@@ -54,7 +54,11 @@ CATEGORIAS = {
     "farmacias": {"nome": "Farmácias", "singular": "Farmácia", "o_que": "farmácias e drogarias, de rede ou independentes"},
     "mercados": {"nome": "Mercados", "singular": "Mercado", "o_que": "supermercados, hipermercados e atacarejos"},
     "petshops": {"nome": "Pet shops", "singular": "Pet shop", "o_que": "pet shops e lojas de produtos para animais"},
+    "online": {"nome": "Online", "singular": "Online", "o_que": "marketplaces com entrega no CEP"},
 }
+MARKETPLACES = {"mercadolivre": "Mercado Livre", "amazon": "Amazon", "shopee": "Shopee", "magalu": "Magalu",
+                "americanas": "Americanas", "casasbahia": "Casas Bahia"}
+ASSINATURAS = {"prime": "Amazon Prime", "melimais": "Meli+"}
 TAGS = {"bebe", "pet", "gato", "cachorro", "alcool", "medicamento", "maquiagem", "geriatrico", "skincare", "suplementos",
         "cafe", "bucal", "limpeza", "carnes", "alimentos", "higiene", "lactose", "gluten", "acucar"}
 FONTES = {"Site", "App", "Encarte", "Clube", "Instagram", "WhatsApp", "Tiendeo"}
@@ -110,6 +114,30 @@ def numero(v):
     except (TypeError, ValueError):
         return None
     return n if n > 0 else None
+
+
+def frete_ok(v):
+    try:
+        n = round(float(v), 2)
+    except (TypeError, ValueError):
+        return None
+    return n if n >= 0 else None
+
+
+def inteiro(v):
+    try:
+        n = int(round(float(v)))
+    except (TypeError, ValueError):
+        return None
+    return n if n >= 0 else None
+
+
+def valor_total(v):
+    """Preço de um item da lista: número (loja) ou {preco, frete} (online)."""
+    if isinstance(v, dict):
+        preco = numero(v.get("preco"))
+        return round(preco + (frete_ok(v.get("frete")) or 0), 2) if preco else None
+    return numero(v)
 
 
 def url_ok(u):
@@ -345,7 +373,37 @@ def descreve_casa(cfg):
     return "; ".join(partes), excluir, restr, p.get("interesses") or []
 
 
+def instrucoes_online(cfg):
+    casa, excluir, restr, interesses = descreve_casa(cfg)
+    on = cfg.get("online") or {}
+    mkts = [MARKETPLACES.get(m, m) for m in (on.get("marketplaces") or ["mercadolivre", "amazon"])]
+    assin = [ASSINATURAS.get(a, a) for a in (on.get("assinaturas") or [])]
+    lista = [nome_item(i) for i in (cfg.get("lista") or []) if nome_item(i)]
+    return f"""Encontre preços válidos hoje ({hoje_br()}) em {', '.join(mkts)} para entrega no CEP {cfg.get('cep')}, no Brasil.
+
+Use a busca na web agora. Use só o que encontrar nas páginas: não invente produtos, preços, fretes nem prazos. Se não conseguir usar a busca na web, responda apenas {{"erro": "sem_busca"}}.
+
+Assinaturas do morador: {', '.join(assin) or 'nenhuma'}. Quando a assinatura der frete grátis no item, use frete 0.
+Casa: {casa}.
+Não traga: {', '.join(excluir) or 'nada a excluir'}.
+Restrições: {', '.join(restr) or 'nenhuma'}. Interesses, que devem vir primeiro: {', '.join(interesses) or 'nenhum'}.
+Lista de compras: {'; '.join(lista) or 'vazia'}. Para cada item, informe o preço equivalente à quantidade do item; se só houver kit maior, divida e explique em "obs".
+
+Regras: só lojas oficiais ou vendedores bem avaliados. Marque "importado": true quando o envio for internacional. Não inclua remédios que exigem receita. Informe frete e prazo de entrega para este CEP. Em kits, informe "unidades". Até 15 ofertas, priorizando os itens da lista e os interesses.
+
+Responda somente com um objeto JSON, sem texto antes ou depois, neste formato:
+{{
+  "cupons": [{{"rede": "Mercado Livre", "codigo": "CODIGO", "valor": 20, "beneficio": "R$ 20 de desconto", "condicao": "Acima de R$ 200", "valido_ate": "AAAA-MM-DD ou null", "oficial": true, "fonte": "URL"}}],
+  "ofertas": [{{"rede": "Amazon", "produto": "Nome · tamanho", "preco_normal": 10.0, "preco_oferta": 8.0, "frete": 0, "prazo_dias": 2, "vendedor": "nome do vendedor", "oficial": true, "importado": false, "unidades": 1, "tipo": "promo", "tags": ["alimentos"], "fonte": "URL"}}],
+  "lista": [{{"produto": "texto exato do item da lista", "precos": [{{"rede": "Amazon", "preco": 9.9, "frete": 0, "prazo_dias": 2, "obs": "kit com 6, valor por unidade", "fonte": "URL"}}]}}]
+}}
+
+Etiquetas permitidas em "tags": {', '.join(sorted(TAGS))}."""
+
+
 def instrucoes_para(cat_id, cfg):
+    if cat_id == "online":
+        return instrucoes_online(cfg)
     cat = CATEGORIAS[cat_id]
     casa, excluir, restr, interesses = descreve_casa(cfg)
     lojas = cfg.get("lojas") or {}
@@ -441,6 +499,21 @@ def normalizar(cat_id, bruto, cfg):
                 item[campo] = texto(o.get(campo), lim)
         if o.get("receita") in ("tarja", "mip"):
             item["receita"] = o["receita"]
+        if cat_id == "online":
+            frete = frete_ok(o.get("frete"))
+            if frete is None or item.get("receita") == "tarja":
+                ids.discard(oid)
+                continue
+            item["frete"] = frete
+            for campo in ("prazo_dias", "unidades"):
+                n = inteiro(o.get(campo))
+                if n is not None and (campo == "prazo_dias" or n > 1):
+                    item[campo] = n
+            if texto(o.get("vendedor"), 60):
+                item["vendedor"] = texto(o.get("vendedor"), 60)
+            item["oficial"] = o.get("oficial") is True
+            if o.get("importado") is True:
+                item["importado"] = True
         ofertas.append(item)
 
     nomes_lista = {norm(i.get("produto") if isinstance(i, dict) else i): (i.get("produto") if isinstance(i, dict) else i)
@@ -456,12 +529,26 @@ def normalizar(cat_id, bruto, cfg):
             if not isinstance(p, dict) or not url_ok(p.get("fonte")):
                 continue
             rid, preco = rede_id(p.get("rede")), numero(p.get("preco"))
-            if rid and preco:
+            if not (rid and preco):
+                continue
+            if cat_id == "online":
+                frete = frete_ok(p.get("frete"))
+                if frete is None:
+                    continue
+                valor = {"preco": preco, "frete": frete}
+                if inteiro(p.get("prazo_dias")) is not None:
+                    valor["prazo_dias"] = inteiro(p.get("prazo_dias"))
+                if texto(p.get("obs"), 60):
+                    valor["obs"] = texto(p.get("obs"), 60)
+                lista.setdefault(original, {})[rid] = valor
+            else:
                 lista.setdefault(original, {})[rid] = preco
 
     # toda rede citada precisa de uma loja, para o painel saber se a acompanha
+    online = cat_id == "online"
     for rid in redes:
-        lojas.setdefault(rid, {"rede": rid, "distancia_km": None, "horario": "", "endereco": None, "fontes": ["Site"]})
+        lojas.setdefault(rid, {"rede": rid, "distancia_km": None, "horario": "Entrega no seu CEP" if online else "",
+                               "endereco": None, "fontes": ["Site", "App"] if online else ["Site"]})
 
     cat = CATEGORIAS[cat_id]
     return {
@@ -555,8 +642,8 @@ def dados_lista():
         if not prod:
             continue
         compras = sorted(d for d in ((it.get("compras") or []) if isinstance(it, dict) else []) if data_ok(d))
-        ps = sorted(({"loja": info[r]["nome"], "tipo": info[r]["tipo"], "preco": numero(v)}
-                     for r, v in precos.get(norm(prod), {}).items() if acompanha(r) and numero(v)),
+        ps = sorted(({"loja": info[r]["nome"], "tipo": info[r]["tipo"], "preco": valor_total(v)}
+                     for r, v in precos.get(norm(prod), {}).items() if acompanha(r) and valor_total(v)),
                     key=lambda x: x["preco"])
         ritmo = None
         if len(compras) >= 2:
@@ -637,7 +724,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.6"
+    server_version = "EconomIA/0.7"
 
     def log_message(self, fmt, *args):
         pass

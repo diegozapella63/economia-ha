@@ -20,6 +20,14 @@ Se você tiver mais de uma tarefa de IA, escolha qual usar na opção `ai_task_e
 5. Em **Ofertas**, use **Não mostrar** em qualquer oferta que não faça sentido para você. Cada oferta tem um link para a fonte.
 6. Em **Lojas**, desmarque as lojas que não quer acompanhar ou adicione uma que não apareceu.
 
+## Compras online
+
+A aba **Online** compara Mercado Livre, Amazon e outros marketplaces que você marcar em **Mais → Compras online**. Marque também as assinaturas que dão frete grátis (Amazon Prime, Meli+).
+
+- O preço considerado é o **preço mais o frete** para o seu CEP. Kits aparecem com o preço por unidade.
+- Na Minha lista, cada item mostra se **compensa pedir** ou se é melhor **comprar na loja**. Se o pedido chegaria depois de o item acabar, o EconomIA sugere comprar na loja agora e diz até quando pedir da próxima vez.
+- Só entram lojas oficiais ou vendedores bem avaliados. Importados ficam marcados, e remédios de receita ficam só nas farmácias.
+
 ## Lista por voz
 
 Em **Mais → Lista do Home Assistant**, escolha a lista de tarefas que o EconomIA deve acompanhar (por exemplo, a **Lista de compras**). A partir daí:

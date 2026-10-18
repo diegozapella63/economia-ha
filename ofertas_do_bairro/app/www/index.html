@@ -257,6 +257,11 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .i-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
 .i-foot{font-size:12px;color:var(--muted);margin-left:auto}
 .rm{background:none;border:0;color:var(--muted);font-size:12px;text-decoration:underline;padding:0;flex:none}
+.i-online{display:flex;flex-direction:column;align-items:flex-start;gap:4px;border-top:1px dashed var(--line);padding-top:8px;font-size:13px;color:var(--muted)}
+.i-nota{color:var(--ink);font-weight:600}
+.dchip{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:var(--bg);color:var(--ink)}
+.dchip.on{background:var(--accent);color:var(--on-accent)}
+.dchip.warn{background:var(--warn-soft);color:var(--warn)}
 
 /* lojas */
 .rows{display:flex;flex-direction:column}
@@ -295,14 +300,14 @@ footer{font-size:12.5px;color:var(--muted)}
   "gerado_em": "2026-10-18T15:51:00-03:00",
   "proxima_atualizacao": "2026-10-19T07:52:00-03:00",
   "lista": [
-    {"produto": "Café torrado e moído · 500 g", "precos": {"giassi": 19.90, "condor": 18.49, "angeloni": 17.98, "clubek": 19.49, "atacadao": 18.90}},
+    {"produto": "Café torrado e moído · 500 g", "precos": {"giassi": 19.90, "condor": 18.49, "angeloni": 17.98, "clubek": 19.49, "atacadao": 18.90, "amazon": {"preco": 18.99, "frete": 0, "prazo_dias": 2}, "mercadolivre": {"preco": 17.49, "frete": 9.90, "prazo_dias": 3}}},
     {"produto": "Leite UHT integral · 1 L", "precos": {"giassi": 5.49, "condor": 5.19, "angeloni": 5.69, "clubek": 5.39, "atacadao": 4.79}},
-    {"produto": "Papel higiênico folha dupla · 12 rolos", "precos": {"pp": 23.90, "dc": 22.49, "giassi": 17.90, "condor": 18.49, "clubek": 19.90, "atacadao": 16.99}},
-    {"produto": "Creme dental Colgate Total 12 · 90 g", "precos": {"pp": 14.99, "dc": 15.49, "panvel": 15.90, "raia": 16.99, "giassi": 9.98, "condor": 10.49, "angeloni": 11.49, "atacadao": 8.99}},
-    {"produto": "Protetor solar facial FPS 50 · 40 g", "precos": {"pp": 69.90, "dc": 66.90, "panvel": 59.90, "raia": 64.90, "saojoao": 68.90, "angeloni": 62.90}},
+    {"produto": "Papel higiênico folha dupla · 12 rolos", "precos": {"pp": 23.90, "dc": 22.49, "giassi": 17.90, "condor": 18.49, "clubek": 19.90, "atacadao": 16.99, "amazon": {"preco": 18.45, "frete": 0, "prazo_dias": 2, "obs": "kit de 24 rolos, valor por 12"}}},
+    {"produto": "Creme dental Colgate Total 12 · 90 g", "precos": {"pp": 14.99, "dc": 15.49, "panvel": 15.90, "raia": 16.99, "giassi": 9.98, "condor": 10.49, "angeloni": 11.49, "atacadao": 8.99, "mercadolivre": {"preco": 7.48, "frete": 0, "prazo_dias": 2, "obs": "kit com 6, valor por unidade"}}},
+    {"produto": "Protetor solar facial FPS 50 · 40 g", "precos": {"pp": 69.90, "dc": 66.90, "panvel": 59.90, "raia": 64.90, "saojoao": 68.90, "angeloni": 62.90, "shopee": {"preco": 52.90, "frete": 12.90, "prazo_dias": 6}}},
     {"produto": "Losartana potássica 50 mg · 30 comp. (genérico)", "precos": {"pp": 9.90, "dc": 10.49, "panvel": 12.90, "raia": 14.29, "saojoao": 11.50}},
-    {"produto": "Ração para gatos adultos · 10,1 kg", "precos": {"condor": 159.90, "giassi": 172.90, "petz": 179.90, "cobasi": 184.90, "petbairro": 189.90}},
-    {"produto": "Areia higiênica para gatos · 4 kg", "precos": {"giassi": 27.90, "atacadao": 25.49, "petz": 24.90, "cobasi": 26.90, "petbairro": 29.90}}
+    {"produto": "Ração para gatos adultos · 10,1 kg", "precos": {"condor": 159.90, "giassi": 172.90, "petz": 179.90, "cobasi": 184.90, "petbairro": 189.90, "amazon": {"preco": 164.90, "frete": 0, "prazo_dias": 2}}},
+    {"produto": "Areia higiênica para gatos · 4 kg", "precos": {"giassi": 27.90, "atacadao": 25.49, "petz": 24.90, "cobasi": 26.90, "petbairro": 29.90, "mercadolivre": {"preco": 21.63, "frete": 0, "prazo_dias": 3, "obs": "kit com 3, valor por unidade"}}}
   ],
   "categorias": [
     {
@@ -433,12 +438,40 @@ footer{font-size:12.5px;color:var(--muted)}
         {"rede": "petz", "libera": "Preços e cupons de cliente cadastrado", "status": "pendente"},
         {"rede": "cobasi", "libera": "Preços e cupons de cliente cadastrado", "status": "pendente"}
       ]
+    },
+    {
+      "id": "online",
+      "nome": "Online",
+      "singular": "Online",
+      "aviso": "Os preços desta aba são ilustrativos, só para mostrar como fica.",
+      "redes": [
+        {"id": "mercadolivre", "nome": "Mercado Livre", "curto": "Mercado Livre"},
+        {"id": "amazon", "nome": "Amazon", "curto": "Amazon"},
+        {"id": "shopee", "nome": "Shopee", "curto": "Shopee"}
+      ],
+      "lojas": [
+        {"rede": "mercadolivre", "distancia_km": null, "horario": "Entrega no seu CEP", "fontes": ["Site", "App"]},
+        {"rede": "amazon", "distancia_km": null, "horario": "Entrega no seu CEP", "fontes": ["Site", "App"]},
+        {"rede": "shopee", "distancia_km": null, "horario": "Entrega no seu CEP", "fontes": ["Site", "App"]}
+      ],
+      "cupons": [],
+      "ofertas": [
+        {"id": "amazon-papel-24", "rede": "amazon", "produto": "Papel higiênico folha dupla · 24 rolos", "preco_normal": 46.90, "preco_oferta": 36.90, "tipo": "promo", "frete": 0, "prazo_dias": 2, "vendedor": "Amazon", "oficial": true, "unidades": 24, "tags": ["limpeza"]},
+        {"id": "ml-areia-kit3", "rede": "mercadolivre", "produto": "Areia higiênica para gatos · kit com 3 de 4 kg", "preco_normal": 89.70, "preco_oferta": 64.90, "tipo": "promo", "frete": 0, "prazo_dias": 3, "vendedor": "Loja oficial da marca", "oficial": true, "unidades": 3, "tags": ["pet", "gato"]},
+        {"id": "amazon-racao-gato", "rede": "amazon", "produto": "Ração para gatos adultos · 10,1 kg", "preco_normal": 219.90, "preco_oferta": 164.90, "tipo": "promo", "frete": 0, "prazo_dias": 2, "vendedor": "Amazon", "oficial": true, "unidades": 1, "tags": ["pet", "gato"]},
+        {"id": "ml-colgate-kit6", "rede": "mercadolivre", "produto": "Creme dental Colgate Total 12 · kit com 6 de 90 g", "preco_normal": 59.94, "preco_oferta": 44.90, "tipo": "promo", "frete": 0, "prazo_dias": 2, "vendedor": "Loja oficial Colgate", "oficial": true, "unidades": 6, "tags": ["bucal"]},
+        {"id": "shopee-protetor-50", "rede": "shopee", "produto": "Protetor solar facial FPS 50 · 40 g", "preco_normal": 69.90, "preco_oferta": 52.90, "tipo": "promo", "frete": 12.90, "prazo_dias": 6, "vendedor": "BeautyStore", "oficial": false, "unidades": 1, "tags": ["skincare"]},
+        {"id": "shopee-serum-import", "rede": "shopee", "produto": "Sérum facial vitamina C · 30 ml", "preco_normal": 89.90, "preco_oferta": 39.90, "tipo": "promo", "frete": 0, "prazo_dias": 18, "vendedor": "Loja internacional", "oficial": false, "importado": true, "unidades": 1, "tags": ["skincare"]},
+        {"id": "ml-pampers-2x56", "rede": "mercadolivre", "produto": "Fralda Pampers Confort Sec XXG · 2 pacotes de 56", "preco_normal": 209.80, "preco_oferta": 159.90, "tipo": "promo", "frete": 0, "prazo_dias": 2, "vendedor": "Loja oficial Pampers", "oficial": true, "unidades": 2, "tags": ["bebe"]}
+      ],
+      "contas": []
     }
   ],
   "config_exemplo": {
     "cep": null,
     "raio_km": 2,
-    "categorias": ["farmacias", "mercados", "petshops"],
+    "categorias": ["farmacias", "mercados", "petshops", "online"],
+    "online": {"marketplaces": ["mercadolivre", "amazon", "shopee"], "assinaturas": ["prime", "melimais"]},
     "lojas": {"ignorar": [], "manter": [], "adicionar": []},
     "lista": [
       {"produto": "Café torrado e moído · 500 g", "compras": ["2026-09-20", "2026-09-30", "2026-10-10"]},
@@ -514,7 +547,7 @@ footer{font-size:12.5px;color:var(--muted)}
     </div>
     <section class="panel" aria-labelledby="h-lista">
       <div class="sec-head"><h2 id="h-lista">Itens da lista</h2></div>
-      <p class="sec-meta">Uma lista só para farmácias, mercados e pet shops. O que está acabando aparece primeiro. Toque em "Comprei hoje" quando comprar: o painel aprende de quanto em quanto tempo cada coisa acaba.</p>
+      <p class="sec-meta">Uma lista só para farmácias, mercados, pet shops e compras online. O que está acabando aparece primeiro. Toque em "Comprei hoje" quando comprar: o painel aprende de quanto em quanto tempo cada coisa acaba.</p>
       <ul class="wish-grid" id="wish"></ul>
       <form class="row-form" id="addForm" novalidate>
         <input class="field" id="novoItem" name="novoItem" placeholder="Ex.: Atorvastatina 20 mg, Café 500 g, Sabão em pó" aria-label="Produto para acompanhar">
@@ -617,6 +650,12 @@ footer{font-size:12.5px;color:var(--muted)}
           <p class="sec-meta">O botão "Não mostrar" de cada oferta também adiciona tipos aqui.</p>
           <div class="picks" id="pNunca"></div>
         </section>
+        <section class="panel" aria-labelledby="h-online">
+          <div class="sec-head"><h2 id="h-online">Compras online</h2></div>
+          <div class="group"><h3>Onde procurar</h3><div class="picks" id="pMkt"></div></div>
+          <div class="group"><h3>Assinaturas com frete grátis</h3><div class="picks" id="pAss"></div></div>
+          <p class="hint">Com assinatura, o frete grátis entra na conta de cada item. Remédios de receita ficam só nas farmácias.</p>
+        </section>
       </div>
     </div>
 
@@ -664,7 +703,7 @@ footer{font-size:12.5px;color:var(--muted)}
       </div>
     </section>
     <section class="panel settings" aria-labelledby="h-sobre">
-      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.6.0. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
+      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.7.0. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
     </section>
   </section>
 
@@ -735,6 +774,8 @@ footer{font-size:12.5px;color:var(--muted)}
   function descrevePets(p){
     return PETS.filter(function(x){ return p[x.id] > 0; }).map(function(x){ return p[x.id] + ' ' + (p[x.id] > 1 ? x.varios : x.um); }).join(' e ');
   }
+  var MKT = [{id:'mercadolivre', nome:'Mercado Livre'}, {id:'amazon', nome:'Amazon'}, {id:'shopee', nome:'Shopee'}, {id:'magalu', nome:'Magalu'}, {id:'americanas', nome:'Americanas'}, {id:'casasbahia', nome:'Casas Bahia'}];
+  var ASS = [{id:'prime', nome:'Amazon Prime'}, {id:'melimais', nome:'Meli+'}];
   var DIAS = [{id:'dom', n:'Dom'}, {id:'seg', n:'Seg'}, {id:'ter', n:'Ter'}, {id:'qua', n:'Qua'}, {id:'qui', n:'Qui'}, {id:'sex', n:'Sex'}, {id:'sab', n:'Sáb'}];
   function cap(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
 
@@ -770,13 +811,17 @@ footer{font-size:12.5px;color:var(--muted)}
   function n0(v, d){ v = Number(v); return isFinite(v) && v >= 0 ? Math.min(Math.round(v), 20) : d; }
   function normaliza(c){
     c = c && typeof c === 'object' ? JSON.parse(JSON.stringify(c)) : {};
-    var p = c.perfil || {}, r = c.cotidiano || {}, l = c.lojas || {}, sy = c.sync || {};
+    var p = c.perfil || {}, r = c.cotidiano || {}, l = c.lojas || {}, sy = c.sync || {}, on = c.online || null;
+    var cats = arr(c.categorias).slice();
+    if (!on && cats.length && cats.indexOf('online') < 0) cats.push('online');  // quem já usava ganha a aba Online
+    on = on || {};
     return {
       rev: Number(c.rev) || 0,
       sync: {ativo: !!sy.ativo && !!sy.entidade, entidade: String(sy.entidade || ''), enviar_novos: sy.enviar_novos !== false, enviar_acabando: sy.enviar_acabando !== false},
       cep: c.cep || null,
       raio_km: Number(c.raio_km) || 2,
-      categorias: arr(c.categorias).length ? c.categorias : D.categorias.map(function(x){ return x.id; }),
+      categorias: cats.length ? cats : D.categorias.map(function(x){ return x.id; }),
+      online: {marketplaces: arr(on.marketplaces).length ? arr(on.marketplaces) : ['mercadolivre', 'amazon'], assinaturas: arr(on.assinaturas)},
       lojas: {ignorar: arr(l.ignorar), manter: arr(l.manter), adicionar: arr(l.adicionar)},
       lista: arr(c.lista).map(function(i){ return typeof i === 'string' ? {produto:i, compras:[]} : {produto:String(i.produto || ''), compras:arr(i.compras), origem:i.origem === 'ha' ? 'ha' : undefined}; }).filter(function(i){ return i.produto; }),
       perfil: {adultos:n0(p.adultos, 1), criancas:n0(p.criancas, 0), bebes:n0(p.bebes, 0), pets:petsDe(p.pets), restricoes:arr(p.restricoes), interesses:arr(p.interesses), nunca:arr(p.nunca)},
@@ -871,6 +916,8 @@ footer{font-size:12.5px;color:var(--muted)}
     $('catNote').textContent = CAT.id === 'petshops' && !petsTotal() ? 'Sem pets no seu perfil, as ofertas daqui ficam escondidas. Ajuste em Mais.' : (exemplo && CAT.aviso ? CAT.aviso : '');
     $('ofertasMeta').textContent = CAT.id === 'farmacias'
       ? 'O que combina com você aparece primeiro. Preço do site; na loja pode ser outro.'
+      : CAT.id === 'online'
+      ? 'Preço com frete para o seu CEP, de lojas oficiais ou vendedores bem avaliados. Importados ficam marcados.'
       : CAT.id === 'petshops'
       ? 'Ração, areia, remédios e acessórios, só para os pets do seu perfil.'
       : 'Encarte da semana, preço de clube e preço de atacado, do que combina com você para o resto.';
@@ -928,6 +975,10 @@ footer{font-size:12.5px;color:var(--muted)}
     var tipo = o.tipo || 'promo', id = idOf(o);
     var rec = o.receita === 'tarja' ? '<span class="tarja">Tarja vermelha · com receita</span>' : o.receita === 'mip' ? '<span class="tarja mip">Sem receita</span>' : '';
     var cond = o.condicao ? '<span>' + esc(o.condicao) + '</span>' : '';
+    if (typeof o.frete === 'number') cond += '<span>' + (o.frete ? 'Frete ' + brl.format(o.frete) : 'Frete grátis') + '</span>';
+    if (o.prazo_dias != null) cond += '<span>Chega em ' + o.prazo_dias + (o.prazo_dias > 1 ? ' dias' : ' dia') + '</span>';
+    if (o.vendedor) cond += '<span>' + (o.oficial ? 'Loja oficial' : 'Vendido por ' + esc(o.vendedor)) + '</span>';
+    if (o.importado) cond += '<span class="chip warn">Importado</span>';
     var tag = tipo === 'clube' ? '<span class="tag">Clube</span>' : tipo === 'atacado' ? '<span class="tag">Atacado</span>' : '';
     var un = o.unidade ? '<span class="un">/' + esc(o.unidade) + '</span>' : '';
     var why = oc ? '<p class="why off-why">' + esc(oc.txt) + '</p>' : (porQue(o) ? '<p class="why">' + esc(porQue(o)) + '</p>' : '');
@@ -950,7 +1001,7 @@ footer{font-size:12.5px;color:var(--muted)}
     return '<li class="deal' + (oc ? ' muted' : '') + '">'
       + '<div><p class="d-prod">' + esc(o.produto) + '</p>' + why
       + '<p class="d-meta"><span>' + esc(G[o.rede].nome) + '</span>' + cond + rec + fonteLink(o.fonte) + acao + '</p></div>'
-      + '<div class="price num"><span class="de">' + ROT_PRECO[tipo] + ' <s>' + brl.format(o.preco_normal) + '</s></span><span class="por">' + tag + brl.format(o.preco_oferta) + un + '</span></div>'
+      + '<div class="price num"><span class="de">' + ROT_PRECO[tipo] + ' <s>' + brl.format(o.preco_normal) + '</s></span><span class="por">' + tag + brl.format(o.preco_oferta) + un + '</span>' + (o.unidades > 1 ? '<span class="de">' + brl.format(o.preco_oferta / o.unidades) + ' cada</span>' : '') + '</div>'
       + '<span class="off num">−' + pct(o) + '%</span>'
       + menu + '</li>';
   }
@@ -999,13 +1050,47 @@ footer{font-size:12.5px;color:var(--muted)}
     var media = Math.max(1, Math.round(soma_ / (c.length - 1)));
     var dias = diasAte(soma(c[c.length - 1], media));
     var fim = dias < 0 ? 'já deve ter acabado' : dias === 0 ? 'deve acabar hoje' : dias === 1 ? 'deve acabar amanhã' : 'deve acabar em ' + dias + ' dias';
-    return {txt:'Você compra a cada ~' + media + ' dias · ' + fim, dias:dias};
+    return {txt:'Você compra a cada ~' + media + ' dias · ' + fim, dias:dias, media:media};
   }
   function precosDe(produto){
     var k = norm(produto), item = arr(D.lista).filter(function(i){ return norm(i.produto) === k; })[0];
     if (!item) return [];
     return Object.keys(item.precos).filter(function(id){ return catAtiva(id) && acompanha(id); })
-      .map(function(id){ return {id:id, v:item.precos[id]}; }).sort(function(a, b){ return a.v - b.v; });
+      .map(function(id){
+        var v = item.precos[id];
+        if (v && typeof v === 'object'){
+          var pr = Number(v.preco) || 0, fr = Number(v.frete) || 0;
+          return {id:id, v:Math.round((pr + fr) * 100) / 100, preco:pr, frete:fr, prazo:v.prazo_dias == null ? null : Number(v.prazo_dias), obs:v.obs || '', online:true};
+        }
+        return {id:id, v:Number(v)};
+      }).filter(function(x){ return x.v > 0; }).sort(function(a, b){ return a.v - b.v; });
+  }
+  // compensa pedir online ou comprar na loja?
+  function decisaoOnline(r, p){
+    var loja = p.filter(function(y){ return !y.online; })[0], net = p.filter(function(y){ return y.online; })[0];
+    if (!net) return '';
+    var dia = function(n){ return n + (n > 1 ? ' dias' : ' dia'); };
+    var linha = 'Online: ' + brl.format(net.v) + ' na ' + G[net.id].nome + (net.frete ? ' (frete ' + brl.format(net.frete) + ')' : ' (frete grátis)')
+      + (net.prazo != null ? ', chega em ' + dia(net.prazo) : '') + (net.obs ? ' · ' + net.obs : '');
+    var chip, nota = '';
+    // data limite para o pedido chegar antes de acabar (um dia de folga)
+    var pedirAte = r.dias != null && net.prazo != null ? soma(hojeSP(), r.dias - net.prazo - 1) : null;
+    if (!loja){ chip = '<span class="dchip on">Só online</span>'; }
+    else if (net.v < loja.v){
+      var dif = brl.format(loja.v - net.v);
+      if (r.dias != null && net.prazo != null && net.prazo > r.dias){
+        chip = '<span class="dchip warn">Compra na loja agora</span>';
+        var prox = r.media ? soma(hojeSP(), r.media - net.prazo - 1) : null;
+        nota = 'Online sai ' + dif + ' mais barato, mas chega depois de acabar.' + (prox ? ' Na próxima, peça até ' + diaLongo(prox) + '.' : '');
+      } else {
+        chip = '<span class="dchip on">Compensa pedir</span>';
+        nota = 'Economiza ' + dif + ' pedindo online.' + (pedirAte && diasAte(pedirAte) >= 0 ? ' Peça até ' + diaLongo(pedirAte) + ' para chegar antes de acabar.' : '');
+      }
+    } else {
+      chip = '<span class="dchip">Compra na loja</span>';
+      nota = 'Com frete, o online sai ' + brl.format(net.v - loja.v) + ' mais caro.';
+    }
+    return '<div class="i-online">' + chip + '<p>' + esc(linha) + '</p>' + (nota ? '<p class="i-nota">' + esc(nota) + '</p>' : '') + '</div>';
   }
   function plural(n, cat){ var c = D.categorias.filter(function(x){ return x.id === cat; })[0]; return n + ' ' + (n > 1 ? c.nome : c.singular).toLowerCase(); }
   function pintaLista(){
@@ -1032,6 +1117,7 @@ footer{font-size:12.5px;color:var(--muted)}
         + '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>'
         + '<div class="i-best"><span class="lbl">Mais barato</span><span class="por num">' + brl.format(best.v) + '</span><span class="i-store">' + esc(G[best.id].nome) + ' <span class="chip">' + esc(G[best.id].singular) + '</span></span></div>'
         + (p.length > 1 ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li>' + esc(G[y.id].curto) + ' <b>' + brl.format(y.v) + '</b></li>'; }).join('') + '</ul>' : '')
+        + decisaoOnline(x.r, p)
         + acoes + '<span class="i-foot">Em ' + onde + '</span></div></li>';
     }).join('');
   }
@@ -1191,6 +1277,8 @@ footer{font-size:12.5px;color:var(--muted)}
     picks('pRestr', RESTR, p.restricoes);
     picks('pInt', INTERESSES.map(function(t){ return {id:t, nome:cap(ROTULO_TAG[t])}; }), p.interesses);
     picks('pNunca', NUNCA.map(function(t){ return {id:t, nome:cap(ROTULO_TAG[t])}; }), p.nunca);
+    picks('pMkt', MKT, estado.online.marketplaces);
+    picks('pAss', ASS, estado.online.assinaturas);
     picks('dMercado', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.mercado);
     picks('dFarmacia', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.farmacia);
     $('avisar').value = r.avisar;
@@ -1289,7 +1377,7 @@ footer{font-size:12.5px;color:var(--muted)}
     };
     leitor.readAsText(f);
   });
-  var ALVO = {pRestr:function(){ return estado.perfil.restricoes; }, pInt:function(){ return estado.perfil.interesses; },
+  var ALVO = {pMkt:function(){ return estado.online.marketplaces; }, pAss:function(){ return estado.online.assinaturas; }, pRestr:function(){ return estado.perfil.restricoes; }, pInt:function(){ return estado.perfil.interesses; },
     pNunca:function(){ return estado.perfil.nunca; }, dMercado:function(){ return estado.cotidiano.mercado; }, dFarmacia:function(){ return estado.cotidiano.farmacia; }};
   $('v-mais').addEventListener('click', function(e){
     var b = e.target.closest('.pick'); if (!b) return;

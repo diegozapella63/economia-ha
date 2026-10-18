@@ -79,6 +79,8 @@ O servidor só aceita conexões do ingress (`172.30.32.2`). Para testar fora do 
 - `ofertas[].id` precisa ser estável entre semanas: é o que o botão "Não mostrar" guarda.
 - `redes[].id` é único entre todas as categorias.
 - `lista[].produto` usa o mesmo texto da lista do `config.json`.
+- Categoria `online`: ofertas têm também `frete`, `prazo_dias`, `vendedor`, `oficial`, `importado` e `unidades`; na `lista`, o preço de um marketplace é um objeto `{"preco", "frete", "prazo_dias", "obs"}`. O painel compara `preco + frete` com o preço das lojas.
+- `config.online`: `{"marketplaces": ["mercadolivre", "amazon"], "assinaturas": ["prime", "melimais"]}`.
 
 ### Etiquetas (`tags`) usadas pelo perfil
 
