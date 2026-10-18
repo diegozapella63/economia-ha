@@ -15,14 +15,14 @@ Se você tiver mais de uma tarefa de IA, escolha qual usar na opção `ai_task_e
 
 1. Abra **EconomIA** no menu lateral do Home Assistant.
 2. Em **Mais**, preencha o CEP, quem mora na casa (incluindo quantos pets), restrições, interesses e os dias em que você costuma comprar.
-3. Em **Minha lista**, adicione o que você compra sempre, pelo campo do topo ou por **Da foto ou do ZAP**. Toque em **Comprei hoje** quando comprar: o painel aprende de quanto em quanto tempo cada coisa acaba. **Limpar lista** apaga tudo, com opção de desfazer.
+3. Em **Minha lista**, adicione o que você compra sempre, pelo campo do topo, por **Escolher fotos** ou por **Colar mensagem**. Toque em **Comprei hoje** quando comprar: o painel aprende de quanto em quanto tempo cada coisa acaba. **Limpar lista** apaga tudo, com opção de desfazer.
 4. Toque em **Buscar**, no centro do menu de baixo. A busca leva alguns minutos e você pode continuar usando o painel.
 5. Em **Ofertas**, use **Não mostrar** em qualquer oferta que não faça sentido para você. Cada oferta tem um link para a fonte.
 6. Em **Lojas**, desmarque as lojas que não quer acompanhar ou adicione uma que não apareceu.
 
-## Itens pela foto ou pelo ZAP
+## Itens por foto ou mensagem
 
-Em **Minha lista → Da foto ou do ZAP**, escolha até 4 fotos (print da conversa do WhatsApp, lista escrita à mão, foto da embalagem que acabou) ou cole o texto da mensagem. Toque em **Ler com a IA**: a IA do Home Assistant devolve os itens, você confere, ajusta o nome se quiser e adiciona.
+Em **Minha lista → Escolher fotos**, tire ou escolha quantas fotos precisar, até 8 (print de conversa, lista escrita à mão, embalagem que acabou). Dá para tirar uma foto da lista. Quando terminar, toque em **Digitalizar com IA**: a IA do Home Assistant devolve os itens, você confere, ajusta o nome se quiser e adiciona. Se a lista veio em texto, use **Colar mensagem**.
 
 Para ler fotos, a IA escolhida precisa aceitar imagens (a Anthropic aceita). A foto fica um instante na pasta de mídia do Home Assistant, só para a IA ler, e é apagada em seguida.
 
@@ -48,6 +48,7 @@ No fim da **Minha lista**, diga em até quantas lojas você topa parar (1 a 4) e
 A aba **Online** compara Mercado Livre, Amazon e outros marketplaces que você marcar em **Mais → Compras online**. Marque também as assinaturas que dão frete grátis (Amazon Prime, Meli+).
 
 - O preço considerado é o **preço mais o frete** para o seu CEP. Kits aparecem com o preço por unidade.
+- Prime e Meli+ dão frete grátis só nos produtos elegíveis (na Amazon, os com selo Prime). O frete de cada item já vem com a assinatura considerada.
 - Na Minha lista, cada item mostra se **compensa pedir** ou se é melhor **comprar na loja**. Se o pedido chegaria depois de o item acabar, o EconomIA sugere comprar na loja agora e diz até quando pedir da próxima vez.
 - Só entram lojas oficiais ou vendedores bem avaliados. Importados ficam marcados, e remédios de receita ficam só nas farmácias.
 

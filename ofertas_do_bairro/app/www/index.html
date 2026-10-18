@@ -313,8 +313,12 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .r-dica{display:block;color:var(--accent);font-size:12px;font-weight:600}
 .foto-box{display:flex;flex-direction:column;gap:10px;border:1px dashed var(--accent);border-radius:12px;padding:12px}
 .arq{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
-.fotos{display:flex;flex-wrap:wrap;gap:8px}
-.fotos img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.fotos{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:10px}
+.foto-th{position:relative;aspect-ratio:1}
+.foto-th img{width:100%;height:100%;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:block}
+.foto-rm{position:absolute;top:-7px;right:-7px;width:26px;height:26px;border-radius:50%;border:2px solid var(--surface);background:var(--ink);color:var(--surface);font-size:16px;line-height:1;display:grid;place-items:center;padding:0;cursor:pointer}
+.foto-add{aspect-ratio:1;border:1.5px dashed var(--accent);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--accent);font-size:12px;font-weight:600;text-align:center;cursor:pointer}
+.foto-add svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .foto-box textarea{resize:vertical;min-height:72px;font:inherit}
 .foto-itens{display:flex;flex-direction:column;gap:6px}
 .foto-itens li{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -616,14 +620,13 @@ footer{font-size:12.5px;color:var(--muted)}
         <button class="btn" type="submit">Adicionar</button>
       </form>
       <p class="hint" id="addMsg" aria-live="polite"></p>
-      <div class="row-form"><button type="button" class="ghost big" id="fotoBtn" aria-expanded="false" aria-controls="fotoBox"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Da foto ou do ZAP</button></div>
+      <div class="row-form"><label class="ghost big" for="fotoArq" id="fotoBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Escolher fotos</label><button type="button" class="ghost big" id="textoBtn" aria-controls="fotoBox"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Colar mensagem</button></div>
+      <input type="file" id="fotoArq" class="arq" accept="image/*" multiple>
+      <p class="hint">Foto da lista escrita à mão, print da conversa ou da embalagem que acabou: a IA do Home Assistant lê e sugere os itens.</p>
       <div class="foto-box" id="fotoBox" hidden>
-        <p class="sec-meta">Escolha o print da conversa, a foto da lista escrita à mão ou da embalagem que acabou. Ou cole o texto da mensagem. A IA do Home Assistant lê e sugere os itens.</p>
-        <div class="row-form"><label class="ghost big" for="fotoArq"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>Escolher fotos</label></div>
-        <input type="file" id="fotoArq" class="arq" accept="image/*" multiple>
         <div class="fotos" id="fotoPrev"></div>
-        <textarea class="field" id="fotoTxt" rows="3" placeholder="Ou cole aqui a mensagem, ex.: compra 2 leites, Lysoform e pão de forma" aria-label="Mensagem com itens para comprar"></textarea>
-        <div class="row-form"><button type="button" class="btn" id="fotoLer">Ler com a IA</button><button type="button" class="ghost big" id="fotoFechar">Fechar</button></div>
+        <textarea class="field" id="fotoTxt" rows="3" hidden placeholder="Cole aqui a mensagem, ex.: compra 2 leites, Lysoform e pão de forma" aria-label="Mensagem com itens para comprar"></textarea>
+        <div class="row-form"><button type="button" class="btn" id="fotoLer" hidden>Digitalizar com IA</button><button type="button" class="ghost big" id="fotoFechar">Fechar</button></div>
         <p class="hint" id="fotoMsg" aria-live="polite"></p>
         <ul class="foto-itens" id="fotoItens"></ul>
         <div class="row-form" id="fotoAddRow" hidden><button type="button" class="btn" id="fotoAdd">Adicionar à lista</button></div>
@@ -753,7 +756,7 @@ footer{font-size:12.5px;color:var(--muted)}
           <div class="sec-head"><h2 id="h-online">Compras online</h2></div>
           <div class="group"><h3>Onde procurar</h3><div class="picks" id="pMkt"></div></div>
           <div class="group"><h3>Assinaturas com frete grátis</h3><div class="picks" id="pAss"></div></div>
-          <p class="hint">Com assinatura, o frete grátis entra na conta de cada item. Remédios de receita ficam só nas farmácias.</p>
+          <p class="hint">Prime e Meli+ não zeram o frete de tudo: valem para os produtos elegíveis (na Amazon, os com selo Prime). O EconomIA usa o frete que aparece para o seu CEP em cada item, já contando a assinatura. Remédios de receita ficam só nas farmácias.</p>
         </section>
       </div>
     </div>
@@ -802,7 +805,7 @@ footer{font-size:12.5px;color:var(--muted)}
       </div>
     </section>
     <section class="panel settings" aria-labelledby="h-sobre">
-      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.8.2. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
+      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.8.3. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
     </section>
   </section>
 
@@ -1189,7 +1192,8 @@ footer{font-size:12.5px;color:var(--muted)}
       }
     } else {
       chip = '<span class="dchip">Compra na loja</span>';
-      nota = 'Com frete, o online sai ' + brl.format(net.v - loja.v) + ' mais caro.';
+      nota = net.frete ? 'Com o frete de ' + brl.format(net.frete) + ', o online sai ' + brl.format(net.v - loja.v) + ' mais caro.'
+        : 'Mesmo com frete grátis, o online sai ' + brl.format(net.v - loja.v) + ' mais caro que na loja.';
     }
     return '<div class="i-online">' + chip + '<p>' + esc(linha) + '</p>' + (nota ? '<p class="i-nota">' + esc(nota) + '</p>' : '') + '</div>';
   }
@@ -1313,7 +1317,7 @@ footer{font-size:12.5px;color:var(--muted)}
       return '<li class="item"><div class="i-head"><p class="i-prod">' + esc(x.it.produto) + '</p>' + (p.length > 1 ? '<span class="i-save num">economia de ' + brl.format(max - best.v) + '</span>' : '') + '</div>'
         + '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>'
         + '<div class="i-best"><span class="lbl">Mais barato</span><span class="por num">' + brl.format(best.v) + '</span><span class="i-store">' + esc(G[best.id].nome) + ' <span class="chip">' + esc(G[best.id].singular) + '</span></span></div>'
-        + (p.length > 1 ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li>' + esc(G[y.id].curto) + ' <b>' + brl.format(y.v) + '</b></li>'; }).join('') + '</ul>' : '')
+        + (p.length > 1 ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li>' + esc(G[y.id].curto) + ' <b>' + brl.format(y.v) + '</b>' + (y.online && y.frete ? ' com frete' : '') + '</li>'; }).join('') + '</ul>' : '')
         + decisaoOnline(x.r, p)
         + ((melhorTamanho(x.it, x.r, p) || {}).html || '')
         + acoes + '<span class="i-foot">Em ' + onde + '</span></div></li>';
@@ -1352,15 +1356,38 @@ footer{font-size:12.5px;color:var(--muted)}
     this.className = 'hint ok'; this.textContent = 'Sua lista voltou.';
     salvar('Lista de volta'); pintaLista(); pintaOfertasTela();
   });
-  // ===== Ler itens de fotos ou do texto do WhatsApp =====
-  var fotosSel = [], leituraT = null;
-  function abreFoto(abrir){
-    $('fotoBox').hidden = !abrir; $('fotoBtn').setAttribute('aria-expanded', String(abrir));
-    if (abrir) return;
-    clearTimeout(leituraT); fotosSel = [];
-    $('fotoPrev').innerHTML = ''; $('fotoTxt').value = ''; $('fotoItens').innerHTML = ''; $('fotoAddRow').hidden = true; $('fotoMsg').textContent = ''; $('fotoLer').disabled = false;
+  // ===== Ler itens de fotos ou de uma mensagem colada =====
+  // Escolher fotos abre o seletor do celular e a IA já começa a ler; Colar mensagem abre o campo de texto
+  // Escolher fotos junta quantas fotos quiser (até 8); a IA só lê ao tocar em Digitalizar com IA
+  var fotosSel = [], leituraT = null, MAX_FOTOS = 8;
+  var ICO_MAIS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+  function abreFoto(modo){
+    clearTimeout(leituraT);
+    $('fotoItens').innerHTML = ''; $('fotoAddRow').hidden = true; $('fotoMsg').textContent = ''; $('fotoLer').disabled = false;
+    if (!modo){ fotosSel = []; $('fotoPrev').innerHTML = ''; $('fotoTxt').value = ''; $('fotoBox').hidden = true; return; }
+    var texto = modo === 'texto';
+    if (texto) fotosSel = [];
+    $('fotoBox').hidden = false; $('fotoTxt').hidden = !texto; $('fotoLer').hidden = false;
+    pintaFotos();
+    if (texto) $('fotoTxt').focus();
   }
-  $('fotoBtn').addEventListener('click', function(){ abreFoto($('fotoBox').hidden); });
+  function pintaFotos(){
+    var n = fotosSel.length, el = $('fotoPrev');
+    el.hidden = !n;
+    el.innerHTML = fotosSel.map(function(u, i){ return '<div class="foto-th"><img src="' + u + '" alt="Foto ' + (i + 1) + '"><button type="button" class="foto-rm" data-i="' + i + '" aria-label="Tirar a foto ' + (i + 1) + '">×</button></div>'; }).join('')
+      + (n && n < MAX_FOTOS ? '<label class="foto-add" for="fotoArq">' + ICO_MAIS + 'Mais fotos</label>' : '');
+    if (!$('fotoTxt').hidden) return;
+    $('fotoLer').disabled = !n;
+    var msg = $('fotoMsg'); msg.className = 'hint';
+    msg.textContent = n ? (n > 1 ? n + ' fotos.' : '1 foto.') + (n < MAX_FOTOS ? ' Tire ou escolha mais, ou toque em Digitalizar com IA.' : ' Chegou ao limite de ' + MAX_FOTOS + '. Toque em Digitalizar com IA.') : 'Escolha ou tire as fotos.';
+  }
+  $('fotoPrev').addEventListener('click', function(e){
+    var b = e.target.closest('.foto-rm'); if (!b) return;
+    fotosSel.splice(Number(b.dataset.i), 1);
+    $('fotoItens').innerHTML = ''; $('fotoAddRow').hidden = true;
+    pintaFotos();
+  });
+  $('textoBtn').addEventListener('click', function(){ abreFoto('texto'); });
   $('fotoFechar').addEventListener('click', function(){ abreFoto(false); });
   function reduz(f){
     return new Promise(function(ok, falha){
@@ -1376,22 +1403,24 @@ footer{font-size:12.5px;color:var(--muted)}
     });
   }
   $('fotoArq').addEventListener('change', function(){
-    var inp = this, todos = [].slice.call(inp.files || []), arqs = todos.slice(0, 4 - fotosSel.length), msg = $('fotoMsg');
-    if (!arqs.length){ if (todos.length) toast('Até 4 fotos por vez'); inp.value = ''; return; }
-    msg.className = 'hint'; msg.textContent = 'Preparando as fotos…';
+    var inp = this, msg = $('fotoMsg');
+    if ($('fotoBox').hidden || !$('fotoTxt').hidden) fotosSel = [];
+    var todos = [].slice.call(inp.files || []), arqs = todos.slice(0, MAX_FOTOS - fotosSel.length);
+    if (todos.length > arqs.length) toast('Até ' + MAX_FOTOS + ' fotos por leitura');
+    if (!arqs.length){ inp.value = ''; return; }
     Promise.all(arqs.map(reduz)).then(function(urls){
-      fotosSel = fotosSel.concat(urls); inp.value = '';
-      $('fotoPrev').innerHTML = fotosSel.map(function(u, i){ return '<img src="' + u + '" alt="Foto ' + (i + 1) + '">'; }).join('');
-      msg.textContent = (fotosSel.length > 1 ? fotosSel.length + ' fotos prontas.' : '1 foto pronta.') + ' Toque em Ler com a IA.';
-    }, function(){ msg.className = 'hint err'; msg.textContent = 'Não consegui abrir essa imagem.'; inp.value = ''; });
+      fotosSel = fotosSel.concat(urls); inp.value = ''; $('fotoTxt').value = '';
+      abreFoto('fotos');
+    }, function(){ abreFoto('fotos'); msg.className = 'hint err'; msg.textContent = 'Não consegui abrir essa imagem.'; inp.value = ''; });
   });
   // no exemplo não há IA: o texto é separado aqui mesmo e a foto mostra itens de demonstração
   function exemploLeitura(txt){
     if (!txt) return [{produto:'Lysoform', quantidade:'1'}, {produto:'Detergente 500 ml', quantidade:'3'}, {produto:'Pão de forma'}, {produto:'Leite UHT integral · 1 L', quantidade:'6'}];
     var CUMPRIMENTO = /^(amor|vida|oi|ol[aá]|bom dia|boa tarde|boa noite|m[aã]e|pai|querid[ao]|por favor|obrigad[ao])$/i;
     return txt.split(/\n|,|;|\s+e\s+/i).filter(function(t){ t = t.trim(); return t && !/:$/.test(t) && !CUMPRIMENTO.test(t); }).map(function(t){
-      var m = t.replace(/^[\s\-•*]+/, '').replace(/^e\s+/i, '').match(/^(\d+\s*(?:x|un\.?|unidades?|pacotes?|caixas?)?\s*(?:de\s+)?)?(.*)$/i);
-      var nome = (m[2] || '').replace(/^(compra|comprar|traz|trazer|pega|pegar|precisa de|preciso de)\s+/i, '').trim();
+      var limpo = t.replace(/^[\s\-•*]+/, '').replace(/^e\s+/i, '').replace(/^(compra|comprar|traz|trazer|pega|pegar|precisa de|preciso de)\s+/i, '');
+      var m = limpo.match(/^(\d+\s*(?:x|un\.?|unidades?|pacotes?|caixas?)?\s*(?:de\s+)?)?(.*)$/i);
+      var nome = (m[2] || '').trim();
       return {produto:nome.charAt(0).toUpperCase() + nome.slice(1), quantidade:m[1] ? m[1].replace(/\s*de\s*$/i, '').trim() : ''};
     }).filter(function(i){ return i.produto.length > 1; }).slice(0, 15);
   }
@@ -1399,7 +1428,7 @@ footer{font-size:12.5px;color:var(--muted)}
     var msg = $('fotoMsg');
     itens = arr(itens).map(function(i){ var n = String(i.produto || '').trim(); return {produto:n, quantidade:i.quantidade || '', ja:estado.lista.some(function(x){ return norm(x.produto) === norm(n); })}; })
       .filter(function(i){ return i.produto; });
-    if (!itens.length){ msg.className = 'hint err'; msg.textContent = 'Não achei itens de compra. Tente outra foto ou cole o texto.'; $('fotoItens').innerHTML = ''; $('fotoAddRow').hidden = true; return; }
+    if (!itens.length){ msg.className = 'hint err'; msg.textContent = 'Não achei itens de compra. Tente outra foto ou cole a mensagem.'; $('fotoItens').innerHTML = ''; $('fotoAddRow').hidden = true; return; }
     msg.className = 'hint ok'; msg.textContent = (itens.length > 1 ? 'Achei ' + itens.length + ' itens.' : 'Achei 1 item.') + ' Confira, ajuste o nome se precisar e adicione.';
     $('fotoItens').innerHTML = itens.map(function(i){
       return '<li><input type="checkbox"' + (i.ja ? ' disabled' : ' checked') + ' aria-label="Adicionar ' + esc(i.produto) + '">'
@@ -1418,10 +1447,11 @@ footer{font-size:12.5px;color:var(--muted)}
       }).catch(function(){ if (n < 120) esperaLeitura(id, n + 1); else $('fotoLer').disabled = false; });
     }, 1500);
   }
-  $('fotoLer').addEventListener('click', function(){
-    var txt = $('fotoTxt').value.trim(), msg = $('fotoMsg'), b = this;
-    if (!fotosSel.length && !txt){ msg.className = 'hint err'; msg.textContent = 'Escolha uma foto ou cole o texto da mensagem.'; return; }
-    msg.className = 'hint'; msg.textContent = 'A IA está lendo…'; b.disabled = true;
+  $('fotoLer').addEventListener('click', function(){ lerAgora(); });
+  function lerAgora(){
+    var txt = $('fotoTxt').hidden ? '' : $('fotoTxt').value.trim(), msg = $('fotoMsg'), b = $('fotoLer');
+    if (!fotosSel.length && !txt){ msg.className = 'hint err'; msg.textContent = 'Cole o texto da mensagem.'; return; }
+    msg.className = 'hint'; msg.textContent = fotosSel.length ? 'A IA está lendo ' + (fotosSel.length > 1 ? 'as fotos…' : 'a foto…') : 'A IA está lendo…'; b.disabled = true;
     if (MODO !== 'addon'){
       leituraT = setTimeout(function(){ b.disabled = false; mostraLidos(exemploLeitura(txt)); if ($('fotoItens').children.length) msg.textContent += ' No Home Assistant, a IA do seu HA lê a foto de verdade.'; }, 900);
       return;
@@ -1430,7 +1460,7 @@ footer{font-size:12.5px;color:var(--muted)}
       .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if (!r.ok) throw new Error(j.erro || 'Não deu para enviar. As fotos podem estar grandes demais.'); return j; }); })
       .then(function(j){ esperaLeitura(j.id, 0); })
       .catch(function(e){ b.disabled = false; msg.className = 'hint err'; msg.textContent = e.message; });
-  });
+  }
   $('fotoAdd').addEventListener('click', function(){
     var novos = 0;
     [].forEach.call($('fotoItens').querySelectorAll('li'), function(li){

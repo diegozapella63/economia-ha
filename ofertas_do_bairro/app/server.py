@@ -850,7 +850,7 @@ def ler_lista(job, fotos, texto_msg):
 
 def comeca_leitura(dado):
     fotos = []
-    for img in (dado.get("imagens") or [])[:4]:
+    for img in (dado.get("imagens") or [])[:8]:
         m = re.match(r"^data:(image/(?:jpeg|png|webp));base64,(.+)$", str(img), re.S)
         if not m:
             continue
@@ -988,7 +988,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.8.2"
+    server_version = "EconomIA/0.8.3"
 
     def log_message(self, fmt, *args):
         pass
