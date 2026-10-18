@@ -6,7 +6,7 @@
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}</style>
 <title>EconomIA</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<script>try{var t=(JSON.parse(localStorage.getItem('ofertas-bairro:ui'))||{}).tema||'escuro';if(t!=='auto')document.documentElement.setAttribute('data-theme',t==='claro'?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
+<script>try{var u=JSON.parse(localStorage.getItem('ofertas-bairro:ui'))||{},t=u.tema||'escuro';if(t!=='auto')document.documentElement.setAttribute('data-theme',t==='claro'?'light':'dark');if(u.cor&&u.cor!=='verde')document.documentElement.setAttribute('data-cor',u.cor);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..800&family=Atkinson+Hyperlegible+Mono:wght@500;600&family=Atkinson+Hyperlegible+Next:wght@400;600&display=swap">
@@ -59,6 +59,37 @@
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
 h1,h2,h3,p,ul,ol{margin:0}
 ul,ol{padding:0;list-style:none}
+/* cor do app: troca o destaque e a etiqueta; fora do verde, o fundo fica neutro */
+:root[data-cor]{--bg:#F1F2F3;--ink:#17191B;--muted:#5A6066;--line:#DADDE0}
+@media (prefers-color-scheme: dark){:root[data-cor]:not([data-theme="light"]){--bg:#121314;--surface:#1A1C1E;--ink:#E8EAEC;--muted:#A0A5AA;--line:#2C2F32}}
+:root[data-theme="dark"][data-cor]{--bg:#121314;--surface:#1A1C1E;--ink:#E8EAEC;--muted:#A0A5AA;--line:#2C2F32}
+:root[data-cor="vermelho"]{--accent:#C42F24;--accent-soft:#FBE3E0;--on-accent:#FFFFFF;--tag-bg:#C42F24;--tag-ink:#FFFFFF;--tag-line:rgba(255,255,255,.5);--tag-ring:#FF6B5E}
+@media (prefers-color-scheme: dark){:root[data-cor="vermelho"]:not([data-theme="light"]){--accent:#FF6B5E;--accent-soft:#3D1D1A;--on-accent:#2A0905;--tag-bg:#FF6B5E;--tag-ink:#2A0905;--tag-line:rgba(0,0,0,.35);--tag-ring:#FFB5AE}}
+:root[data-theme="dark"][data-cor="vermelho"]{--accent:#FF6B5E;--accent-soft:#3D1D1A;--on-accent:#2A0905;--tag-bg:#FF6B5E;--tag-ink:#2A0905;--tag-line:rgba(0,0,0,.35);--tag-ring:#FFB5AE}
+:root[data-cor="coral"]{--accent:#B4471F;--accent-soft:#FBE7DF;--on-accent:#FFFFFF;--tag-bg:#B4471F;--tag-ink:#FFFFFF;--tag-line:rgba(255,255,255,.5);--tag-ring:#FF8A65}
+@media (prefers-color-scheme: dark){:root[data-cor="coral"]:not([data-theme="light"]){--accent:#FF8A65;--accent-soft:#3D2219;--on-accent:#2B0F05;--tag-bg:#FF8A65;--tag-ink:#2B0F05;--tag-line:rgba(0,0,0,.35);--tag-ring:#FFC4B2}}
+:root[data-theme="dark"][data-cor="coral"]{--accent:#FF8A65;--accent-soft:#3D2219;--on-accent:#2B0F05;--tag-bg:#FF8A65;--tag-ink:#2B0F05;--tag-line:rgba(0,0,0,.35);--tag-ring:#FFC4B2}
+:root[data-cor="rosa"]{--accent:#B3306D;--accent-soft:#FBE1EE;--on-accent:#FFFFFF;--tag-bg:#B3306D;--tag-ink:#FFFFFF;--tag-line:rgba(255,255,255,.5);--tag-ring:#FF7AB6}
+@media (prefers-color-scheme: dark){:root[data-cor="rosa"]:not([data-theme="light"]){--accent:#FF7AB6;--accent-soft:#3D1A2B;--on-accent:#2E0718;--tag-bg:#FF7AB6;--tag-ink:#2E0718;--tag-line:rgba(0,0,0,.35);--tag-ring:#FFBCDA}}
+:root[data-theme="dark"][data-cor="rosa"]{--accent:#FF7AB6;--accent-soft:#3D1A2B;--on-accent:#2E0718;--tag-bg:#FF7AB6;--tag-ink:#2E0718;--tag-line:rgba(0,0,0,.35);--tag-ring:#FFBCDA}
+:root[data-cor="magenta"]{--accent:#A3245F;--accent-soft:#F8DDEA;--on-accent:#FFFFFF;--tag-bg:#A3245F;--tag-ink:#FFFFFF;--tag-line:rgba(255,255,255,.5);--tag-ring:#E8559A}
+@media (prefers-color-scheme: dark){:root[data-cor="magenta"]:not([data-theme="light"]){--accent:#E8559A;--accent-soft:#3A1626;--on-accent:#2A0515;--tag-bg:#E8559A;--tag-ink:#2A0515;--tag-line:rgba(0,0,0,.35);--tag-ring:#F4AACC}}
+:root[data-theme="dark"][data-cor="magenta"]{--accent:#E8559A;--accent-soft:#3A1626;--on-accent:#2A0515;--tag-bg:#E8559A;--tag-ink:#2A0515;--tag-line:rgba(0,0,0,.35);--tag-ring:#F4AACC}
+:root[data-cor="laranja"]{--accent:#A35400;--accent-soft:#FCEBD5;--on-accent:#FFFFFF;--tag-bg:#A35400;--tag-ink:#FFFFFF;--tag-line:rgba(255,255,255,.5);--tag-ring:#FFA53D}
+@media (prefers-color-scheme: dark){:root[data-cor="laranja"]:not([data-theme="light"]){--accent:#FFA53D;--accent-soft:#3D2A12;--on-accent:#2B1800;--tag-bg:#FFA53D;--tag-ink:#2B1800;--tag-line:rgba(0,0,0,.35);--tag-ring:#FFD29E}}
+:root[data-theme="dark"][data-cor="laranja"]{--accent:#FFA53D;--accent-soft:#3D2A12;--on-accent:#2B1800;--tag-bg:#FFA53D;--tag-ink:#2B1800;--tag-line:rgba(0,0,0,.35);--tag-ring:#FFD29E}
+:root[data-cor="amarelo"]{--accent:#7F6100;--accent-soft:#FAF0CC;--on-accent:#FFFFFF;--tag-bg:#7F6100;--tag-ink:#FFFFFF;--tag-line:rgba(255,255,255,.5);--tag-ring:#F2C14E}
+@media (prefers-color-scheme: dark){:root[data-cor="amarelo"]:not([data-theme="light"]){--accent:#F2C14E;--accent-soft:#3A3014;--on-accent:#2A2000;--tag-bg:#F2C14E;--tag-ink:#2A2000;--tag-line:rgba(0,0,0,.35);--tag-ring:#F8E0A6}}
+:root[data-theme="dark"][data-cor="amarelo"]{--accent:#F2C14E;--accent-soft:#3A3014;--on-accent:#2A2000;--tag-bg:#F2C14E;--tag-ink:#2A2000;--tag-line:rgba(0,0,0,.35);--tag-ring:#F8E0A6}
+:root[data-cor="roxo"]{--accent:#6346C9;--accent-soft:#ECE6FD;--on-accent:#FFFFFF;--tag-bg:#6346C9;--tag-ink:#FFFFFF;--tag-line:rgba(255,255,255,.5);--tag-ring:#B79CFF}
+@media (prefers-color-scheme: dark){:root[data-cor="roxo"]:not([data-theme="light"]){--accent:#B79CFF;--accent-soft:#2B2340;--on-accent:#1A0F33;--tag-bg:#B79CFF;--tag-ink:#1A0F33;--tag-line:rgba(0,0,0,.35);--tag-ring:#DBCEFF}}
+:root[data-theme="dark"][data-cor="roxo"]{--accent:#B79CFF;--accent-soft:#2B2340;--on-accent:#1A0F33;--tag-bg:#B79CFF;--tag-ink:#1A0F33;--tag-line:rgba(0,0,0,.35);--tag-ring:#DBCEFF}
+:root[data-cor="azul"]{--accent:#1C67B5;--accent-soft:#E0EDFB;--on-accent:#FFFFFF;--tag-bg:#1C67B5;--tag-ink:#FFFFFF;--tag-line:rgba(255,255,255,.5);--tag-ring:#5CB8FF}
+@media (prefers-color-scheme: dark){:root[data-cor="azul"]:not([data-theme="light"]){--accent:#5CB8FF;--accent-soft:#15304A;--on-accent:#04213A;--tag-bg:#5CB8FF;--tag-ink:#04213A;--tag-line:rgba(0,0,0,.35);--tag-ring:#AEDCFF}}
+:root[data-theme="dark"][data-cor="azul"]{--accent:#5CB8FF;--accent-soft:#15304A;--on-accent:#04213A;--tag-bg:#5CB8FF;--tag-ink:#04213A;--tag-line:rgba(0,0,0,.35);--tag-ring:#AEDCFF}
+:root[data-cor="cinza"]{--accent:#5E5858;--accent-soft:#ECEAEA;--on-accent:#FFFFFF;--tag-bg:#5E5858;--tag-ink:#FFFFFF;--tag-line:rgba(255,255,255,.5);--tag-ring:#BDB6B6}
+@media (prefers-color-scheme: dark){:root[data-cor="cinza"]:not([data-theme="light"]){--accent:#BDB6B6;--accent-soft:#2E2B2B;--on-accent:#1B1818;--tag-bg:#BDB6B6;--tag-ink:#1B1818;--tag-line:rgba(0,0,0,.35);--tag-ring:#DEDADA}}
+:root[data-theme="dark"][data-cor="cinza"]{--accent:#BDB6B6;--accent-soft:#2E2B2B;--on-accent:#1B1818;--tag-bg:#BDB6B6;--tag-ink:#1B1818;--tag-line:rgba(0,0,0,.35);--tag-ring:#DEDADA}
 a{color:var(--accent)}
 button{font:inherit;cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
@@ -214,6 +245,10 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .de s{text-decoration-thickness:1px}
 .por{display:inline-flex;align-items:baseline;gap:4px;font-family:var(--font-display);font-stretch:70%;font-weight:800;font-size:1.6rem;letter-spacing:.005em;white-space:nowrap}
 .chip.selo{background:var(--accent-soft);color:var(--accent)}
+.cores{display:flex;flex-wrap:wrap;gap:12px;max-width:340px}
+.cor{width:42px;height:42px;border-radius:50%;border:0;padding:0;background:var(--sw);display:grid;place-items:center;cursor:pointer}
+.cor[aria-pressed="true"]{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--sw)}
+.cor svg{width:20px;height:20px;stroke:#141414;fill:none;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
 .foto-itens select.field{flex:1 1 140px}
 #cupItens li{padding-bottom:10px;border-bottom:1px solid var(--line)}
 .ia-st{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--muted)}
@@ -812,9 +847,13 @@ footer{font-size:12.5px;color:var(--muted)}
         <div><h3 class="set-t">Tema</h3><p class="sec-meta">Automático segue o modo claro ou escuro do aparelho.</p></div>
         <div class="seg" id="tema" role="group" aria-label="Tema"></div>
       </div>
+      <div class="set-row">
+        <div><h3 class="set-t">Cor do app</h3><p class="sec-meta">Muda botões, destaques e a etiqueta da abertura.</p></div>
+        <div class="cores" id="cores" role="group" aria-label="Cor do app"></div>
+      </div>
     </section>
     <section class="panel settings" aria-labelledby="h-sobre">
-      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.9.1. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
+      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.9.2. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
     </section>
 
     <div class="group" id="lojasSec"><h2 class="big">Lojas</h2></div>
@@ -946,6 +985,12 @@ footer{font-size:12.5px;color:var(--muted)}
     else if (t === 'auto') r.removeAttribute('data-theme');
   }
   aplicaTema(ui.tema || 'escuro');
+  var CORES = [{id:'vermelho', nome:'Vermelho', sw:'#FF6B5E'}, {id:'coral', nome:'Coral', sw:'#FF8A65'}, {id:'rosa', nome:'Rosa', sw:'#FF7AB6'}, {id:'magenta', nome:'Magenta', sw:'#E8559A'}, {id:'laranja', nome:'Laranja', sw:'#FFA53D'}, {id:'amarelo', nome:'Amarelo', sw:'#F2C14E'}, {id:'roxo', nome:'Roxo', sw:'#B79CFF'}, {id:'azul', nome:'Azul', sw:'#5CB8FF'}, {id:'verde', nome:'Verde', sw:'#45C89B'}, {id:'cinza', nome:'Cinza', sw:'#BDB6B6'}];
+  function aplicaCor(c){
+    var r = document.documentElement;
+    if (!c || c === 'verde' || !CORES.some(function(x){ return x.id === c; })) r.removeAttribute('data-cor'); else r.setAttribute('data-cor', c);
+  }
+  aplicaCor(ui.cor);
 
   function indexa(){
     G = {}; LOJA = {};
@@ -1965,8 +2010,20 @@ footer{font-size:12.5px;color:var(--muted)}
     picks('dMercado', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.mercado);
     picks('dFarmacia', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.farmacia);
     $('avisar').value = r.avisar; $('estoque').value = r.estoque;
-    pintaAviso(); pintaTema(); pintaSyncUI(); pintaIA();
+    pintaAviso(); pintaTema(); pintaCores(); pintaSyncUI(); pintaIA();
   }
+  function pintaCores(){
+    var atual = ui.cor || 'verde';
+    $('cores').innerHTML = CORES.map(function(c){
+      var sel = c.id === atual;
+      return '<button type="button" class="cor" style="--sw:' + c.sw + '" data-v="' + c.id + '" aria-pressed="' + sel + '" aria-label="' + c.nome + '" title="' + c.nome + '">'
+        + (sel ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : '') + '</button>';
+    }).join('');
+  }
+  $('cores').addEventListener('click', function(e){
+    var b = e.target.closest('button[data-v]'); if (!b) return;
+    ui.cor = b.dataset.v; salvarUI(); aplicaCor(ui.cor); pintaCores();
+  });
   function pintaTema(){
     var atual = ui.tema || 'escuro';
     $('tema').innerHTML = [['auto', 'Automático'], ['claro', 'Claro'], ['escuro', 'Escuro']].map(function(t){

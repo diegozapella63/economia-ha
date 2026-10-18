@@ -71,6 +71,6 @@ Em **Mais → Lista do Home Assistant**, escolha a lista de tarefas que o Econom
 
 Também dá para usar uma lista do **Google Tasks** conectada ao Home Assistant pela integração Google Tasks. Ela é atualizada pelo Home Assistant a cada 30 minutos.
 
-Em **Mais → Dados e ajustes** você exporta a lista para Excel ou JSON, importa uma lista e escolhe o tema (automático, claro ou escuro).
+Em **Mais → Dados e ajustes** você exporta a lista para Excel ou JSON, importa uma lista, escolhe o tema (automático, claro ou escuro) e a **cor do app** (o tema e a cor ficam guardados em cada aparelho).
 
 Tudo o que você preenche fica guardado só no Home Assistant e entra nos backups dele.

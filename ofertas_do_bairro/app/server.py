@@ -89,7 +89,11 @@ class ErroFormato(ErroBusca):
     """A IA respondeu texto em vez do JSON pedido; guarda um trecho para mostrar e registrar."""
     def __init__(self, trecho=""):
         self.trecho = " ".join(str(trecho or "").split())[:220]
-        super().__init__("A IA respondeu fora do formato esperado." + (f" Ela disse: \"{self.trecho}\"" if self.trecho else ""))
+        if "{" in self.trecho:
+            msg = "A IA mandou a resposta num formato que o EconomIA não conseguiu ler. Toque em Buscar de novo; se repetir, veja o Registro do app."
+        else:
+            msg = "A IA respondeu fora do formato esperado." + (f" Ela disse: \"{self.trecho}\"" if self.trecho else "")
+        super().__init__(msg)
 
 
 def log(msg):
@@ -384,20 +388,47 @@ def ia_escolhida(uso):
     return ent or str(opcoes().get("ai_task_entity") or "").strip()
 
 
-def extrai_json(dado):
+def _json_ou_none(t):
+    try:
+        return json.loads(t)
+    except ValueError:
+        return None
+
+
+def extrai_json(dado, nivel=0):
+    """Acha o objeto JSON na resposta da IA: puro, em bloco de código, dentro de uma string ou com aspas escapadas."""
     if isinstance(dado, dict):
         return dado
     if not isinstance(dado, str):
         raise ErroBusca("A IA não devolveu resposta.")
-    ini, fim = dado.find("{"), dado.rfind("}")
-    if ini < 0 or fim <= ini:
-        log("resposta fora do formato: " + " ".join(dado.split())[:400])
-        raise ErroFormato(dado)
-    try:
-        return json.loads(dado[ini:fim + 1])
-    except ValueError as e:
-        log("JSON inválido da IA: " + " ".join(dado.split())[:400])
-        raise ErroFormato(dado) from e
+    t = dado.strip()
+    blocos = re.findall(r"```(?:json)?\s*(.*?)```", t, re.S)
+    for c in blocos + [t]:
+        c = c.strip()
+        v = _json_ou_none(c)
+        if isinstance(v, dict):
+            return v
+        if isinstance(v, str) and nivel < 2:  # JSON entregue como texto entre aspas
+            try:
+                return extrai_json(v, nivel + 1)
+            except ErroBusca:
+                pass
+        ini, fim = c.find("{"), c.rfind("}")
+        if ini < 0 or fim <= ini:
+            continue
+        trecho = c[ini:fim + 1]
+        for tentativa in (trecho, re.sub(r",\s*([}\]])", r"\1", trecho)):
+            v = _json_ou_none(tentativa)
+            if isinstance(v, dict):
+                return v
+        if '\\"' in trecho:  # aspas e quebras de linha escapadas: \" e \n
+            v = _json_ou_none('"' + trecho.replace("\n", "\\n") + '"')
+            if isinstance(v, str):
+                v = _json_ou_none(v)
+                if isinstance(v, dict):
+                    return v
+    log("resposta da IA fora do formato: " + " ".join(dado.split())[:600])
+    raise ErroFormato(dado)
 
 
 def chamar_conversa(agente, instrucoes):
@@ -485,6 +516,8 @@ def testar_ia(uso):
 Responda somente com um objeto JSON, sem texto antes ou depois: {{"busca": true, "exemplo": "loja e preço que você achou", "fonte": "URL"}}
 Se não conseguir usar a busca na web, responda apenas {{"erro": "sem_busca"}}.""")
     except ErroFormato as e:
+        if "{" in e.trecho:
+            return {"ok": False, "msg": str(e)}
         return {"ok": False, "msg": "A IA respondeu sem usar a busca na web" + (f" (\"{e.trecho[:140]}\")" if e.trecho else "") + ". " + COMO_BUSCA}
     except ErroBusca as e:
         return {"ok": False, "msg": str(e)}
@@ -1136,7 +1169,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.9.1"
+    server_version = "EconomIA/0.9.2"
 
     def log_message(self, fmt, *args):
         pass
