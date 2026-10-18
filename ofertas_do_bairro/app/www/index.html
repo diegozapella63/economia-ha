@@ -267,6 +267,8 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .i-best .por{color:var(--ink)}
 .i-store{font-weight:600;display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}
 .i-wait{font-size:13px;color:var(--muted)}
+.i-avulso{font-size:13px;color:var(--muted)}
+.i-avulso b{color:var(--ink);font-weight:600}
 .item.wait .i-best{background:var(--bg)}
 .i-others{display:flex;flex-wrap:wrap;gap:5px}
 .i-others li{font-size:12.5px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;color:var(--muted);white-space:nowrap}
@@ -805,7 +807,7 @@ footer{font-size:12.5px;color:var(--muted)}
       </div>
     </section>
     <section class="panel settings" aria-labelledby="h-sobre">
-      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.8.3. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
+      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.8.4. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
     </section>
   </section>
 
@@ -1170,11 +1172,11 @@ footer{font-size:12.5px;color:var(--muted)}
       }).filter(function(x){ return x.v > 0; }).sort(function(a, b){ return a.v - b.v; });
   }
   // compensa pedir online ou comprar na loja?
-  function decisaoOnline(r, p){
+  function decisaoOnline(r, p, avulso){
     var loja = p.filter(function(y){ return !y.online; })[0], net = p.filter(function(y){ return y.online; })[0];
     if (!net) return '';
     var dia = function(n){ return n + (n > 1 ? ' dias' : ' dia'); };
-    var linha = 'Online: ' + brl.format(net.v) + ' na ' + G[net.id].nome + (net.frete ? ' (frete ' + brl.format(net.frete) + ')' : ' (frete grátis)')
+    var linha = (avulso ? 'Avulso online: ' : 'Online: ') + brl.format(net.v) + ' na ' + G[net.id].nome + (net.frete ? ' (frete ' + brl.format(net.frete) + ')' : ' (frete grátis)')
       + (net.prazo != null ? ', chega em ' + dia(net.prazo) : '') + (net.obs ? ' · ' + net.obs : '');
     var chip, nota = '';
     // data limite para o pedido chegar antes de acabar (um dia de folga)
@@ -1258,11 +1260,13 @@ footer{font-size:12.5px;color:var(--muted)}
     var det = ops.slice().sort(function(x, y){ return x.total / x.q - y.total / y.q; }).slice(0, 8).map(function(o, i){
       return '<li' + (i === 0 ? ' class="top"' : '') + '><b>' + esc(o.emb || medidaTxt(o.q, b)) + '</b><span>' + esc(G[o.id].curto) + '</span><span>' + brl.format(o.total) + (o.online ? (o.frete ? ' com frete' : ' frete grátis') : '') + '</span><span class="pu">' + esc(porUn(o.total, o.q, b)) + '</span></li>';
     }).join('');
-    var chip, linha, nota = [], eco = 0, dica = null;
+    var chip, linha, nota = [], eco = 0, dica = null, principal = false;
     if (best !== ref && vale(best)){
       var nr = noRef(best.Q), d = dura(best.Q);
       eco = economia(best);
-      dica = {id:best.o.id, txt:comoTxt(best, b) + ' por ' + brl.format(best.total)};
+      dica = {id:best.o.id, txt:comoTxt(best, b) + ' por ' + brl.format(best.total), como:comoTxt(best, b), total:best.total, online:best.o.online, frete:best.o.frete,
+              porBase:Math.round(best.total / (best.Q / q0) * 100) / 100, base:medidaTxt(q0, b)};
+      principal = !(best.o.online && best.o.prazo != null && r.dias != null && best.o.prazo > r.dias);
       chip = '<span class="dchip on">Compensa o maior</span>';
       linha = comoTxt(best, b) + ' por ' + brl.format(best.total) + ' (' + ondeTxt(best.o) + ') · ' + porUn(best.total, best.Q, b);
       nota.push('Economia de ' + brl.format(eco) + ' em relação a ' + (nr.n ? nr.n + ' de ' + medidaTxt(ref.Q, b) + ' (' + brl.format(nr.total) + ')' : 'comprar o de ' + medidaTxt(ref.Q, b)) + '.');
@@ -1285,7 +1289,7 @@ footer{font-size:12.5px;color:var(--muted)}
         else nota.push(rotulo + ' sai ' + porUn(unico.total, unico.q, b) + ', mais caro que o de ' + medidaTxt(ref.Q, b) + '.');
       }
     }
-    return {economia:eco, dica:dica, html:'<div class="i-tam">' + chip + '<p>' + esc(linha) + '</p>' + (nota.length ? '<p class="i-nota">' + esc(nota.join(' ')) + '</p>' : '')
+    return {economia:eco, dica:dica, principal:principal, html:'<div class="i-tam">' + chip + (principal ? '' : '<p>' + esc(linha) + '</p>') + (nota.length ? '<p class="i-nota">' + esc(nota.join(' ')) + '</p>' : '')
       + '<details><summary>Comparar tamanhos (' + ops.length + ')</summary><ul class="tam-list num">' + det + '</ul></details></div>'};
   }
   function nomeCurto(prod){ var n = String(prod).split(' · ')[0]; return n.length > 24 ? n.slice(0, 23) + '…' : n; }
@@ -1311,15 +1315,18 @@ footer{font-size:12.5px;color:var(--muted)}
           + '<div class="i-best"><span class="lbl">Sem preço ainda</span><span class="i-wait">Os preços aparecem depois da próxima busca.</span></div>'
           + acoes + '</div></li>';
       }
-      var best = p[0], max = p[p.length - 1].v, conta = {};
+      var best = p[0], max = p[p.length - 1].v, conta = {}, mt = melhorTamanho(x.it, x.r, p), dc = mt && mt.principal ? mt.dica : null;
       p.forEach(function(y){ conta[G[y.id].cat] = (conta[G[y.id].cat] || 0) + 1; });
       var onde = D.categorias.filter(function(c){ return conta[c.id]; }).map(function(c){ return plural(conta[c.id], c.id); }).join(' e ');
-      return '<li class="item"><div class="i-head"><p class="i-prod">' + esc(x.it.produto) + '</p>' + (p.length > 1 ? '<span class="i-save num">economia de ' + brl.format(max - best.v) + '</span>' : '') + '</div>'
+      return '<li class="item"><div class="i-head"><p class="i-prod">' + esc(x.it.produto) + '</p>' + (p.length > 1 || dc ? '<span class="i-save num">economia de ' + brl.format(max - (dc ? dc.porBase : best.v)) + '</span>' : '') + '</div>'
         + '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>'
-        + '<div class="i-best"><span class="lbl">Mais barato</span><span class="por num">' + brl.format(best.v) + '</span><span class="i-store">' + esc(G[best.id].nome) + ' <span class="chip">' + esc(G[best.id].singular) + '</span></span></div>'
+        + (dc
+          ? '<div class="i-best"><span class="lbl">Melhor compra</span><span class="por num">' + brl.format(dc.porBase) + '<span class="un">por ' + esc(dc.base) + '</span></span><span class="i-store">' + esc(dc.como) + ' por ' + brl.format(dc.total) + ' · ' + esc(G[dc.id].nome) + ' <span class="chip">' + esc(G[dc.id].singular) + '</span></span></div>'
+            + '<p class="i-avulso num">Avulso, o mais barato: <b>' + brl.format(best.v) + '</b> (' + esc(G[best.id].nome) + ')</p>'
+          : '<div class="i-best"><span class="lbl">Mais barato</span><span class="por num">' + brl.format(best.v) + '</span><span class="i-store">' + esc(G[best.id].nome) + ' <span class="chip">' + esc(G[best.id].singular) + '</span></span></div>')
         + (p.length > 1 ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li>' + esc(G[y.id].curto) + ' <b>' + brl.format(y.v) + '</b>' + (y.online && y.frete ? ' com frete' : '') + '</li>'; }).join('') + '</ul>' : '')
-        + decisaoOnline(x.r, p)
-        + ((melhorTamanho(x.it, x.r, p) || {}).html || '')
+        + decisaoOnline(x.r, p, !!dc)
+        + ((mt || {}).html || '')
         + acoes + '<span class="i-foot">Em ' + onde + '</span></div></li>';
     }).join('');
   }
