@@ -11,6 +11,8 @@ Todos os dados ficam no Home Assistant, na pasta `/data` do add-on:
 
 Sem `ofertas.json`, o painel mostra um exemplo embutido.
 
+Tipografia: Barlow (texto) e Barlow Condensed (títulos e números), embutidas em `app/www/fonts` como WOFF (subconjunto latino, licença SIL OFL em `fonts/OFL.txt`), para funcionar sem internet.
+
 ## Busca de ofertas
 
 O botão **Buscar** chama `ai_task.generate_data` pela API do Home Assistant (`homeassistant_api: true`), uma vez por categoria ativa. A resposta é validada antes de gravar: ofertas e cupons sem URL de fonte são descartados, preços precisam ser números e a oferta precisa ser menor que o preço normal. Se uma categoria falhar, fica o resultado anterior dela.

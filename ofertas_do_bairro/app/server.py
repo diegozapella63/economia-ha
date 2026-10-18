@@ -1169,7 +1169,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.9.2"
+    server_version = "EconomIA/0.9.3"
 
     def log_message(self, fmt, *args):
         pass
@@ -1213,6 +1213,19 @@ class Painel(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Cache-Control", "no-cache")
+            self.send_header("Content-Length", str(len(corpo)))
+            self.end_headers()
+            self.wfile.write(corpo)
+        elif re.fullmatch(r"/fonts/[a-z0-9-]+\.(woff2?|txt)", rota):
+            caminho = os.path.join(WWW, rota.lstrip("/"))
+            if not os.path.isfile(caminho):
+                return self._json(404, {"erro": "Não encontrado"})
+            with open(caminho, "rb") as f:
+                corpo = f.read()
+            ext = rota.rsplit(".", 1)[1]
+            self.send_response(200)
+            self.send_header("Content-Type", {"woff": "font/woff", "woff2": "font/woff2"}.get(ext, "text/plain; charset=utf-8"))
+            self.send_header("Cache-Control", "public, max-age=31536000, immutable")
             self.send_header("Content-Length", str(len(corpo)))
             self.end_headers()
             self.wfile.write(corpo)

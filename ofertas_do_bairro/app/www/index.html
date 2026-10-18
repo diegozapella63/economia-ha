@@ -7,9 +7,14 @@
 <title>EconomIA</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <script>try{var u=JSON.parse(localStorage.getItem('ofertas-bairro:ui'))||{},t=u.tema||'escuro';if(t!=='auto')document.documentElement.setAttribute('data-theme',t==='claro'?'light':'dark');if(u.cor&&u.cor!=='verde')document.documentElement.setAttribute('data-cor',u.cor);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..800&family=Atkinson+Hyperlegible+Mono:wght@500;600&family=Atkinson+Hyperlegible+Next:wght@400;600&display=swap">
+<style>
+@font-face{font-family:"Barlow";font-style:normal;font-weight:400;font-display:swap;src:url(fonts/barlow-400.woff) format("woff")}
+@font-face{font-family:"Barlow";font-style:normal;font-weight:500;font-display:swap;src:url(fonts/barlow-500.woff) format("woff")}
+@font-face{font-family:"Barlow";font-style:normal;font-weight:600;font-display:swap;src:url(fonts/barlow-600.woff) format("woff")}
+@font-face{font-family:"Barlow Condensed";font-style:normal;font-weight:500;font-display:swap;src:url(fonts/barlow-condensed-500.woff) format("woff")}
+@font-face{font-family:"Barlow Condensed";font-style:normal;font-weight:600;font-display:swap;src:url(fonts/barlow-condensed-600.woff) format("woff")}
+@font-face{font-family:"Barlow Condensed";font-style:normal;font-weight:700;font-display:swap;src:url(fonts/barlow-condensed-700.woff) format("woff")}
+</style>
 <style>
 /* Layout: app de quatro telas (Minha lista, Roteiro, Ofertas, Mais) com abas sublinhadas no topo.
    Ofertas: seletor de categoria, resumo e duas colunas (ofertas | cupons). Uma coluna abaixo de 900px.
@@ -391,6 +396,52 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 footer{font-size:12.5px;color:var(--muted)}
 .toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 16px;border-radius:999px;font-size:13.5px;font-weight:600;z-index:20;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.18)}
 
+
+/* ===== Tipografia (a mesma do InventarIA): Barlow no texto, Barlow Condensed em títulos, números e valores ===== */
+:root{
+  --font-body:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-display:"Barlow Condensed",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-mono:"Barlow Condensed",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+body{font-size:16px;line-height:1.5;font-weight:400}
+h1,h2,.brand,.por,.fact .v,.t-ben,.off,.tag-valor,.opp-val strong,.r-val,.people .field,.code{font-stretch:normal;letter-spacing:0}
+.num,.por,.de,.r-val,.opp-val,.fact .v,.t-ben,.off,.tag-valor,.i-save,.i-others,.tam-list,.parada,.rot-total,.rot-op,.code,.people .field{font-variant-numeric:tabular-nums}
+/* campos: 16px para o celular não dar zoom */
+.field,input,select,textarea{font-size:16px}
+.people label{font-size:14px;font-weight:500}
+.hint,.ia-st,.lock{font-size:13px}
+/* botões */
+.btn{font-size:15px;font-weight:600}
+.ghost.big,.rot-op{font-size:15px;font-weight:500}
+.ghost,.copy,.cats button,.filters button,.pick,.seg button,.hide-btn,.linkbtn,.rm{font-size:14px;font-weight:500}
+.tab{font-size:12px;font-weight:500}
+/* títulos */
+.brand{font-family:var(--font-display);font-size:21px;font-weight:600}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(34px,8vw,46px);line-height:1.02}
+h2.big,.sec-head h2,.set-head h2{font-family:var(--font-display);font-weight:600;font-size:25px;line-height:1.1}
+h3{font-size:13px;font-weight:600}
+.set-t{font-size:16px;font-weight:600}
+.i-prod,.d-prod,.opp-txt b{font-size:16px;font-weight:600}
+.r-name{font-weight:600}
+/* valores */
+.por,.r-val,.opp-val strong{font-family:var(--font-display);font-size:19px;font-weight:600}
+.por .un{font-size:13px}
+.i-best .por{font-size:28px;font-weight:700}
+.rot-total .por,.fact .v{font-size:40px;font-weight:700;line-height:1}
+.t-ben{font-family:var(--font-display);font-size:25px;font-weight:600;line-height:1.1}
+.ticket.login .t-ben,.ticket.testar .t-ben{font-size:21px}
+.off{font-family:var(--font-display);font-size:17px;font-weight:700}
+.code{font-family:var(--font-display);font-size:19px;font-weight:700;letter-spacing:.04em}
+.people .field{font-family:var(--font-display);font-size:20px;font-weight:600}
+.parada-n{font-family:var(--font-display);font-size:15px}
+.tag-eyebrow{font-size:15px;font-weight:600}
+.tag-valor{font-family:var(--font-display);font-weight:700;font-size:clamp(48px,15vw,76px);line-height:.95}
+.tag-sub{font-size:15px}
+/* textos secundários 14px, legendas 13px, selos 12px, avisos 15px */
+.sec-meta,.rhythm,.d-meta,.r-sub,.i-online,.i-tam,.i-avulso,.opp-txt small,.sync,.cat-note,.t-cond,.parada ul,.rot-sub,.set-line,.checks,.foto-itens{font-size:14px}
+.de,.opp-val small,.i-foot,.fact .s,.why,footer,.tam-list li,.i-others li,.parada-h .sub,.cup-row .r-name small,.i-tam summary,.r-dica,.foto-add,.hide-menu{font-size:13px}
+.chip,.dchip,.src,.tarja,.opps-h,.fact .k,.t-rede,.i-best .lbl,.rot-total .lbl,.i-save{font-size:12px;font-weight:600}
+.banner,.busca-msg,.aviso,.empty,.confirma,.toast{font-size:15px}
 @media (max-width:900px){
   .cols,.cols.even{grid-template-columns:minmax(0,1fr)}
 }
@@ -399,7 +450,6 @@ footer{font-size:12.5px;color:var(--muted)}
   .fact{flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:2px 10px}
   .fact .k{flex:1 0 100%}
   .panel{padding:15px}
-  .por{font-size:1.4rem}
 }
 @media (prefers-reduced-motion:no-preference){
   .btn,.copy,.ghost,.pick,.filters button,.cats button,.tab,.seg button{transition:filter .15s,border-color .15s,color .15s,background .15s}
@@ -853,7 +903,7 @@ footer{font-size:12.5px;color:var(--muted)}
       </div>
     </section>
     <section class="panel settings" aria-labelledby="h-sobre">
-      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.9.2. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
+      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.9.3. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
     </section>
 
     <div class="group" id="lojasSec"><h2 class="big">Lojas</h2></div>
@@ -1130,7 +1180,7 @@ footer{font-size:12.5px;color:var(--muted)}
     var cup = arr(CAT.cupons).filter(function(c){ return acompanha(c.rede) && c.status === 'confirmado' && c.codigo && (!c.valido_ate || diasAte(c.valido_ate) >= 0); })
       .sort(function(a, b){ return (b.valor || 0) - (a.valor || 0); })[0];
     $('sumCupom').textContent = cup ? cup.codigo : '—';
-    $('sumCupomS').textContent = cup ? G[cup.rede].nome + ' · ' + cup.beneficio.toLowerCase() + ' · ' + validade(cup).t.toLowerCase() : 'Os cupons dos clubes aparecem depois do login';
+    $('sumCupomS').textContent = cup ? G[cup.rede].nome + ' · ' + (/^R\$/.test(cup.beneficio) ? cup.beneficio : cup.beneficio.charAt(0).toLowerCase() + cup.beneficio.slice(1)) + ' · ' + validade(cup).t.toLowerCase() : 'Os cupons dos clubes aparecem depois do login';
     var lista = ofertasDaAba(), vis = lista.filter(function(o){ return !escondida(o); }).sort(function(a, b){ return nota(b) - nota(a); });
     var top = vis[0];
     $('sumTop').textContent = top ? '−' + pct(top) + '%' : '—';
