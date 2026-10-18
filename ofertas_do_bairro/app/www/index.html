@@ -1,0 +1,1002 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}</style>
+<title>Ofertas do Bairro</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..800&family=Atkinson+Hyperlegible+Mono:wght@500;600&family=Atkinson+Hyperlegible+Next:wght@400;600&display=swap">
+<style>
+/* Layout: app de quatro telas (Ofertas, Minha lista, Lojas, Perfil) com abas sublinhadas no topo.
+   Ofertas: seletor de categoria, resumo e duas colunas (ofertas | cupons). Uma coluna abaixo de 900px.
+   Preços em tipo condensado de etiqueta de gôndola, no padrão "De / Por". */
+:root{
+  --bg:#EEF2F0;
+  --surface:#FFFFFF;
+  --ink:#15201B;
+  --muted:#56645D;
+  --line:#D5DED9;
+  --accent:#0D7356;
+  --accent-soft:#DDEFE7;
+  --on-accent:#FFFFFF;
+  --deal:#B3301F;
+  --deal-soft:#F8E2DD;
+  --warn:#7E5300;
+  --warn-soft:#FAEDCC;
+  --ticket:#FFF6D6;
+  --ticket-line:#CDB062;
+  --font-display:"Archivo","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
+  --font-body:"Atkinson Hyperlegible Next","Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-mono:"Atkinson Hyperlegible Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1412; --surface:#161F1B; --ink:#E4ECE8; --muted:#98A8A0; --line:#28342F;
+    --accent:#45C89B; --accent-soft:#153A2D; --on-accent:#05251A;
+    --deal:#FF8673; --deal-soft:#3C1F1A; --warn:#EFC063; --warn-soft:#342912;
+    --ticket:#25220F; --ticket-line:#6E612F; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1412; --surface:#161F1B; --ink:#E4ECE8; --muted:#98A8A0; --line:#28342F;
+  --accent:#45C89B; --accent-soft:#153A2D; --on-accent:#05251A;
+  --deal:#FF8673; --deal-soft:#3C1F1A; --warn:#EFC063; --warn-soft:#342912;
+  --ticket:#25220F; --ticket-line:#6E612F; color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3,p,ul,ol{margin:0}
+ul,ol{padding:0;list-style:none}
+a{color:var(--accent)}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.num{font-variant-numeric:tabular-nums}
+
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:22px 48px;display:flex;flex-direction:column;gap:18px}
+
+/* topo */
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-family:var(--font-display);font-stretch:68%;font-weight:800;text-transform:uppercase;font-size:clamp(2.3rem,6.4vw,3.6rem);line-height:.92;letter-spacing:.005em;margin-top:6px;text-wrap:balance}
+.sync{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:12px;color:var(--muted);font-size:13.5px}
+.sync .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);flex:none}
+
+.views{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.views::-webkit-scrollbar{display:none}
+.views button{background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;padding:10px 14px 8px;font-family:var(--font-display);font-stretch:80%;font-weight:750;font-size:1.15rem;color:var(--muted);white-space:nowrap}
+.views button:hover{color:var(--ink)}
+.views button[aria-current="page"]{color:var(--ink);border-bottom-color:var(--accent)}
+.banner{background:var(--warn-soft);border-radius:12px;padding:10px 14px;font-size:13.5px}
+.banner strong{color:var(--warn)}
+.view{display:flex;flex-direction:column;gap:18px}
+
+/* categorias */
+.catbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
+.cats{display:inline-flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:4px;max-width:100%}
+.cats button{border:0;background:transparent;color:var(--muted);border-radius:10px;padding:7px 16px;font-weight:600;font-size:14px}
+.cats button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.cat-note{font-size:13px;color:var(--muted)}
+
+/* resumo */
+.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.fact{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.fact .k{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.fact .v{font-family:var(--font-display);font-stretch:75%;font-weight:750;font-size:1.55rem;line-height:1.15;overflow-wrap:anywhere}
+.fact .s{font-size:13px;color:var(--muted)}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);font-weight:600;font-size:13px;text-decoration:underline;text-underline-offset:2px;align-self:flex-start}
+
+/* painéis */
+.cols{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);gap:18px;align-items:start}
+.cols.even{grid-template-columns:repeat(2,minmax(0,1fr))}
+.col{display:flex;flex-direction:column;gap:18px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.sec-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 12px}
+.sec-head h2{font-family:var(--font-display);font-stretch:80%;font-weight:750;font-size:1.3rem;letter-spacing:.01em;text-wrap:balance}
+h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.sec-meta{font-size:13.5px;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--bg);color:var(--muted);white-space:nowrap}
+.chip.real{background:var(--accent-soft);color:var(--accent)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.deal{background:var(--deal-soft);color:var(--deal)}
+.empty{padding:14px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);font-size:13.5px}
+
+/* campos */
+.field{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 11px;min-width:0}
+.mono{font-family:var(--font-mono);letter-spacing:.04em}
+.row-form{display:flex;gap:8px;flex-wrap:wrap}
+.row-form .field{flex:1 1 200px}
+.btn{background:var(--accent);color:var(--on-accent);border:0;border-radius:9px;padding:9px 16px;font-weight:600}
+.btn:hover{filter:brightness(1.07)}
+.ghost{background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:4px 10px;font-size:12.5px;font-weight:600}
+.ghost:hover{border-color:var(--accent);color:var(--accent)}
+.hint{font-size:12.5px;color:var(--muted)}
+.hint.ok{color:var(--accent)}
+.hint.err{color:var(--deal)}
+.checks{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:14px}
+.checks label{display:inline-flex;align-items:center;gap:7px;cursor:pointer}
+.checks input,.track input{accent-color:var(--accent);width:17px;height:17px;margin:0;flex:none;cursor:pointer}
+.group{display:flex;flex-direction:column;gap:8px}
+.picks{display:flex;flex-wrap:wrap;gap:6px}
+.pick{background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:600}
+.pick:hover{border-color:var(--accent)}
+.pick[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.pick[aria-pressed="true"]::before{content:"✓ "}
+.people{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.people label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;min-width:0}
+.people .field{width:100%;font-family:var(--font-display);font-stretch:80%;font-weight:750;font-size:1.2rem;padding:6px 10px}
+.aviso{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13.5px;display:flex;flex-direction:column;gap:3px}
+.aviso strong{font-weight:600}
+
+/* cupons (tíquetes) */
+.tickets{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,225px),1fr));gap:12px}
+.ticket{position:relative;overflow:hidden;background:var(--ticket);border:1.5px dashed var(--ticket-line);border-radius:12px;display:flex;flex-direction:column}
+.ticket.login,.ticket.testar{background:transparent;border-color:var(--line)}
+.t-main{padding:12px 14px;display:flex;flex-direction:column;gap:3px;flex:1}
+.t-rede{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.t-ben{font-family:var(--font-display);font-stretch:75%;font-weight:780;font-size:1.45rem;line-height:1.1}
+.ticket.login .t-ben,.ticket.testar .t-ben{font-size:1.15rem}
+.t-cond{font-size:13px;color:var(--muted)}
+.stub{position:relative;border-top:1.5px dashed var(--ticket-line);padding:9px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
+.ticket.login .stub,.ticket.testar .stub{border-top-color:var(--line)}
+.stub::before,.stub::after{content:"";position:absolute;top:-8px;width:15px;height:15px;border-radius:50%;background:var(--surface)}
+.stub::before{left:-9px}
+.stub::after{right:-9px}
+.code{font-family:var(--font-mono);font-weight:600;font-size:15px;letter-spacing:.06em;user-select:all}
+.copy{background:transparent;border:1px solid var(--ticket-line);color:var(--ink);border-radius:7px;padding:2px 9px;font-size:12.5px;font-weight:600}
+.copy:hover{border-color:var(--accent);color:var(--accent)}
+.stub .chip{margin-left:auto}
+.lock{font-size:13px;color:var(--muted);font-weight:600}
+
+/* ofertas */
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.filters button{background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.deals{display:flex;flex-direction:column}
+.deal{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 14px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.deal:first-child{border-top:0}
+.d-prod{font-weight:600;line-height:1.3}
+.why{font-size:12.5px;font-weight:600;color:var(--accent);margin-top:2px}
+.why.off-why{color:var(--warn)}
+.d-meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-size:12.5px;color:var(--muted);margin-top:3px}
+.tarja{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--ink)}
+.tarja::before{content:"";width:14px;height:5px;border-radius:2px;background:var(--deal)}
+.tarja.mip::before{background:var(--line)}
+.hide-btn{background:none;border:0;padding:0;color:var(--muted);font-size:12.5px;text-decoration:underline;text-underline-offset:2px}
+.hide-btn:hover{color:var(--ink)}
+.hide-menu{grid-column:1 / -1;display:flex;flex-wrap:wrap;align-items:center;gap:6px;background:var(--bg);border-radius:10px;padding:8px 10px;font-size:12.5px}
+.price{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1}
+.de{font-size:12px;color:var(--muted);white-space:nowrap}
+.de s{text-decoration-thickness:1px}
+.por{display:inline-flex;align-items:baseline;gap:4px;font-family:var(--font-display);font-stretch:70%;font-weight:800;font-size:1.6rem;letter-spacing:.005em;white-space:nowrap}
+.por .tag{font-family:var(--font-body);font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.por .un{font-family:var(--font-body);font-size:12px;font-weight:600;color:var(--muted)}
+.off{font-family:var(--font-display);font-stretch:75%;font-weight:780;font-size:1rem;background:var(--deal-soft);color:var(--deal);border-radius:7px;padding:4px 7px;min-width:3.4em;text-align:center}
+.deal.muted .d-prod,.deal.muted .por{color:var(--muted)}
+.deal.muted .off{background:var(--bg);color:var(--muted)}
+
+/* minha lista */
+.wish-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:12px}
+.item{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.i-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.i-prod{font-weight:600;line-height:1.3;min-width:0}
+.i-save{font-size:12px;font-weight:600;color:var(--accent);white-space:nowrap}
+.rhythm{font-size:13px;color:var(--muted)}
+.rhythm.soon{color:var(--deal);font-weight:600}
+.i-best{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;background:var(--accent-soft);border-radius:9px;padding:8px 10px}
+.i-best .lbl{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.i-best .por{color:var(--ink)}
+.i-store{font-weight:600;display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}
+.i-wait{font-size:13px;color:var(--muted)}
+.item.wait .i-best{background:var(--bg)}
+.i-others{display:flex;flex-wrap:wrap;gap:5px}
+.i-others li{font-size:12.5px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;color:var(--muted);white-space:nowrap}
+.i-others b{color:var(--ink);font-weight:600}
+.i-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.i-foot{font-size:12px;color:var(--muted);margin-left:auto}
+.rm{background:none;border:0;color:var(--muted);font-size:12px;text-decoration:underline;padding:0;flex:none}
+
+/* lojas */
+.rows{display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 12px;padding:10px 0;border-top:1px solid var(--line);align-items:center}
+.row:first-child{border-top:0}
+.r-name{font-weight:600}
+.r-sub{font-size:13px;color:var(--muted);grid-column:1 / -1;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
+.r-val{font-family:var(--font-display);font-stretch:75%;font-weight:750;font-size:1.15rem;text-align:right}
+.track{display:inline-flex;align-items:center;gap:9px;cursor:pointer;min-width:0}
+.row.has-track .r-sub{padding-left:26px}
+.row.out .r-name,.row.out .r-val,.row.out .src{color:var(--muted)}
+.src{font-size:11px;font-weight:600;padding:1px 7px;border-radius:6px;border:1px solid var(--line);color:var(--ink)}
+.note{font-size:13px;color:var(--muted)}
+
+footer{font-size:12.5px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 16px;border-radius:999px;font-size:13.5px;font-weight:600;z-index:20;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.18)}
+
+@media (max-width:900px){
+  .cols,.cols.even{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:640px){
+  .summary{grid-template-columns:minmax(0,1fr)}
+  .fact{flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:2px 10px}
+  .fact .k{flex:1 0 100%}
+  .panel{padding:15px}
+  .por{font-size:1.4rem}
+  .views button{padding:10px 11px 8px;font-size:1.05rem}
+}
+@media (prefers-reduced-motion:no-preference){
+  .btn,.copy,.ghost,.pick,.filters button,.cats button,.views button{transition:filter .15s,border-color .15s,color .15s,background .15s}
+}
+</style>
+
+<script type="application/json" id="dados">
+{
+  "versao": 2,
+  "gerado_em": "2026-10-18T15:51:00-03:00",
+  "proxima_atualizacao": "2026-10-19T07:52:00-03:00",
+  "lista": [
+    {"produto": "Café torrado e moído · 500 g", "precos": {"giassi": 19.90, "condor": 18.49, "angeloni": 17.98, "clubek": 19.49, "atacadao": 18.90}},
+    {"produto": "Leite UHT integral · 1 L", "precos": {"giassi": 5.49, "condor": 5.19, "angeloni": 5.69, "clubek": 5.39, "atacadao": 4.79}},
+    {"produto": "Papel higiênico folha dupla · 12 rolos", "precos": {"pp": 23.90, "dc": 22.49, "giassi": 17.90, "condor": 18.49, "clubek": 19.90, "atacadao": 16.99}},
+    {"produto": "Creme dental Colgate Total 12 · 90 g", "precos": {"pp": 14.99, "dc": 15.49, "panvel": 15.90, "raia": 16.99, "giassi": 9.98, "condor": 10.49, "angeloni": 11.49, "atacadao": 8.99}},
+    {"produto": "Protetor solar facial FPS 50 · 40 g", "precos": {"pp": 69.90, "dc": 66.90, "panvel": 59.90, "raia": 64.90, "saojoao": 68.90, "angeloni": 62.90}},
+    {"produto": "Losartana potássica 50 mg · 30 comp. (genérico)", "precos": {"pp": 9.90, "dc": 10.49, "panvel": 12.90, "raia": 14.29, "saojoao": 11.50}}
+  ],
+  "categorias": [
+    {
+      "id": "farmacias",
+      "nome": "Farmácias",
+      "singular": "Farmácia",
+      "aviso": "Cupons e ofertas desta aba são reais, coletados em 18/10.",
+      "redes": [
+        {"id": "pp", "nome": "Preço Popular", "curto": "Preço Pop."},
+        {"id": "dc", "nome": "Drogaria Catarinense", "curto": "Catarinense"},
+        {"id": "panvel", "nome": "Panvel", "curto": "Panvel", "nota": "A Panvel mostra preço por CEP. As ofertas aparecem depois da primeira busca no seu CEP."},
+        {"id": "raia", "nome": "Raia", "curto": "Raia", "nota": "A Raia mostra preço por CEP e cupons só com login. Aparecem depois da primeira busca e do login."},
+        {"id": "saojoao", "nome": "São João", "curto": "São João", "nota": "Loja encontrada perto de você. As ofertas aparecem na próxima atualização."},
+        {"id": "indep", "nome": "Drogaria independente", "curto": "Independente", "nota": "Não tem loja online. As ofertas vêm do encarte que ela publica no Instagram."}
+      ],
+      "lojas": [
+        {"rede": "indep", "distancia_km": 0.4, "horario": "Aberta até 20h", "fontes": ["Instagram"]},
+        {"rede": "panvel", "distancia_km": 0.6, "horario": "Aberta 24 horas", "fontes": ["Site", "App", "Clube"]},
+        {"rede": "pp", "distancia_km": 0.9, "horario": "Aberta até 22h", "fontes": ["Site", "Encarte", "Clube"]},
+        {"rede": "saojoao", "distancia_km": 1.1, "horario": "Aberta até 22h", "fontes": ["Site", "Encarte"]},
+        {"rede": "raia", "distancia_km": 1.4, "horario": "Aberta até 23h", "fontes": ["Site", "App", "Clube"]},
+        {"rede": "dc", "distancia_km": 1.8, "horario": "Aberta até 21h", "fontes": ["Site", "Encarte", "Clube"]}
+      ],
+      "cupons": [
+        {"rede": "pp", "codigo": "QUERO40", "valor": 40, "beneficio": "R$ 40 de desconto", "condicao": "Pedidos acima de R$ 439,90", "valido_ate": "2026-10-26", "status": "confirmado"},
+        {"rede": "pp", "codigo": "QUERO20", "valor": 20, "beneficio": "R$ 20 de desconto", "condicao": "Pedidos acima de R$ 239,90", "valido_ate": "2026-10-26", "status": "confirmado"},
+        {"rede": "pp", "codigo": "APP10", "valor": 10, "beneficio": "R$ 10 de desconto", "condicao": "Primeira compra pelo app, acima de R$ 99,90", "valido_ate": "2027-01-01", "status": "confirmado"},
+        {"rede": "panvel", "codigo": "PRIMEIRACOMPRA", "valor": 5, "beneficio": "R$ 5 de desconto", "condicao": "No site e no app", "valido_ate": null, "status": "confirmado"},
+        {"rede": "dc", "codigo": null, "beneficio": "Testar QUERO20 e QUERO40", "condicao": "Mesma empresa da Preço Popular. Os cupons da Catarinense não apareceram no site.", "valido_ate": null, "status": "testar"},
+        {"rede": "panvel", "codigo": null, "beneficio": "Cupom Week da sua carteira", "condicao": "Os cupons da semana ficam em Meus Cupons e aparecem aqui depois do login.", "valido_ate": null, "status": "login"},
+        {"rede": "raia", "codigo": null, "beneficio": "Cupons da sua conta Raia", "condicao": "A página de cupons só carrega para quem está logado.", "valido_ate": null, "status": "login"}
+      ],
+      "ofertas": [
+        {"id": "pp-fluconazol-150", "rede": "pp", "produto": "Fluconazol Cimed 150 mg · 2 cápsulas", "preco_normal": 23.82, "preco_oferta": 5.66, "tipo": "promo", "receita": "tarja", "tags": ["medicamento"]},
+        {"id": "pp-nimesulida-100", "rede": "pp", "produto": "Nimesulida Cimed 100 mg · 12 comprimidos", "preco_normal": 26.42, "preco_oferta": 7.25, "tipo": "promo", "receita": "tarja", "tags": ["medicamento"]},
+        {"id": "pp-dipirona-1g", "rede": "pp", "produto": "Dipirona 1 g Neo Química · 10 comprimidos", "preco_normal": 26.64, "preco_oferta": 9.20, "tipo": "promo", "receita": "mip", "tags": ["medicamento"]},
+        {"id": "pp-cimegripe-20", "rede": "pp", "produto": "Cimegripe 400 mg · 20 cápsulas", "preco_normal": 30.20, "preco_oferta": 12.90, "tipo": "promo", "receita": "mip", "tags": ["medicamento"]},
+        {"id": "pp-corega-40", "rede": "pp", "produto": "Fixador de dentadura Corega Ultra 40 g", "preco_normal": 67.99, "preco_oferta": 34.90, "tipo": "promo", "tags": ["bucal"]},
+        {"id": "pp-hipoglos-40", "rede": "pp", "produto": "Creme para assadura Hipoglós 40 g", "preco_normal": 31.50, "preco_oferta": 20.99, "tipo": "promo", "tags": ["bebe"]},
+        {"id": "pp-huggies-g-92", "rede": "pp", "produto": "Fralda Huggies Máxima Proteção G · 92 un.", "preco_normal": 139.90, "preco_oferta": 105.90, "tipo": "promo", "tags": ["bebe"]},
+        {"id": "dc-hydroboost-50", "rede": "dc", "produto": "Hidratante Neutrogena Hydro Boost Water Gel 50 g", "preco_normal": 100.90, "preco_oferta": 69.90, "tipo": "promo", "tags": ["skincare"]},
+        {"id": "dc-dove-acne-547", "rede": "dc", "produto": "Sabonete líquido Dove Acne Control 547 ml", "preco_normal": 68.90, "preco_oferta": 47.90, "tipo": "promo", "tags": ["skincare", "higiene"]},
+        {"id": "dc-johnsons-400", "rede": "dc", "produto": "Sabonete Johnson's Baby cabeça aos pés 400 ml", "preco_normal": 37.99, "preco_oferta": 26.48, "tipo": "promo", "tags": ["bebe"]},
+        {"id": "dc-sensodyne-90", "rede": "dc", "produto": "Creme dental Sensodyne Branqueador Extra Fresh 90 g", "preco_normal": 40.50, "preco_oferta": 29.90, "tipo": "promo", "condicao": "Leve 3, pague 2", "tags": ["bucal"]},
+        {"id": "dc-listerine-1l", "rede": "dc", "produto": "Antisséptico Listerine Cool Mint sem álcool 1 L", "preco_normal": 37.90, "preco_oferta": 28.43, "tipo": "promo", "tags": ["bucal"]},
+        {"id": "dc-cicalfate-40", "rede": "dc", "produto": "Creme Avène Cicalfate 40 ml", "preco_normal": 105.90, "preco_oferta": 79.90, "tipo": "promo", "tags": ["skincare"]},
+        {"id": "dc-pampers-xxg-56", "rede": "dc", "produto": "Fralda Pampers Confort Sec XXG · 56 un.", "preco_normal": 104.90, "preco_oferta": 84.90, "tipo": "promo", "tags": ["bebe"]}
+      ],
+      "contas": [
+        {"rede": "panvel", "libera": "Carteira de cupons e preços do Bem Panvel", "status": "pendente"},
+        {"rede": "raia", "libera": "Cupons da conta e pontos Stix", "status": "pendente"},
+        {"rede": "pp", "libera": "Preços do Clube PP", "status": "pendente"},
+        {"rede": "dc", "libera": "Preços do Clube DC", "status": "pendente"}
+      ]
+    },
+    {
+      "id": "mercados",
+      "nome": "Mercados",
+      "singular": "Mercado",
+      "aviso": "Os preços desta aba são ilustrativos, só para mostrar como fica.",
+      "redes": [
+        {"id": "giassi", "nome": "Giassi", "curto": "Giassi"},
+        {"id": "condor", "nome": "Condor", "curto": "Condor"},
+        {"id": "angeloni", "nome": "Angeloni", "curto": "Angeloni"},
+        {"id": "clubek", "nome": "Clube K", "curto": "Clube K"},
+        {"id": "atacadao", "nome": "Atacadão", "curto": "Atacadão"},
+        {"id": "imperatriz", "nome": "Imperatriz", "curto": "Imperatriz"}
+      ],
+      "lojas": [
+        {"rede": "giassi", "distancia_km": 0.8, "horario": "Aberto até 22h", "fontes": ["Site", "Encarte", "App"]},
+        {"rede": "condor", "distancia_km": 1.2, "horario": "Aberto até 22h", "fontes": ["Encarte", "Clube"]},
+        {"rede": "angeloni", "distancia_km": 1.5, "horario": "Aberto até 22h", "fontes": ["Site", "Encarte"]},
+        {"rede": "clubek", "distancia_km": 1.7, "horario": "Aberto até 21h", "fontes": ["Encarte", "Clube"]},
+        {"rede": "atacadao", "distancia_km": 1.9, "horario": "Aberto até 22h", "fontes": ["Tiendeo", "App"]},
+        {"rede": "imperatriz", "distancia_km": 3.6, "horario": "Aberto até 22h", "fontes": ["Encarte", "Clube"]}
+      ],
+      "cupons": [
+        {"rede": "condor", "codigo": null, "beneficio": "Ofertas do Clube Condor", "condicao": "As ofertas que você ativa no app aparecem aqui depois do login.", "valido_ate": null, "status": "login"},
+        {"rede": "clubek", "codigo": null, "beneficio": "Preços do Clube K", "condicao": "Preço de clube por CPF. Aparece depois do login.", "valido_ate": null, "status": "login"},
+        {"rede": "atacadao", "codigo": null, "beneficio": "Cupons do Meu Atacadão", "condicao": "Os cupons do app aparecem aqui depois do login.", "valido_ate": null, "status": "login"},
+        {"rede": "imperatriz", "codigo": null, "beneficio": "Super Clube Imperatriz", "condicao": "As ofertas do clube aparecem aqui depois do login.", "valido_ate": null, "status": "login"}
+      ],
+      "ofertas": [
+        {"id": "giassi-arroz-5kg", "rede": "giassi", "produto": "Arroz branco tipo 1 · 5 kg", "preco_normal": 27.90, "preco_oferta": 21.90, "tipo": "promo", "tags": ["alimentos"]},
+        {"id": "angeloni-cafe-500", "rede": "angeloni", "produto": "Café torrado e moído · 500 g", "preco_normal": 22.98, "preco_oferta": 17.98, "tipo": "clube", "tags": ["alimentos", "cafe"]},
+        {"id": "atacadao-leite-1l", "rede": "atacadao", "produto": "Leite UHT integral · 1 L", "preco_normal": 5.29, "preco_oferta": 4.79, "tipo": "atacado", "condicao": "A partir de 12 unidades", "tags": ["alimentos", "lactose"]},
+        {"id": "condor-patinho-kg", "rede": "condor", "produto": "Patinho moído", "preco_normal": 46.90, "preco_oferta": 39.90, "tipo": "clube", "unidade": "kg", "tags": ["alimentos", "carnes"]},
+        {"id": "imperatriz-azeite-500", "rede": "imperatriz", "produto": "Azeite extra virgem · 500 ml", "preco_normal": 36.90, "preco_oferta": 29.90, "tipo": "clube", "tags": ["alimentos"]},
+        {"id": "clubek-papel-12", "rede": "clubek", "produto": "Papel higiênico folha dupla · 12 rolos", "preco_normal": 24.90, "preco_oferta": 19.90, "tipo": "promo", "tags": ["limpeza"]},
+        {"id": "condor-racao-gato", "rede": "condor", "produto": "Ração para gatos adultos · 10,1 kg", "preco_normal": 189.90, "preco_oferta": 159.90, "tipo": "clube", "tags": ["pet", "gato"]},
+        {"id": "giassi-cerveja-12", "rede": "giassi", "produto": "Cerveja pilsen lata 350 ml · 12 un.", "preco_normal": 47.88, "preco_oferta": 39.90, "tipo": "promo", "tags": ["alimentos", "alcool"]}
+      ],
+      "contas": [
+        {"rede": "condor", "libera": "Ofertas ativadas no Clube Condor", "status": "pendente"},
+        {"rede": "clubek", "libera": "Preço de clube do Clube K", "status": "pendente"},
+        {"rede": "atacadao", "libera": "Cupons do app Meu Atacadão", "status": "pendente"},
+        {"rede": "imperatriz", "libera": "Ofertas do Super Clube Imperatriz", "status": "pendente"}
+      ]
+    }
+  ],
+  "config_exemplo": {
+    "cep": null,
+    "raio_km": 2,
+    "categorias": ["farmacias", "mercados"],
+    "lojas": {"ignorar": [], "manter": [], "adicionar": []},
+    "lista": [
+      {"produto": "Café torrado e moído · 500 g", "compras": ["2026-09-20", "2026-09-30", "2026-10-10"]},
+      {"produto": "Leite UHT integral · 1 L", "compras": ["2026-09-29", "2026-10-06", "2026-10-13"]},
+      {"produto": "Papel higiênico folha dupla · 12 rolos", "compras": ["2026-08-30", "2026-09-24"]},
+      {"produto": "Creme dental Colgate Total 12 · 90 g", "compras": ["2026-09-05"]},
+      {"produto": "Protetor solar facial FPS 50 · 40 g", "compras": []},
+      {"produto": "Losartana potássica 50 mg · 30 comp. (genérico)", "compras": ["2026-09-21"]}
+    ],
+    "perfil": {"adultos": 2, "criancas": 0, "bebes": 0, "pets": [], "restricoes": [], "interesses": ["skincare", "cafe"], "nunca": []},
+    "cotidiano": {"mercado": ["sab"], "farmacia": ["qua"], "avisar": "vespera"},
+    "ocultas": []
+  }
+}
+</script>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow" id="hello">Perto de casa</p>
+    <h1>Ofertas do Bairro</h1>
+    <p class="sync"><span class="dot" aria-hidden="true"></span><span id="syncText">Carregando…</span></p>
+  </header>
+
+  <nav class="views" id="views" aria-label="Telas">
+    <button type="button" data-view="ofertas">Ofertas</button>
+    <button type="button" data-view="lista">Minha lista</button>
+    <button type="button" data-view="lojas">Lojas</button>
+    <button type="button" data-view="perfil">Perfil</button>
+  </nav>
+
+  <p class="banner" id="banner" hidden><strong>Exemplo.</strong> Algumas ofertas de farmácia são reais, de 18/10. O resto é ilustrativo. Depois da primeira busca no seu CEP, aparecem as suas lojas e os seus preços.</p>
+
+  <!-- OFERTAS -->
+  <section class="view" id="v-ofertas" aria-label="Ofertas">
+    <div class="catbar">
+      <div class="cats" id="cats" role="group" aria-label="Categoria"></div>
+      <p class="cat-note" id="catNote"></p>
+    </div>
+    <div class="summary" aria-label="Resumo">
+      <div class="fact"><span class="k">Melhor cupom agora</span><span class="v num" id="sumCupom">—</span><span class="s" id="sumCupomS"></span></div>
+      <div class="fact"><span class="k">Destaque para você</span><span class="v num" id="sumTop">—</span><span class="s" id="sumTopS"></span></div>
+      <div class="fact"><span class="k">Escondidas pelo perfil</span><span class="v num" id="sumHid">0</span><button type="button" class="linkbtn" id="toggleHid">Ver quais são</button></div>
+    </div>
+    <div class="cols">
+      <section class="panel" aria-labelledby="h-ofertas">
+        <div class="sec-head"><h2 id="h-ofertas">Ofertas</h2></div>
+        <p class="sec-meta" id="ofertasMeta"></p>
+        <div class="filters" id="filters" role="group" aria-label="Filtrar por loja"></div>
+        <ul class="deals" id="deals"></ul>
+      </section>
+      <section class="panel" aria-labelledby="h-cupons">
+        <div class="sec-head"><h2 id="h-cupons">Cupons e clubes</h2></div>
+        <div class="tickets" id="tickets"></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- MINHA LISTA -->
+  <section class="view" id="v-lista" aria-label="Minha lista" hidden>
+    <section class="panel" aria-labelledby="h-lista">
+      <div class="sec-head"><h2 id="h-lista">Minha lista</h2></div>
+      <p class="sec-meta">Uma lista só para farmácias e mercados. O que está acabando aparece primeiro. Toque em "Comprei hoje" quando comprar: o painel aprende de quanto em quanto tempo cada coisa acaba.</p>
+      <ul class="wish-grid" id="wish"></ul>
+      <form class="row-form" id="addForm" novalidate>
+        <input class="field" id="novoItem" name="novoItem" placeholder="Ex.: Atorvastatina 20 mg, Café 500 g, Sabão em pó" aria-label="Produto para acompanhar">
+        <button class="btn" type="submit">Adicionar</button>
+      </form>
+      <p class="hint" id="addMsg" aria-live="polite"></p>
+    </section>
+  </section>
+
+  <!-- LOJAS -->
+  <section class="view" id="v-lojas" aria-label="Lojas" hidden>
+    <div class="cols even">
+      <section class="panel" aria-labelledby="h-lojas">
+        <div class="sec-head"><h2 id="h-lojas">Lojas perto de casa</h2></div>
+        <p class="sec-meta">Encontradas pelo seu CEP, de rede ou independentes. Desmarque uma loja para não ver mais as ofertas dela, ou marque uma mais longe para acompanhar também.</p>
+        <div id="lojasCats" class="group"></div>
+        <form class="row-form" id="addLoja" novalidate>
+          <input class="field" id="novaLoja" name="novaLoja" placeholder="Loja que não apareceu, ex.: Mercado da esquina" aria-label="Nome da loja">
+          <select class="field" id="novaLojaCat" name="novaLojaCat" aria-label="Tipo de loja" style="flex:0 0 auto"></select>
+          <button class="btn" type="submit">Adicionar</button>
+        </form>
+        <p class="hint" id="lojaMsg" aria-live="polite"></p>
+      </section>
+      <section class="panel" aria-labelledby="h-contas">
+        <div class="sec-head"><h2 id="h-contas">Clubes e contas</h2></div>
+        <p class="sec-meta">Com login, aparecem os cupons e preços que cada clube dá só para você.</p>
+        <ul class="rows" id="contasList"></ul>
+        <p class="note">Na primeira busca, o Claude abre o site do clube no seu computador e você entra uma vez. Depois o login fica guardado, e a senha não passa pelo painel.</p>
+      </section>
+    </div>
+  </section>
+
+  <!-- PERFIL -->
+  <section class="view" id="v-perfil" aria-label="Perfil" hidden>
+    <p class="sec-meta">O perfil decide o que aparece para você. Mudou aqui, muda na hora em todas as telas.</p>
+    <div class="cols even">
+      <div class="col">
+        <section class="panel" aria-labelledby="h-onde">
+          <div class="sec-head"><h2 id="h-onde">Onde</h2></div>
+          <form class="group" id="ondeForm" novalidate>
+            <div class="row-form">
+              <input class="field mono" type="text" id="cep" name="cep" inputmode="numeric" autocomplete="postal-code" placeholder="CEP 00000-000" maxlength="9" aria-label="CEP de casa">
+              <select class="field" id="raio" name="raio" aria-label="Distância" style="flex:0 0 auto">
+                <option value="1">até 1 km</option>
+                <option value="2">até 2 km</option>
+                <option value="5">até 5 km</option>
+              </select>
+              <button class="btn" type="submit">Salvar</button>
+            </div>
+            <div class="checks" id="catsCfg" role="group" aria-label="O que acompanhar"></div>
+            <p class="hint" id="ondeMsg">As lojas são procuradas a partir deste CEP.</p>
+          </form>
+        </section>
+
+        <section class="panel" aria-labelledby="h-casa">
+          <div class="sec-head"><h2 id="h-casa">Quem mora</h2></div>
+          <div class="people">
+            <label for="pAdultos">Adultos<input class="field num" type="number" id="pAdultos" min="0" max="20" inputmode="numeric"></label>
+            <label for="pCriancas">Crianças<input class="field num" type="number" id="pCriancas" min="0" max="20" inputmode="numeric"></label>
+            <label for="pBebes">Bebês<input class="field num" type="number" id="pBebes" min="0" max="20" inputmode="numeric"></label>
+          </div>
+          <div class="group"><h3>Pets</h3><div class="picks" id="pPets"></div></div>
+          <p class="hint" id="casaHint"></p>
+        </section>
+
+        <section class="panel" aria-labelledby="h-rotina">
+          <div class="sec-head"><h2 id="h-rotina">Rotina de compras</h2></div>
+          <div class="group"><h3>Dias de mercado</h3><div class="picks" id="dMercado"></div></div>
+          <div class="group"><h3>Dias de farmácia</h3><div class="picks" id="dFarmacia"></div></div>
+          <div class="group">
+            <h3><label for="avisar">Avisar no celular</label></h3>
+            <select class="field" id="avisar" style="align-self:flex-start">
+              <option value="vespera">Na véspera, à noite</option>
+              <option value="dia">No dia, de manhã</option>
+              <option value="nao">Não avisar</option>
+            </select>
+          </div>
+          <div class="aviso" id="proxAviso"></div>
+        </section>
+      </div>
+
+      <div class="col">
+        <section class="panel" aria-labelledby="h-restr">
+          <div class="sec-head"><h2 id="h-restr">Restrições</h2></div>
+          <div class="picks" id="pRestr"></div>
+        </section>
+        <section class="panel" aria-labelledby="h-int">
+          <div class="sec-head"><h2 id="h-int">Interesses</h2></div>
+          <p class="sec-meta">Ofertas desses tipos aparecem primeiro.</p>
+          <div class="picks" id="pInt"></div>
+        </section>
+        <section class="panel" aria-labelledby="h-nunca">
+          <div class="sec-head"><h2 id="h-nunca">Nunca mostrar</h2></div>
+          <p class="sec-meta">O botão "Não mostrar" de cada oferta também adiciona tipos aqui.</p>
+          <div class="picks" id="pNunca"></div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <footer>Preço do site pode ser diferente do preço na loja. Confira validade e regras do cupom no carrinho.</footer>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var EX = JSON.parse(document.getElementById('dados').textContent);
+  var TZ = 'America/Sao_Paulo';
+  var brl = new Intl.NumberFormat('pt-BR', {style:'currency', currency:'BRL'});
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function arr(v){ return Array.isArray(v) ? v : []; }
+  function tira(a, v){ var i = a.indexOf(v); if (i >= 0) a.splice(i, 1); }
+  function alterna(a, v){ if (a.indexOf(v) >= 0) tira(a, v); else a.push(v); }
+  function norm(s){ return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
+  function chave(s){ return norm(s).split(' ').slice(0, 2).join(' '); }
+
+  // ---------- datas (fuso de São Paulo) ----------
+  function hojeSP(){ return new Intl.DateTimeFormat('en-CA', {timeZone:TZ, year:'numeric', month:'2-digit', day:'2-digit'}).format(new Date()); }
+  function utc(iso){ var a = iso.split('-').map(Number); return Date.UTC(a[0], a[1]-1, a[2]); }
+  function soma(iso, n){ return new Date(utc(iso) + n*86400000).toISOString().slice(0, 10); }
+  function diasAte(iso){ return Math.round((utc(iso) - utc(hojeSP())) / 86400000); }
+  function dataBR(iso){ var p = iso.split('-'); return p[2] + '/' + p[1]; }
+  var fmtDia = new Intl.DateTimeFormat('pt-BR', {timeZone:'UTC', weekday:'long', day:'2-digit', month:'2-digit'});
+  function diaLongo(iso){ return fmtDia.format(new Date(utc(iso))); }
+  function quando(iso){ return new Intl.DateTimeFormat('pt-BR', {timeZone:TZ, weekday:'long', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}).format(new Date(iso)); }
+  function validade(c){
+    if (!c.valido_ate) return c.status === 'testar' ? {t:'Não confirmado', k:'warn'} : c.status === 'login' ? {t:'Depois do login', k:''} : {t:'Sem data de validade', k:''};
+    var n = diasAte(c.valido_ate);
+    if (n < 0) return {t:'Vencido', k:'deal'};
+    if (n === 0) return {t:'Vence hoje', k:'deal'};
+    if (n <= 3) return {t:'Vence em ' + n + (n > 1 ? ' dias' : ' dia'), k:'deal'};
+    if (n <= 31) return {t:'Vence em ' + n + ' dias', k:'warn'};
+    return {t:'Até ' + dataBR(c.valido_ate) + '/' + c.valido_ate.slice(0, 4), k:''};
+  }
+  function pct(o){ return Math.round((1 - o.preco_oferta / o.preco_normal) * 100); }
+  function km(v){ return v.toFixed(1).replace('.', ',') + ' km'; }
+
+  // ---------- vocabulário do perfil ----------
+  var ROTULO_TAG = {bebe:'bebê e infantil', pet:'pet', alcool:'bebidas alcoólicas', geriatrico:'fraldas geriátricas', maquiagem:'maquiagem', medicamento:'medicamentos',
+    skincare:'cuidados com a pele', suplementos:'suplementos', cafe:'café', bucal:'higiene bucal', limpeza:'limpeza da casa', carnes:'carnes', alimentos:'alimentos', higiene:'higiene'};
+  var INTERESSES = ['skincare', 'cafe', 'bucal', 'suplementos', 'limpeza', 'carnes'];
+  var NUNCA = ['bebe', 'pet', 'alcool', 'medicamento', 'maquiagem', 'geriatrico'];
+  var RESTR = [{id:'lactose', nome:'Sem lactose', tag:'lactose'}, {id:'gluten', nome:'Sem glúten', tag:'gluten'}, {id:'vegetariano', nome:'Vegetariano', tag:'carnes'}, {id:'acucar', nome:'Sem açúcar', tag:'acucar'}];
+  var PETS = [{id:'cachorro', nome:'Cachorro'}, {id:'gato', nome:'Gato'}];
+  var DIAS = [{id:'dom', n:'Dom'}, {id:'seg', n:'Seg'}, {id:'ter', n:'Ter'}, {id:'qua', n:'Qua'}, {id:'qui', n:'Qui'}, {id:'sex', n:'Sex'}, {id:'sab', n:'Sáb'}];
+  function cap(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  // ---------- estado ----------
+  var D, estado, G = {}, LOJA = {}, MODO = 'exemplo', exemplo = true, usuario = null;
+  var CAT, filtro = 'todas', menuAberto = null;
+  var KEY = 'ofertas-bairro:v3', KEY_UI = 'ofertas-bairro:ui';
+  function lerLocal(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } }
+  function gravarLocal(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch(e){ return false; } }
+  var ui = lerLocal(KEY_UI) || {};
+  var VIEWS = ['ofertas', 'lista', 'lojas', 'perfil'];
+  var hash = (location.hash || '').slice(1);
+  if (VIEWS.indexOf(hash) >= 0) ui.view = hash;
+  if (VIEWS.indexOf(ui.view) < 0) ui.view = 'ofertas';
+  function salvarUI(){ gravarLocal(KEY_UI, ui); }
+
+  function indexa(){
+    G = {}; LOJA = {};
+    D.categorias.forEach(function(c){
+      arr(c.redes).forEach(function(r){ G[r.id] = {nome:r.nome, curto:r.curto || r.nome, nota:r.nota, cat:c.id, singular:c.singular || c.nome}; });
+      arr(c.lojas).forEach(function(l){ LOJA[l.rede] = l; });
+    });
+  }
+  function n0(v, d){ v = Number(v); return isFinite(v) && v >= 0 ? Math.min(Math.round(v), 20) : d; }
+  function normaliza(c){
+    c = c && typeof c === 'object' ? JSON.parse(JSON.stringify(c)) : {};
+    var p = c.perfil || {}, r = c.cotidiano || {}, l = c.lojas || {};
+    return {
+      cep: c.cep || null,
+      raio_km: Number(c.raio_km) || 2,
+      categorias: arr(c.categorias).length ? c.categorias : D.categorias.map(function(x){ return x.id; }),
+      lojas: {ignorar: arr(l.ignorar), manter: arr(l.manter), adicionar: arr(l.adicionar)},
+      lista: arr(c.lista).map(function(i){ return typeof i === 'string' ? {produto:i, compras:[]} : {produto:String(i.produto || ''), compras:arr(i.compras)}; }).filter(function(i){ return i.produto; }),
+      perfil: {adultos:n0(p.adultos, 1), criancas:n0(p.criancas, 0), bebes:n0(p.bebes, 0), pets:arr(p.pets), restricoes:arr(p.restricoes), interesses:arr(p.interesses), nunca:arr(p.nunca)},
+      cotidiano: {mercado:arr(r.mercado), farmacia:arr(r.farmacia), avisar:r.avisar || 'vespera'},
+      ocultas: arr(c.ocultas)
+    };
+  }
+
+  // ---------- salvar ----------
+  var toastT;
+  function toast(msg){
+    var t = $('toast'); t.textContent = msg; t.hidden = false;
+    clearTimeout(toastT); toastT = setTimeout(function(){ t.hidden = true; }, 2200);
+  }
+  function salvar(msg){
+    if (MODO === 'addon'){
+      fetch('api/config', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(estado)})
+        .then(function(r){ toast(r.ok ? (msg || 'Salvo') : 'Não deu para salvar. Tente de novo.'); })
+        .catch(function(){ toast('Sem conexão com o Home Assistant. Tente de novo.'); });
+    } else {
+      toast(gravarLocal(KEY, estado) ? (msg || 'Salvo') : 'Salvo só até fechar a página');
+    }
+  }
+
+  // ---------- regras ----------
+  function acompanha(id){
+    if (estado.lojas.ignorar.indexOf(id) >= 0) return false;
+    if (estado.lojas.manter.indexOf(id) >= 0) return true;
+    var l = LOJA[id];
+    return l ? l.distancia_km <= estado.raio_km : false;
+  }
+  function setAcompanha(id, on){
+    tira(estado.lojas.ignorar, id); tira(estado.lojas.manter, id);
+    var l = LOJA[id], auto = !!(l && l.distancia_km <= estado.raio_km);
+    if (on !== auto) (on ? estado.lojas.manter : estado.lojas.ignorar).push(id);
+  }
+  function catAtiva(id){ return G[id] && estado.categorias.indexOf(G[id].cat) >= 0; }
+  function idOf(o){ return o.id || (o.rede + '|' + o.produto); }
+
+  // por que uma oferta fica escondida (null = aparece)
+  function escondida(o){
+    var t = arr(o.tags), p = estado.perfil;
+    if (estado.ocultas.indexOf(idOf(o)) >= 0) return {txt:'Você escondeu esta oferta', tipo:'oferta'};
+    for (var i = 0; i < p.nunca.length; i++) if (t.indexOf(p.nunca[i]) >= 0) return {txt:'Você pediu para não mostrar ' + ROTULO_TAG[p.nunca[i]], tipo:'nunca', tag:p.nunca[i]};
+    if (t.indexOf('bebe') >= 0 && p.criancas + p.bebes === 0) return {txt:'Não há crianças no seu perfil', tipo:'perfil'};
+    if (t.indexOf('pet') >= 0){
+      if (!p.pets.length) return {txt:'Não há pets no seu perfil', tipo:'perfil'};
+      var bichos = t.filter(function(x){ return x === 'gato' || x === 'cachorro'; });
+      if (bichos.length && !bichos.some(function(b){ return p.pets.indexOf(b) >= 0; })) return {txt:'Não é para o seu pet', tipo:'perfil'};
+    }
+    for (var j = 0; j < RESTR.length; j++) if (p.restricoes.indexOf(RESTR[j].id) >= 0 && t.indexOf(RESTR[j].tag) >= 0) return {txt:'Você marcou ' + RESTR[j].nome.toLowerCase(), tipo:'perfil'};
+    return null;
+  }
+  function naLista(o){ var k = chave(o.produto); return estado.lista.some(function(i){ return chave(i.produto) === k; }); }
+  function interesse(o){ return arr(o.tags).filter(function(t){ return estado.perfil.interesses.indexOf(t) >= 0; })[0]; }
+  function porQue(o){
+    if (naLista(o)) return 'Está na sua lista';
+    var i = interesse(o); if (i) return 'Você se interessa por ' + ROTULO_TAG[i];
+    if (pct(o) >= 50) return 'Mais de 50% de desconto';
+    return '';
+  }
+  function nota(o){ return (naLista(o) ? 1000 : 0) + (interesse(o) ? 500 : 0) + pct(o); }
+
+  // ---------- telas ----------
+  function irPara(v){
+    ui.view = v; salvarUI();
+    VIEWS.forEach(function(x){ $('v-' + x).hidden = x !== v; });
+    Array.prototype.forEach.call($('views').querySelectorAll('button'), function(b){
+      if (b.dataset.view === v) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+    });
+  }
+  $('views').addEventListener('click', function(e){ var b = e.target.closest('button'); if (b) irPara(b.dataset.view); });
+
+  function tudo(){ pintaOfertasTela(); pintaLista(); pintaLojas(); pintaContas(); pintaPerfil(); }
+
+  // ===== Ofertas =====
+  function pintaOfertasTela(){
+    var ativas = D.categorias.filter(function(c){ return estado.categorias.indexOf(c.id) >= 0; });
+    if (!ativas.some(function(c){ return c.id === ui.aba; })) ui.aba = ativas[0].id;
+    CAT = ativas.filter(function(c){ return c.id === ui.aba; })[0];
+    $('cats').innerHTML = ativas.map(function(c){ return '<button type="button" data-cat="' + c.id + '" aria-pressed="' + (c.id === CAT.id) + '">' + esc(c.nome) + '</button>'; }).join('');
+    $('catNote').textContent = exemplo && CAT.aviso ? CAT.aviso : '';
+    $('ofertasMeta').textContent = CAT.id === 'farmacias'
+      ? 'O que combina com você aparece primeiro. Preço do site; na loja pode ser outro.'
+      : 'Encarte da semana, preço de clube e preço de atacado, do que combina com você para o resto.';
+    if (filtro !== 'todas' && !acompanha(filtro)) filtro = 'todas';
+    pintaResumo(); pintaFiltros(); pintaDeals(); pintaCupons();
+  }
+  $('cats').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    ui.aba = b.dataset.cat; salvarUI(); filtro = 'todas'; menuAberto = null;
+    pintaOfertasTela();
+  });
+
+  function ofertasDaAba(){ return arr(CAT.ofertas).filter(function(o){ return acompanha(o.rede); }); }
+  function pintaResumo(){
+    var cup = arr(CAT.cupons).filter(function(c){ return acompanha(c.rede) && c.status === 'confirmado' && c.codigo && (!c.valido_ate || diasAte(c.valido_ate) >= 0); })
+      .sort(function(a, b){ return (b.valor || 0) - (a.valor || 0); })[0];
+    $('sumCupom').textContent = cup ? cup.codigo : '—';
+    $('sumCupomS').textContent = cup ? G[cup.rede].nome + ' · ' + cup.beneficio.toLowerCase() + ' · ' + validade(cup).t.toLowerCase() : 'Os cupons dos clubes aparecem depois do login';
+    var lista = ofertasDaAba(), vis = lista.filter(function(o){ return !escondida(o); }).sort(function(a, b){ return nota(b) - nota(a); });
+    var top = vis[0];
+    $('sumTop').textContent = top ? '−' + pct(top) + '%' : '—';
+    $('sumTopS').textContent = top ? top.produto.split(' · ')[0] + ' · ' + G[top.rede].nome + (porQue(top) ? ' · ' + porQue(top).toLowerCase() : '') : 'Nada por enquanto';
+    var esc_ = lista.length - vis.length;
+    $('sumHid').textContent = String(esc_);
+    $('toggleHid').hidden = esc_ === 0;
+    $('toggleHid').textContent = ui.verOcultas ? 'Esconder de novo' : 'Ver quais são';
+  }
+  $('toggleHid').addEventListener('click', function(){ ui.verOcultas = !ui.verOcultas; salvarUI(); pintaResumo(); pintaDeals(); });
+
+  function pintaFiltros(){
+    var opcoes = [{id:'todas', nome:'Todas'}].concat(arr(CAT.redes).filter(function(r){ return acompanha(r.id); }));
+    $('filters').innerHTML = opcoes.map(function(r){ return '<button type="button" data-rede="' + r.id + '" aria-pressed="' + (r.id === filtro) + '">' + esc(r.nome) + '</button>'; }).join('');
+  }
+  $('filters').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    filtro = b.dataset.rede; menuAberto = null;
+    Array.prototype.forEach.call(this.querySelectorAll('button'), function(x){ x.setAttribute('aria-pressed', String(x === b)); });
+    pintaDeals();
+  });
+
+  var ROT_PRECO = {promo:'De', clube:'Sem clube', atacado:'Unitário'};
+  function tagPrincipal(o){ return arr(o.tags).filter(function(t){ return NUNCA.indexOf(t) >= 0; })[0] || arr(o.tags).filter(function(t){ return ROTULO_TAG[t] && t !== 'alimentos'; })[0]; }
+  function pintaDeals(){
+    var base = ofertasDaAba().filter(function(o){ return filtro === 'todas' || o.rede === filtro; });
+    var vis = base.filter(function(o){ return !escondida(o); }).sort(function(a, b){ return nota(b) - nota(a); });
+    var ocu = ui.verOcultas ? base.filter(function(o){ return escondida(o); }) : [];
+    if (!vis.length && !ocu.length){
+      var n = filtro !== 'todas' && G[filtro] ? G[filtro].nota : '';
+      $('deals').innerHTML = '<li class="empty">' + esc(n || (base.length ? 'Todas as ofertas daqui foram escondidas pelo seu perfil.' : 'Nenhuma oferta encontrada ainda nas lojas que você acompanha.')) + '</li>';
+      return;
+    }
+    $('deals').innerHTML = vis.map(function(o){ return linhaOferta(o, null); }).join('') + ocu.map(function(o){ return linhaOferta(o, escondida(o)); }).join('');
+  }
+  function linhaOferta(o, oc){
+    var tipo = o.tipo || 'promo', id = idOf(o);
+    var rec = o.receita === 'tarja' ? '<span class="tarja">Tarja vermelha · com receita</span>' : o.receita === 'mip' ? '<span class="tarja mip">Sem receita</span>' : '';
+    var cond = o.condicao ? '<span>' + esc(o.condicao) + '</span>' : '';
+    var tag = tipo === 'clube' ? '<span class="tag">Clube</span>' : tipo === 'atacado' ? '<span class="tag">Atacado</span>' : '';
+    var un = o.unidade ? '<span class="un">/' + esc(o.unidade) + '</span>' : '';
+    var why = oc ? '<p class="why off-why">' + esc(oc.txt) + '</p>' : (porQue(o) ? '<p class="why">' + esc(porQue(o)) + '</p>' : '');
+    var acao;
+    if (oc){
+      acao = oc.tipo === 'perfil'
+        ? '<button type="button" class="hide-btn" data-act="perfil">Ajustar no perfil</button>'
+        : '<button type="button" class="hide-btn" data-act="mostrar" data-id="' + esc(id) + '"' + (oc.tag ? ' data-tag="' + oc.tag + '"' : '') + '>Mostrar de novo</button>';
+    } else {
+      acao = '<button type="button" class="hide-btn" data-act="menu" data-id="' + esc(id) + '" aria-expanded="' + (menuAberto === id) + '">Não mostrar</button>';
+    }
+    var menu = '';
+    if (!oc && menuAberto === id){
+      var tp = tagPrincipal(o);
+      menu = '<div class="hide-menu"><span>Esconder:</span>'
+        + '<button type="button" class="ghost" data-act="esconder" data-id="' + esc(id) + '">Só esta oferta</button>'
+        + (tp ? '<button type="button" class="ghost" data-act="nunca" data-tag="' + tp + '">Nada de ' + esc(ROTULO_TAG[tp]) + '</button>' : '')
+        + '<button type="button" class="hide-btn" data-act="fechar">Cancelar</button></div>';
+    }
+    return '<li class="deal' + (oc ? ' muted' : '') + '">'
+      + '<div><p class="d-prod">' + esc(o.produto) + '</p>' + why
+      + '<p class="d-meta"><span>' + esc(G[o.rede].nome) + '</span>' + cond + rec + acao + '</p></div>'
+      + '<div class="price num"><span class="de">' + ROT_PRECO[tipo] + ' <s>' + brl.format(o.preco_normal) + '</s></span><span class="por">' + tag + brl.format(o.preco_oferta) + un + '</span></div>'
+      + '<span class="off num">−' + pct(o) + '%</span>'
+      + menu + '</li>';
+  }
+  $('deals').addEventListener('click', function(e){
+    var b = e.target.closest('button[data-act]'); if (!b) return;
+    var act = b.dataset.act;
+    if (act === 'menu'){ menuAberto = menuAberto === b.dataset.id ? null : b.dataset.id; pintaDeals(); return; }
+    if (act === 'fechar'){ menuAberto = null; pintaDeals(); return; }
+    if (act === 'perfil'){ irPara('perfil'); window.scrollTo(0, 0); return; }
+    if (act === 'esconder'){ estado.ocultas.push(b.dataset.id); menuAberto = null; salvar('Oferta escondida'); }
+    if (act === 'nunca'){ if (estado.perfil.nunca.indexOf(b.dataset.tag) < 0) estado.perfil.nunca.push(b.dataset.tag); menuAberto = null; salvar('Você não vai mais ver ' + ROTULO_TAG[b.dataset.tag]); }
+    if (act === 'mostrar'){ if (b.dataset.tag) tira(estado.perfil.nunca, b.dataset.tag); else tira(estado.ocultas, b.dataset.id); salvar('Volta a aparecer'); }
+    pintaOfertasTela(); pintaPerfil();
+  });
+
+  function pintaCupons(){
+    var lista = arr(CAT.cupons).filter(function(c){ return acompanha(c.rede); });
+    if (!lista.length){ $('tickets').innerHTML = '<p class="empty">Nenhum cupom das lojas que você acompanha.</p>'; return; }
+    $('tickets').innerHTML = lista.map(function(c, i){
+      var v = validade(c);
+      var stub = c.codigo
+        ? '<code class="code" id="code-' + i + '">' + esc(c.codigo) + '</code><button type="button" class="copy" data-code="' + esc(c.codigo) + '" data-target="code-' + i + '">Copiar</button>'
+        : '<span class="lock">' + (c.status === 'login' ? 'Precisa de login' : 'Sem código próprio') + '</span>';
+      return '<article class="ticket ' + esc(c.status) + '">'
+        + '<div class="t-main"><p class="t-rede">' + esc(G[c.rede].nome) + '</p><p class="t-ben num">' + esc(c.beneficio) + '</p><p class="t-cond num">' + esc(c.condicao) + '</p></div>'
+        + '<div class="stub">' + stub + '<span class="chip ' + v.k + '">' + esc(v.t) + '</span></div></article>';
+    }).join('');
+  }
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('.copy'); if (!b) return;
+    function volta(){ setTimeout(function(){ b.textContent = 'Copiar'; }, 1600); }
+    function seleciona(){
+      var r = document.createRange(); r.selectNodeContents($(b.dataset.target));
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      b.textContent = 'Selecionado'; volta();
+    }
+    try { navigator.clipboard.writeText(b.dataset.code).then(function(){ b.textContent = 'Copiado'; volta(); }, seleciona); } catch(err){ seleciona(); }
+  });
+
+  // ===== Minha lista =====
+  function ritmo(compras){
+    var c = arr(compras).slice().sort();
+    if (!c.length) return {txt:'Toque em "Comprei hoje" quando comprar para o painel aprender seu ritmo.', dias:null};
+    if (c.length < 2) return {txt:'Última compra em ' + dataBR(c[0]) + '. Mais uma compra e o painel já prevê a próxima.', dias:null};
+    var soma_ = 0; for (var i = 1; i < c.length; i++) soma_ += (utc(c[i]) - utc(c[i-1])) / 86400000;
+    var media = Math.max(1, Math.round(soma_ / (c.length - 1)));
+    var dias = diasAte(soma(c[c.length - 1], media));
+    var fim = dias < 0 ? 'já deve ter acabado' : dias === 0 ? 'deve acabar hoje' : dias === 1 ? 'deve acabar amanhã' : 'deve acabar em ' + dias + ' dias';
+    return {txt:'Você compra a cada ~' + media + ' dias · ' + fim, dias:dias};
+  }
+  function precosDe(produto){
+    var k = norm(produto), item = arr(D.lista).filter(function(i){ return norm(i.produto) === k; })[0];
+    if (!item) return [];
+    return Object.keys(item.precos).filter(function(id){ return catAtiva(id) && acompanha(id); })
+      .map(function(id){ return {id:id, v:item.precos[id]}; }).sort(function(a, b){ return a.v - b.v; });
+  }
+  function plural(n, cat){ var c = D.categorias.filter(function(x){ return x.id === cat; })[0]; return n + ' ' + (n > 1 ? c.nome : c.singular).toLowerCase(); }
+  function pintaLista(){
+    var itens = estado.lista.map(function(it, i){ var r = ritmo(it.compras); return {it:it, i:i, r:r}; })
+      .sort(function(a, b){
+        var x = a.r.dias == null ? 9999 : a.r.dias, y = b.r.dias == null ? 9999 : b.r.dias;
+        return x - y || a.i - b.i;
+      });
+    if (!itens.length){ $('wish').innerHTML = '<li class="empty">Sua lista está vazia. Adicione o que você compra sempre.</li>'; return; }
+    $('wish').innerHTML = itens.map(function(x){
+      var p = precosDe(x.it.produto), soon = x.r.dias != null && x.r.dias <= 3;
+      var acoes = '<div class="i-actions"><button type="button" class="ghost" data-comprei="' + x.i + '">Comprei hoje</button><button type="button" class="rm" data-rm="' + x.i + '">remover</button>';
+      if (!p.length){
+        return '<li class="item wait"><div class="i-head"><p class="i-prod">' + esc(x.it.produto) + '</p></div>'
+          + '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>'
+          + '<div class="i-best"><span class="lbl">Procurando</span><span class="i-wait">Os preços aparecem na próxima atualização, ' + esc(quando(D.proxima_atualizacao)) + '.</span></div>'
+          + acoes + '</div></li>';
+      }
+      var best = p[0], max = p[p.length - 1].v, conta = {};
+      p.forEach(function(y){ conta[G[y.id].cat] = (conta[G[y.id].cat] || 0) + 1; });
+      var onde = D.categorias.filter(function(c){ return conta[c.id]; }).map(function(c){ return plural(conta[c.id], c.id); }).join(' e ');
+      return '<li class="item"><div class="i-head"><p class="i-prod">' + esc(x.it.produto) + '</p>' + (p.length > 1 ? '<span class="i-save num">economia de ' + brl.format(max - best.v) + '</span>' : '') + '</div>'
+        + '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>'
+        + '<div class="i-best"><span class="lbl">Mais barato</span><span class="por num">' + brl.format(best.v) + '</span><span class="i-store">' + esc(G[best.id].nome) + ' <span class="chip">' + esc(G[best.id].singular) + '</span></span></div>'
+        + (p.length > 1 ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li>' + esc(G[y.id].curto) + ' <b>' + brl.format(y.v) + '</b></li>'; }).join('') + '</ul>' : '')
+        + acoes + '<span class="i-foot">Em ' + onde + '</span></div></li>';
+    }).join('');
+  }
+  $('wish').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.comprei != null){
+      var it = estado.lista[Number(b.dataset.comprei)], hoje = hojeSP();
+      if (it.compras.indexOf(hoje) < 0) it.compras.push(hoje);
+      salvar('Compra registrada'); pintaLista(); return;
+    }
+    if (b.dataset.rm != null){
+      var nome = estado.lista[Number(b.dataset.rm)].produto;
+      estado.lista.splice(Number(b.dataset.rm), 1); salvar('"' + nome + '" saiu da lista'); pintaLista(); pintaOfertasTela();
+    }
+  });
+  $('addForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var nome = $('novoItem').value.trim(), msg = $('addMsg');
+    if (nome.length < 3){ msg.className = 'hint err'; msg.textContent = 'Escreva o nome do produto, com tamanho ou dosagem se tiver.'; return; }
+    if (estado.lista.some(function(i){ return norm(i.produto) === norm(nome); })){ msg.className = 'hint err'; msg.textContent = 'Esse produto já está na lista.'; return; }
+    estado.lista.push({produto:nome, compras:[]}); $('novoItem').value = '';
+    msg.className = 'hint ok'; msg.textContent = '"' + nome + '" entrou na lista. O Claude procura em farmácias e mercados na próxima atualização.';
+    salvar('Adicionado à lista'); pintaLista(); pintaOfertasTela();
+  });
+
+  // ===== Lojas =====
+  function pintaLojas(){
+    var ativas = D.categorias.filter(function(c){ return estado.categorias.indexOf(c.id) >= 0; });
+    $('lojasCats').innerHTML = ativas.map(function(c){
+      var rows = arr(c.lojas).slice().sort(function(a, b){ return a.distancia_km - b.distancia_km; }).map(function(l){
+        var on = acompanha(l.rede), longe = l.distancia_km > estado.raio_km;
+        var txt = longe ? (on ? 'Mais longe, mas você acompanha' : 'Mais longe que ' + estado.raio_km + ' km') : (on ? l.horario : 'Você não acompanha');
+        return '<li class="row has-track' + (on ? '' : ' out') + '">'
+          + '<label class="track"><input type="checkbox" data-rede="' + l.rede + '"' + (on ? ' checked' : '') + '><span class="r-name">' + esc(G[l.rede].nome) + '</span></label>'
+          + '<span class="r-val num">' + km(l.distancia_km) + '</span>'
+          + '<span class="r-sub"><span>' + esc(txt) + '</span>' + arr(l.fontes).map(function(f){ return '<span class="src">' + esc(f) + '</span>'; }).join('') + '</span></li>';
+      });
+      estado.lojas.adicionar.forEach(function(a, i){
+        if (a.categoria !== c.id) return;
+        rows.push('<li class="row"><span class="r-name">' + esc(a.nome) + '</span><button type="button" class="rm" data-loja="' + i + '">remover</button><span class="r-sub"><span>Adicionada por você · entra na próxima atualização</span></span></li>');
+      });
+      return '<div class="group"><h3>' + esc(c.nome) + '</h3><ul class="rows">' + rows.join('') + '</ul></div>';
+    }).join('');
+    $('novaLojaCat').innerHTML = ativas.map(function(c){ return '<option value="' + c.id + '">' + esc(c.singular) + '</option>'; }).join('');
+  }
+  $('lojasCats').addEventListener('change', function(e){
+    var c = e.target.closest('input[data-rede]'); if (!c) return;
+    setAcompanha(c.dataset.rede, c.checked);
+    salvar(c.checked ? 'Você passa a acompanhar ' + G[c.dataset.rede].nome : G[c.dataset.rede].nome + ' não aparece mais');
+    tudo();
+  });
+  $('lojasCats').addEventListener('click', function(e){
+    var b = e.target.closest('.rm[data-loja]'); if (!b) return;
+    estado.lojas.adicionar.splice(Number(b.dataset.loja), 1); salvar('Loja removida'); pintaLojas();
+  });
+  $('addLoja').addEventListener('submit', function(e){
+    e.preventDefault();
+    var nome = $('novaLoja').value.trim(), msg = $('lojaMsg');
+    if (nome.length < 3){ msg.className = 'hint err'; msg.textContent = 'Escreva o nome da loja e, se souber, a rua.'; return; }
+    estado.lojas.adicionar.push({categoria:$('novaLojaCat').value, nome:nome}); $('novaLoja').value = '';
+    msg.className = 'hint ok'; msg.textContent = '"' + nome + '" entra na próxima atualização.';
+    salvar('Loja adicionada'); pintaLojas();
+  });
+
+  function pintaContas(){
+    var linhas = [];
+    D.categorias.forEach(function(c){
+      if (estado.categorias.indexOf(c.id) < 0) return;
+      arr(c.contas).forEach(function(a){
+        if (!acompanha(a.rede)) return;
+        var chip = a.status === 'conectada' ? '<span class="chip real">Conectado</span>' : '<span class="chip warn">Falta entrar</span>';
+        linhas.push('<li class="row"><span class="r-name">' + esc(G[a.rede].nome) + '</span>' + chip + '<span class="r-sub">' + esc(a.libera) + '</span></li>');
+      });
+    });
+    $('contasList').innerHTML = linhas.join('') || '<li class="empty">Nenhuma loja que você acompanha tem clube.</li>';
+  }
+
+  // ===== Perfil =====
+  function picks(el, itens, sel){
+    $(el).innerHTML = itens.map(function(x){ return '<button type="button" class="pick" data-v="' + x.id + '" aria-pressed="' + (sel.indexOf(x.id) >= 0) + '">' + esc(x.nome) + '</button>'; }).join('');
+  }
+  function proximoDia(ids){
+    if (!ids.length) return null;
+    var hoje = hojeSP();
+    for (var k = 1; k <= 7; k++){ var iso = soma(hoje, k), wd = new Date(utc(iso)).getUTCDay(); if (ids.indexOf(DIAS[wd].id) >= 0) return iso; }
+    return null;
+  }
+  function pintaAviso(){
+    var r = estado.cotidiano, partes = [];
+    if (r.avisar === 'nao'){ $('proxAviso').innerHTML = '<span>Sem avisos no celular. O painel continua atualizando toda semana.</span>'; return; }
+    [['mercado', 'Mercado'], ['farmacia', 'Farmácia']].forEach(function(par){
+      var d = proximoDia(r[par[0]]); if (!d) return;
+      var av = r.avisar === 'vespera' ? soma(d, -1) : d;
+      partes.push('<span><strong>' + par[1] + ' ' + esc(diaLongo(d)) + '</strong> · aviso ' + (r.avisar === 'vespera' ? 'na véspera, ' : 'no dia, ') + esc(diaLongo(av)) + '</span>');
+    });
+    $('proxAviso').innerHTML = partes.length
+      ? partes.join('') + '<span class="hint">O aviso traz as ofertas da sua lista nas lojas que você acompanha, pelo app do Home Assistant.</span>'
+      : '<span>Escolha os dias em que você costuma comprar para receber o aviso com as ofertas certas.</span>';
+  }
+  function pintaPerfil(){
+    var p = estado.perfil, r = estado.cotidiano;
+    if (estado.cep && document.activeElement !== $('cep')) $('cep').value = estado.cep;
+    $('raio').value = String(estado.raio_km);
+    $('catsCfg').innerHTML = D.categorias.map(function(c){ return '<label><input type="checkbox" value="' + c.id + '"' + (estado.categorias.indexOf(c.id) >= 0 ? ' checked' : '') + '> ' + esc(c.nome) + '</label>'; }).join('');
+    $('pAdultos').value = p.adultos; $('pCriancas').value = p.criancas; $('pBebes').value = p.bebes;
+    picks('pPets', PETS, p.pets);
+    $('casaHint').textContent = p.criancas + p.bebes === 0 ? 'Sem crianças: fraldas, papinhas e produtos de bebê ficam escondidos.' : 'Com crianças: produtos infantis aparecem.';
+    picks('pRestr', RESTR, p.restricoes);
+    picks('pInt', INTERESSES.map(function(t){ return {id:t, nome:cap(ROTULO_TAG[t])}; }), p.interesses);
+    picks('pNunca', NUNCA.map(function(t){ return {id:t, nome:cap(ROTULO_TAG[t])}; }), p.nunca);
+    picks('dMercado', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.mercado);
+    picks('dFarmacia', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.farmacia);
+    $('avisar').value = r.avisar;
+    pintaAviso();
+  }
+  var ALVO = {pPets:function(){ return estado.perfil.pets; }, pRestr:function(){ return estado.perfil.restricoes; }, pInt:function(){ return estado.perfil.interesses; },
+    pNunca:function(){ return estado.perfil.nunca; }, dMercado:function(){ return estado.cotidiano.mercado; }, dFarmacia:function(){ return estado.cotidiano.farmacia; }};
+  $('v-perfil').addEventListener('click', function(e){
+    var b = e.target.closest('.pick'); if (!b) return;
+    var grupo = b.parentNode.id; if (!ALVO[grupo]) return;
+    alterna(ALVO[grupo](), b.dataset.v);
+    salvar(); tudo();
+  });
+  ['pAdultos', 'pCriancas', 'pBebes'].forEach(function(id){
+    $(id).addEventListener('change', function(){
+      var campo = {pAdultos:'adultos', pCriancas:'criancas', pBebes:'bebes'}[id];
+      estado.perfil[campo] = n0(this.value, 0); this.value = estado.perfil[campo];
+      salvar(); tudo();
+    });
+  });
+  $('avisar').addEventListener('change', function(){ estado.cotidiano.avisar = this.value; salvar(); pintaAviso(); });
+
+  function mascara(v){ var d = v.replace(/\D/g, '').slice(0, 8); return d.length > 5 ? d.slice(0, 5) + '-' + d.slice(5) : d; }
+  $('cep').addEventListener('input', function(){ this.value = mascara(this.value); });
+  $('ondeForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var msg = $('ondeMsg'), cep = mascara($('cep').value);
+    var cats = Array.prototype.filter.call($('catsCfg').querySelectorAll('input'), function(i){ return i.checked; }).map(function(i){ return i.value; });
+    if (cep.replace('-', '').length !== 8){ msg.className = 'hint err'; msg.textContent = 'Digite os 8 números do CEP.'; $('cep').focus(); return; }
+    if (!cats.length){ msg.className = 'hint err'; msg.textContent = 'Marque pelo menos farmácias ou mercados.'; return; }
+    estado.cep = cep; estado.raio_km = Number($('raio').value); estado.categorias = cats;
+    msg.className = 'hint ok'; msg.textContent = 'Salvo. A próxima atualização, ' + quando(D.proxima_atualizacao) + ', procura as lojas perto deste CEP.';
+    salvar('Endereço salvo'); tudo();
+  });
+
+  // ---------- início ----------
+  function iniciar(){
+    $('hello').textContent = usuario ? 'Olá, ' + usuario : 'Perto de casa';
+    $('syncText').textContent = 'Atualizado ' + quando(D.gerado_em) + ' · próxima atualização ' + quando(D.proxima_atualizacao);
+    $('banner').hidden = !exemplo;
+    tudo(); irPara(ui.view);
+  }
+  function usarExemplo(){
+    MODO = 'exemplo'; D = EX; exemplo = true; indexa();
+    estado = normaliza(lerLocal(KEY) || EX.config_exemplo); iniciar();
+  }
+  // Dentro do Home Assistant, o add-on responde em api/estado. Fora dele (como aqui), usa o exemplo.
+  var ctrl = window.AbortController ? new AbortController() : null;
+  var limite = setTimeout(function(){ if (ctrl) ctrl.abort(); }, 2500);
+  fetch('api/estado', {headers:{Accept:'application/json'}, cache:'no-store', signal:ctrl ? ctrl.signal : undefined})
+    .then(function(r){ var ct = r.headers.get('content-type') || ''; if (!r.ok || ct.indexOf('json') < 0) throw new Error('sem add-on'); return r.json(); })
+    .then(function(api){
+      clearTimeout(limite);
+      MODO = 'addon'; usuario = api.usuario || null;
+      D = api.ofertas && api.ofertas.categorias ? api.ofertas : EX; exemplo = D === EX; indexa();
+      estado = normaliza(api.config || (exemplo ? EX.config_exemplo : null)); iniciar();
+    })
+    .catch(function(){ clearTimeout(limite); usarExemplo(); });
+})();
+</script>
+
+</html>
