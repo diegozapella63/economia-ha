@@ -85,6 +85,13 @@ class ErroBusca(Exception):
     pass
 
 
+class ErroFormato(ErroBusca):
+    """A IA respondeu texto em vez do JSON pedido; guarda um trecho para mostrar e registrar."""
+    def __init__(self, trecho=""):
+        self.trecho = " ".join(str(trecho or "").split())[:220]
+        super().__init__("A IA respondeu fora do formato esperado." + (f" Ela disse: \"{self.trecho}\"" if self.trecho else ""))
+
+
 def log(msg):
     print(f"[ofertas] {datetime.now().strftime('%H:%M:%S')} {msg}", flush=True)
 
@@ -365,9 +372,10 @@ def opcoes():
     return ler_json(OPTIONS, {}) or {}
 
 
-SEM_BUSCA = ("A IA escolhida não usou a busca na web. Na Anthropic, ligue a busca na web nas opções da tarefa de IA. "
-             "No Google Gemini, a Pesquisa Google só funciona num assistente de conversa: ligue \"Enable Google Search tool\" "
-             "nele e escolha esse assistente em Mais → IA do Home Assistant → Para buscar ofertas.")
+COMO_BUSCA = ("Na Anthropic, ligue a busca na web nas opções da tarefa de IA. "
+              "No Google Gemini, a Pesquisa Google só funciona num assistente de conversa: ligue \"Enable Google Search tool\" "
+              "nele e escolha esse assistente em Mais → IA do Home Assistant → Para buscar ofertas.")
+SEM_BUSCA = "A IA escolhida não usou a busca na web. " + COMO_BUSCA
 
 
 def ia_escolhida(uso):
@@ -383,11 +391,13 @@ def extrai_json(dado):
         raise ErroBusca("A IA não devolveu resposta.")
     ini, fim = dado.find("{"), dado.rfind("}")
     if ini < 0 or fim <= ini:
-        raise ErroBusca("A IA respondeu fora do formato esperado.")
+        log("resposta fora do formato: " + " ".join(dado.split())[:400])
+        raise ErroFormato(dado)
     try:
         return json.loads(dado[ini:fim + 1])
     except ValueError as e:
-        raise ErroBusca("A IA respondeu fora do formato esperado.") from e
+        log("JSON inválido da IA: " + " ".join(dado.split())[:400])
+        raise ErroFormato(dado) from e
 
 
 def chamar_conversa(agente, instrucoes):
@@ -474,6 +484,8 @@ def testar_ia(uso):
         r = chamar_ai_task("EconomIA: teste", f"""Teste rápido do EconomIA ({hoje_br()}). Use a busca na web agora para achar o preço atual de café torrado e moído 500 g em algum supermercado do Brasil.
 Responda somente com um objeto JSON, sem texto antes ou depois: {{"busca": true, "exemplo": "loja e preço que você achou", "fonte": "URL"}}
 Se não conseguir usar a busca na web, responda apenas {{"erro": "sem_busca"}}.""")
+    except ErroFormato as e:
+        return {"ok": False, "msg": "A IA respondeu sem usar a busca na web" + (f" (\"{e.trecho[:140]}\")" if e.trecho else "") + ". " + COMO_BUSCA}
     except ErroBusca as e:
         return {"ok": False, "msg": str(e)}
     if r.get("erro") == "sem_busca" or not url_ok(r.get("fonte")):
@@ -1124,7 +1136,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.9.0"
+    server_version = "EconomIA/0.9.1"
 
     def log_message(self, fmt, *args):
         pass
