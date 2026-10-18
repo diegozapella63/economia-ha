@@ -1,5 +1,5 @@
-name: Ofertas do Bairro
-version: "0.3.0"
+name: EconomIA
+version: "0.5.0"
 slug: ofertas_do_bairro
 description: Cupons, ofertas e sua lista de compras nas farmácias, mercados e pet shops perto de casa
 arch:
@@ -10,4 +10,9 @@ init: false
 ingress: true
 ingress_port: 8099
 panel_icon: mdi:tag-heart-outline
-panel_title: Ofertas
+panel_title: EconomIA
+homeassistant_api: true
+options:
+  ai_task_entity: ""
+schema:
+  ai_task_entity: str?

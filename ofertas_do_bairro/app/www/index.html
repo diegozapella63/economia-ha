@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}</style>
-<title>Ofertas do Bairro</title>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}</style>
+<title>EconomIA</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<script>try{var t=(JSON.parse(localStorage.getItem('ofertas-bairro:ui'))||{}).tema||'escuro';if(t!=='auto')document.documentElement.setAttribute('data-theme',t==='claro'?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..800&family=Atkinson+Hyperlegible+Mono:wght@500;600&family=Atkinson+Hyperlegible+Next:wght@400;600&display=swap">
@@ -28,6 +29,10 @@
   --warn-soft:#FAEDCC;
   --ticket:#FFF6D6;
   --ticket-line:#CDB062;
+  --tag-bg:#0D7356;
+  --tag-ink:#FFFFFF;
+  --tag-line:rgba(255,255,255,.5);
+  --tag-ring:#86CDB4;
   --font-display:"Archivo","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
   --font-body:"Atkinson Hyperlegible Next","Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --font-mono:"Atkinson Hyperlegible Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
@@ -38,6 +43,7 @@
     --accent:#45C89B; --accent-soft:#153A2D; --on-accent:#05251A;
     --deal:#FF8673; --deal-soft:#3C1F1A; --warn:#EFC063; --warn-soft:#342912;
     --ticket:#25220F; --ticket-line:#6E612F; color-scheme:dark;
+    --tag-bg:#45C89B; --tag-ink:#05251A; --tag-line:rgba(5,37,26,.45); --tag-ring:#A9E8D0;
   }
 }
 :root[data-theme="dark"]{
@@ -45,6 +51,7 @@
   --accent:#45C89B; --accent-soft:#153A2D; --on-accent:#05251A;
   --deal:#FF8673; --deal-soft:#3C1F1A; --warn:#EFC063; --warn-soft:#342912;
   --ticket:#25220F; --ticket-line:#6E612F; color-scheme:dark;
+  --tag-bg:#45C89B; --tag-ink:#05251A; --tag-line:rgba(5,37,26,.45); --tag-ring:#A9E8D0;
 }
 
 *{box-sizing:border-box}
@@ -57,19 +64,46 @@ button{font:inherit;cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
 .num{font-variant-numeric:tabular-nums}
 
-.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:22px 48px;display:flex;flex-direction:column;gap:18px}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:22px calc(104px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:18px}
 
 /* topo */
 .eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
-h1{font-family:var(--font-display);font-stretch:68%;font-weight:800;text-transform:uppercase;font-size:clamp(2.3rem,6.4vw,3.6rem);line-height:.92;letter-spacing:.005em;margin-top:6px;text-wrap:balance}
+.brand{font-family:var(--font-display);font-stretch:80%;font-weight:800;font-size:16px;letter-spacing:.01em;text-transform:none;color:var(--ink)}
+.brand span{color:var(--accent)}
+h1{font-family:var(--font-display);font-stretch:72%;font-weight:800;font-size:clamp(2.2rem,6vw,3rem);line-height:1;letter-spacing:.005em;margin-top:4px;text-wrap:balance}
 .sync{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:12px;color:var(--muted);font-size:13.5px}
 .sync .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);flex:none}
 
-.views{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
-.views::-webkit-scrollbar{display:none}
-.views button{background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;padding:10px 14px 8px;font-family:var(--font-display);font-stretch:80%;font-weight:750;font-size:1.15rem;color:var(--muted);white-space:nowrap}
-.views button:hover{color:var(--ink)}
-.views button[aria-current="page"]{color:var(--ink);border-bottom-color:var(--accent)}
+/* menu fixo embaixo, com a busca no centro */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--line);padding-top:6px;padding-bottom:calc(6px + env(safe-area-inset-bottom,0px));padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+.tabbar-in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:end}
+.tab{background:none;border:0;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;font-size:12.5px;font-weight:600;min-width:0;white-space:nowrap}
+.tab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab:hover{color:var(--ink)}
+.tab[aria-current="page"]{color:var(--ink)}
+.tab[aria-current="page"] svg{stroke:var(--accent)}
+.tab-main{color:var(--ink)}
+.tab-main .pill{display:grid;place-items:center;width:58px;height:38px;border-radius:12px;background:var(--accent)}
+.tab-main .pill svg{stroke:var(--on-accent)}
+.tab-main:disabled{cursor:progress}
+.tab-main:disabled .pill{opacity:.8}
+@keyframes gira{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:no-preference){.tab-main.girando .ic-gira{animation:gira 1s linear infinite}}
+.busca-msg{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:13.5px;color:var(--muted)}
+.busca-msg.ok{color:var(--accent)}
+.busca-msg.err{color:var(--deal);border-color:var(--deal)}
+
+/* Mais: dados e ajustes */
+h2.big{font-family:var(--font-display);font-stretch:75%;font-weight:800;font-size:1.9rem;line-height:1.05;letter-spacing:.005em}
+.settings{gap:0;padding-block:4px}
+.set-head{display:flex;flex-direction:column;gap:4px;padding:12px 0}
+.set-head h2{font-family:var(--font-display);font-stretch:80%;font-weight:750;font-size:1.3rem}
+.set-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;padding:14px 0;border-top:1px solid var(--line)}
+.set-row > div:first-child{flex:1 1 240px;min-width:0}
+.set-t{font-size:15px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink)}
+.seg{display:inline-flex;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:4px;gap:2px;max-width:100%}
+.seg button{background:none;border:0;border-radius:9px;padding:8px 16px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
 .banner{background:var(--warn-soft);border-radius:12px;padding:10px 14px;font-size:13.5px}
 .banner strong{color:var(--warn)}
 .view{display:flex;flex-direction:column;gap:18px}
@@ -113,6 +147,8 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .btn:hover{filter:brightness(1.07)}
 .ghost{background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:4px 10px;font-size:12.5px;font-weight:600}
 .ghost:hover{border-color:var(--accent);color:var(--accent)}
+.ghost.big{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;font-size:14.5px;text-decoration:none;cursor:pointer}
+.ghost.big svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .hint{font-size:12.5px;color:var(--muted)}
 .hint.ok{color:var(--accent)}
 .hint.err{color:var(--deal)}
@@ -178,6 +214,24 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .deal.muted .d-prod,.deal.muted .por{color:var(--muted)}
 .deal.muted .off{background:var(--bg);color:var(--muted)}
 
+/* abertura: etiqueta de preço com a economia possível */
+.hero{display:flex;flex-direction:column;gap:14px;padding-top:36px}
+.tag-wrap{position:relative;max-width:640px;transform:rotate(-1.4deg);transform-origin:45px -34px}
+.tag-wrap::before{content:"";position:absolute;z-index:2;left:44px;top:-36px;bottom:50%;width:2px;border-radius:2px;background:var(--muted);transform:rotate(-3deg);transform-origin:top}
+@media (prefers-reduced-motion:no-preference){.tag-wrap{animation:balanca 1.8s cubic-bezier(.2,.7,.3,1) both}}
+@keyframes balanca{0%{transform:rotate(-8deg)}40%{transform:rotate(1.6deg)}70%{transform:rotate(-2.6deg)}100%{transform:rotate(-1.4deg)}}
+.tag{position:relative;z-index:1;background:var(--tag-bg);color:var(--tag-ink);clip-path:polygon(30px 0,100% 0,100% 100%,30px 100%,0 calc(100% - 30px),0 30px);padding:22px 24px 22px 92px;min-height:156px;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.tag::before{content:"";position:absolute;left:76px;top:16px;bottom:16px;border-left:2px dashed var(--tag-line)}
+.tag-hole{position:absolute;left:31px;top:50%;width:28px;height:28px;margin-top:-14px;border-radius:50%;background:var(--bg);box-shadow:0 0 0 5px var(--tag-ring)}
+.tag-eyebrow{font-weight:600;font-size:14px;opacity:.85}
+.tag-valor{font-family:var(--font-display);font-stretch:70%;font-weight:800;font-size:clamp(2.7rem,11vw,4.4rem);line-height:.95;letter-spacing:.005em}
+.tag-sub{font-size:14px;opacity:.88;max-width:42ch}
+.hero-chips{display:flex;flex-wrap:wrap;gap:8px}
+.hchip{background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:7px 14px;font-weight:600;font-size:13.5px}
+.hchip:hover{border-color:var(--accent);color:var(--accent)}
+.comecar{display:flex;flex-direction:column;gap:10px}
+@media (max-width:640px){.tag{padding-left:80px;min-height:140px}.tag::before{left:66px}.tag-hole{left:24px}.tag-wrap::before{left:37px}.tag-wrap{transform-origin:38px -34px}}
+
 /* minha lista */
 .wish-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:12px}
 .item{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
@@ -213,7 +267,7 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .note{font-size:13px;color:var(--muted)}
 
 footer{font-size:12.5px;color:var(--muted)}
-.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 16px;border-radius:999px;font-size:13.5px;font-weight:600;z-index:20;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 16px;border-radius:999px;font-size:13.5px;font-weight:600;z-index:20;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.18)}
 
 @media (max-width:900px){
   .cols,.cols.even{grid-template-columns:minmax(0,1fr)}
@@ -224,10 +278,9 @@ footer{font-size:12.5px;color:var(--muted)}
   .fact .k{flex:1 0 100%}
   .panel{padding:15px}
   .por{font-size:1.4rem}
-  .views button{padding:10px 11px 8px;font-size:1.05rem}
 }
 @media (prefers-reduced-motion:no-preference){
-  .btn,.copy,.ghost,.pick,.filters button,.cats button,.views button{transition:filter .15s,border-color .15s,color .15s,background .15s}
+  .btn,.copy,.ghost,.pick,.filters button,.cats button,.tab,.seg button{transition:filter .15s,border-color .15s,color .15s,background .15s}
 }
 </style>
 
@@ -401,19 +454,14 @@ footer{font-size:12.5px;color:var(--muted)}
 
 <div class="wrap">
   <header>
-    <p class="eyebrow" id="hello">Perto de casa</p>
-    <h1>Ofertas do Bairro</h1>
+    <p class="eyebrow" id="hello"><span class="brand">Econom<span>IA</span></span></p>
+    <h1 id="screenTitle">Minha lista</h1>
     <p class="sync"><span class="dot" aria-hidden="true"></span><span id="syncText">Carregando…</span></p>
   </header>
 
-  <nav class="views" id="views" aria-label="Telas">
-    <button type="button" data-view="ofertas">Ofertas</button>
-    <button type="button" data-view="lista">Minha lista</button>
-    <button type="button" data-view="lojas">Lojas</button>
-    <button type="button" data-view="perfil">Perfil</button>
-  </nav>
+  <p class="busca-msg" id="buscaMsg" aria-live="polite" hidden></p>
 
-  <p class="banner" id="banner" hidden><strong>Exemplo.</strong> Algumas ofertas de farmácia são reais, de 18/10. O resto é ilustrativo. Depois da primeira busca no seu CEP, aparecem as suas lojas e os seus preços.</p>
+  <p class="banner" id="banner" hidden><strong>Exemplo.</strong> <span id="bannerTxt">Algumas ofertas de farmácia são reais, de 18/10. O resto é ilustrativo.</span></p>
 
   <!-- OFERTAS -->
   <section class="view" id="v-ofertas" aria-label="Ofertas">
@@ -442,8 +490,24 @@ footer{font-size:12.5px;color:var(--muted)}
 
   <!-- MINHA LISTA -->
   <section class="view" id="v-lista" aria-label="Minha lista" hidden>
+    <section class="hero" aria-label="Oportunidades de economia">
+      <div class="tag-wrap">
+        <div class="tag">
+          <span class="tag-hole" aria-hidden="true"></span>
+          <p class="tag-eyebrow" id="heroOla">Bem-vindo</p>
+          <p class="tag-valor num" id="heroValor">EconomIA</p>
+          <p class="tag-sub" id="heroSub">Farmácias, mercados e pet shops perto de casa</p>
+        </div>
+      </div>
+      <div class="hero-chips" id="heroChips" hidden></div>
+    </section>
+    <div class="comecar" id="comecar" hidden>
+      <h2 class="big">Vamos começar</h2>
+      <p class="sec-meta">Já tem uma lista salva? Importe o arquivo .json e tudo volta. Se preferir, comece preenchendo o perfil da casa e adicionando aqui embaixo o que você compra sempre.</p>
+      <div class="row-form"><button type="button" class="btn" data-ir="mais">Preencher o perfil</button><button type="button" class="ghost big" data-ir="importar">Importar lista</button></div>
+    </div>
     <section class="panel" aria-labelledby="h-lista">
-      <div class="sec-head"><h2 id="h-lista">Minha lista</h2></div>
+      <div class="sec-head"><h2 id="h-lista">Itens da lista</h2></div>
       <p class="sec-meta">Uma lista só para farmácias, mercados e pet shops. O que está acabando aparece primeiro. Toque em "Comprei hoje" quando comprar: o painel aprende de quanto em quanto tempo cada coisa acaba.</p>
       <ul class="wish-grid" id="wish"></ul>
       <form class="row-form" id="addForm" novalidate>
@@ -472,14 +536,14 @@ footer{font-size:12.5px;color:var(--muted)}
         <div class="sec-head"><h2 id="h-contas">Clubes e contas</h2></div>
         <p class="sec-meta">Com login, aparecem os cupons e preços que cada clube dá só para você.</p>
         <ul class="rows" id="contasList"></ul>
-        <p class="note">Na primeira busca, o Claude abre o site do clube no seu computador e você entra uma vez. Depois o login fica guardado, e a senha não passa pelo painel.</p>
+        <p class="note">A busca usa o que as lojas publicam para todo mundo. Os cupons pessoais dos clubes, que pedem login, ficam para uma próxima versão.</p>
       </section>
     </div>
   </section>
 
   <!-- PERFIL -->
-  <section class="view" id="v-perfil" aria-label="Perfil" hidden>
-    <p class="sec-meta">O perfil decide o que aparece para você. Mudou aqui, muda na hora em todas as telas.</p>
+  <section class="view" id="v-mais" aria-label="Mais" hidden>
+    <div class="group"><h2 class="big">Perfil da casa</h2><p class="sec-meta">O perfil decide o que aparece para você. Mudou aqui, muda na hora em todas as telas.</p></div>
     <div class="cols even">
       <div class="col">
         <section class="panel" aria-labelledby="h-onde">
@@ -549,11 +613,53 @@ footer{font-size:12.5px;color:var(--muted)}
         </section>
       </div>
     </div>
+
+    <div class="group"><h2 class="big">Dados e ajustes</h2></div>
+    <section class="panel settings" aria-labelledby="h-exp">
+      <div class="set-head"><h2 id="h-exp">Exportar</h2><p class="sec-meta">Baixe sua lista para abrir no Excel, guardar ou levar para outro programa.</p></div>
+      <div class="set-row">
+        <div><h3 class="set-t">Planilha (Excel)</h3><p class="sec-meta">Um item por linha, com a loja mais barata, o preço em cada loja e as datas de compra.</p></div>
+        <a class="ghost big" id="expXlsx" href="api/exportar/lista.xlsx" download><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Baixar Excel</a>
+      </div>
+      <div class="set-row">
+        <div><h3 class="set-t">Dados completos (JSON)</h3><p class="sec-meta">Todos os campos, para backup ou para outro sistema.</p></div>
+        <a class="ghost big" id="expJson" href="api/exportar/lista.json" download><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Baixar JSON</a>
+      </div>
+    </section>
+    <section class="panel settings" aria-labelledby="h-imp">
+      <div class="set-head"><h2 id="h-imp">Importar</h2><p class="sec-meta">Traz uma lista de um arquivo .json exportado por aqui. Itens repetidos não duplicam, e as datas de compra são juntadas.</p></div>
+      <div class="set-row">
+        <div><h3 class="set-t">Importar lista (JSON)</h3><p class="sec-meta">Funciona pelo celular: escolha o arquivo nos seus downloads.</p></div>
+        <label class="ghost big" for="impArq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"/></svg>Escolher arquivo</label>
+        <input type="file" id="impArq" accept=".json,application/json" hidden>
+      </div>
+      <p class="hint" id="impMsg" aria-live="polite"></p>
+    </section>
+    <section class="panel settings" aria-labelledby="h-apar">
+      <div class="set-head"><h2 id="h-apar">Aparência</h2></div>
+      <div class="set-row">
+        <div><h3 class="set-t">Tema</h3><p class="sec-meta">Automático segue o modo claro ou escuro do aparelho.</p></div>
+        <div class="seg" id="tema" role="group" aria-label="Tema"></div>
+      </div>
+    </section>
+    <section class="panel settings" aria-labelledby="h-sobre">
+      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.5.0. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
+    </section>
   </section>
 
   <footer>Preço do site pode ser diferente do preço na loja. Confira validade e regras do cupom no carrinho.</footer>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 </div>
+
+<nav class="tabbar" id="views" aria-label="Telas">
+  <div class="tabbar-in">
+    <button type="button" class="tab" data-view="lista"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg>Minha lista</button>
+    <button type="button" class="tab" data-view="ofertas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/></svg>Ofertas</button>
+    <button type="button" class="tab tab-main" id="buscar"><span class="pill"><svg class="ic-busca" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><svg class="ic-gira" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></span><span id="buscarTxt">Buscar</span></button>
+    <button type="button" class="tab" data-view="lojas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Lojas</button>
+    <button type="button" class="tab" data-view="mais"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Mais</button>
+  </div>
+</nav>
 
 <script>
 (function(){
@@ -588,7 +694,8 @@ footer{font-size:12.5px;color:var(--muted)}
     return {t:'Até ' + dataBR(c.valido_ate) + '/' + c.valido_ate.slice(0, 4), k:''};
   }
   function pct(o){ return Math.round((1 - o.preco_oferta / o.preco_normal) * 100); }
-  function km(v){ return v.toFixed(1).replace('.', ',') + ' km'; }
+  function km(v){ return v == null || !isFinite(v) ? '—' : v.toFixed(1).replace('.', ',') + ' km'; }
+  function fonteLink(u){ return /^https?:\/\//.test(u || '') ? '<a href="' + esc(u) + '" target="_blank" rel="noopener">fonte</a>' : ''; }
 
   // ---------- vocabulário do perfil ----------
   var ROTULO_TAG = {bebe:'bebê e infantil', pet:'pet', alcool:'bebidas alcoólicas', geriatrico:'fraldas geriátricas', maquiagem:'maquiagem', medicamento:'medicamentos',
@@ -617,11 +724,20 @@ footer{font-size:12.5px;color:var(--muted)}
   function lerLocal(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } }
   function gravarLocal(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch(e){ return false; } }
   var ui = lerLocal(KEY_UI) || {};
-  var VIEWS = ['ofertas', 'lista', 'lojas', 'perfil'];
+  var VIEWS = ['lista', 'ofertas', 'lojas', 'mais'];
+  var TITULOS = {lista:'Minha lista', ofertas:'Ofertas', lojas:'Lojas', mais:'Mais'};
   var hash = (location.hash || '').slice(1);
   if (VIEWS.indexOf(hash) >= 0) ui.view = hash;
-  if (VIEWS.indexOf(ui.view) < 0) ui.view = 'ofertas';
+  if (VIEWS.indexOf(ui.view) < 0) ui.view = 'lista';
   function salvarUI(){ gravarLocal(KEY_UI, ui); }
+  // tema: Automático segue o aparelho; Claro e Escuro fixam
+  function aplicaTema(t){
+    var r = document.documentElement;
+    if (t === 'claro') r.setAttribute('data-theme', 'light');
+    else if (t === 'escuro') r.setAttribute('data-theme', 'dark');
+    else if (t === 'auto') r.removeAttribute('data-theme');
+  }
+  aplicaTema(ui.tema || 'escuro');
 
   function indexa(){
     G = {}; LOJA = {};
@@ -667,11 +783,11 @@ footer{font-size:12.5px;color:var(--muted)}
     if (estado.lojas.ignorar.indexOf(id) >= 0) return false;
     if (estado.lojas.manter.indexOf(id) >= 0) return true;
     var l = LOJA[id];
-    return l ? l.distancia_km <= estado.raio_km : false;
+    return l ? (l.distancia_km == null || l.distancia_km <= estado.raio_km) : true;
   }
   function setAcompanha(id, on){
     tira(estado.lojas.ignorar, id); tira(estado.lojas.manter, id);
-    var l = LOJA[id], auto = !!(l && l.distancia_km <= estado.raio_km);
+    var l = LOJA[id], auto = !l || l.distancia_km == null || l.distancia_km <= estado.raio_km;
     if (on !== auto) (on ? estado.lojas.manter : estado.lojas.ignorar).push(id);
   }
   function catAtiva(id){ return G[id] && estado.categorias.indexOf(G[id].cat) >= 0; }
@@ -704,12 +820,13 @@ footer{font-size:12.5px;color:var(--muted)}
   // ---------- telas ----------
   function irPara(v){
     ui.view = v; salvarUI();
+    $('screenTitle').textContent = TITULOS[v];
     VIEWS.forEach(function(x){ $('v-' + x).hidden = x !== v; });
-    Array.prototype.forEach.call($('views').querySelectorAll('button'), function(b){
+    Array.prototype.forEach.call($('views').querySelectorAll('button[data-view]'), function(b){
       if (b.dataset.view === v) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
     });
   }
-  $('views').addEventListener('click', function(e){ var b = e.target.closest('button'); if (b) irPara(b.dataset.view); });
+  $('views').addEventListener('click', function(e){ var b = e.target.closest('button[data-view]'); if (b){ irPara(b.dataset.view); window.scrollTo(0, 0); } });
 
   function tudo(){ pintaOfertasTela(); pintaLista(); pintaLojas(); pintaContas(); pintaPerfil(); }
 
@@ -719,7 +836,7 @@ footer{font-size:12.5px;color:var(--muted)}
     if (!ativas.some(function(c){ return c.id === ui.aba; })) ui.aba = ativas[0].id;
     CAT = ativas.filter(function(c){ return c.id === ui.aba; })[0];
     $('cats').innerHTML = ativas.map(function(c){ return '<button type="button" data-cat="' + c.id + '" aria-pressed="' + (c.id === CAT.id) + '">' + esc(c.nome) + '</button>'; }).join('');
-    $('catNote').textContent = CAT.id === 'petshops' && !petsTotal() ? 'Sem pets no seu perfil, as ofertas daqui ficam escondidas. Ajuste em Perfil.' : (exemplo && CAT.aviso ? CAT.aviso : '');
+    $('catNote').textContent = CAT.id === 'petshops' && !petsTotal() ? 'Sem pets no seu perfil, as ofertas daqui ficam escondidas. Ajuste em Mais.' : (exemplo && CAT.aviso ? CAT.aviso : '');
     $('ofertasMeta').textContent = CAT.id === 'farmacias'
       ? 'O que combina com você aparece primeiro. Preço do site; na loja pode ser outro.'
       : CAT.id === 'petshops'
@@ -800,7 +917,7 @@ footer{font-size:12.5px;color:var(--muted)}
     }
     return '<li class="deal' + (oc ? ' muted' : '') + '">'
       + '<div><p class="d-prod">' + esc(o.produto) + '</p>' + why
-      + '<p class="d-meta"><span>' + esc(G[o.rede].nome) + '</span>' + cond + rec + acao + '</p></div>'
+      + '<p class="d-meta"><span>' + esc(G[o.rede].nome) + '</span>' + cond + rec + fonteLink(o.fonte) + acao + '</p></div>'
       + '<div class="price num"><span class="de">' + ROT_PRECO[tipo] + ' <s>' + brl.format(o.preco_normal) + '</s></span><span class="por">' + tag + brl.format(o.preco_oferta) + un + '</span></div>'
       + '<span class="off num">−' + pct(o) + '%</span>'
       + menu + '</li>';
@@ -810,7 +927,7 @@ footer{font-size:12.5px;color:var(--muted)}
     var act = b.dataset.act;
     if (act === 'menu'){ menuAberto = menuAberto === b.dataset.id ? null : b.dataset.id; pintaDeals(); return; }
     if (act === 'fechar'){ menuAberto = null; pintaDeals(); return; }
-    if (act === 'perfil'){ irPara('perfil'); window.scrollTo(0, 0); return; }
+    if (act === 'perfil'){ irPara('mais'); window.scrollTo(0, 0); return; }
     if (act === 'esconder'){ estado.ocultas.push(b.dataset.id); menuAberto = null; salvar('Oferta escondida'); }
     if (act === 'nunca'){ if (estado.perfil.nunca.indexOf(b.dataset.tag) < 0) estado.perfil.nunca.push(b.dataset.tag); menuAberto = null; salvar('Você não vai mais ver ' + ROTULO_TAG[b.dataset.tag]); }
     if (act === 'mostrar'){ if (b.dataset.tag) tira(estado.perfil.nunca, b.dataset.tag); else tira(estado.ocultas, b.dataset.id); salvar('Volta a aparecer'); }
@@ -826,7 +943,7 @@ footer{font-size:12.5px;color:var(--muted)}
         ? '<code class="code" id="code-' + i + '">' + esc(c.codigo) + '</code><button type="button" class="copy" data-code="' + esc(c.codigo) + '" data-target="code-' + i + '">Copiar</button>'
         : '<span class="lock">' + (c.status === 'login' ? 'Precisa de login' : 'Sem código próprio') + '</span>';
       return '<article class="ticket ' + esc(c.status) + '">'
-        + '<div class="t-main"><p class="t-rede">' + esc(G[c.rede].nome) + '</p><p class="t-ben num">' + esc(c.beneficio) + '</p><p class="t-cond num">' + esc(c.condicao) + '</p></div>'
+        + '<div class="t-main"><p class="t-rede">' + esc(G[c.rede].nome) + '</p><p class="t-ben num">' + esc(c.beneficio) + '</p><p class="t-cond num">' + esc(c.condicao) + (fonteLink(c.fonte) ? ' · ' + fonteLink(c.fonte) : '') + '</p></div>'
         + '<div class="stub">' + stub + '<span class="chip ' + v.k + '">' + esc(v.t) + '</span></div></article>';
     }).join('');
   }
@@ -865,14 +982,15 @@ footer{font-size:12.5px;color:var(--muted)}
         var x = a.r.dias == null ? 9999 : a.r.dias, y = b.r.dias == null ? 9999 : b.r.dias;
         return x - y || a.i - b.i;
       });
-    if (!itens.length){ $('wish').innerHTML = '<li class="empty">Sua lista está vazia. Adicione o que você compra sempre.</li>'; return; }
+    if (!itens.length){ pintaHero(); $('wish').innerHTML = '<li class="empty">Sua lista está vazia. Adicione o que você compra sempre.</li>'; return; }
+    pintaHero();
     $('wish').innerHTML = itens.map(function(x){
       var p = precosDe(x.it.produto), soon = x.r.dias != null && x.r.dias <= 3;
       var acoes = '<div class="i-actions"><button type="button" class="ghost" data-comprei="' + x.i + '">Comprei hoje</button><button type="button" class="rm" data-rm="' + x.i + '">remover</button>';
       if (!p.length){
         return '<li class="item wait"><div class="i-head"><p class="i-prod">' + esc(x.it.produto) + '</p></div>'
           + '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>'
-          + '<div class="i-best"><span class="lbl">Procurando</span><span class="i-wait">Os preços aparecem na próxima atualização, ' + esc(quando(D.proxima_atualizacao)) + '.</span></div>'
+          + '<div class="i-best"><span class="lbl">Sem preço ainda</span><span class="i-wait">Os preços aparecem depois da próxima busca.</span></div>'
           + acoes + '</div></li>';
       }
       var best = p[0], max = p[p.length - 1].v, conta = {};
@@ -907,21 +1025,68 @@ footer{font-size:12.5px;color:var(--muted)}
     salvar('Adicionado à lista'); pintaLista(); pintaOfertasTela();
   });
 
+  // ===== Abertura: oportunidades de economia =====
+  function oportunidades(){
+    var o = {total:0, acabando:0, paraVoce:0, cupom:null};
+    estado.lista.forEach(function(it){
+      var p = precosDe(it.produto);
+      if (p.length > 1) o.total += p[p.length - 1].v - p[0].v;
+      var r = ritmo(it.compras); if (r.dias != null && r.dias <= 3) o.acabando++;
+    });
+    D.categorias.forEach(function(c){
+      if (estado.categorias.indexOf(c.id) < 0) return;
+      arr(c.ofertas).forEach(function(of){ if (acompanha(of.rede) && !escondida(of) && porQue(of)) o.paraVoce++; });
+      arr(c.cupons).forEach(function(k){
+        if (!acompanha(k.rede) || !k.codigo || !k.valido_ate || k.status !== 'confirmado') return;
+        var n = diasAte(k.valido_ate);
+        if (n >= 0 && n <= 10 && (!o.cupom || n < o.cupom.n)) o.cupom = {c:k, n:n, cat:c.id};
+      });
+    });
+    return o;
+  }
+  function pintaHero(){
+    var o = oportunidades(), vazio = !estado.lista.length;
+    $('heroOla').textContent = usuario ? 'Olá, ' + usuario : 'Bem-vindo';
+    $('comecar').hidden = !vazio;
+    if (o.total > 0){
+      $('heroValor').textContent = brl.format(o.total);
+      $('heroSub').textContent = 'de economia possível na sua lista, comprando cada item onde está mais barato';
+    } else {
+      $('heroValor').textContent = 'EconomIA';
+      $('heroSub').textContent = vazio ? 'Farmácias, mercados e pet shops perto de casa' : 'Toque em Buscar para descobrir quanto dá para economizar na sua lista';
+    }
+    var chips = [];
+    if (o.acabando) chips.push('<button type="button" class="hchip" data-ir="itens">' + o.acabando + (o.acabando > 1 ? ' itens acabando' : ' item acabando') + '</button>');
+    if (o.paraVoce) chips.push('<button type="button" class="hchip" data-ir="ofertas">' + o.paraVoce + (o.paraVoce > 1 ? ' ofertas combinam com você' : ' oferta combina com você') + '</button>');
+    if (o.cupom) chips.push('<button type="button" class="hchip" data-ir="ofertas" data-cat="' + o.cupom.cat + '">Cupom ' + esc(o.cupom.c.codigo) + ' ' + (o.cupom.n === 0 ? 'vence hoje' : 'vence em ' + o.cupom.n + (o.cupom.n > 1 ? ' dias' : ' dia')) + '</button>');
+    $('heroChips').innerHTML = chips.join('');
+    $('heroChips').hidden = !chips.length;
+  }
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('[data-ir]'); if (!b) return;
+    var ir = b.dataset.ir;
+    if (ir === 'itens'){ $('wish').scrollIntoView({behavior:'smooth', block:'start'}); return; }
+    if (ir === 'importar'){ irPara('mais'); $('h-imp').scrollIntoView({block:'start'}); return; }
+    if (b.dataset.cat){ ui.aba = b.dataset.cat; salvarUI(); filtro = 'todas'; pintaOfertasTela(); }
+    irPara(ir); window.scrollTo(0, 0);
+  });
+
   // ===== Lojas =====
   function pintaLojas(){
     var ativas = D.categorias.filter(function(c){ return estado.categorias.indexOf(c.id) >= 0; });
     $('lojasCats').innerHTML = ativas.map(function(c){
-      var rows = arr(c.lojas).slice().sort(function(a, b){ return a.distancia_km - b.distancia_km; }).map(function(l){
+      var dist = function(l){ return l.distancia_km == null ? 99 : l.distancia_km; };
+      var rows = arr(c.lojas).slice().sort(function(a, b){ return dist(a) - dist(b); }).map(function(l){
         var on = acompanha(l.rede), longe = l.distancia_km > estado.raio_km;
-        var txt = longe ? (on ? 'Mais longe, mas você acompanha' : 'Mais longe que ' + estado.raio_km + ' km') : (on ? l.horario : 'Você não acompanha');
+        var txt = longe ? (on ? 'Mais longe, mas você acompanha' : 'Mais longe que ' + estado.raio_km + ' km') : (on ? (l.horario || 'Horário não informado') : 'Você não acompanha');
         return '<li class="row has-track' + (on ? '' : ' out') + '">'
           + '<label class="track"><input type="checkbox" data-rede="' + l.rede + '"' + (on ? ' checked' : '') + '><span class="r-name">' + esc(G[l.rede].nome) + '</span></label>'
           + '<span class="r-val num">' + km(l.distancia_km) + '</span>'
-          + '<span class="r-sub"><span>' + esc(txt) + '</span>' + arr(l.fontes).map(function(f){ return '<span class="src">' + esc(f) + '</span>'; }).join('') + '</span></li>';
+          + '<span class="r-sub"><span>' + esc(txt) + '</span>' + (l.endereco ? '<span>' + esc(l.endereco) + '</span>' : '') + arr(l.fontes).map(function(f){ return '<span class="src">' + esc(f) + '</span>'; }).join('') + '</span></li>';
       });
       estado.lojas.adicionar.forEach(function(a, i){
         if (a.categoria !== c.id) return;
-        rows.push('<li class="row"><span class="r-name">' + esc(a.nome) + '</span><button type="button" class="rm" data-loja="' + i + '">remover</button><span class="r-sub"><span>Adicionada por você · entra na próxima atualização</span></span></li>');
+        rows.push('<li class="row"><span class="r-name">' + esc(a.nome) + '</span><button type="button" class="rm" data-loja="' + i + '">remover</button><span class="r-sub"><span>Adicionada por você · entra na próxima busca</span></span></li>');
       });
       return '<div class="group"><h3>' + esc(c.nome) + '</h3><ul class="rows">' + rows.join('') + '</ul></div>';
     }).join('');
@@ -942,7 +1107,7 @@ footer{font-size:12.5px;color:var(--muted)}
     var nome = $('novaLoja').value.trim(), msg = $('lojaMsg');
     if (nome.length < 3){ msg.className = 'hint err'; msg.textContent = 'Escreva o nome da loja e, se souber, a rua.'; return; }
     estado.lojas.adicionar.push({categoria:$('novaLojaCat').value, nome:nome}); $('novaLoja').value = '';
-    msg.className = 'hint ok'; msg.textContent = '"' + nome + '" entra na próxima atualização.';
+    msg.className = 'hint ok'; msg.textContent = '"' + nome + '" entra na próxima busca.';
     salvar('Loja adicionada'); pintaLojas();
   });
 
@@ -952,7 +1117,7 @@ footer{font-size:12.5px;color:var(--muted)}
       if (estado.categorias.indexOf(c.id) < 0) return;
       arr(c.contas).forEach(function(a){
         if (!acompanha(a.rede)) return;
-        var chip = a.status === 'conectada' ? '<span class="chip real">Conectado</span>' : '<span class="chip warn">Falta entrar</span>';
+        var chip = a.status === 'conectada' ? '<span class="chip real">Conectado</span>' : '<span class="chip">Login em breve</span>';
         linhas.push('<li class="row"><span class="r-name">' + esc(G[a.rede].nome) + '</span>' + chip + '<span class="r-sub">' + esc(a.libera) + '</span></li>');
       });
     });
@@ -978,7 +1143,7 @@ footer{font-size:12.5px;color:var(--muted)}
       partes.push('<span><strong>' + par[1] + ' ' + esc(diaLongo(d)) + '</strong> · aviso ' + (r.avisar === 'vespera' ? 'na véspera, ' : 'no dia, ') + esc(diaLongo(av)) + '</span>');
     });
     $('proxAviso').innerHTML = partes.length
-      ? partes.join('') + '<span class="hint">O aviso traz as ofertas da sua lista nas lojas que você acompanha, pelo app do Home Assistant.</span>'
+      ? partes.join('') + '<span class="hint">O aviso no celular chega numa próxima versão do painel.</span>'
       : '<span>Escolha os dias em que você costuma comprar para receber o aviso com as ofertas certas.</span>';
   }
   function pintaPerfil(){
@@ -997,11 +1162,53 @@ footer{font-size:12.5px;color:var(--muted)}
     picks('dMercado', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.mercado);
     picks('dFarmacia', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.farmacia);
     $('avisar').value = r.avisar;
-    pintaAviso();
+    pintaAviso(); pintaTema();
   }
+  function pintaTema(){
+    var atual = ui.tema || 'escuro';
+    $('tema').innerHTML = [['auto', 'Automático'], ['claro', 'Claro'], ['escuro', 'Escuro']].map(function(t){
+      return '<button type="button" data-v="' + t[0] + '" aria-pressed="' + (atual === t[0]) + '">' + t[1] + '</button>';
+    }).join('');
+  }
+  $('tema').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    ui.tema = b.dataset.v; salvarUI(); aplicaTema(ui.tema); pintaTema();
+  });
+
+  // exportar e importar a lista
+  ['expXlsx', 'expJson'].forEach(function(id){
+    $(id).addEventListener('click', function(e){
+      if (MODO !== 'addon'){ e.preventDefault(); toast('No Home Assistant, este botão baixa o arquivo da sua lista.'); }
+    });
+  });
+  $('impArq').addEventListener('change', function(){
+    var inp = this, f = inp.files && inp.files[0], msg = $('impMsg');
+    if (!f) return;
+    var leitor = new FileReader();
+    leitor.onload = function(){
+      inp.value = '';
+      var dado;
+      try { dado = JSON.parse(leitor.result); } catch(e){ msg.className = 'hint err'; msg.textContent = 'Esse arquivo não é um JSON válido.'; return; }
+      var itens = Array.isArray(dado) ? dado : arr(dado && dado.lista), novos = 0, juntados = 0;
+      itens.forEach(function(i){
+        var nome = typeof i === 'string' ? i : (i && i.produto);
+        if (!nome || String(nome).trim().length < 3) return;
+        nome = String(nome).trim().slice(0, 120);
+        var compras = arr(i && i.compras).filter(function(d){ return /^\d{4}-\d{2}-\d{2}$/.test(d); });
+        var ex = estado.lista.filter(function(x){ return norm(x.produto) === norm(nome); })[0];
+        if (ex){ compras.forEach(function(d){ if (ex.compras.indexOf(d) < 0){ ex.compras.push(d); juntados++; } }); return; }
+        estado.lista.push({produto:nome, compras:compras}); novos++;
+      });
+      if (!novos && !juntados){ msg.className = 'hint err'; msg.textContent = 'Não achei itens novos nesse arquivo.'; return; }
+      msg.className = 'hint ok';
+      msg.textContent = (novos === 1 ? '1 item novo entrou' : novos + ' itens novos entraram') + ' na lista' + (juntados ? ', e ' + juntados + (juntados === 1 ? ' data de compra foi juntada' : ' datas de compra foram juntadas') : '') + '.';
+      salvar('Lista importada'); pintaLista(); pintaOfertasTela();
+    };
+    leitor.readAsText(f);
+  });
   var ALVO = {pRestr:function(){ return estado.perfil.restricoes; }, pInt:function(){ return estado.perfil.interesses; },
     pNunca:function(){ return estado.perfil.nunca; }, dMercado:function(){ return estado.cotidiano.mercado; }, dFarmacia:function(){ return estado.cotidiano.farmacia; }};
-  $('v-perfil').addEventListener('click', function(e){
+  $('v-mais').addEventListener('click', function(e){
     var b = e.target.closest('.pick'); if (!b) return;
     var grupo = b.parentNode.id; if (!ALVO[grupo]) return;
     alterna(ALVO[grupo](), b.dataset.v);
@@ -1031,16 +1238,69 @@ footer{font-size:12.5px;color:var(--muted)}
     if (cep.replace('-', '').length !== 8){ msg.className = 'hint err'; msg.textContent = 'Digite os 8 números do CEP.'; $('cep').focus(); return; }
     if (!cats.length){ msg.className = 'hint err'; msg.textContent = 'Marque pelo menos um tipo de loja.'; return; }
     estado.cep = cep; estado.raio_km = Number($('raio').value); estado.categorias = cats;
-    msg.className = 'hint ok'; msg.textContent = 'Salvo. A próxima atualização, ' + quando(D.proxima_atualizacao) + ', procura as lojas perto deste CEP.';
+    msg.className = 'hint ok'; msg.textContent = 'Salvo. Toque em Buscar, no menu de baixo, para procurar as lojas perto deste CEP.';
     salvar('Endereço salvo'); tudo();
   });
 
   // ---------- início ----------
-  function iniciar(){
-    $('hello').textContent = usuario ? 'Olá, ' + usuario : 'Perto de casa';
-    $('syncText').textContent = 'Atualizado ' + quando(D.gerado_em) + ' · próxima atualização ' + quando(D.proxima_atualizacao);
+  function pintaSync(){
+    $('syncText').textContent = exemplo
+      ? (MODO === 'addon' ? 'Nenhuma busca ainda' : 'Exemplo com ofertas de farmácia de 18/10')
+      : 'Última busca ' + quando(D.gerado_em);
     $('banner').hidden = !exemplo;
-    tudo(); irPara(ui.view);
+    $('bannerTxt').textContent = MODO === 'addon'
+      ? 'Salve o CEP em Mais e toque em Buscar, no menu de baixo, para trocar este exemplo pelas lojas e ofertas perto de você.'
+      : 'Algumas ofertas de farmácia são reais, de 18/10. O resto é ilustrativo. No Home Assistant, o botão Buscar traz as do seu CEP.';
+  }
+
+  // ----- busca na hora -----
+  var buscaT = null;
+  function botaoBusca(rodando, txt){
+    var b = $('buscar');
+    b.disabled = rodando; b.classList.toggle('girando', rodando);
+    b.querySelector('.ic-busca').hidden = rodando; b.querySelector('.ic-gira').hidden = !rodando;
+    $('buscarTxt').textContent = txt;
+  }
+  function mostraBusca(st, inicial){
+    var m = $('buscaMsg');
+    if (st.rodando){
+      botaoBusca(true, 'Buscando');
+      m.hidden = false; m.className = 'busca-msg';
+      m.textContent = 'Buscando ' + (st.etapa || 'ofertas') + (st.total > 1 ? ' (' + st.atual + ' de ' + st.total + ')' : '') + '. Leva alguns minutos; pode continuar usando o painel.';
+      return;
+    }
+    botaoBusca(false, 'Buscar');
+    if (st.erro){ m.hidden = false; m.className = 'busca-msg err'; m.textContent = st.erro; }
+    else if (!inicial && st.terminou_em){ m.hidden = false; m.className = 'busca-msg ok'; m.textContent = 'Busca concluída.' + (arr(st.avisos).length ? ' ' + st.avisos.join(' ') : ''); }
+    else m.hidden = true;
+  }
+  function acompanhaBusca(inicial){
+    clearTimeout(buscaT);
+    fetch('api/busca', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(st){
+      mostraBusca(st, inicial);
+      if (st.rodando) buscaT = setTimeout(function(){ acompanhaBusca(false); }, 3000);
+      else if (!inicial && !st.erro) recarrega();
+    }).catch(function(){ buscaT = setTimeout(function(){ acompanhaBusca(inicial); }, 5000); });
+  }
+  function recarrega(){
+    fetch('api/estado', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(api){
+      if (api.ofertas && api.ofertas.categorias){ D = api.ofertas; exemplo = false; indexa(); pintaSync(); tudo(); toast('Ofertas atualizadas'); }
+    }).catch(function(){});
+  }
+  $('buscar').addEventListener('click', function(){
+    if (MODO !== 'addon'){ toast('No Home Assistant, este botão busca as ofertas do seu CEP na hora.'); return; }
+    if (!estado.cep){ irPara('mais'); window.scrollTo(0, 0); toast('Salve o CEP antes de buscar.'); return; }
+    botaoBusca(true, 'Começando');
+    fetch('api/buscar', {method:'POST'})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+      .then(function(x){ if (!x.ok){ mostraBusca({erro:x.j.erro || 'Não deu para começar a busca.'}); return; } acompanhaBusca(false); })
+      .catch(function(){ mostraBusca({erro:'Sem conexão com o Home Assistant. Tente de novo.'}); });
+  });
+
+  function iniciar(){
+    $('hello').innerHTML = '<span class="brand">Econom<span>IA</span></span>' + (usuario ? ' · Olá, ' + esc(usuario) : '');
+    pintaSync(); tudo(); irPara(ui.view);
+    if (MODO === 'addon') acompanhaBusca(true);
   }
   function usarExemplo(){
     MODO = 'exemplo'; D = EX; exemplo = true; indexa();

@@ -1,4 +1,4 @@
-# Ofertas do Bairro — add-on do Home Assistant
+# EconomIA — add-on do Home Assistant
 
 Painel de cupons, ofertas e lista de compras de farmácias, mercados e pet shops perto de casa, aberto pelo menu lateral do Home Assistant (ingress).
 
@@ -11,6 +11,10 @@ Todos os dados ficam no Home Assistant, na pasta `/data` do add-on:
 
 Sem `ofertas.json`, o painel mostra um exemplo embutido.
 
+## Busca de ofertas
+
+O botão **Buscar** chama `ai_task.generate_data` pela API do Home Assistant (`homeassistant_api: true`), uma vez por categoria ativa. A resposta é validada antes de gravar: ofertas e cupons sem URL de fonte são descartados, preços precisam ser números e a oferta precisa ser menor que o preço normal. Se uma categoria falhar, fica o resultado anterior dela.
+
 ## Rotas (relativas ao ingress)
 
 | Método | Rota | O que faz |
@@ -19,6 +23,10 @@ Sem `ofertas.json`, o painel mostra um exemplo embutido.
 | GET | `/api/estado` | `{config, ofertas, usuario}`. `usuario` vem do cabeçalho `X-Remote-User-Display-Name` do ingress. |
 | PUT | `/api/config` | Grava `config.json`. |
 | PUT | `/api/ofertas` | Grava `ofertas.json` (precisa ter `categorias`). |
+| POST | `/api/buscar` | Começa a busca agora, uma categoria por vez, pela ação `ai_task.generate_data` do HA. |
+| GET | `/api/busca` | Andamento: `{rodando, etapa, atual, total, erro, avisos, terminou_em}`. |
+| GET | `/api/exportar/lista.xlsx` | Lista em Excel: loja mais barata, preços, economia e datas de compra. |
+| GET | `/api/exportar/lista.json` | A mesma lista em JSON. |
 | GET | `/api/saude` | Verificação simples. |
 
 O servidor só aceita conexões do ingress (`172.30.32.2`). Para testar fora do HA:
