@@ -103,6 +103,11 @@ h2.big{font-family:var(--font-display);font-stretch:75%;font-weight:800;font-siz
 .set-t{font-size:15px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink)}
 .seg{display:inline-flex;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:4px;gap:2px;max-width:100%}
 .seg button{background:none;border:0;border-radius:9px;padding:8px 16px;font-weight:600;color:var(--muted)}
+.switch{appearance:none;-webkit-appearance:none;width:46px;height:28px;margin:0;border-radius:999px;background:var(--line);position:relative;cursor:pointer;flex:none}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .15s}
+.switch:checked{background:var(--accent)}
+.switch:checked::after{transform:translateX(18px)}
+.switch:disabled{opacity:.45;cursor:default}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
 .banner{background:var(--warn-soft);border-radius:12px;padding:10px 14px;font-size:13.5px}
 .banner strong{color:var(--warn)}
@@ -437,7 +442,7 @@ footer{font-size:12.5px;color:var(--muted)}
     "lojas": {"ignorar": [], "manter": [], "adicionar": []},
     "lista": [
       {"produto": "Café torrado e moído · 500 g", "compras": ["2026-09-20", "2026-09-30", "2026-10-10"]},
-      {"produto": "Leite UHT integral · 1 L", "compras": ["2026-09-29", "2026-10-06", "2026-10-13"]},
+      {"produto": "Leite UHT integral · 1 L", "compras": ["2026-09-29", "2026-10-06", "2026-10-13"], "origem": "ha"},
       {"produto": "Papel higiênico folha dupla · 12 rolos", "compras": ["2026-08-30", "2026-09-24"]},
       {"produto": "Creme dental Colgate Total 12 · 90 g", "compras": ["2026-09-05"]},
       {"produto": "Protetor solar facial FPS 50 · 40 g", "compras": []},
@@ -447,6 +452,7 @@ footer{font-size:12.5px;color:var(--muted)}
     ],
     "perfil": {"adultos": 2, "criancas": 0, "bebes": 0, "pets": {"cachorro": 0, "gato": 1, "outros": 0}, "restricoes": [], "interesses": ["skincare", "cafe"], "nunca": []},
     "cotidiano": {"mercado": ["sab"], "farmacia": ["qua"], "avisar": "vespera"},
+    "sync": {"ativo": true, "entidade": "todo.shopping_list", "enviar_novos": true, "enviar_acabando": true},
     "ocultas": []
   }
 }
@@ -615,6 +621,21 @@ footer{font-size:12.5px;color:var(--muted)}
     </div>
 
     <div class="group"><h2 class="big">Dados e ajustes</h2></div>
+    <section class="panel settings" aria-labelledby="h-ha">
+      <div class="set-head"><h2 id="h-ha">Lista do Home Assistant</h2><p class="sec-meta">Fale com o Assist, por exemplo "adicione café na lista de compras", e o item aparece aqui. Marcou como comprado lá, conta como "Comprei hoje" aqui.</p></div>
+      <div class="set-row">
+        <div><h3 class="set-t">Sincronizar com</h3><p class="sec-meta" id="syncInfo">Escolha uma lista de tarefas do Home Assistant, como a Lista de compras.</p></div>
+        <select class="field" id="syncEnt" aria-label="Lista do Home Assistant"></select>
+      </div>
+      <div class="set-row">
+        <div><h3 class="set-t"><label for="syncNovos">Itens novos daqui vão para lá</label></h3><p class="sec-meta">O que você adicionar no EconomIA aparece também na lista do Home Assistant.</p></div>
+        <input type="checkbox" class="switch" id="syncNovos">
+      </div>
+      <div class="set-row">
+        <div><h3 class="set-t"><label for="syncAcabando">Itens acabando entram sozinhos</label></h3><p class="sec-meta">Quando o seu ritmo de compra indicar que algo acaba amanhã, ele vai para a lista do Home Assistant.</p></div>
+        <input type="checkbox" class="switch" id="syncAcabando">
+      </div>
+    </section>
     <section class="panel settings" aria-labelledby="h-exp">
       <div class="set-head"><h2 id="h-exp">Exportar</h2><p class="sec-meta">Baixe sua lista para abrir no Excel, guardar ou levar para outro programa.</p></div>
       <div class="set-row">
@@ -643,7 +664,7 @@ footer{font-size:12.5px;color:var(--muted)}
       </div>
     </section>
     <section class="panel settings" aria-labelledby="h-sobre">
-      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.5.0. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
+      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.6.0. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
     </section>
   </section>
 
@@ -749,13 +770,15 @@ footer{font-size:12.5px;color:var(--muted)}
   function n0(v, d){ v = Number(v); return isFinite(v) && v >= 0 ? Math.min(Math.round(v), 20) : d; }
   function normaliza(c){
     c = c && typeof c === 'object' ? JSON.parse(JSON.stringify(c)) : {};
-    var p = c.perfil || {}, r = c.cotidiano || {}, l = c.lojas || {};
+    var p = c.perfil || {}, r = c.cotidiano || {}, l = c.lojas || {}, sy = c.sync || {};
     return {
+      rev: Number(c.rev) || 0,
+      sync: {ativo: !!sy.ativo && !!sy.entidade, entidade: String(sy.entidade || ''), enviar_novos: sy.enviar_novos !== false, enviar_acabando: sy.enviar_acabando !== false},
       cep: c.cep || null,
       raio_km: Number(c.raio_km) || 2,
       categorias: arr(c.categorias).length ? c.categorias : D.categorias.map(function(x){ return x.id; }),
       lojas: {ignorar: arr(l.ignorar), manter: arr(l.manter), adicionar: arr(l.adicionar)},
-      lista: arr(c.lista).map(function(i){ return typeof i === 'string' ? {produto:i, compras:[]} : {produto:String(i.produto || ''), compras:arr(i.compras)}; }).filter(function(i){ return i.produto; }),
+      lista: arr(c.lista).map(function(i){ return typeof i === 'string' ? {produto:i, compras:[]} : {produto:String(i.produto || ''), compras:arr(i.compras), origem:i.origem === 'ha' ? 'ha' : undefined}; }).filter(function(i){ return i.produto; }),
       perfil: {adultos:n0(p.adultos, 1), criancas:n0(p.criancas, 0), bebes:n0(p.bebes, 0), pets:petsDe(p.pets), restricoes:arr(p.restricoes), interesses:arr(p.interesses), nunca:arr(p.nunca)},
       cotidiano: {mercado:arr(r.mercado), farmacia:arr(r.farmacia), avisar:r.avisar || 'vespera'},
       ocultas: arr(c.ocultas)
@@ -771,7 +794,16 @@ footer{font-size:12.5px;color:var(--muted)}
   function salvar(msg){
     if (MODO === 'addon'){
       fetch('api/config', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(estado)})
-        .then(function(r){ toast(r.ok ? (msg || 'Salvo') : 'Não deu para salvar. Tente de novo.'); })
+        .then(function(r){
+          if (!r.ok){ toast('Não deu para salvar. Tente de novo.'); return; }
+          return r.json().then(function(j){
+            if (j && j.config){
+              if (j.mesclado){ estado = normaliza(j.config); tudo(); toast('Salvo, junto com o que chegou do Home Assistant'); return; }
+              estado.rev = Number(j.config.rev) || estado.rev;
+            }
+            toast(msg || 'Salvo');
+          });
+        })
         .catch(function(){ toast('Sem conexão com o Home Assistant. Tente de novo.'); });
     } else {
       toast(gravarLocal(KEY, estado) ? (msg || 'Salvo') : 'Salvo só até fechar a página');
@@ -986,7 +1018,7 @@ footer{font-size:12.5px;color:var(--muted)}
     pintaHero();
     $('wish').innerHTML = itens.map(function(x){
       var p = precosDe(x.it.produto), soon = x.r.dias != null && x.r.dias <= 3;
-      var acoes = '<div class="i-actions"><button type="button" class="ghost" data-comprei="' + x.i + '">Comprei hoje</button><button type="button" class="rm" data-rm="' + x.i + '">remover</button>';
+      var acoes = '<div class="i-actions"><button type="button" class="ghost" data-comprei="' + x.i + '">Comprei hoje</button><button type="button" class="rm" data-rm="' + x.i + '">remover</button>' + (x.it.origem === 'ha' ? '<span class="chip">Veio do Home Assistant</span>' : '');
       if (!p.length){
         return '<li class="item wait"><div class="i-head"><p class="i-prod">' + esc(x.it.produto) + '</p></div>'
           + '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>'
@@ -1162,7 +1194,7 @@ footer{font-size:12.5px;color:var(--muted)}
     picks('dMercado', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.mercado);
     picks('dFarmacia', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.farmacia);
     $('avisar').value = r.avisar;
-    pintaAviso(); pintaTema();
+    pintaAviso(); pintaTema(); pintaSyncUI();
   }
   function pintaTema(){
     var atual = ui.tema || 'escuro';
@@ -1174,6 +1206,57 @@ footer{font-size:12.5px;color:var(--muted)}
     var b = e.target.closest('button'); if (!b) return;
     ui.tema = b.dataset.v; salvarUI(); aplicaTema(ui.tema); pintaTema();
   });
+
+  // lista do Home Assistant
+  var LISTAS_HA = null, ultimoSync = null;
+  function carregaListas(){
+    if (MODO !== 'addon'){
+      LISTAS_HA = [{id:'todo.shopping_list', nome:'Lista de compras'}, {id:'todo.compras', nome:'Compras (Google Tasks)'}];
+      pintaSyncUI(); return;
+    }
+    fetch('api/todos', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
+      LISTAS_HA = arr(j.listas); pintaSyncUI();
+      if (j.erro) $('syncInfo').textContent = j.erro;
+    }).catch(function(){ LISTAS_HA = []; pintaSyncUI(); });
+  }
+  function pintaSyncInfo(){
+    var el = $('syncInfo'), st = ultimoSync;
+    if (!estado.sync.ativo){ el.textContent = 'Escolha uma lista de tarefas do Home Assistant, como a Lista de compras.'; return; }
+    if (MODO !== 'addon'){ el.textContent = 'No Home Assistant, a lista é conferida a cada minuto.'; return; }
+    if (st && st.erro){ el.textContent = st.erro; return; }
+    el.textContent = st && st.ultima ? 'Conferida ' + quando(st.ultima) + '. Confere de novo a cada minuto.' : 'Confere a lista a cada minuto.';
+  }
+  function pintaSyncUI(){
+    var sel = $('syncEnt'), s = estado.sync, listas = LISTAS_HA || [];
+    var opts = '<option value="">Não sincronizar</option>' + listas.map(function(l){ return '<option value="' + esc(l.id) + '">' + esc(l.nome) + '</option>'; }).join('');
+    if (s.entidade && !listas.some(function(l){ return l.id === s.entidade; })) opts += '<option value="' + esc(s.entidade) + '">' + esc(s.entidade) + '</option>';
+    sel.innerHTML = opts;
+    sel.value = s.ativo ? s.entidade : '';
+    $('syncNovos').checked = s.enviar_novos; $('syncAcabando').checked = s.enviar_acabando;
+    $('syncNovos').disabled = $('syncAcabando').disabled = !s.ativo;
+    pintaSyncInfo();
+  }
+  function puxaEstado(){
+    if (MODO !== 'addon') return;
+    fetch('api/estado', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(api){
+      if (api.sync){ ultimoSync = api.sync; pintaSyncInfo(); }
+      if (api.config && Number(api.config.rev) > estado.rev){ estado = normaliza(api.config); tudo(); toast('Sua lista foi atualizada pelo Home Assistant'); }
+    }).catch(function(){});
+  }
+  function sincronizaAgora(){
+    if (MODO !== 'addon') return;
+    if (!estado.sync.ativo) return puxaEstado();
+    fetch('api/sincronizar-lista', {method:'POST'}).then(function(){ puxaEstado(); }).catch(function(){});
+  }
+  $('syncEnt').addEventListener('change', function(){
+    estado.sync.entidade = this.value; estado.sync.ativo = !!this.value;
+    salvar(this.value ? 'Sincronizando com ' + this.options[this.selectedIndex].text : 'Sincronização desligada');
+    pintaSyncUI();
+    if (this.value) setTimeout(sincronizaAgora, 1500);
+  });
+  $('syncNovos').addEventListener('change', function(){ estado.sync.enviar_novos = this.checked; salvar(); });
+  $('syncAcabando').addEventListener('change', function(){ estado.sync.enviar_acabando = this.checked; salvar(); });
+  document.addEventListener('visibilitychange', function(){ if (!document.hidden) sincronizaAgora(); });
 
   // exportar e importar a lista
   ['expXlsx', 'expJson'].forEach(function(id){
@@ -1300,7 +1383,12 @@ footer{font-size:12.5px;color:var(--muted)}
   function iniciar(){
     $('hello').innerHTML = '<span class="brand">Econom<span>IA</span></span>' + (usuario ? ' · Olá, ' + esc(usuario) : '');
     pintaSync(); tudo(); irPara(ui.view);
-    if (MODO === 'addon') acompanhaBusca(true);
+    carregaListas();
+    if (MODO === 'addon'){
+      acompanhaBusca(true);
+      sincronizaAgora();
+      setInterval(function(){ if (!document.hidden) puxaEstado(); }, 45000);
+    }
   }
   function usarExemplo(){
     MODO = 'exemplo'; D = EX; exemplo = true; indexa();

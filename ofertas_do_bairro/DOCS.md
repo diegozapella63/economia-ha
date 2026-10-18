@@ -20,6 +20,16 @@ Se você tiver mais de uma tarefa de IA, escolha qual usar na opção `ai_task_e
 5. Em **Ofertas**, use **Não mostrar** em qualquer oferta que não faça sentido para você. Cada oferta tem um link para a fonte.
 6. Em **Lojas**, desmarque as lojas que não quer acompanhar ou adicione uma que não apareceu.
 
+## Lista por voz
+
+Em **Mais → Lista do Home Assistant**, escolha a lista de tarefas que o EconomIA deve acompanhar (por exemplo, a **Lista de compras**). A partir daí:
+
+- O que você pedir ao Assist, como "adicione café na lista de compras", aparece na Minha lista em até um minuto.
+- Marcar um item como concluído na lista do Home Assistant conta como **Comprei hoje** no EconomIA.
+- O que você adicionar no EconomIA vai para a lista do Home Assistant, e os itens que estão acabando entram sozinhos (dá para desligar as duas coisas).
+
+Também dá para usar uma lista do **Google Tasks** conectada ao Home Assistant pela integração Google Tasks. Ela é atualizada pelo Home Assistant a cada 30 minutos.
+
 Em **Mais → Dados e ajustes** você exporta a lista para Excel ou JSON, importa uma lista e escolhe o tema (automático, claro ou escuro).
 
 Tudo o que você preenche fica guardado só no Home Assistant e entra nos backups dele.

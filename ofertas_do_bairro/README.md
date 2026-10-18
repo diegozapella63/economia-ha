@@ -27,6 +27,15 @@ O botão **Buscar** chama `ai_task.generate_data` pela API do Home Assistant (`h
 | GET | `/api/busca` | Andamento: `{rodando, etapa, atual, total, erro, avisos, terminou_em}`. |
 | GET | `/api/exportar/lista.xlsx` | Lista em Excel: loja mais barata, preços, economia e datas de compra. |
 | GET | `/api/exportar/lista.json` | A mesma lista em JSON. |
+| GET | `/api/todos` | Listas de tarefas (`todo.*`) do Home Assistant. |
+| POST | `/api/sincronizar-lista` | Sincroniza agora com a lista escolhida em `config.sync`. |
+
+### Sincronização com a lista do Home Assistant
+
+A cada minuto (e quando o painel volta a ficar visível), o add-on lê a lista escolhida com `todo.get_items`:
+item novo pendente entra na Minha lista (`origem: "ha"`); item que passa a concluído registra a compra do dia.
+No outro sentido, usa `todo.add_item` para itens novos do painel e para os que devem acabar em até um dia.
+`config.json` tem `rev`, que sobe a cada gravação; se o painel salvar com uma revisão antiga, o servidor junta as mudanças que vieram do HA antes de gravar.
 | GET | `/api/saude` | Verificação simples. |
 
 O servidor só aceita conexões do ingress (`172.30.32.2`). Para testar fora do HA:

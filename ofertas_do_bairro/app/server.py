@@ -16,6 +16,8 @@ Rotas:
 - POST /api/buscar   começa a busca agora
 - GET  /api/busca    andamento da busca
 - GET  /api/exportar/lista.xlsx | lista.json   exporta a lista
+- GET  /api/todos    listas de tarefas do Home Assistant
+- POST /api/sincronizar-lista   sincroniza agora com a lista do Home Assistant
 
 Só usa a biblioteca padrão do Python.
 """
@@ -24,6 +26,7 @@ import json
 import os
 import re
 import threading
+import time
 import unicodedata
 import urllib.error
 import urllib.parse
@@ -39,6 +42,8 @@ PORT = int(os.environ.get("OFERTAS_PORT", "8099"))
 CONFIG = os.path.join(DATA, "config.json")
 OFERTAS = os.path.join(DATA, "ofertas.json")
 OPTIONS = os.path.join(DATA, "options.json")
+SYNC_FILE = os.path.join(DATA, "sync_ha.json")
+SYNC_INTERVALO = int(os.environ.get("OFERTAS_SYNC_SEG", "60"))
 HA_API = os.environ.get("OFERTAS_HA_API", "http://supervisor/core/api")
 # O ingress do Supervisor chega sempre deste endereço.
 INGRESS_IPS = {"172.30.32.2", "127.0.0.1", "::1"}
@@ -56,6 +61,10 @@ FONTES = {"Site", "App", "Encarte", "Clube", "Instagram", "WhatsApp", "Tiendeo"}
 
 BUSCA = {"rodando": False, "etapa": None, "atual": 0, "total": 0, "erro": None, "avisos": [], "terminou_em": None}
 _trava = threading.Lock()
+# configuração: cada gravação aumenta "rev"; o diário guarda o que veio do HA para juntar com o painel
+_cfg_trava = threading.Lock()
+DIARIO = []
+SYNC = {"ultima": None, "erro": None, "chegaram": 0, "enviados": 0}
 
 
 class ErroBusca(Exception):
@@ -118,6 +127,156 @@ def data_ok(v):
 def norm(s):
     t = unicodedata.normalize("NFD", str(s)).encode("ascii", "ignore").decode("ascii").lower()
     return re.sub(r"[^a-z0-9]+", " ", t).strip()
+
+
+# ---------- configuração com revisão ----------
+def ler_config():
+    return ler_json(CONFIG, {}) or {}
+
+
+def gravar_config(cfg):
+    cfg["rev"] = int(cfg.get("rev") or 0) + 1
+    cfg["atualizado_em"] = agora()
+    gravar_json(CONFIG, cfg)
+    return cfg
+
+
+def nome_item(i):
+    return (i.get("produto") if isinstance(i, dict) else str(i or "")).strip()
+
+
+def aplicar_diario(cfg, d):
+    lista = cfg.setdefault("lista", [])
+    idx = {norm(nome_item(i)): i for i in lista if isinstance(i, dict)}
+    item = idx.get(norm(d["produto"]))
+    if not item:
+        item = {"produto": d["produto"], "compras": [], "origem": "ha"}
+        lista.append(item)
+    if d["tipo"] == "compra" and d.get("data") and d["data"] not in item.setdefault("compras", []):
+        item["compras"].append(d["data"])
+
+
+def ritmo_info(item):
+    compras = sorted(c for c in (item.get("compras") or []) if data_ok(c))
+    if len(compras) < 2:
+        return None, None
+    ds = [datetime.strptime(c, "%Y-%m-%d") for c in compras]
+    media = max(1, round(sum((ds[k] - ds[k - 1]).days for k in range(1, len(ds))) / (len(ds) - 1)))
+    prevista = ds[-1] + timedelta(days=media)
+    hoje = datetime.strptime(hoje_br(), "%Y-%m-%d")
+    return (prevista - hoje).days, prevista.strftime("%Y-%m-%d")
+
+
+# ---------- API do Home Assistant ----------
+def ha_api(metodo, caminho, corpo=None, timeout=30):
+    token = os.environ.get("SUPERVISOR_TOKEN")
+    if not token:
+        raise ErroBusca("O add-on não tem acesso ao Home Assistant. Reinstale a versão mais nova do add-on.")
+    req = urllib.request.Request(HA_API + caminho, method=metodo,
+                                 data=json.dumps(corpo).encode("utf-8") if corpo is not None else None,
+                                 headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            texto = r.read().decode("utf-8")
+            return json.loads(texto) if texto else None
+    except urllib.error.HTTPError as e:
+        raise ErroBusca(f"O Home Assistant recusou o pedido ({e.code}).") from e
+    except urllib.error.URLError as e:
+        raise ErroBusca("Não consegui falar com o Home Assistant.") from e
+
+
+def listas_ha():
+    estados = ha_api("GET", "/states") or []
+    return sorted(({"id": e["entity_id"], "nome": (e.get("attributes") or {}).get("friendly_name") or e["entity_id"]}
+                   for e in estados if isinstance(e, dict) and str(e.get("entity_id", "")).startswith("todo.")),
+                  key=lambda x: x["nome"].lower())
+
+
+def itens_ha(entidade):
+    r = ha_api("POST", "/services/todo/get_items?return_response=true",
+               {"entity_id": entidade, "status": ["needs_action", "completed"]}) or {}
+    return ((r.get("service_response") or {}).get(entidade) or {}).get("items") or []
+
+
+def sincronizar_lista():
+    cfg = ler_config()
+    conf = cfg.get("sync") or {}
+    ent = str(conf.get("entidade") or "").strip()
+    if not conf.get("ativo") or not ent.startswith("todo."):
+        return
+    estado = ler_json(SYNC_FILE, {}) or {}
+    primeira = estado.get("entidade") != ent
+    if primeira:
+        estado = {"entidade": ent, "status": {}, "enviados": [norm(nome_item(i)) for i in cfg.get("lista") or []], "acabando": {}}
+    itens = itens_ha(ent)
+    hoje = hoje_br()
+    mudancas = []
+    enviados = set(estado.get("enviados") or [])
+    with _cfg_trava:
+        cfg = ler_config()
+        lista = cfg.setdefault("lista", [])
+        idx = {norm(nome_item(i)): i for i in lista if isinstance(i, dict)}
+        for it in itens:
+            nome = str(it.get("summary") or "").strip()[:120]
+            if len(nome) < 2:
+                continue
+            uid, situacao, k = str(it.get("uid") or nome), it.get("status"), norm(nome)
+            antes = estado["status"].get(uid)
+            if situacao == "needs_action" and antes is None and k not in idx:
+                idx[k] = {"produto": nome, "compras": [], "origem": "ha"}
+                lista.append(idx[k])
+                enviados.add(k)
+                mudancas.append({"tipo": "novo", "produto": nome})
+            if situacao == "completed" and antes is not None and antes != "completed":
+                if k not in idx:
+                    idx[k] = {"produto": nome, "compras": [], "origem": "ha"}
+                    lista.append(idx[k])
+                    enviados.add(k)
+                if hoje not in idx[k].setdefault("compras", []):
+                    idx[k]["compras"].append(hoje)
+                    mudancas.append({"tipo": "compra", "produto": idx[k]["produto"], "data": hoje})
+            estado["status"][uid] = situacao
+        if mudancas:
+            rev = gravar_config(cfg)["rev"]
+            DIARIO.extend(dict(m, rev=rev) for m in mudancas)
+            del DIARIO[:-300]
+            log(f"lista do HA: {len(mudancas)} mudança(s)")
+    # do EconomIA para a lista do HA
+    pendentes = {norm(i.get("summary") or "") for i in itens if i.get("status") == "needs_action"}
+    mandou = 0
+    for item in cfg.get("lista") or []:
+        if not isinstance(item, dict):
+            continue
+        nome, k = nome_item(item), norm(nome_item(item))
+        if not nome or k in pendentes:
+            continue
+        if conf.get("enviar_novos", True) and k not in enviados:
+            ha_api("POST", "/services/todo/add_item", {"entity_id": ent, "item": nome})
+            pendentes.add(k)
+            mandou += 1
+        elif conf.get("enviar_acabando", True):
+            dias, prevista = ritmo_info(item)
+            if dias is not None and dias <= 1 and estado["acabando"].get(k) != prevista:
+                ha_api("POST", "/services/todo/add_item", {"entity_id": ent, "item": nome})
+                estado["acabando"][k] = prevista
+                pendentes.add(k)
+                mandou += 1
+        enviados.add(k)
+    estado["enviados"] = sorted(enviados)
+    gravar_json(SYNC_FILE, estado)
+    SYNC.update({"ultima": agora(), "erro": None, "chegaram": SYNC["chegaram"] + len(mudancas), "enviados": SYNC["enviados"] + mandou})
+
+
+def laco_sincronizacao():
+    while True:
+        try:
+            sincronizar_lista()
+        except ErroBusca as e:
+            SYNC["erro"] = str(e)
+        except Exception as e:  # noqa: BLE001
+            SYNC["erro"] = f"Erro na sincronização: {e}"
+            log(SYNC["erro"])
+        time.sleep(SYNC_INTERVALO)
 
 
 # ---------- IA do Home Assistant ----------
@@ -478,7 +637,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.5"
+    server_version = "EconomIA/0.6"
 
     def log_message(self, fmt, *args):
         pass
@@ -531,7 +690,13 @@ class Painel(BaseHTTPRequestHandler):
                 "ofertas": ler_json(OFERTAS),
                 "usuario": self.headers.get("X-Remote-User-Display-Name") or self.headers.get("X-Remote-User-Name") or None,
                 "busca": BUSCA,
+                "sync": SYNC,
             })
+        elif rota == "/api/todos":
+            try:
+                self._json(200, {"listas": listas_ha()})
+            except ErroBusca as e:
+                self._json(502, {"erro": str(e)})
         elif rota == "/api/busca":
             self._json(200, BUSCA)
         elif rota in ("/api/exportar/lista.xlsx", "/api/exportar/lista.json"):
@@ -557,9 +722,18 @@ class Painel(BaseHTTPRequestHandler):
             cfg = self._corpo()
             if cfg is None:
                 return
-            cfg["atualizado_em"] = agora()
-            gravar_json(CONFIG, cfg)
-            self._json(200, {"ok": True})
+            with _cfg_trava:
+                atual = ler_config()
+                base, cur = int(cfg.get("rev") or 0), int(atual.get("rev") or 0)
+                mesclado = False
+                if cur > base:
+                    for d in DIARIO:
+                        if d["rev"] > base:
+                            aplicar_diario(cfg, d)
+                            mesclado = True
+                cfg["rev"] = cur
+                novo = gravar_config(cfg)
+            self._json(200, {"ok": True, "config": novo, "mesclado": mesclado})
         elif rota == "/api/ofertas":
             dado = self._corpo()
             if dado is None:
@@ -574,6 +748,12 @@ class Painel(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self._permitido():
             return
+        if urllib.parse.urlsplit(self.path).path == "/api/sincronizar-lista":
+            try:
+                sincronizar_lista()
+            except ErroBusca as e:
+                SYNC["erro"] = str(e)
+            return self._json(200, {"sync": SYNC, "rev": int(ler_config().get("rev") or 0)})
         if urllib.parse.urlsplit(self.path).path != "/api/buscar":
             return self._json(404, {"erro": "Não encontrado"})
         with _trava:
@@ -589,6 +769,7 @@ class Painel(BaseHTTPRequestHandler):
 
 def main():
     os.makedirs(DATA, exist_ok=True)
+    threading.Thread(target=laco_sincronizacao, daemon=True).start()
     servidor = ThreadingHTTPServer(("0.0.0.0", PORT), Painel)
     log(f"painel no ar na porta {PORT}; dados em {DATA}")
     servidor.serve_forever()
