@@ -213,9 +213,9 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .de{font-size:12px;color:var(--muted);white-space:nowrap}
 .de s{text-decoration-thickness:1px}
 .por{display:inline-flex;align-items:baseline;gap:4px;font-family:var(--font-display);font-stretch:70%;font-weight:800;font-size:1.6rem;letter-spacing:.005em;white-space:nowrap}
-.por .tag{font-family:var(--font-body);font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.chip.selo{background:var(--accent-soft);color:var(--accent)}
 .por .un{font-family:var(--font-body);font-size:12px;font-weight:600;color:var(--muted)}
-.off{font-family:var(--font-display);font-stretch:75%;font-weight:780;font-size:1rem;background:var(--deal-soft);color:var(--deal);border-radius:7px;padding:4px 7px;min-width:3.4em;text-align:center}
+.off{font-family:var(--font-display);font-stretch:75%;font-weight:780;font-size:1rem;background:var(--deal-soft);color:var(--deal);border-radius:7px;padding:4px 0;width:4.4em;box-sizing:border-box;text-align:center}
 .deal.muted .d-prod,.deal.muted .por{color:var(--muted)}
 .deal.muted .off{background:var(--bg);color:var(--muted)}
 
@@ -802,7 +802,7 @@ footer{font-size:12.5px;color:var(--muted)}
       </div>
     </section>
     <section class="panel settings" aria-labelledby="h-sobre">
-      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.8.1. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
+      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.8.2. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
     </section>
   </section>
 
@@ -1079,7 +1079,7 @@ footer{font-size:12.5px;color:var(--muted)}
     if (o.prazo_dias != null) cond += '<span>Chega em ' + o.prazo_dias + (o.prazo_dias > 1 ? ' dias' : ' dia') + '</span>';
     if (o.vendedor) cond += '<span>' + (o.oficial ? 'Loja oficial' : 'Vendido por ' + esc(o.vendedor)) + '</span>';
     if (o.importado) cond += '<span class="chip warn">Importado</span>';
-    var tag = tipo === 'clube' ? '<span class="tag">Clube</span>' : tipo === 'atacado' ? '<span class="tag">Atacado</span>' : '';
+    var selo = tipo === 'clube' ? '<span class="chip selo">Clube</span>' : tipo === 'atacado' ? '<span class="chip selo">Atacado</span>' : '';
     var un = o.unidade ? '<span class="un">/' + esc(o.unidade) + '</span>' : '';
     var why = oc ? '<p class="why off-why">' + esc(oc.txt) + '</p>' : (porQue(o) ? '<p class="why">' + esc(porQue(o)) + '</p>' : '');
     var acao;
@@ -1100,8 +1100,8 @@ footer{font-size:12.5px;color:var(--muted)}
     }
     return '<li class="deal' + (oc ? ' muted' : '') + '">'
       + '<div><p class="d-prod">' + esc(o.produto) + '</p>' + why
-      + '<p class="d-meta"><span>' + esc(G[o.rede].nome) + '</span>' + cond + rec + fonteLink(o.fonte) + acao + '</p></div>'
-      + '<div class="price num"><span class="de">' + ROT_PRECO[tipo] + ' <s>' + brl.format(o.preco_normal) + '</s></span><span class="por">' + tag + brl.format(o.preco_oferta) + un + '</span>' + (o.tamanho && Number(o.tamanho.quantidade) > 0 && !o.unidade ? '<span class="de">' + porUn(o.preco_oferta, Number(o.tamanho.quantidade), o.tamanho) + '</span>' : o.unidades > 1 ? '<span class="de">' + brl.format(o.preco_oferta / o.unidades) + ' cada</span>' : '') + '</div>'
+      + '<p class="d-meta"><span>' + esc(G[o.rede].nome) + '</span>' + selo + cond + rec + fonteLink(o.fonte) + acao + '</p></div>'
+      + '<div class="price num"><span class="de">' + ROT_PRECO[tipo] + ' <s>' + brl.format(o.preco_normal) + '</s></span><span class="por">' + brl.format(o.preco_oferta) + un + '</span>' + (o.tamanho && Number(o.tamanho.quantidade) > 0 && !o.unidade ? '<span class="de">' + porUn(o.preco_oferta, Number(o.tamanho.quantidade), o.tamanho) + '</span>' : o.unidades > 1 ? '<span class="de">' + brl.format(o.preco_oferta / o.unidades) + ' cada</span>' : '') + '</div>'
       + '<span class="off num">−' + pct(o) + '%</span>'
       + menu + '</li>';
   }
