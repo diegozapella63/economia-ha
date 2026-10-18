@@ -242,7 +242,9 @@ footer{font-size:12.5px;color:var(--muted)}
     {"produto": "Papel higiênico folha dupla · 12 rolos", "precos": {"pp": 23.90, "dc": 22.49, "giassi": 17.90, "condor": 18.49, "clubek": 19.90, "atacadao": 16.99}},
     {"produto": "Creme dental Colgate Total 12 · 90 g", "precos": {"pp": 14.99, "dc": 15.49, "panvel": 15.90, "raia": 16.99, "giassi": 9.98, "condor": 10.49, "angeloni": 11.49, "atacadao": 8.99}},
     {"produto": "Protetor solar facial FPS 50 · 40 g", "precos": {"pp": 69.90, "dc": 66.90, "panvel": 59.90, "raia": 64.90, "saojoao": 68.90, "angeloni": 62.90}},
-    {"produto": "Losartana potássica 50 mg · 30 comp. (genérico)", "precos": {"pp": 9.90, "dc": 10.49, "panvel": 12.90, "raia": 14.29, "saojoao": 11.50}}
+    {"produto": "Losartana potássica 50 mg · 30 comp. (genérico)", "precos": {"pp": 9.90, "dc": 10.49, "panvel": 12.90, "raia": 14.29, "saojoao": 11.50}},
+    {"produto": "Ração para gatos adultos · 10,1 kg", "precos": {"condor": 159.90, "giassi": 172.90, "petz": 179.90, "cobasi": 184.90, "petbairro": 189.90}},
+    {"produto": "Areia higiênica para gatos · 4 kg", "precos": {"giassi": 27.90, "atacadao": 25.49, "petz": 24.90, "cobasi": 26.90, "petbairro": 29.90}}
   ],
   "categorias": [
     {
@@ -341,12 +343,44 @@ footer{font-size:12.5px;color:var(--muted)}
         {"rede": "atacadao", "libera": "Cupons do app Meu Atacadão", "status": "pendente"},
         {"rede": "imperatriz", "libera": "Ofertas do Super Clube Imperatriz", "status": "pendente"}
       ]
+    },
+    {
+      "id": "petshops",
+      "nome": "Pet shops",
+      "singular": "Pet shop",
+      "aviso": "Os preços desta aba são ilustrativos, só para mostrar como fica.",
+      "redes": [
+        {"id": "petbairro", "nome": "Pet shop do bairro", "curto": "Pet do bairro", "nota": "Não tem loja online. As ofertas vêm do que ele publica no Instagram e no WhatsApp."},
+        {"id": "petz", "nome": "Petz", "curto": "Petz"},
+        {"id": "cobasi", "nome": "Cobasi", "curto": "Cobasi"}
+      ],
+      "lojas": [
+        {"rede": "petbairro", "distancia_km": 0.5, "horario": "Aberto até 19h", "fontes": ["Instagram", "WhatsApp"]},
+        {"rede": "petz", "distancia_km": 1.6, "horario": "Aberto até 22h", "fontes": ["Site", "App", "Clube"]},
+        {"rede": "cobasi", "distancia_km": 3.1, "horario": "Aberto até 22h", "fontes": ["Site", "App", "Clube"]}
+      ],
+      "cupons": [
+        {"rede": "petz", "codigo": null, "beneficio": "Cupons da sua conta Petz", "condicao": "Os cupons de cliente cadastrado aparecem aqui depois do login.", "valido_ate": null, "status": "login"},
+        {"rede": "cobasi", "codigo": null, "beneficio": "Cupons da sua conta Cobasi", "condicao": "Os cupons de cliente cadastrado aparecem aqui depois do login.", "valido_ate": null, "status": "login"}
+      ],
+      "ofertas": [
+        {"id": "petz-racao-gato-10", "rede": "petz", "produto": "Ração para gatos adultos castrados · 10,1 kg", "preco_normal": 219.90, "preco_oferta": 179.90, "tipo": "promo", "tags": ["pet", "gato"]},
+        {"id": "petz-areia-4", "rede": "petz", "produto": "Areia higiênica para gatos · 4 kg", "preco_normal": 32.90, "preco_oferta": 24.90, "tipo": "promo", "tags": ["pet", "gato"]},
+        {"id": "petz-arranhador", "rede": "petz", "produto": "Arranhador para gatos com plataforma", "preco_normal": 89.90, "preco_oferta": 59.90, "tipo": "promo", "tags": ["pet", "gato"]},
+        {"id": "petbairro-sache-12", "rede": "petbairro", "produto": "Sachê para gatos · caixa com 12", "preco_normal": 26.90, "preco_oferta": 19.90, "tipo": "promo", "tags": ["pet", "gato"]},
+        {"id": "cobasi-racao-cao-15", "rede": "cobasi", "produto": "Ração para cães adultos porte médio · 15 kg", "preco_normal": 239.90, "preco_oferta": 199.90, "tipo": "clube", "tags": ["pet", "cachorro"]},
+        {"id": "cobasi-antipulgas-cao", "rede": "cobasi", "produto": "Antipulgas para cães de 10 a 25 kg · 3 comprimidos", "preco_normal": 249.90, "preco_oferta": 199.90, "tipo": "promo", "tags": ["pet", "cachorro"]}
+      ],
+      "contas": [
+        {"rede": "petz", "libera": "Preços e cupons de cliente cadastrado", "status": "pendente"},
+        {"rede": "cobasi", "libera": "Preços e cupons de cliente cadastrado", "status": "pendente"}
+      ]
     }
   ],
   "config_exemplo": {
     "cep": null,
     "raio_km": 2,
-    "categorias": ["farmacias", "mercados"],
+    "categorias": ["farmacias", "mercados", "petshops"],
     "lojas": {"ignorar": [], "manter": [], "adicionar": []},
     "lista": [
       {"produto": "Café torrado e moído · 500 g", "compras": ["2026-09-20", "2026-09-30", "2026-10-10"]},
@@ -354,9 +388,11 @@ footer{font-size:12.5px;color:var(--muted)}
       {"produto": "Papel higiênico folha dupla · 12 rolos", "compras": ["2026-08-30", "2026-09-24"]},
       {"produto": "Creme dental Colgate Total 12 · 90 g", "compras": ["2026-09-05"]},
       {"produto": "Protetor solar facial FPS 50 · 40 g", "compras": []},
-      {"produto": "Losartana potássica 50 mg · 30 comp. (genérico)", "compras": ["2026-09-21"]}
+      {"produto": "Losartana potássica 50 mg · 30 comp. (genérico)", "compras": ["2026-09-21"]},
+      {"produto": "Ração para gatos adultos · 10,1 kg", "compras": ["2026-08-25", "2026-09-24"]},
+      {"produto": "Areia higiênica para gatos · 4 kg", "compras": ["2026-09-28", "2026-10-08"]}
     ],
-    "perfil": {"adultos": 2, "criancas": 0, "bebes": 0, "pets": [], "restricoes": [], "interesses": ["skincare", "cafe"], "nunca": []},
+    "perfil": {"adultos": 2, "criancas": 0, "bebes": 0, "pets": {"cachorro": 0, "gato": 1, "outros": 0}, "restricoes": [], "interesses": ["skincare", "cafe"], "nunca": []},
     "cotidiano": {"mercado": ["sab"], "farmacia": ["qua"], "avisar": "vespera"},
     "ocultas": []
   }
@@ -408,7 +444,7 @@ footer{font-size:12.5px;color:var(--muted)}
   <section class="view" id="v-lista" aria-label="Minha lista" hidden>
     <section class="panel" aria-labelledby="h-lista">
       <div class="sec-head"><h2 id="h-lista">Minha lista</h2></div>
-      <p class="sec-meta">Uma lista só para farmácias e mercados. O que está acabando aparece primeiro. Toque em "Comprei hoje" quando comprar: o painel aprende de quanto em quanto tempo cada coisa acaba.</p>
+      <p class="sec-meta">Uma lista só para farmácias, mercados e pet shops. O que está acabando aparece primeiro. Toque em "Comprei hoje" quando comprar: o painel aprende de quanto em quanto tempo cada coisa acaba.</p>
       <ul class="wish-grid" id="wish"></ul>
       <form class="row-form" id="addForm" novalidate>
         <input class="field" id="novoItem" name="novoItem" placeholder="Ex.: Atorvastatina 20 mg, Café 500 g, Sabão em pó" aria-label="Produto para acompanhar">
@@ -470,7 +506,13 @@ footer{font-size:12.5px;color:var(--muted)}
             <label for="pCriancas">Crianças<input class="field num" type="number" id="pCriancas" min="0" max="20" inputmode="numeric"></label>
             <label for="pBebes">Bebês<input class="field num" type="number" id="pBebes" min="0" max="20" inputmode="numeric"></label>
           </div>
-          <div class="group"><h3>Pets</h3><div class="picks" id="pPets"></div></div>
+          <div class="group"><h3>Pets</h3>
+            <div class="people">
+              <label for="pCaes">Cachorros<input class="field num" type="number" id="pCaes" min="0" max="20" inputmode="numeric"></label>
+              <label for="pGatos">Gatos<input class="field num" type="number" id="pGatos" min="0" max="20" inputmode="numeric"></label>
+              <label for="pOutros">Outros<input class="field num" type="number" id="pOutros" min="0" max="20" inputmode="numeric"></label>
+            </div>
+          </div>
           <p class="hint" id="casaHint"></p>
         </section>
 
@@ -525,7 +567,7 @@ footer{font-size:12.5px;color:var(--muted)}
   function tira(a, v){ var i = a.indexOf(v); if (i >= 0) a.splice(i, 1); }
   function alterna(a, v){ if (a.indexOf(v) >= 0) tira(a, v); else a.push(v); }
   function norm(s){ return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
-  function chave(s){ return norm(s).split(' ').slice(0, 2).join(' '); }
+  function chave(s){ return norm(s).split(' ').slice(0, 3).join(' '); }
 
   // ---------- datas (fuso de São Paulo) ----------
   function hojeSP(){ return new Intl.DateTimeFormat('en-CA', {timeZone:TZ, year:'numeric', month:'2-digit', day:'2-digit'}).format(new Date()); }
@@ -554,7 +596,17 @@ footer{font-size:12.5px;color:var(--muted)}
   var INTERESSES = ['skincare', 'cafe', 'bucal', 'suplementos', 'limpeza', 'carnes'];
   var NUNCA = ['bebe', 'pet', 'alcool', 'medicamento', 'maquiagem', 'geriatrico'];
   var RESTR = [{id:'lactose', nome:'Sem lactose', tag:'lactose'}, {id:'gluten', nome:'Sem glúten', tag:'gluten'}, {id:'vegetariano', nome:'Vegetariano', tag:'carnes'}, {id:'acucar', nome:'Sem açúcar', tag:'acucar'}];
-  var PETS = [{id:'cachorro', nome:'Cachorro'}, {id:'gato', nome:'Gato'}];
+  var PETS = [{id:'cachorro', campo:'pCaes', um:'cachorro', varios:'cachorros'}, {id:'gato', campo:'pGatos', um:'gato', varios:'gatos'}, {id:'outros', campo:'pOutros', um:'outro pet', varios:'outros pets'}];
+  function petsDe(v){
+    var o = {cachorro:0, gato:0, outros:0};
+    if (Array.isArray(v)) v.forEach(function(k){ if (k in o) o[k] = 1; });
+    else if (v && typeof v === 'object') Object.keys(o).forEach(function(k){ o[k] = n0(v[k], 0); });
+    return o;
+  }
+  function petsTotal(){ var p = estado.perfil.pets; return p.cachorro + p.gato + p.outros; }
+  function descrevePets(p){
+    return PETS.filter(function(x){ return p[x.id] > 0; }).map(function(x){ return p[x.id] + ' ' + (p[x.id] > 1 ? x.varios : x.um); }).join(' e ');
+  }
   var DIAS = [{id:'dom', n:'Dom'}, {id:'seg', n:'Seg'}, {id:'ter', n:'Ter'}, {id:'qua', n:'Qua'}, {id:'qui', n:'Qui'}, {id:'sex', n:'Sex'}, {id:'sab', n:'Sáb'}];
   function cap(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
 
@@ -588,7 +640,7 @@ footer{font-size:12.5px;color:var(--muted)}
       categorias: arr(c.categorias).length ? c.categorias : D.categorias.map(function(x){ return x.id; }),
       lojas: {ignorar: arr(l.ignorar), manter: arr(l.manter), adicionar: arr(l.adicionar)},
       lista: arr(c.lista).map(function(i){ return typeof i === 'string' ? {produto:i, compras:[]} : {produto:String(i.produto || ''), compras:arr(i.compras)}; }).filter(function(i){ return i.produto; }),
-      perfil: {adultos:n0(p.adultos, 1), criancas:n0(p.criancas, 0), bebes:n0(p.bebes, 0), pets:arr(p.pets), restricoes:arr(p.restricoes), interesses:arr(p.interesses), nunca:arr(p.nunca)},
+      perfil: {adultos:n0(p.adultos, 1), criancas:n0(p.criancas, 0), bebes:n0(p.bebes, 0), pets:petsDe(p.pets), restricoes:arr(p.restricoes), interesses:arr(p.interesses), nunca:arr(p.nunca)},
       cotidiano: {mercado:arr(r.mercado), farmacia:arr(r.farmacia), avisar:r.avisar || 'vespera'},
       ocultas: arr(c.ocultas)
     };
@@ -632,9 +684,9 @@ footer{font-size:12.5px;color:var(--muted)}
     for (var i = 0; i < p.nunca.length; i++) if (t.indexOf(p.nunca[i]) >= 0) return {txt:'Você pediu para não mostrar ' + ROTULO_TAG[p.nunca[i]], tipo:'nunca', tag:p.nunca[i]};
     if (t.indexOf('bebe') >= 0 && p.criancas + p.bebes === 0) return {txt:'Não há crianças no seu perfil', tipo:'perfil'};
     if (t.indexOf('pet') >= 0){
-      if (!p.pets.length) return {txt:'Não há pets no seu perfil', tipo:'perfil'};
+      if (!petsTotal()) return {txt:'Não há pets no seu perfil', tipo:'perfil'};
       var bichos = t.filter(function(x){ return x === 'gato' || x === 'cachorro'; });
-      if (bichos.length && !bichos.some(function(b){ return p.pets.indexOf(b) >= 0; })) return {txt:'Não é para o seu pet', tipo:'perfil'};
+      if (bichos.length && !bichos.some(function(b){ return p.pets[b] > 0; })) return {txt:'Não é para o seu pet', tipo:'perfil'};
     }
     for (var j = 0; j < RESTR.length; j++) if (p.restricoes.indexOf(RESTR[j].id) >= 0 && t.indexOf(RESTR[j].tag) >= 0) return {txt:'Você marcou ' + RESTR[j].nome.toLowerCase(), tipo:'perfil'};
     return null;
@@ -667,9 +719,11 @@ footer{font-size:12.5px;color:var(--muted)}
     if (!ativas.some(function(c){ return c.id === ui.aba; })) ui.aba = ativas[0].id;
     CAT = ativas.filter(function(c){ return c.id === ui.aba; })[0];
     $('cats').innerHTML = ativas.map(function(c){ return '<button type="button" data-cat="' + c.id + '" aria-pressed="' + (c.id === CAT.id) + '">' + esc(c.nome) + '</button>'; }).join('');
-    $('catNote').textContent = exemplo && CAT.aviso ? CAT.aviso : '';
+    $('catNote').textContent = CAT.id === 'petshops' && !petsTotal() ? 'Sem pets no seu perfil, as ofertas daqui ficam escondidas. Ajuste em Perfil.' : (exemplo && CAT.aviso ? CAT.aviso : '');
     $('ofertasMeta').textContent = CAT.id === 'farmacias'
       ? 'O que combina com você aparece primeiro. Preço do site; na loja pode ser outro.'
+      : CAT.id === 'petshops'
+      ? 'Ração, areia, remédios e acessórios, só para os pets do seu perfil.'
       : 'Encarte da semana, preço de clube e preço de atacado, do que combina com você para o resto.';
     if (filtro !== 'todas' && !acompanha(filtro)) filtro = 'todas';
     pintaResumo(); pintaFiltros(); pintaDeals(); pintaCupons();
@@ -849,7 +903,7 @@ footer{font-size:12.5px;color:var(--muted)}
     if (nome.length < 3){ msg.className = 'hint err'; msg.textContent = 'Escreva o nome do produto, com tamanho ou dosagem se tiver.'; return; }
     if (estado.lista.some(function(i){ return norm(i.produto) === norm(nome); })){ msg.className = 'hint err'; msg.textContent = 'Esse produto já está na lista.'; return; }
     estado.lista.push({produto:nome, compras:[]}); $('novoItem').value = '';
-    msg.className = 'hint ok'; msg.textContent = '"' + nome + '" entrou na lista. O Claude procura em farmácias e mercados na próxima atualização.';
+    msg.className = 'hint ok'; msg.textContent = '"' + nome + '" entrou na lista. Os preços aparecem depois da próxima busca, em todas as lojas que você acompanha.';
     salvar('Adicionado à lista'); pintaLista(); pintaOfertasTela();
   });
 
@@ -933,8 +987,10 @@ footer{font-size:12.5px;color:var(--muted)}
     $('raio').value = String(estado.raio_km);
     $('catsCfg').innerHTML = D.categorias.map(function(c){ return '<label><input type="checkbox" value="' + c.id + '"' + (estado.categorias.indexOf(c.id) >= 0 ? ' checked' : '') + '> ' + esc(c.nome) + '</label>'; }).join('');
     $('pAdultos').value = p.adultos; $('pCriancas').value = p.criancas; $('pBebes').value = p.bebes;
-    picks('pPets', PETS, p.pets);
-    $('casaHint').textContent = p.criancas + p.bebes === 0 ? 'Sem crianças: fraldas, papinhas e produtos de bebê ficam escondidos.' : 'Com crianças: produtos infantis aparecem.';
+    PETS.forEach(function(x){ $(x.campo).value = p.pets[x.id]; });
+    var tot = petsTotal(), so = p.pets.cachorro && !p.pets.gato ? ' para cães' : p.pets.gato && !p.pets.cachorro ? ' para gatos' : '';
+    $('casaHint').textContent = (p.criancas + p.bebes === 0 ? 'Sem crianças: produtos de bebê ficam escondidos. ' : 'Com crianças: produtos infantis aparecem. ')
+      + (tot ? 'Com ' + descrevePets(p.pets) + ': aparecem ração, areia e cuidados' + so + '.' : 'Sem pets: ração e itens de pet ficam escondidos.');
     picks('pRestr', RESTR, p.restricoes);
     picks('pInt', INTERESSES.map(function(t){ return {id:t, nome:cap(ROTULO_TAG[t])}; }), p.interesses);
     picks('pNunca', NUNCA.map(function(t){ return {id:t, nome:cap(ROTULO_TAG[t])}; }), p.nunca);
@@ -943,7 +999,7 @@ footer{font-size:12.5px;color:var(--muted)}
     $('avisar').value = r.avisar;
     pintaAviso();
   }
-  var ALVO = {pPets:function(){ return estado.perfil.pets; }, pRestr:function(){ return estado.perfil.restricoes; }, pInt:function(){ return estado.perfil.interesses; },
+  var ALVO = {pRestr:function(){ return estado.perfil.restricoes; }, pInt:function(){ return estado.perfil.interesses; },
     pNunca:function(){ return estado.perfil.nunca; }, dMercado:function(){ return estado.cotidiano.mercado; }, dFarmacia:function(){ return estado.cotidiano.farmacia; }};
   $('v-perfil').addEventListener('click', function(e){
     var b = e.target.closest('.pick'); if (!b) return;
@@ -958,6 +1014,12 @@ footer{font-size:12.5px;color:var(--muted)}
       salvar(); tudo();
     });
   });
+  PETS.forEach(function(x){
+    $(x.campo).addEventListener('change', function(){
+      estado.perfil.pets[x.id] = n0(this.value, 0); this.value = estado.perfil.pets[x.id];
+      salvar(); tudo();
+    });
+  });
   $('avisar').addEventListener('change', function(){ estado.cotidiano.avisar = this.value; salvar(); pintaAviso(); });
 
   function mascara(v){ var d = v.replace(/\D/g, '').slice(0, 8); return d.length > 5 ? d.slice(0, 5) + '-' + d.slice(5) : d; }
@@ -967,7 +1029,7 @@ footer{font-size:12.5px;color:var(--muted)}
     var msg = $('ondeMsg'), cep = mascara($('cep').value);
     var cats = Array.prototype.filter.call($('catsCfg').querySelectorAll('input'), function(i){ return i.checked; }).map(function(i){ return i.value; });
     if (cep.replace('-', '').length !== 8){ msg.className = 'hint err'; msg.textContent = 'Digite os 8 números do CEP.'; $('cep').focus(); return; }
-    if (!cats.length){ msg.className = 'hint err'; msg.textContent = 'Marque pelo menos farmácias ou mercados.'; return; }
+    if (!cats.length){ msg.className = 'hint err'; msg.textContent = 'Marque pelo menos um tipo de loja.'; return; }
     estado.cep = cep; estado.raio_km = Number($('raio').value); estado.categorias = cats;
     msg.className = 'hint ok'; msg.textContent = 'Salvo. A próxima atualização, ' + quando(D.proxima_atualizacao) + ', procura as lojas perto deste CEP.';
     salvar('Endereço salvo'); tudo();

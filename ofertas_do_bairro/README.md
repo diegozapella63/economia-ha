@@ -1,6 +1,6 @@
 # Ofertas do Bairro — add-on do Home Assistant
 
-Painel de cupons, ofertas e lista de compras de farmácias e mercados perto de casa, aberto pelo menu lateral do Home Assistant (ingress).
+Painel de cupons, ofertas e lista de compras de farmácias, mercados e pet shops perto de casa, aberto pelo menu lateral do Home Assistant (ingress).
 
 Todos os dados ficam no Home Assistant, na pasta `/data` do add-on:
 
@@ -30,10 +30,10 @@ O servidor só aceita conexões do ingress (`172.30.32.2`). Para testar fora do 
 {
   "cep": "89200-000",
   "raio_km": 2,
-  "categorias": ["farmacias", "mercados"],
+  "categorias": ["farmacias", "mercados", "petshops"],
   "lojas": {"ignorar": ["raia"], "manter": ["imperatriz"], "adicionar": [{"categoria": "mercados", "nome": "Mercado da esquina"}]},
   "lista": [{"produto": "Café torrado e moído · 500 g", "compras": ["2026-09-20", "2026-09-30"]}],
-  "perfil": {"adultos": 2, "criancas": 0, "bebes": 0, "pets": [], "restricoes": [], "interesses": ["skincare", "cafe"], "nunca": ["alcool"]},
+  "perfil": {"adultos": 2, "criancas": 0, "bebes": 0, "pets": {"cachorro": 0, "gato": 1, "outros": 0}, "restricoes": [], "interesses": ["skincare", "cafe"], "nunca": ["alcool"]},
   "cotidiano": {"mercado": ["sab"], "farmacia": ["qua"], "avisar": "vespera"},
   "ocultas": ["giassi-cerveja-12"]
 }
@@ -68,7 +68,7 @@ O servidor só aceita conexões do ingress (`172.30.32.2`). Para testar fora do 
 | Etiqueta | Efeito |
 | --- | --- |
 | `bebe` | Escondida se o perfil não tem crianças nem bebês. |
-| `pet`, `gato`, `cachorro` | Escondida sem pets, ou se o animal não é o da casa. |
+| `pet`, `gato`, `cachorro` | Escondida sem pets (`perfil.pets` com zero em tudo), ou se o animal não é o da casa. |
 | `lactose`, `gluten`, `carnes`, `acucar` | Escondida pelas restrições (`vegetariano` usa `carnes`). |
 | `alcool`, `medicamento`, `maquiagem`, `geriatrico` | Podem ir para "Nunca mostrar". |
 | `skincare`, `cafe`, `bucal`, `suplementos`, `limpeza`, `carnes` | Interesses: sobem na lista. |

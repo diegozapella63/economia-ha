@@ -1,7 +1,7 @@
 name: Ofertas do Bairro
-version: "0.2.0"
+version: "0.3.0"
 slug: ofertas_do_bairro
-description: Cupons, ofertas e sua lista de compras nas farmácias e mercados perto de casa
+description: Cupons, ofertas e sua lista de compras nas farmácias, mercados e pet shops perto de casa
 arch:
   - aarch64
   - amd64
