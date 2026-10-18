@@ -226,8 +226,25 @@ def ritmo_info(item):
 
 
 # ---------- API do Home Assistant ----------
+def token_ha():
+    """Chave do Supervisor. O s6-overlay da imagem base limpa o ambiente, então também lê o arquivo dele."""
+    for k in ("SUPERVISOR_TOKEN", "HASSIO_TOKEN"):
+        if os.environ.get(k):
+            return os.environ[k]
+    for pasta in ("/run/s6/container_environment", "/var/run/s6/container_environment"):
+        for k in ("SUPERVISOR_TOKEN", "HASSIO_TOKEN"):
+            try:
+                with open(os.path.join(pasta, k), encoding="utf-8") as f:
+                    t = f.read().strip()
+            except OSError:
+                continue
+            if t:
+                return t
+    return None
+
+
 def ha_api(metodo, caminho, corpo=None, timeout=30):
-    token = os.environ.get("SUPERVISOR_TOKEN")
+    token = token_ha()
     if not token:
         raise ErroBusca("O add-on não tem acesso ao Home Assistant. Reinstale a versão mais nova do add-on.")
     req = urllib.request.Request(HA_API + caminho, method=metodo,
@@ -344,7 +361,7 @@ def opcoes():
 
 
 def chamar_ai_task(nome, instrucoes, anexos=None):
-    token = os.environ.get("SUPERVISOR_TOKEN")
+    token = token_ha()
     if not token:
         raise ErroBusca("O add-on não tem acesso ao Home Assistant. Reinstale a versão mais nova do add-on.")
     corpo = {"task_name": nome, "instructions": instrucoes}
@@ -988,7 +1005,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.8.5"
+    server_version = "EconomIA/0.8.6"
 
     def log_message(self, fmt, *args):
         pass
@@ -1133,6 +1150,7 @@ class Painel(BaseHTTPRequestHandler):
 
 def main():
     os.makedirs(DATA, exist_ok=True)
+    log("chave do Home Assistant: " + ("encontrada" if token_ha() else "AUSENTE (a busca e a lista do HA não vão funcionar)"))
     threading.Thread(target=laco_sincronizacao, daemon=True).start()
     servidor = ThreadingHTTPServer(("0.0.0.0", PORT), Painel)
     log(f"painel no ar na porta {PORT}; dados em {DATA}")
