@@ -214,6 +214,17 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .de s{text-decoration-thickness:1px}
 .por{display:inline-flex;align-items:baseline;gap:4px;font-family:var(--font-display);font-stretch:70%;font-weight:800;font-size:1.6rem;letter-spacing:.005em;white-space:nowrap}
 .chip.selo{background:var(--accent-soft);color:var(--accent)}
+.foto-itens select.field{flex:1 1 140px}
+#cupItens li{padding-bottom:10px;border-bottom:1px solid var(--line)}
+.ia-st{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--muted)}
+.ia-st::before{content:"";flex:none;width:9px;height:9px;margin-top:5px;border-radius:50%;background:var(--line)}
+.ia-st.ok{color:var(--ink)}
+.ia-st.ok::before{background:var(--accent)}
+.ia-st.erro::before{background:var(--deal)}
+.ia-st.erro{color:var(--deal)}
+#cupMeus{border-top:1px solid var(--line);padding-top:14px}
+.cup-row .r-name{display:flex;flex-direction:column;gap:2px}
+.cup-row .r-name small{font-weight:500;font-size:12.5px;color:var(--muted)}
 .por .un{font-family:var(--font-body);font-size:12px;font-weight:600;color:var(--muted)}
 .off{font-family:var(--font-display);font-stretch:75%;font-weight:780;font-size:1rem;background:var(--deal-soft);color:var(--deal);border-radius:7px;padding:4px 0;width:4.4em;box-sizing:border-box;text-align:center}
 .deal.muted .d-prod,.deal.muted .por{color:var(--muted)}
@@ -366,14 +377,14 @@ footer{font-size:12.5px;color:var(--muted)}
   "gerado_em": "2026-10-18T15:51:00-03:00",
   "proxima_atualizacao": "2026-10-19T07:52:00-03:00",
   "lista": [
-    {"produto": "Café torrado e moído · 500 g", "precos": {"giassi": 19.90, "condor": 18.49, "angeloni": 17.98, "clubek": 19.49, "atacadao": 18.90, "amazon": {"preco": 18.99, "frete": 0, "prazo_dias": 2}, "mercadolivre": {"preco": 17.49, "frete": 9.90, "prazo_dias": 3}}},
-    {"produto": "Leite UHT integral · 1 L", "precos": {"giassi": 5.49, "condor": 5.19, "angeloni": 5.69, "clubek": 5.39, "atacadao": 4.79}},
-    {"produto": "Papel higiênico folha dupla · 12 rolos", "base": {"quantidade": 12, "unidade": "un", "rotulo": "rolo"}, "precos": {"pp": 23.90, "dc": 22.49, "giassi": 17.90, "condor": 18.49, "clubek": 19.90, "atacadao": 16.99}, "tamanhos": [{"rede": "giassi", "embalagem": "Pacote 24 rolos", "quantidade": 24, "preco": 35.90}, {"rede": "amazon", "embalagem": "Kit 24 rolos", "quantidade": 24, "preco": 36.90, "frete": 0, "prazo_dias": 2}]},
+    {"produto": "Café torrado e moído · 500 g", "precos": {"giassi": 19.90, "condor": {"preco": 18.49, "clube": 16.99}, "angeloni": {"preco": 22.98, "clube": 17.98}, "clubek": 19.49, "atacadao": 18.90, "amazon": {"preco": 18.99, "frete": 0, "prazo_dias": 2}, "mercadolivre": {"preco": 17.49, "frete": 9.90, "prazo_dias": 3}}},
+    {"produto": "Leite UHT integral · 1 L", "precos": {"giassi": 5.49, "condor": {"preco": 5.19, "clube": 4.69}, "angeloni": 5.69, "clubek": 5.39, "atacadao": 4.79}},
+    {"produto": "Papel higiênico folha dupla · 12 rolos", "base": {"quantidade": 12, "unidade": "un", "rotulo": "rolo"}, "precos": {"pp": 23.90, "dc": 22.49, "giassi": 17.90, "condor": 18.49, "clubek": {"preco": 19.90, "clube": 15.99}, "atacadao": 16.99}, "tamanhos": [{"rede": "giassi", "embalagem": "Pacote 24 rolos", "quantidade": 24, "preco": 35.90}, {"rede": "amazon", "embalagem": "Kit 24 rolos", "quantidade": 24, "preco": 36.90, "frete": 0, "prazo_dias": 2}]},
     {"produto": "Lysoform", "base": {"quantidade": 1, "unidade": "L"}, "precos": {"pp": 22.90, "dc": 23.49, "giassi": 21.90, "condor": 19.98, "angeloni": 20.49, "atacadao": 17.49, "amazon": {"preco": 19.90, "frete": 0, "prazo_dias": 2}}, "tamanhos": [{"rede": "atacadao", "embalagem": "Galão 5 L", "quantidade": 5, "preco": 79.90}, {"rede": "angeloni", "embalagem": "Galão 5 L", "quantidade": 5, "preco": 89.90}, {"rede": "amazon", "embalagem": "Galão 5 L", "quantidade": 5, "preco": 84.90, "frete": 0, "prazo_dias": 2}, {"rede": "mercadolivre", "embalagem": "Kit 3 × 1 L", "quantidade": 3, "preco": 54.90, "frete": 0, "prazo_dias": 3}]},
     {"produto": "Creme dental Colgate Total 12 · 90 g", "base": {"quantidade": 0.09, "unidade": "kg"}, "precos": {"pp": 14.99, "dc": 15.49, "panvel": 15.90, "raia": 16.99, "giassi": 9.98, "condor": 10.49, "angeloni": 11.49, "atacadao": 8.99}, "tamanhos": [{"rede": "mercadolivre", "embalagem": "Kit 6 × 90 g", "quantidade": 0.54, "preco": 44.90, "frete": 0, "prazo_dias": 2}]},
     {"produto": "Protetor solar facial FPS 50 · 40 g", "precos": {"pp": 69.90, "dc": 66.90, "panvel": 59.90, "raia": 64.90, "saojoao": 68.90, "angeloni": 62.90, "shopee": {"preco": 52.90, "frete": 12.90, "prazo_dias": 6}}},
     {"produto": "Losartana potássica 50 mg · 30 comp. (genérico)", "precos": {"pp": 9.90, "dc": 10.49, "panvel": 12.90, "raia": 14.29, "saojoao": 11.50}},
-    {"produto": "Ração para gatos adultos · 10,1 kg", "precos": {"condor": 159.90, "giassi": 172.90, "petz": 179.90, "cobasi": 184.90, "petbairro": 189.90, "amazon": {"preco": 164.90, "frete": 0, "prazo_dias": 2}}},
+    {"produto": "Ração para gatos adultos · 10,1 kg", "precos": {"condor": {"preco": 189.90, "clube": 159.90}, "giassi": 172.90, "petz": 179.90, "cobasi": 184.90, "petbairro": 189.90, "amazon": {"preco": 164.90, "frete": 0, "prazo_dias": 2}}},
     {"produto": "Areia higiênica para gatos · 4 kg", "base": {"quantidade": 4, "unidade": "kg"}, "precos": {"giassi": 27.90, "atacadao": 25.49, "petz": 24.90, "cobasi": 26.90, "petbairro": 29.90}, "tamanhos": [{"rede": "mercadolivre", "embalagem": "Kit 3 × 4 kg", "quantidade": 12, "preco": 64.90, "frete": 0, "prazo_dias": 3}, {"rede": "cobasi", "embalagem": "Pacote 12 kg", "quantidade": 12, "preco": 71.90}]}
   ],
   "categorias": [
@@ -555,6 +566,8 @@ footer{font-size:12.5px;color:var(--muted)}
     "perfil": {"adultos": 2, "criancas": 0, "bebes": 0, "pets": {"cachorro": 0, "gato": 1, "outros": 0}, "restricoes": [], "interesses": ["skincare", "cafe"], "nunca": []},
     "cotidiano": {"mercado": ["sab"], "farmacia": ["qua"], "avisar": "vespera", "estoque": "normal"},
     "roteiro": {"paradas": 2, "escopo": "tudo", "online": true},
+    "clubes": ["condor"],
+    "cupons_meus": [{"id": "meu-exemplo", "rede": "panvel", "beneficio": "20% em protetor solar", "condicao": "Ativado no app Bem Panvel", "valido_ate": "2026-10-24", "produto": "Protetor solar"}],
     "sync": {"ativo": true, "entidade": "todo.shopping_list", "enviar_novos": true, "enviar_acabando": true},
     "ocultas": []
   }
@@ -745,6 +758,19 @@ footer{font-size:12.5px;color:var(--muted)}
     </div>
 
     <div class="group"><h2 class="big">Dados e ajustes</h2></div>
+    <section class="panel settings" aria-labelledby="h-ia">
+      <div class="set-head"><h2 id="h-ia">IA do Home Assistant</h2><p class="sec-meta">O EconomIA usa a IA já configurada no seu Home Assistant (Anthropic Claude, OpenAI, Google Gemini ou outra). Para buscar ofertas ela precisa de busca na web; para ler fotos, precisa aceitar imagens. Dá para trocar quando quiser.</p></div>
+      <div class="set-row">
+        <div><h3 class="set-t"><label for="iaBusca">Para buscar ofertas</label></h3><p class="ia-st" id="iaBuscaSt">Toque em Verificar de novo para testar.</p></div>
+        <select class="field" id="iaBusca"></select>
+      </div>
+      <div class="set-row">
+        <div><h3 class="set-t"><label for="iaFotos">Para ler fotos</label></h3><p class="ia-st" id="iaFotosSt">Usando a IA preferida do Home Assistant.</p></div>
+        <select class="field" id="iaFotos"></select>
+      </div>
+      <div class="row-form"><button type="button" class="ghost big" id="iaTestar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>Verificar de novo</button></div>
+      <p class="hint">Google Gemini: a Pesquisa Google funciona num <b>assistente de conversa</b> com "Enable Google Search tool" ligado e "Controlar o Home Assistant" em nenhum. Escolha esse assistente em "Para buscar ofertas" e deixe o Google AI Task para ler fotos.</p>
+    </section>
     <section class="panel settings" aria-labelledby="h-ha">
       <div class="set-head"><h2 id="h-ha">Lista do Home Assistant</h2><p class="sec-meta">Fale com o Assist, por exemplo "adicione café na lista de compras", e o item aparece aqui. Marcou como comprado lá, conta como "Comprei hoje" aqui.</p></div>
       <div class="set-row">
@@ -788,7 +814,7 @@ footer{font-size:12.5px;color:var(--muted)}
       </div>
     </section>
     <section class="panel settings" aria-labelledby="h-sobre">
-      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.8.6. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
+      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.9.0. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
     </section>
 
     <div class="group" id="lojasSec"><h2 class="big">Lojas</h2></div>
@@ -805,10 +831,23 @@ footer{font-size:12.5px;color:var(--muted)}
         <p class="hint" id="lojaMsg" aria-live="polite"></p>
       </section>
       <section class="panel" aria-labelledby="h-contas">
-        <div class="sec-head"><h2 id="h-contas">Clubes e contas</h2></div>
-        <p class="sec-meta">Com login, aparecem os cupons e preços que cada clube dá só para você.</p>
+        <div class="sec-head"><h2 id="h-contas">Clubes e cupons do app</h2></div>
+        <p class="sec-meta">Marque os clubes em que você é cadastrado (quase sempre é só o CPF no caixa). O EconomIA passa a usar o preço de clube dessas lojas na lista, no roteiro e nas ofertas.</p>
         <ul class="rows" id="contasList"></ul>
-        <p class="note">A busca usa o que as lojas publicam para todo mundo. Os cupons pessoais dos clubes, que pedem login, ficam para uma próxima versão.</p>
+        <div class="group" id="cupMeus">
+          <h3>Cupons do app</h3>
+          <p class="sec-meta">Tire print da carteira de cupons do app da loja (Bem Panvel, Raia, Meu Atacadão…). A IA lê e eles aparecem em Ofertas como "Seu cupom".</p>
+          <div class="row-form"><label class="ghost big" for="cupArq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Escolher prints</label></div>
+          <input type="file" id="cupArq" class="arq" accept="image/*" multiple>
+          <div class="foto-box" id="cupBox" hidden>
+            <div class="fotos" id="cupPrev"></div>
+            <div class="row-form"><button type="button" class="btn" id="cupLer">Digitalizar com IA</button><button type="button" class="ghost big" id="cupFechar">Fechar</button></div>
+            <p class="hint" id="cupMsg" aria-live="polite"></p>
+            <ul class="foto-itens" id="cupItens"></ul>
+            <div class="row-form" id="cupAddRow" hidden><button type="button" class="btn" id="cupAdd">Guardar cupons</button></div>
+          </div>
+          <ul class="rows" id="cupLista"></ul>
+        </div>
       </section>
     </div>
   </section>
@@ -933,6 +972,9 @@ footer{font-size:12.5px;color:var(--muted)}
       lista: arr(c.lista).map(function(i){ return typeof i === 'string' ? {produto:i, compras:[]} : {produto:String(i.produto || ''), compras:arr(i.compras), origem:i.origem === 'ha' ? 'ha' : undefined}; }).filter(function(i){ return i.produto; }),
       perfil: {adultos:n0(p.adultos, 1), criancas:n0(p.criancas, 0), bebes:n0(p.bebes, 0), pets:petsDe(p.pets), restricoes:arr(p.restricoes), interesses:arr(p.interesses), nunca:arr(p.nunca)},
       cotidiano: {mercado:arr(r.mercado), farmacia:arr(r.farmacia), avisar:r.avisar || 'vespera', estoque:['pouco', 'normal', 'bastante'].indexOf(r.estoque) >= 0 ? r.estoque : 'normal'},
+      ia: {busca:String((c.ia || {}).busca || ''), fotos:String((c.ia || {}).fotos || '')},
+      clubes: arr(c.clubes),
+      cupons_meus: arr(c.cupons_meus).filter(function(k){ return k && k.beneficio && k.rede; }),
       roteiro: {paradas:Math.min(4, Math.max(1, Math.round(Number(ro.paradas)) || 2)), escopo:ro.escopo === 'acabando' ? 'acabando' : 'tudo', online:ro.online !== false},
       ocultas: arr(c.ocultas)
     };
@@ -1000,7 +1042,7 @@ footer{font-size:12.5px;color:var(--muted)}
     if (pct(o) >= 50) return 'Mais de 50% de desconto';
     return '';
   }
-  function nota(o){ return (naLista(o) ? 1000 : 0) + (interesse(o) ? 500 : 0) + pct(o); }
+  function nota(o){ return (naLista(o) ? 1000 : 0) + (interesse(o) ? 500 : 0) + pct(o) - (o.tipo === 'clube' && estado.clubes.indexOf(o.rede) < 0 ? 300 : 0); }
 
   // ---------- telas ----------
   function irPara(v){
@@ -1087,7 +1129,7 @@ footer{font-size:12.5px;color:var(--muted)}
     if (o.prazo_dias != null) cond += '<span>Chega em ' + o.prazo_dias + (o.prazo_dias > 1 ? ' dias' : ' dia') + '</span>';
     if (o.vendedor) cond += '<span>' + (o.oficial ? 'Loja oficial' : 'Vendido por ' + esc(o.vendedor)) + '</span>';
     if (o.importado) cond += '<span class="chip warn">Importado</span>';
-    var selo = tipo === 'clube' ? '<span class="chip selo">Clube</span>' : tipo === 'atacado' ? '<span class="chip selo">Atacado</span>' : '';
+    var selo = tipo === 'clube' ? (estado.clubes.indexOf(o.rede) >= 0 ? '<span class="chip selo">Seu clube</span>' : '<span class="chip">Preço de clube</span>') : tipo === 'atacado' ? '<span class="chip selo">Atacado</span>' : '';
     var un = o.unidade ? '<span class="un">/' + esc(o.unidade) + '</span>' : '';
     var why = oc ? '<p class="why off-why">' + esc(oc.txt) + '</p>' : (porQue(o) ? '<p class="why">' + esc(porQue(o)) + '</p>' : '');
     var acao;
@@ -1125,16 +1167,20 @@ footer{font-size:12.5px;color:var(--muted)}
     pintaOfertasTela(); pintaPerfil();
   });
 
+  function meusCupons(cat){
+    return estado.cupons_meus.filter(function(k){ return G[k.rede] && (!cat || G[k.rede].cat === cat) && (!k.valido_ate || diasAte(k.valido_ate) >= 0); })
+      .map(function(k){ return {rede:k.rede, codigo:k.codigo || null, beneficio:k.beneficio, condicao:k.condicao || (k.produto ? 'Em ' + k.produto : 'Da sua conta no app'), valido_ate:k.valido_ate || null, status:'confirmado', meu:true}; });
+  }
   function pintaCupons(){
-    var lista = arr(CAT.cupons).filter(function(c){ return acompanha(c.rede); });
+    var lista = meusCupons(CAT.id).concat(arr(CAT.cupons).filter(function(c){ return acompanha(c.rede); }));
     if (!lista.length){ $('tickets').innerHTML = '<p class="empty">Nenhum cupom das lojas que você acompanha.</p>'; return; }
     $('tickets').innerHTML = lista.map(function(c, i){
       var v = validade(c);
       var stub = c.codigo
         ? '<code class="code" id="code-' + i + '">' + esc(c.codigo) + '</code><button type="button" class="copy" data-code="' + esc(c.codigo) + '" data-target="code-' + i + '">Copiar</button>'
-        : '<span class="lock">' + (c.status === 'login' ? 'Precisa de login' : 'Sem código próprio') + '</span>';
+        : '<span class="lock">' + (c.meu ? 'Já está no app da loja' : c.status === 'login' ? 'Precisa de login' : 'Sem código próprio') + '</span>';
       return '<article class="ticket ' + esc(c.status) + '">'
-        + '<div class="t-main"><p class="t-rede">' + esc(G[c.rede].nome) + '</p><p class="t-ben num">' + esc(c.beneficio) + '</p><p class="t-cond num">' + esc(c.condicao) + (fonteLink(c.fonte) ? ' · ' + fonteLink(c.fonte) : '') + '</p></div>'
+        + '<div class="t-main"><p class="t-rede">' + esc(G[c.rede].nome) + (c.meu ? ' <span class="chip selo">Seu cupom</span>' : '') + '</p><p class="t-ben num">' + esc(c.beneficio) + '</p><p class="t-cond num">' + esc(c.condicao) + (fonteLink(c.fonte) ? ' · ' + fonteLink(c.fonte) : '') + '</p></div>'
         + '<div class="stub">' + stub + '<span class="chip ' + v.k + '">' + esc(v.t) + '</span></div></article>';
     }).join('');
   }
@@ -1167,9 +1213,13 @@ footer{font-size:12.5px;color:var(--muted)}
     return Object.keys(item.precos).filter(function(id){ return catAtiva(id) && acompanha(id); })
       .map(function(id){
         var v = item.precos[id];
-        if (v && typeof v === 'object'){
+        if (v && typeof v === 'object' && v.frete != null){
           var pr = Number(v.preco) || 0, fr = Number(v.frete) || 0;
           return {id:id, v:Math.round((pr + fr) * 100) / 100, preco:pr, frete:fr, prazo:v.prazo_dias == null ? null : Number(v.prazo_dias), obs:v.obs || '', online:true};
+        }
+        if (v && typeof v === 'object'){  // loja com preço de clube: vale só para quem é do clube
+          var pn = Number(v.preco) || 0, cl = Number(v.clube) || 0, socio = estado.clubes.indexOf(id) >= 0, temClube = cl > 0 && (!pn || cl < pn);
+          return {id:id, v:socio && temClube ? cl : pn, clube:socio && temClube, precoClube:temClube ? cl : 0, socio:socio};
         }
         return {id:id, v:Number(v)};
       }).filter(function(x){ return x.v > 0; }).sort(function(a, b){ return a.v - b.v; });
@@ -1295,6 +1345,11 @@ footer{font-size:12.5px;color:var(--muted)}
     return {economia:eco, dica:dica, principal:principal, html:'<div class="i-tam">' + chip + (principal ? '' : '<p>' + esc(linha) + '</p>') + (nota.length ? '<p class="i-nota">' + esc(nota.join(' ')) + '</p>' : '')
       + '<details><summary>Comparar tamanhos (' + ops.length + ')</summary><ul class="tam-list num">' + det + '</ul></details></div>'};
   }
+  // loja com preço de clube melhor, mas você não marcou que é do clube
+  function dicaClube(p, best){
+    var c = p.filter(function(y){ return !y.socio && y.precoClube && y.precoClube < best.v - 0.004; }).sort(function(a, b){ return a.precoClube - b.precoClube; })[0];
+    return c ? '<p class="i-avulso num"><b>' + esc(G[c.id].nome) + '</b> tem preço de clube: <b>' + brl.format(c.precoClube) + '</b>. Se você for do clube, marque em Mais → Lojas.</p>' : '';
+  }
   function nomeCurto(prod){ var n = String(prod).split(' · ')[0]; return n.length > 24 ? n.slice(0, 23) + '…' : n; }
 
   function plural(n, cat){ var c = D.categorias.filter(function(x){ return x.id === cat; })[0]; return n + ' ' + (n > 1 ? c.nome : c.singular).toLowerCase(); }
@@ -1326,8 +1381,9 @@ footer{font-size:12.5px;color:var(--muted)}
         + (dc
           ? '<div class="i-best"><span class="lbl">Melhor compra</span><span class="por num">' + brl.format(dc.porBase) + '<span class="un">por ' + esc(dc.base) + '</span></span><span class="i-store">' + esc(dc.como) + ' por ' + brl.format(dc.total) + ' · ' + esc(G[dc.id].nome) + ' <span class="chip">' + esc(G[dc.id].singular) + '</span></span></div>'
             + '<p class="i-avulso num">Avulso, o mais barato: <b>' + brl.format(best.v) + '</b> (' + esc(G[best.id].nome) + ')</p>'
-          : '<div class="i-best"><span class="lbl">Mais barato</span><span class="por num">' + brl.format(best.v) + '</span><span class="i-store">' + esc(G[best.id].nome) + ' <span class="chip">' + esc(G[best.id].singular) + '</span></span></div>')
-        + (p.length > 1 ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li>' + esc(G[y.id].curto) + ' <b>' + brl.format(y.v) + '</b>' + (y.online && y.frete ? ' com frete' : '') + '</li>'; }).join('') + '</ul>' : '')
+          : '<div class="i-best"><span class="lbl">Mais barato</span><span class="por num">' + brl.format(best.v) + '</span><span class="i-store">' + esc(G[best.id].nome) + ' <span class="chip">' + esc(G[best.id].singular) + '</span>' + (best.clube ? ' <span class="chip selo">Clube</span>' : '') + '</span></div>')
+        + (p.length > 1 ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li>' + esc(G[y.id].curto) + ' <b>' + brl.format(y.v) + '</b>' + (y.online && y.frete ? ' com frete' : '') + (y.clube ? ' clube' : '') + '</li>'; }).join('') + '</ul>' : '')
+        + dicaClube(p, best)
         + decisaoOnline(x.r, p, !!dc)
         + ((mt || {}).html || '')
         + acoes + '<span class="i-foot">Em ' + onde + '</span></div></li>';
@@ -1605,7 +1661,7 @@ footer{font-size:12.5px;color:var(--muted)}
       return '<li class="parada"><div class="parada-h"><span class="parada-n">' + (i + 1) + '</span><b>' + esc(G[id].nome) + '</b><span class="chip">' + esc(G[id].singular) + '</span><span class="sub num">' + (l && l.distancia_km != null ? km(l.distancia_km) + ' · ' : '') + brl.format(sub) + '</span></div>'
         + '<ul>' + its.map(function(z){
           var mt = melhorTamanho(z.x.it, z.x.r, z.x.p), dica = mt && mt.dica && mt.dica.id === id ? '<small class="r-dica">Compensa levar ' + esc(mt.dica.txt) + '</small>' : '';
-          return '<li><span>' + esc(z.x.it.produto) + dica + '</span><span class="num">' + brl.format(z.y.v) + '</span></li>';
+          return '<li><span>' + esc(z.x.it.produto) + dica + '</span><span class="num">' + brl.format(z.y.v) + (z.y.clube ? ' <small>clube</small>' : '') + '</span></li>';
         }).join('') + '</ul></li>';
     });
     var porNet = {};
@@ -1649,8 +1705,8 @@ footer{font-size:12.5px;color:var(--muted)}
     D.categorias.forEach(function(c){
       if (estado.categorias.indexOf(c.id) < 0) return;
       arr(c.ofertas).forEach(function(of){ if (acompanha(of.rede) && !escondida(of) && porQue(of)) o.paraVoce++; });
-      arr(c.cupons).forEach(function(k){
-        if (!acompanha(k.rede) || !k.codigo || !k.valido_ate || k.status !== 'confirmado') return;
+      meusCupons(c.id).concat(arr(c.cupons)).forEach(function(k){
+        if ((!k.meu && (!acompanha(k.rede) || !k.codigo || k.status !== 'confirmado')) || !k.valido_ate) return;
         var n = diasAte(k.valido_ate);
         if (n >= 0 && n <= 10 && (!o.cupom || n < o.cupom.n)) o.cupom = {c:k, n:n, cat:c.id};
       });
@@ -1689,7 +1745,7 @@ footer{font-size:12.5px;color:var(--muted)}
     if (o.tam.length) chips.push(linhaOpp('', 'itens', '', ICONE.caixa, 'Tamanho maior', 'Compensa em ' + nomes(o.tam.map(function(t){ return t.nome; })), brl.format(somaTam), 'economia'));
     if (o.acabando) chips.push(linhaOpp('warn', 'itens', '', ICONE.relogio, o.acabando > 1 ? 'Itens acabando' : 'Item acabando', nomes(o.acabandoNomes), String(o.acabando), o.acabando > 1 ? 'itens' : 'item'));
     if (o.paraVoce) chips.push(linhaOpp('neutro', 'ofertas', '', ICONE.etiqueta, 'Ofertas para você', estado.perfil.interesses.length ? 'Combinam com ' + nomes(estado.perfil.interesses.map(function(t){ return ROTULO_TAG[t] || t; })) : 'Combinam com o perfil da casa', String(o.paraVoce), o.paraVoce > 1 ? 'ofertas' : 'oferta'));
-    if (o.cupom) chips.push(linhaOpp('deal', 'ofertas', o.cupom.cat, ICONE.cupom, 'Cupom ' + o.cupom.c.codigo, G[o.cupom.c.rede].nome + ' · ' + o.cupom.c.beneficio, o.cupom.n === 0 ? 'Hoje' : o.cupom.n + (o.cupom.n > 1 ? ' dias' : ' dia'), o.cupom.n === 0 ? 'vence' : 'para vencer'));
+    if (o.cupom) chips.push(linhaOpp('deal', 'ofertas', o.cupom.cat, ICONE.cupom, o.cupom.c.codigo ? 'Cupom ' + o.cupom.c.codigo : 'Seu cupom', G[o.cupom.c.rede].nome + ' · ' + o.cupom.c.beneficio, o.cupom.n === 0 ? 'Hoje' : o.cupom.n + (o.cupom.n > 1 ? ' dias' : ' dia'), o.cupom.n === 0 ? 'vence' : 'para vencer'));
     $('heroChips').innerHTML = chips.length ? '<p class="opps-h">Oportunidades</p>' + chips.join('') : '';
     $('heroChips').hidden = !chips.length;
   }
@@ -1748,12 +1804,126 @@ footer{font-size:12.5px;color:var(--muted)}
       if (estado.categorias.indexOf(c.id) < 0) return;
       arr(c.contas).forEach(function(a){
         if (!acompanha(a.rede)) return;
-        var chip = a.status === 'conectada' ? '<span class="chip real">Conectado</span>' : '<span class="chip">Login em breve</span>';
-        linhas.push('<li class="row"><span class="r-name">' + esc(G[a.rede].nome) + '</span>' + chip + '<span class="r-sub">' + esc(a.libera) + '</span></li>');
+        var socio = estado.clubes.indexOf(a.rede) >= 0, idc = 'cl-' + a.rede;
+        linhas.push('<li class="row"><label class="r-name" for="' + esc(idc) + '">' + esc(G[a.rede].nome) + '</label><input type="checkbox" class="switch" id="' + esc(idc) + '" data-clube="' + esc(a.rede) + '"' + (socio ? ' checked' : '') + '>'
+          + '<span class="r-sub">' + (socio ? '<span class="chip selo">Sou do clube</span> Preço de clube ligado' : 'Marque se você é do clube') + '</span></li>');
       });
     });
     $('contasList').innerHTML = linhas.join('') || '<li class="empty">Nenhuma loja que você acompanha tem clube.</li>';
+    pintaCupLista();
   }
+  $('contasList').addEventListener('change', function(e){
+    var c = e.target.closest('input[data-clube]'); if (!c) return;
+    var id = c.dataset.clube;
+    if (c.checked){ if (estado.clubes.indexOf(id) < 0) estado.clubes.push(id); } else tira(estado.clubes, id);
+    salvar((c.checked ? 'Preço de clube ligado: ' : 'Preço de clube desligado: ') + G[id].nome);
+    tudo();
+  });
+
+  // ===== Cupons do app pelo print =====
+  var cupFotos = [], cupT = null;
+  function aguardaLeitura(id, n, pronto, falha){
+    cupT = setTimeout(function(){
+      fetch('api/ler-lista?id=' + encodeURIComponent(id), {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
+        if (j.status === 'lendo' && n < 120) return aguardaLeitura(id, n + 1, pronto, falha);
+        if (j.status === 'pronto') pronto(j); else falha(j.erro || 'A leitura demorou demais. Tente de novo.');
+      }).catch(function(){ if (n < 120) aguardaLeitura(id, n + 1, pronto, falha); else falha('Não consegui falar com o add-on.'); });
+    }, 1500);
+  }
+  function cupFecha(){
+    clearTimeout(cupT); cupFotos = [];
+    $('cupBox').hidden = true; $('cupPrev').innerHTML = ''; $('cupItens').innerHTML = ''; $('cupAddRow').hidden = true; $('cupMsg').textContent = ''; $('cupLer').disabled = false;
+  }
+  function pintaCupFotos(){
+    var n = cupFotos.length;
+    $('cupBox').hidden = false; $('cupItens').innerHTML = ''; $('cupAddRow').hidden = true; $('cupLer').disabled = !n;
+    $('cupPrev').innerHTML = cupFotos.map(function(u, i){ return '<div class="foto-th"><img src="' + u + '" alt="Print ' + (i + 1) + '"><button type="button" class="foto-rm" data-i="' + i + '" aria-label="Tirar o print ' + (i + 1) + '">×</button></div>'; }).join('')
+      + (n < MAX_FOTOS ? '<label class="foto-add" for="cupArq">' + ICO_MAIS + 'Mais prints</label>' : '');
+    $('cupMsg').className = 'hint';
+    $('cupMsg').textContent = n ? (n > 1 ? n + ' prints.' : '1 print.') + ' Junte todos e toque em Digitalizar com IA.' : 'Escolha os prints da carteira de cupons.';
+  }
+  $('cupArq').addEventListener('change', function(){
+    var inp = this, todos = [].slice.call(inp.files || []), arqs = todos.slice(0, MAX_FOTOS - cupFotos.length);
+    if (todos.length > arqs.length) toast('Até ' + MAX_FOTOS + ' prints por leitura');
+    if (!arqs.length){ inp.value = ''; return; }
+    Promise.all(arqs.map(reduz)).then(function(urls){ cupFotos = cupFotos.concat(urls); inp.value = ''; pintaCupFotos(); },
+      function(){ inp.value = ''; $('cupMsg').className = 'hint err'; $('cupMsg').textContent = 'Não consegui abrir essa imagem.'; });
+  });
+  $('cupPrev').addEventListener('click', function(e){
+    var b = e.target.closest('.foto-rm'); if (!b) return;
+    cupFotos.splice(Number(b.dataset.i), 1); pintaCupFotos();
+  });
+  $('cupFechar').addEventListener('click', cupFecha);
+  function redeDoNome(nome){
+    var k = norm(nome || ''), ids = Object.keys(G);
+    return ids.filter(function(id){ return norm(G[id].nome) === k; })[0] || ids.filter(function(id){ return k && (norm(G[id].nome).indexOf(k) >= 0 || k.indexOf(norm(G[id].nome)) >= 0); })[0] || '';
+  }
+  function mostraCupLidos(cups){
+    var msg = $('cupMsg');
+    cups = arr(cups).filter(function(c){ return c && c.beneficio; });
+    if (!cups.length){ msg.className = 'hint err'; msg.textContent = 'Não achei cupons nesses prints. Tente um print da tela de cupons do app.'; return; }
+    msg.className = 'hint ok'; msg.textContent = (cups.length > 1 ? 'Achei ' + cups.length + ' cupons.' : 'Achei 1 cupom.') + ' Confira a loja de cada um e guarde.';
+    var lojas = Object.keys(G).filter(function(id){ return estado.categorias.indexOf(G[id].cat) >= 0; }).sort(function(a, b){ return G[a].nome.localeCompare(G[b].nome); });
+    $('cupItens').innerHTML = cups.map(function(c, i){
+      var rede = (c.rede && G[c.rede]) ? c.rede : redeDoNome(c.loja);
+      return '<li data-k="' + i + '"><input type="checkbox"' + (rede ? ' checked' : '') + ' aria-label="Guardar cupom">'
+        + '<input type="text" class="field" value="' + esc(c.beneficio) + '" aria-label="Benefício">'
+        + '<select class="field" aria-label="Loja"><option value="">Qual loja?' + (c.loja ? ' (' + esc(c.loja) + ')' : '') + '</option>' + lojas.map(function(id){ return '<option value="' + esc(id) + '"' + (id === rede ? ' selected' : '') + '>' + esc(G[id].nome) + '</option>'; }).join('') + '</select>'
+        + (c.codigo ? '<span class="chip">' + esc(c.codigo) + '</span>' : '') + (c.valido_ate ? '<span class="chip warn">Até ' + dataBR(c.valido_ate) + '</span>' : '') + '</li>';
+    }).join('');
+    $('cupItens').dataset.lidos = JSON.stringify(cups);
+    $('cupAddRow').hidden = false;
+  }
+  $('cupItens').addEventListener('change', function(e){
+    var sel = e.target.closest('select'); if (!sel) return;
+    sel.parentNode.querySelector('input[type=checkbox]').checked = !!sel.value;
+  });
+  $('cupLer').addEventListener('click', function(){
+    var b = this, msg = $('cupMsg');
+    if (!cupFotos.length) return;
+    b.disabled = true; msg.className = 'hint'; msg.textContent = 'A IA está lendo ' + (cupFotos.length > 1 ? 'os prints…' : 'o print…');
+    if (MODO !== 'addon'){
+      cupT = setTimeout(function(){
+        b.disabled = false;
+        mostraCupLidos([{loja:'Raia', beneficio:'15% em Neutrogena', condicao:'Ativado no app Raia', valido_ate:soma(hojeSP(), 9)}, {loja:'Atacadão', codigo:'MEUATAC10', beneficio:'R$ 10 acima de R$ 150', valido_ate:soma(hojeSP(), 5)}]);
+        msg.textContent += ' No Home Assistant, a IA lê seus prints de verdade.';
+      }, 900);
+      return;
+    }
+    fetch('api/ler-lista', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({imagens:cupFotos, tipo:'cupons'})})
+      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if (!r.ok) throw new Error(j.erro || 'Não deu para enviar. Os prints podem estar grandes demais.'); return j; }); })
+      .then(function(j){ aguardaLeitura(j.id, 0, function(res){ b.disabled = false; mostraCupLidos(res.cupons); }, function(err){ b.disabled = false; msg.className = 'hint err'; msg.textContent = err; }); })
+      .catch(function(e){ b.disabled = false; msg.className = 'hint err'; msg.textContent = e.message; });
+  });
+  $('cupAdd').addEventListener('click', function(){
+    var lidos = JSON.parse($('cupItens').dataset.lidos || '[]'), novos = 0;
+    [].forEach.call($('cupItens').querySelectorAll('li'), function(li){
+      var c = lidos[Number(li.dataset.k)], rede = li.querySelector('select').value, ben = li.querySelector('input[type=text]').value.trim().slice(0, 60);
+      if (!c || !li.querySelector('input[type=checkbox]').checked || !rede || ben.length < 2) return;
+      if (estado.cupons_meus.some(function(k){ return k.rede === rede && norm(k.beneficio) === norm(ben) && (k.codigo || null) === (c.codigo || null); })) return;
+      estado.cupons_meus.push({id:'meu-' + Date.now().toString(36) + '-' + novos, rede:rede, beneficio:ben, codigo:c.codigo || null, condicao:c.condicao || '', valido_ate:c.valido_ate || null, produto:c.produto || '', criado:hojeSP()});
+      novos++;
+    });
+    if (!novos){ $('cupMsg').className = 'hint err'; $('cupMsg').textContent = 'Marque pelo menos um cupom e escolha a loja.'; return; }
+    cupFecha();
+    salvar(novos > 1 ? novos + ' cupons guardados' : 'Cupom guardado');
+    pintaCupLista(); pintaOfertasTela(); pintaHero();
+  });
+  function pintaCupLista(){
+    var hoje = hojeSP();
+    var l = estado.cupons_meus.map(function(k, i){ return {k:k, i:i}; }).sort(function(a, b){ return (a.k.valido_ate || '9999') < (b.k.valido_ate || '9999') ? -1 : 1; });
+    $('cupLista').innerHTML = l.map(function(x){
+      var k = x.k, v = validade({valido_ate:k.valido_ate, status:'confirmado'});
+      return '<li class="row cup-row"><span class="r-name">' + esc(k.beneficio) + '<small>' + esc(G[k.rede] ? G[k.rede].nome : k.rede) + (k.codigo ? ' · código ' + esc(k.codigo) : ' · já está no app') + '</small></span>'
+        + '<span class="chip ' + v.k + '">' + esc(v.t) + '</span>'
+        + '<span class="r-sub"><button type="button" class="rm" data-cup="' + x.i + '">remover</button></span></li>';
+    }).join('');
+  }
+  $('cupLista').addEventListener('click', function(e){
+    var b = e.target.closest('[data-cup]'); if (!b) return;
+    estado.cupons_meus.splice(Number(b.dataset.cup), 1);
+    salvar('Cupom removido'); pintaCupLista(); pintaOfertasTela(); pintaHero();
+  });
 
   // ===== Perfil =====
   function picks(el, itens, sel){
@@ -1795,7 +1965,7 @@ footer{font-size:12.5px;color:var(--muted)}
     picks('dMercado', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.mercado);
     picks('dFarmacia', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.farmacia);
     $('avisar').value = r.avisar; $('estoque').value = r.estoque;
-    pintaAviso(); pintaTema(); pintaSyncUI();
+    pintaAviso(); pintaTema(); pintaSyncUI(); pintaIA();
   }
   function pintaTema(){
     var atual = ui.tema || 'escuro';
@@ -1807,6 +1977,51 @@ footer{font-size:12.5px;color:var(--muted)}
     var b = e.target.closest('button'); if (!b) return;
     ui.tema = b.dataset.v; salvarUI(); aplicaTema(ui.tema); pintaTema();
   });
+
+  // IA do Home Assistant
+  var IAS = null, IA_ST = {busca:null, fotos:null};
+  function carregaIAs(){
+    if (MODO !== 'addon'){
+      IAS = {tarefas:[{id:'ai_task.google_ai_task', nome:'Google AI Task', anexos:true}], agentes:[{id:'conversation.google_generative_ai', nome:'Google Generative AI'}]};
+      pintaIA(); return;
+    }
+    fetch('api/ias', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){ IAS = j; pintaIA(); })
+      .catch(function(){ IAS = {tarefas:[], agentes:[]}; pintaIA(); });
+  }
+  function pintaIA(){
+    var t = (IAS && arr(IAS.tarefas)) || [], a = (IAS && arr(IAS.agentes)) || [], ia = estado.ia;
+    var opt = function(x, pre){ return '<option value="' + esc(x.id) + '">' + esc(pre + x.nome) + '</option>'; };
+    var extra = function(v, lista){ return v && !lista.some(function(x){ return x.id === v; }) ? '<option value="' + esc(v) + '">' + esc(v) + '</option>' : ''; };
+    $('iaBusca').innerHTML = '<option value="">Padrão do Home Assistant</option>' + t.map(function(x){ return opt(x, 'Tarefa de IA: '); }).join('') + a.map(function(x){ return opt(x, 'Assistente: '); }).join('') + extra(ia.busca, t.concat(a));
+    $('iaFotos').innerHTML = '<option value="">Padrão do Home Assistant</option>' + t.map(function(x){ return opt(x, x.anexos ? '' : '(não lê imagens) '); }).join('') + extra(ia.fotos, t);
+    $('iaBusca').value = ia.busca; $('iaFotos').value = ia.fotos;
+    [['busca', 'iaBuscaSt', 'Toque em Verificar de novo para testar.'], ['fotos', 'iaFotosSt', 'Usando a IA preferida do Home Assistant.']].forEach(function(x){
+      var st = IA_ST[x[0]], el = $(x[1]);
+      el.className = 'ia-st' + (st && st.ok === true ? ' ok' : st && st.ok === false ? ' erro' : '');
+      el.textContent = st ? st.msg : x[2];
+    });
+  }
+  function testaIA(uso){
+    IA_ST[uso] = {ok:null, msg:uso === 'busca' ? 'Testando a busca na web… pode levar até um minuto.' : 'Verificando…'}; pintaIA();
+    if (MODO !== 'addon'){
+      setTimeout(function(){ IA_ST[uso] = {ok:true, msg:uso === 'busca' ? 'Pronta para buscar ofertas.' : 'Pronta para ler fotos.'}; pintaIA(); }, 700);
+      return;
+    }
+    fetch('api/testar-ia', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({uso:uso})})
+      .then(function(r){ return r.json(); }).then(function(j){ IA_ST[uso] = j; pintaIA(); })
+      .catch(function(){ IA_ST[uso] = {ok:false, msg:'Não consegui falar com o add-on.'}; pintaIA(); });
+  }
+  $('iaBusca').addEventListener('change', function(){
+    estado.ia.busca = this.value; IA_ST.busca = null;
+    salvar('IA para buscar ofertas: ' + this.options[this.selectedIndex].text); pintaIA();
+    setTimeout(function(){ testaIA('busca'); }, 800);
+  });
+  $('iaFotos').addEventListener('change', function(){
+    estado.ia.fotos = this.value; IA_ST.fotos = null;
+    salvar('IA para ler fotos: ' + this.options[this.selectedIndex].text); pintaIA();
+    setTimeout(function(){ testaIA('fotos'); }, 800);
+  });
+  $('iaTestar').addEventListener('click', function(){ carregaIAs(); testaIA('busca'); testaIA('fotos'); });
 
   // lista do Home Assistant
   var LISTAS_HA = null, ultimoSync = null;
@@ -1985,8 +2200,9 @@ footer{font-size:12.5px;color:var(--muted)}
   function iniciar(){
     $('hello').innerHTML = '<span class="brand">Econom<span>IA</span></span>' + (usuario ? ' · Olá, ' + esc(usuario) : '');
     pintaSync(); tudo(); irPara(ui.view);
-    carregaListas();
+    carregaListas(); carregaIAs();
     if (MODO === 'addon'){
+      testaIA('fotos');
       acompanhaBusca(true);
       sincronizaAgora();
       setInterval(function(){ if (!document.hidden) puxaEstado(); }, 45000);

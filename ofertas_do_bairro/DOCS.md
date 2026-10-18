@@ -4,12 +4,12 @@ Cupons, ofertas e a sua lista de compras nas farmácias, mercados e pet shops pe
 
 ## Antes de começar
 
-A busca de ofertas usa a IA do próprio Home Assistant. Você precisa de:
+O EconomIA usa a IA do próprio Home Assistant (Anthropic Claude, OpenAI, Google Gemini...). Escolha qual usar em **Mais → Dados e ajustes → IA do Home Assistant** e toque em **Verificar de novo** para testar.
 
-1. A integração **Anthropic** (ou outra que ofereça *tarefa de IA*) configurada em **Configurações → Dispositivos e serviços**.
-2. A **busca na web** ligada nas opções da tarefa de IA dessa integração.
-
-Se você tiver mais de uma tarefa de IA, escolha qual usar na opção `ai_task_entity` deste add-on. Em branco, ele usa a preferida do Home Assistant.
+- **Para buscar ofertas**, a IA precisa de busca na web:
+  - **Anthropic**: ligue a busca na web nas opções da tarefa de IA.
+  - **Google Gemini**: a Pesquisa Google só funciona num **assistente de conversa**. Nas opções do Google Generative AI, crie ou ajuste um assistente com "Controlar o Home Assistant" em nenhum e **Enable Google Search tool** ligado, e escolha esse assistente.
+- **Para ler fotos**, escolha uma tarefa de IA que aceite imagens (Google AI Task e Anthropic aceitam).
 
 ## Como usar
 
@@ -42,6 +42,15 @@ Na aba **Roteiro**, ao lado da Minha lista, diga em até quantas lojas você top
 - o que comprar em cada parada, da loja mais perto para a mais longe, com link para a rota no Maps;
 - o que compensa pedir online (pode desligar);
 - quanto uma parada a mais economizaria. Se for pouco, ele recomenda menos paradas, e dá para comparar as opções com um toque.
+
+## Clubes e cupons do app
+
+Em **Mais → Lojas → Clubes e cupons do app**:
+
+- Marque **Sou do clube** nas lojas em que você é cadastrado (quase sempre é só o CPF no caixa). O preço de clube dessas lojas passa a valer na lista, no roteiro e nas ofertas. Nas outras, o preço de clube aparece marcado e o EconomIA avisa quando valeria a pena entrar no clube.
+- Em **Cupons do app**, escolha prints da carteira de cupons do app da loja (Bem Panvel, Raia, Meu Atacadão...) e toque em **Digitalizar com IA**. Confira a loja de cada cupom e guarde: eles aparecem em Ofertas como **Seu cupom** e na abertura quando estiverem perto de vencer.
+
+O EconomIA não entra na sua conta das lojas: esses apps não têm acesso aberto e pedem código por SMS.
 
 ## Compras online
 

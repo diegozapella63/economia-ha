@@ -20,6 +20,8 @@ Rotas:
 - POST /api/sincronizar-lista   sincroniza agora com a lista do Home Assistant
 - POST /api/ler-lista   lê fotos ou texto (do WhatsApp, por exemplo) e sugere itens
 - GET  /api/ler-lista?id=...   resultado da leitura
+- GET  /api/ias    tarefas de IA e assistentes de conversa do Home Assistant
+- POST /api/testar-ia   testa a IA escolhida para buscar ofertas ou ler fotos
 
 Só usa a biblioteca padrão do Python.
 """
@@ -140,10 +142,13 @@ def inteiro(v):
     return n if n >= 0 else None
 
 
-def valor_total(v):
-    """Preço de um item da lista: número (loja) ou {preco, frete} (online)."""
+def valor_total(v, socio=False):
+    """Preço de um item da lista: número (loja), {preco, clube} (loja com clube) ou {preco, frete} (online)."""
     if isinstance(v, dict):
         preco = numero(v.get("preco"))
+        clube = numero(v.get("clube"))
+        if socio and clube and (not preco or clube < preco):
+            preco = clube
         return round(preco + (frete_ok(v.get("frete")) or 0), 2) if preco else None
     return numero(v)
 
@@ -360,14 +365,53 @@ def opcoes():
     return ler_json(OPTIONS, {}) or {}
 
 
-def chamar_ai_task(nome, instrucoes, anexos=None):
+SEM_BUSCA = ("A IA escolhida não usou a busca na web. Na Anthropic, ligue a busca na web nas opções da tarefa de IA. "
+             "No Google Gemini, a Pesquisa Google só funciona num assistente de conversa: ligue \"Enable Google Search tool\" "
+             "nele e escolha esse assistente em Mais → IA do Home Assistant → Para buscar ofertas.")
+
+
+def ia_escolhida(uso):
+    """Entidade escolhida em Mais (busca ou fotos); em branco, a opção antiga do add-on ou a preferida do HA."""
+    ent = str(((ler_config().get("ia") or {}).get(uso)) or "").strip()
+    return ent or str(opcoes().get("ai_task_entity") or "").strip()
+
+
+def extrai_json(dado):
+    if isinstance(dado, dict):
+        return dado
+    if not isinstance(dado, str):
+        raise ErroBusca("A IA não devolveu resposta.")
+    ini, fim = dado.find("{"), dado.rfind("}")
+    if ini < 0 or fim <= ini:
+        raise ErroBusca("A IA respondeu fora do formato esperado.")
+    try:
+        return json.loads(dado[ini:fim + 1])
+    except ValueError as e:
+        raise ErroBusca("A IA respondeu fora do formato esperado.") from e
+
+
+def chamar_conversa(agente, instrucoes):
+    r = ha_api("POST", "/services/conversation/process?return_response=true",
+               {"text": instrucoes, "agent_id": agente}, timeout=900) or {}
+    resp = ((r.get("service_response") or {}).get("response")) or {}
+    fala = ((resp.get("speech") or {}).get("plain") or {}).get("speech") or ""
+    if resp.get("response_type") == "error":
+        raise ErroBusca("O assistente de conversa respondeu com erro: " + fala[:200])
+    return extrai_json(fala)
+
+
+def chamar_ai_task(nome, instrucoes, anexos=None, uso="busca"):
     token = token_ha()
     if not token:
         raise ErroBusca("O add-on não tem acesso ao Home Assistant. Reinstale a versão mais nova do add-on.")
+    entidade = ia_escolhida(uso)
+    if entidade.startswith("conversation."):
+        if anexos:
+            raise ErroBusca("Um assistente de conversa não lê imagens. Em Mais → IA do Home Assistant, escolha uma tarefa de IA para ler fotos.")
+        return chamar_conversa(entidade, instrucoes)
     corpo = {"task_name": nome, "instructions": instrucoes}
     if anexos:
         corpo["attachments"] = anexos
-    entidade = str(opcoes().get("ai_task_entity") or "").strip()
     if entidade:
         corpo["entity_id"] = entidade
     req = urllib.request.Request(
@@ -382,8 +426,8 @@ def chamar_ai_task(nome, instrucoes, anexos=None):
     except urllib.error.HTTPError as e:
         corpo_erro = e.read().decode("utf-8", "ignore")[:300]
         if e.code in (400, 404) and ("not found" in corpo_erro.lower() or "ai_task" in corpo_erro.lower()):
-            raise ErroBusca("Falta uma IA com tarefa de IA no Home Assistant. Configure a integração Anthropic "
-                            "(ou outra com AI Task) em Configurações → Dispositivos e serviços.") from e
+            raise ErroBusca("Falta uma IA no Home Assistant. Configure uma integração de IA (Anthropic, OpenAI, Google Gemini...) "
+                            "em Configurações → Dispositivos e serviços e escolha-a em Mais → IA do Home Assistant.") from e
         if e.code == 401:
             raise ErroBusca("O add-on não tem permissão para usar o Home Assistant. Reinstale a versão mais nova.") from e
         if anexos and "attachment" in corpo_erro.lower():
@@ -393,17 +437,48 @@ def chamar_ai_task(nome, instrucoes, anexos=None):
     except urllib.error.URLError as e:
         raise ErroBusca("Não consegui falar com o Home Assistant. Tente de novo em instantes.") from e
     dado = (resp.get("service_response") or {}).get("data") if isinstance(resp, dict) else None
-    if isinstance(dado, dict):
-        return dado
-    if not isinstance(dado, str):
-        raise ErroBusca("A IA não devolveu resposta.")
-    ini, fim = dado.find("{"), dado.rfind("}")
-    if ini < 0 or fim <= ini:
-        raise ErroBusca("A IA respondeu fora do formato esperado.")
+    return extrai_json(dado)
+
+
+def ias_disponiveis():
+    estados = ha_api("GET", "/states") or []
+    tarefas, agentes = [], []
+    for e in estados:
+        if not isinstance(e, dict):
+            continue
+        ent, at = str(e.get("entity_id") or ""), e.get("attributes") or {}
+        nome = at.get("friendly_name") or ent
+        if ent.startswith("ai_task."):
+            tarefas.append({"id": ent, "nome": nome, "anexos": bool(int(at.get("supported_features") or 0) & 2)})
+        elif ent.startswith("conversation.") and ent != "conversation.home_assistant":
+            agentes.append({"id": ent, "nome": nome})
+    ordem = lambda x: x["nome"].lower()  # noqa: E731
+    return {"tarefas": sorted(tarefas, key=ordem), "agentes": sorted(agentes, key=ordem)}
+
+
+def testar_ia(uso):
+    ent = ia_escolhida(uso)
+    if uso == "fotos":
+        if ent.startswith("conversation."):
+            return {"ok": False, "msg": "Assistente de conversa não lê imagens. Escolha uma tarefa de IA."}
+        tarefas = ias_disponiveis()["tarefas"]
+        if not tarefas:
+            return {"ok": False, "msg": "Nenhuma tarefa de IA no Home Assistant."}
+        if not ent:
+            return {"ok": True, "msg": "Usando a IA preferida do Home Assistant."}
+        t = next((t for t in tarefas if t["id"] == ent), None)
+        if not t:
+            return {"ok": False, "msg": "Essa IA não existe mais no Home Assistant."}
+        return {"ok": True, "msg": "Pronta para ler fotos."} if t["anexos"] else {"ok": False, "msg": "Essa IA não lê imagens."}
     try:
-        return json.loads(dado[ini:fim + 1])
-    except ValueError as e:
-        raise ErroBusca("A IA respondeu fora do formato esperado.") from e
+        r = chamar_ai_task("EconomIA: teste", f"""Teste rápido do EconomIA ({hoje_br()}). Use a busca na web agora para achar o preço atual de café torrado e moído 500 g em algum supermercado do Brasil.
+Responda somente com um objeto JSON, sem texto antes ou depois: {{"busca": true, "exemplo": "loja e preço que você achou", "fonte": "URL"}}
+Se não conseguir usar a busca na web, responda apenas {{"erro": "sem_busca"}}.""")
+    except ErroBusca as e:
+        return {"ok": False, "msg": str(e)}
+    if r.get("erro") == "sem_busca" or not url_ok(r.get("fonte")):
+        return {"ok": False, "msg": SEM_BUSCA}
+    return {"ok": True, "msg": "Pronta para buscar ofertas." + (" Exemplo: " + texto(r.get("exemplo"), 80) if texto(r.get("exemplo"), 80) else "")}
 
 
 def descreve_casa(cfg):
@@ -515,18 +590,17 @@ Responda somente com um objeto JSON, sem texto antes ou depois, neste formato:
   "lojas": [{{"rede": "nome da rede ou da loja", "endereco": "rua e número", "distancia_km": 1.2, "horario": "Aberta até 22h", "fontes": ["Site", "App", "Encarte", "Clube", "Instagram", "WhatsApp", "Tiendeo"]}}],
   "cupons": [{{"rede": "...", "codigo": "CODIGO", "valor": 20, "beneficio": "R$ 20 de desconto", "condicao": "Pedidos acima de R$ 200", "valido_ate": "AAAA-MM-DD ou null", "oficial": true, "fonte": "URL"}}],
   "ofertas": [{{"rede": "...", "produto": "Nome · tamanho", "preco_normal": 10.0, "preco_oferta": 8.0, "tipo": "promo", "unidade": null, "tamanho": {{"quantidade": 500, "unidade": "g"}}, "condicao": null, "tags": ["alimentos"], "fonte": "URL"}}],
-  "lista": [{{"produto": "texto exato do item da lista", "base": {{"quantidade": 1, "unidade": "L", "rotulo": null}}, "precos": [{{"rede": "...", "preco": 9.9, "fonte": "URL"}}], "tamanhos": [{{"rede": "...", "embalagem": "Galão 5 L", "quantidade": 5, "unidade": "L", "preco": 39.9, "fonte": "URL"}}]}}]
+  "lista": [{{"produto": "texto exato do item da lista", "base": {{"quantidade": 1, "unidade": "L", "rotulo": null}}, "precos": [{{"rede": "...", "preco": 9.9, "preco_clube": 8.9, "fonte": "URL"}}], "tamanhos": [{{"rede": "...", "embalagem": "Galão 5 L", "quantidade": 5, "unidade": "L", "preco": 39.9, "fonte": "URL"}}]}}]
 }}
 
-Regras: até 15 ofertas, priorizando os interesses e os maiores descontos. "tipo" é "promo", "clube" (preço para membros) ou "atacado" (preço por quantidade). "oficial" é true só se o cupom estiver no site ou app da própria loja. Etiquetas permitidas em "tags": {', '.join(sorted(TAGS))}.{extra}"""
+Regras: até 15 ofertas, priorizando os interesses e os maiores descontos. Nos preços da lista, "preco" é o preço para todo mundo; se a loja tiver preço de clube (cadastro por CPF ou app), informe também "preco_clube", senão null. "tipo" é "promo", "clube" (preço para membros) ou "atacado" (preço por quantidade). "oficial" é true só se o cupom estiver no site ou app da própria loja. Etiquetas permitidas em "tags": {', '.join(sorted(TAGS))}.{extra}"""
 
 
 def normalizar(cat_id, bruto, cfg):
     if not isinstance(bruto, dict):
         raise ErroBusca("A IA respondeu fora do formato esperado.")
     if bruto.get("erro") == "sem_busca":
-        raise ErroBusca("A IA do Home Assistant está sem a busca na web. Ligue a busca na web nas opções da tarefa de IA "
-                        "(Configurações → Dispositivos e serviços → Anthropic).")
+        raise ErroBusca(SEM_BUSCA)
     pre = cat_id[:4] + "-"
     redes = {}
 
@@ -616,7 +690,8 @@ def normalizar(cat_id, bruto, cfg):
         if not (rid and preco):
             return None, None
         if cat_id != "online":
-            return rid, preco
+            clube = numero(p.get("preco_clube"))
+            return rid, ({"preco": preco, "clube": clube} if clube and clube < preco else preco)
         frete = frete_ok(p.get("frete"))
         if frete is None:
             return None, None
@@ -768,7 +843,7 @@ def buscar():
             try:
                 cat, parcial = normalizar(cat_id, chamar_ai_task(f"EconomIA: {cat_id}", instrucoes_para(cat_id, cfg)), cfg)
             except ErroBusca as e:
-                if any(t in str(e) for t in ("Falta uma IA", "sem a busca na web", "não tem acesso", "não tem permissão")):
+                if any(t in str(e) for t in ("Falta uma IA", "não usou a busca na web", "não tem acesso", "não tem permissão", "assistente de conversa")):
                     raise
                 falhas.append(f"{CATEGORIAS[cat_id]['nome']}: {e}")
                 if cat_id in antigas:
@@ -817,7 +892,41 @@ Responda somente com um objeto JSON, sem texto antes ou depois:
 Se não achar nenhum item, responda {{"itens": []}}."""
 
 
-def ler_lista(job, fotos, texto_msg):
+def instrucoes_cupons(n_fotos, nomes):
+    return f"""Você recebe {n_fotos} print(s) do app ou do site de lojas (farmácias, mercados, pet shops) com cupons ou ofertas da conta do cliente.
+
+Extraia cada cupom ou oferta pessoal: a loja, o código (muitos são ativados com um toque e não têm código: use null), um benefício curto (por exemplo "20% em Colgate" ou "R$ 10 acima de R$ 80"), a condição, a validade e o produto, se for de um produto específico.
+Ignore propaganda que não seja cupom ou oferta da conta. Não invente: se a validade não aparecer, use null.
+Lojas que o morador acompanha: {'; '.join(nomes) or 'nenhuma'}. Quando for uma delas, use exatamente esse nome em "loja".
+
+Responda somente com um objeto JSON, sem texto antes ou depois:
+{{"cupons": [{{"loja": "Panvel", "codigo": null, "beneficio": "20% em Colgate", "condicao": "Ativado no app", "valido_ate": "AAAA-MM-DD ou null", "produto": "Colgate"}}]}}
+Se não achar nenhum cupom, responda {{"cupons": []}}."""
+
+
+def ler_cupons(bruto):
+    of = ler_json(OFERTAS, {}) or {}
+    redes = {norm(r.get("nome") or ""): r.get("id") for c in of.get("categorias") or [] if isinstance(c, dict)
+             for r in c.get("redes") or [] if isinstance(r, dict) and r.get("id")}
+    cupons, vistos = [], set()
+    for c in (bruto.get("cupons") if isinstance(bruto, dict) else None) or []:
+        if not isinstance(c, dict) or not texto(c.get("beneficio"), 60):
+            continue
+        cup = {"loja": texto(c.get("loja"), 60) or "", "beneficio": texto(c.get("beneficio"), 60)}
+        cup["rede"] = redes.get(norm(cup["loja"]))
+        for campo, lim in (("codigo", 40), ("condicao", 120), ("produto", 60)):
+            if texto(c.get(campo), lim):
+                cup[campo] = texto(c.get(campo), lim)
+        if data_ok(c.get("valido_ate")):
+            cup["valido_ate"] = data_ok(c.get("valido_ate"))
+        k = (norm(cup["loja"]), norm(cup["beneficio"]), cup.get("codigo"))
+        if k not in vistos:
+            vistos.add(k)
+            cupons.append(cup)
+    return cupons[:30]
+
+
+def ler_lista(job, fotos, texto_msg, tipo="lista"):
     pasta = os.path.join(MEDIA, "economia")
     arquivos, anexos = [], []
     try:
@@ -834,7 +943,15 @@ def ler_lista(job, fotos, texto_msg):
                 arquivos.append(os.path.join(pasta, nome))
                 anexos.append({"media_content_id": f"{MEDIA_URI}/economia/{nome}", "media_content_type": tipo})
         cfg = ler_config()
-        bruto = chamar_ai_task("EconomIA: ler lista", instrucoes_leitura(texto_msg, len(anexos), cfg), anexos)
+        if tipo == "cupons":
+            of = ler_json(OFERTAS, {}) or {}
+            nomes = [r.get("nome") for c in of.get("categorias") or [] if isinstance(c, dict)
+                     for r in c.get("redes") or [] if isinstance(r, dict) and r.get("nome")]
+            cupons = ler_cupons(chamar_ai_task("EconomIA: ler cupons", instrucoes_cupons(len(anexos), nomes), anexos, uso="fotos"))
+            LEITURAS[job].update({"status": "pronto", "cupons": cupons})
+            log(f"leitura {job}: {len(cupons)} cupom(ns)")
+            return
+        bruto = chamar_ai_task("EconomIA: ler lista", instrucoes_leitura(texto_msg, len(anexos), cfg), anexos, uso="fotos")
         atuais = {norm(nome_item(i)): nome_item(i) for i in (cfg.get("lista") or []) if nome_item(i)}
         itens, vistos = [], set()
         for it in (bruto.get("itens") if isinstance(bruto, dict) else None) or []:
@@ -877,14 +994,15 @@ def comeca_leitura(dado):
             continue
         if 0 < len(bruto) <= 6 * 1024 * 1024:
             fotos.append((bruto, m.group(1)))
-    texto_msg = str(dado.get("texto") or "").strip()[:4000]
+    tipo = "cupons" if dado.get("tipo") == "cupons" else "lista"
+    texto_msg = "" if tipo == "cupons" else str(dado.get("texto") or "").strip()[:4000]
     if not fotos and not texto_msg:
         return None
     job = datetime.now().strftime("%H%M%S") + "-" + os.urandom(3).hex()
     for antigo in sorted(LEITURAS)[:-20]:
         LEITURAS.pop(antigo, None)
     LEITURAS[job] = {"status": "lendo", "itens": [], "erro": None}
-    threading.Thread(target=ler_lista, args=(job, fotos, texto_msg), daemon=True).start()
+    threading.Thread(target=ler_lista, args=(job, fotos, texto_msg, tipo), daemon=True).start()
     return job
 
 
@@ -917,14 +1035,15 @@ def dados_lista():
         return rid in manter or i["dist"] is None or i["dist"] <= raio
 
     precos = {norm(i.get("produto")): i.get("precos") or {} for i in of.get("lista") or [] if isinstance(i, dict)}
+    socios = set(cfg.get("clubes") or [])
     itens = []
     for it in cfg.get("lista") or []:
         prod = it.get("produto") if isinstance(it, dict) else str(it)
         if not prod:
             continue
         compras = sorted(d for d in ((it.get("compras") or []) if isinstance(it, dict) else []) if data_ok(d))
-        ps = sorted(({"loja": info[r]["nome"], "tipo": info[r]["tipo"], "preco": valor_total(v)}
-                     for r, v in precos.get(norm(prod), {}).items() if acompanha(r) and valor_total(v)),
+        ps = sorted(({"loja": info[r]["nome"], "tipo": info[r]["tipo"], "preco": valor_total(v, r in socios)}
+                     for r, v in precos.get(norm(prod), {}).items() if acompanha(r) and valor_total(v, r in socios)),
                     key=lambda x: x["preco"])
         ritmo = None
         if len(compras) >= 2:
@@ -1005,7 +1124,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.8.6"
+    server_version = "EconomIA/0.9.0"
 
     def log_message(self, fmt, *args):
         pass
@@ -1067,6 +1186,11 @@ class Painel(BaseHTTPRequestHandler):
                 self._json(502, {"erro": str(e)})
         elif rota == "/api/busca":
             self._json(200, BUSCA)
+        elif rota == "/api/ias":
+            try:
+                self._json(200, ias_disponiveis())
+            except ErroBusca as e:
+                self._json(502, {"erro": str(e), "tarefas": [], "agentes": []})
         elif rota == "/api/ler-lista":
             job = (urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("id") or [""])[0]
             if job not in LEITURAS:
@@ -1127,6 +1251,12 @@ class Painel(BaseHTTPRequestHandler):
             except ErroBusca as e:
                 SYNC["erro"] = str(e)
             return self._json(200, {"sync": SYNC, "rev": int(ler_config().get("rev") or 0)})
+        if urllib.parse.urlsplit(self.path).path == "/api/testar-ia":
+            dado = self._corpo() or {}
+            try:
+                return self._json(200, testar_ia("fotos" if dado.get("uso") == "fotos" else "busca"))
+            except ErroBusca as e:
+                return self._json(200, {"ok": False, "msg": str(e)})
         if urllib.parse.urlsplit(self.path).path == "/api/ler-lista":
             dado = self._corpo(MAX_FOTOS_BODY)
             if dado is None:
