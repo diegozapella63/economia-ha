@@ -988,7 +988,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.8.4"
+    server_version = "EconomIA/0.8.5"
 
     def log_message(self, fmt, *args):
         pass

@@ -18,7 +18,7 @@ Se você tiver mais de uma tarefa de IA, escolha qual usar na opção `ai_task_e
 3. Em **Minha lista**, adicione o que você compra sempre, pelo campo do topo, por **Escolher fotos** ou por **Colar mensagem**. Toque em **Comprei hoje** quando comprar: o painel aprende de quanto em quanto tempo cada coisa acaba. **Limpar lista** apaga tudo, com opção de desfazer.
 4. Toque em **Buscar**, no centro do menu de baixo. A busca leva alguns minutos e você pode continuar usando o painel.
 5. Em **Ofertas**, use **Não mostrar** em qualquer oferta que não faça sentido para você. Cada oferta tem um link para a fonte.
-6. Em **Lojas**, desmarque as lojas que não quer acompanhar ou adicione uma que não apareceu.
+6. Em **Mais**, no fim da tela, fica **Lojas**: desmarque as que não quer acompanhar ou adicione uma que não apareceu.
 
 ## Itens por foto ou mensagem
 
@@ -36,7 +36,7 @@ Pode escrever só o produto, como **Lysoform**. Na busca, o EconomIA traz també
 
 ## Roteiro de compras
 
-No fim da **Minha lista**, diga em até quantas lojas você topa parar (1 a 4) e se é a lista toda ou só o que está acabando. O EconomIA testa as combinações de lojas e mostra:
+Na aba **Roteiro**, ao lado da Minha lista, diga em até quantas lojas você topa parar (1 a 4) e se é a lista toda ou só o que está acabando. O EconomIA testa as combinações de lojas e mostra:
 
 - o total e a economia sobre o preço médio;
 - o que comprar em cada parada, da loja mais perto para a mais longe, com link para a rota no Maps;
