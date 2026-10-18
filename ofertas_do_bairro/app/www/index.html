@@ -231,9 +231,26 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .tag-eyebrow{font-weight:600;font-size:14px;opacity:.85}
 .tag-valor{font-family:var(--font-display);font-stretch:70%;font-weight:800;font-size:clamp(2.7rem,11vw,4.4rem);line-height:.95;letter-spacing:.005em}
 .tag-sub{font-size:14px;opacity:.88;max-width:42ch}
-.hero-chips{display:flex;flex-wrap:wrap;gap:8px}
-.hchip{background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:7px 14px;font-weight:600;font-size:13.5px}
-.hchip:hover{border-color:var(--accent);color:var(--accent)}
+.opps{display:flex;flex-direction:column;max-width:640px;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.opps-h{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:12px 14px 2px}
+.opp{display:grid;grid-template-columns:40px minmax(0,1fr) auto 14px;align-items:center;gap:12px;width:100%;min-height:64px;padding:10px 14px;background:none;border:0;border-top:1px solid var(--line);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.opps-h + .opp{border-top:0}
+.opp:hover{background:var(--bg)}
+.opp-ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.opp-ic svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.opp.warn .opp-ic{background:var(--warn-soft);color:var(--warn)}
+.opp.deal .opp-ic{background:var(--deal-soft);color:var(--deal)}
+.opp.neutro .opp-ic{background:var(--bg);color:var(--ink)}
+.opp-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.opp-txt b{font-weight:650;font-size:14.5px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.opp-txt small{font-size:12.5px;line-height:1.3;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.opp-val{display:flex;flex-direction:column;align-items:flex-end;gap:1px;text-align:right}
+.opp-val strong{font-family:var(--font-display);font-stretch:75%;font-weight:780;font-size:1.2rem;line-height:1.1;color:var(--accent);white-space:nowrap}
+.opp.warn .opp-val strong{color:var(--warn)}
+.opp.deal .opp-val strong{color:var(--deal)}
+.opp.neutro .opp-val strong{color:var(--ink)}
+.opp-val small{font-size:11px;color:var(--muted);white-space:nowrap}
+.opp-seta{width:14px;height:14px;stroke:var(--muted);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .comecar{display:flex;flex-direction:column;gap:10px}
 @media (max-width:640px){.tag{padding-left:80px;min-height:140px}.tag::before{left:66px}.tag-hole{left:24px}.tag-wrap::before{left:37px}.tag-wrap{transform-origin:38px -34px}}
 
@@ -585,7 +602,7 @@ footer{font-size:12.5px;color:var(--muted)}
           <p class="tag-sub" id="heroSub">Farmácias, mercados e pet shops perto de casa</p>
         </div>
       </div>
-      <div class="hero-chips" id="heroChips" hidden></div>
+      <div class="opps" id="heroChips" hidden></div>
     </section>
     <div class="comecar" id="comecar" hidden>
       <h2 class="big">Vamos começar</h2>
@@ -785,7 +802,7 @@ footer{font-size:12.5px;color:var(--muted)}
       </div>
     </section>
     <section class="panel settings" aria-labelledby="h-sobre">
-      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.8.0. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
+      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.8.1. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
     </section>
   </section>
 
@@ -1580,15 +1597,15 @@ footer{font-size:12.5px;color:var(--muted)}
 
   // ===== Abertura: oportunidades de economia =====
   function oportunidades(){
-    var o = {total:0, acabando:0, paraVoce:0, cupom:null, tam:[], rot:null};
+    var o = {total:0, acabando:0, acabandoNomes:[], paraVoce:0, cupom:null, tam:[], rot:null};
     estado.lista.forEach(function(it){
       var p = precosDe(it.produto), r = ritmo(it.compras), mt = p.length ? melhorTamanho(it, r, p) : null;
       if (p.length > 1) o.total += p[p.length - 1].v - p[0].v;
-      if (r.dias != null && r.dias <= 3) o.acabando++;
+      if (r.dias != null && r.dias <= 3){ o.acabando++; o.acabandoNomes.push(nomeCurto(it.produto)); }
       if (mt && mt.economia > 0) o.tam.push({nome:nomeCurto(it.produto), e:mt.economia});
     });
     var c = estado.lista.length ? calculaRoteiro() : {};
-    if (c.rec && c.rec.pl.ids.length) o.rot = {n:c.rec.pl.ids.length, eco:economiaPlano(c.rec.pl), total:c.rec.pl.total};
+    if (c.rec && c.rec.pl.ids.length) o.rot = {n:c.rec.pl.ids.length, ids:c.rec.pl.ids, online:c.rec.pl.online.length > 0, eco:economiaPlano(c.rec.pl), total:c.rec.pl.total};
     D.categorias.forEach(function(c){
       if (estado.categorias.indexOf(c.id) < 0) return;
       arr(c.ofertas).forEach(function(of){ if (acompanha(of.rede) && !escondida(of) && porQue(of)) o.paraVoce++; });
@@ -1599,6 +1616,21 @@ footer{font-size:12.5px;color:var(--muted)}
       });
     });
     return o;
+  }
+  var SVG = function(d){ return '<svg viewBox="0 0 24 24" aria-hidden="true">' + d + '</svg>'; };
+  var ICONE = {
+    rota:SVG('<circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H16a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h7.5"/>'),
+    caixa:SVG('<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>'),
+    relogio:SVG('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+    etiqueta:SVG('<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/>'),
+    cupom:SVG('<path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z"/><path d="M14 7v10" stroke-dasharray="2 2.2"/>')
+  };
+  function linhaOpp(tipo, ir, cat, icone, titulo, sub, valor, rotulo){
+    return '<button type="button" class="opp' + (tipo ? ' ' + tipo : '') + '" data-ir="' + ir + '"' + (cat ? ' data-cat="' + esc(cat) + '"' : '') + '>'
+      + '<span class="opp-ic">' + icone + '</span>'
+      + '<span class="opp-txt"><b>' + esc(titulo) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>'
+      + '<span class="opp-val num"><strong>' + esc(valor) + '</strong><small>' + esc(rotulo) + '</small></span>'
+      + '<svg class="opp-seta" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>';
   }
   function pintaHero(){
     var o = oportunidades(), vazio = !estado.lista.length;
@@ -1611,13 +1643,14 @@ footer{font-size:12.5px;color:var(--muted)}
       $('heroValor').textContent = 'EconomIA';
       $('heroSub').textContent = vazio ? 'Farmácias, mercados e pet shops perto de casa' : 'Toque em Buscar para descobrir quanto dá para economizar na sua lista';
     }
-    var chips = [];
-    if (o.rot) chips.push('<button type="button" class="hchip" data-ir="roteiro">Roteiro em ' + paradasTxt(o.rot.n) + (o.rot.eco > 0 ? ' economiza ' + brl.format(o.rot.eco) : ': ' + brl.format(o.rot.total)) + '</button>');
-    if (o.tam.length) chips.push('<button type="button" class="hchip" data-ir="itens">' + (o.tam.length === 1 ? esc(o.tam[0].nome) + ': o tamanho maior economiza ' + brl.format(o.tam[0].e) : o.tam.length + ' itens compensam no tamanho maior') + '</button>');
-    if (o.acabando) chips.push('<button type="button" class="hchip" data-ir="itens">' + o.acabando + (o.acabando > 1 ? ' itens acabando' : ' item acabando') + '</button>');
-    if (o.paraVoce) chips.push('<button type="button" class="hchip" data-ir="ofertas">' + o.paraVoce + (o.paraVoce > 1 ? ' ofertas combinam com você' : ' oferta combina com você') + '</button>');
-    if (o.cupom) chips.push('<button type="button" class="hchip" data-ir="ofertas" data-cat="' + o.cupom.cat + '">Cupom ' + esc(o.cupom.c.codigo) + ' ' + (o.cupom.n === 0 ? 'vence hoje' : 'vence em ' + o.cupom.n + (o.cupom.n > 1 ? ' dias' : ' dia')) + '</button>');
-    $('heroChips').innerHTML = chips.join('');
+    var chips = [], somaTam = o.tam.reduce(function(s_, t){ return s_ + t.e; }, 0);
+    var nomes = function(l){ return l.length > 2 ? l.slice(0, 2).join(', ') + ' e mais ' + (l.length - 2) : l.join(' e '); };
+    if (o.rot) chips.push(linhaOpp('', 'roteiro', '', ICONE.rota, 'Roteiro em ' + paradasTxt(o.rot.n), nomes(o.rot.ids.map(function(id){ return G[id].nome; })) + (o.rot.online ? ' + online' : ''), o.rot.eco > 0 ? brl.format(o.rot.eco) : brl.format(o.rot.total), o.rot.eco > 0 ? 'economia' : 'total'));
+    if (o.tam.length) chips.push(linhaOpp('', 'itens', '', ICONE.caixa, 'Tamanho maior', 'Compensa em ' + nomes(o.tam.map(function(t){ return t.nome; })), brl.format(somaTam), 'economia'));
+    if (o.acabando) chips.push(linhaOpp('warn', 'itens', '', ICONE.relogio, o.acabando > 1 ? 'Itens acabando' : 'Item acabando', nomes(o.acabandoNomes), String(o.acabando), o.acabando > 1 ? 'itens' : 'item'));
+    if (o.paraVoce) chips.push(linhaOpp('neutro', 'ofertas', '', ICONE.etiqueta, 'Ofertas para você', estado.perfil.interesses.length ? 'Combinam com ' + nomes(estado.perfil.interesses.map(function(t){ return ROTULO_TAG[t] || t; })) : 'Combinam com o perfil da casa', String(o.paraVoce), o.paraVoce > 1 ? 'ofertas' : 'oferta'));
+    if (o.cupom) chips.push(linhaOpp('deal', 'ofertas', o.cupom.cat, ICONE.cupom, 'Cupom ' + o.cupom.c.codigo, G[o.cupom.c.rede].nome + ' · ' + o.cupom.c.beneficio, o.cupom.n === 0 ? 'Hoje' : o.cupom.n + (o.cupom.n > 1 ? ' dias' : ' dia'), o.cupom.n === 0 ? 'vence' : 'para vencer'));
+    $('heroChips').innerHTML = chips.length ? '<p class="opps-h">Oportunidades</p>' + chips.join('') : '';
     $('heroChips').hidden = !chips.length;
   }
   document.addEventListener('click', function(e){
