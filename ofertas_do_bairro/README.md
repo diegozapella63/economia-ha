@@ -29,6 +29,13 @@ O botão **Buscar** chama `ai_task.generate_data` pela API do Home Assistant (`h
 | GET | `/api/exportar/lista.json` | A mesma lista em JSON. |
 | GET | `/api/todos` | Listas de tarefas (`todo.*`) do Home Assistant. |
 | POST | `/api/sincronizar-lista` | Sincroniza agora com a lista escolhida em `config.sync`. |
+| POST | `/api/ler-lista` | `{imagens: ["data:image/jpeg;base64,..."], texto}` (até 4 imagens, 16 MB no total). Devolve `{id}`. |
+| GET | `/api/ler-lista?id=...` | `{status: "lendo|pronto|erro", itens: [{produto, quantidade, ja_na_lista}], erro}`. |
+| GET | `/api/saude` | Verificação simples. |
+
+### Leitura de fotos
+
+As imagens são gravadas por um instante em `/media/economia` (o add-on mapeia a pasta `media`) e vão para `ai_task.generate_data` como `attachments` (`media-source://media_source/local/economia/...`). O arquivo é apagado depois da resposta.
 
 ### Sincronização com a lista do Home Assistant
 
@@ -36,7 +43,6 @@ A cada minuto (e quando o painel volta a ficar visível), o add-on lê a lista e
 item novo pendente entra na Minha lista (`origem: "ha"`); item que passa a concluído registra a compra do dia.
 No outro sentido, usa `todo.add_item` para itens novos do painel e para os que devem acabar em até um dia.
 `config.json` tem `rev`, que sobe a cada gravação; se o painel salvar com uma revisão antiga, o servidor junta as mudanças que vieram do HA antes de gravar.
-| GET | `/api/saude` | Verificação simples. |
 
 O servidor só aceita conexões do ingress (`172.30.32.2`). Para testar fora do HA:
 `OFERTAS_ALLOW_ALL=1 OFERTAS_DATA=/tmp/ofertas python3 app/server.py`
@@ -51,7 +57,8 @@ O servidor só aceita conexões do ingress (`172.30.32.2`). Para testar fora do 
   "lojas": {"ignorar": ["raia"], "manter": ["imperatriz"], "adicionar": [{"categoria": "mercados", "nome": "Mercado da esquina"}]},
   "lista": [{"produto": "Café torrado e moído · 500 g", "compras": ["2026-09-20", "2026-09-30"]}],
   "perfil": {"adultos": 2, "criancas": 0, "bebes": 0, "pets": {"cachorro": 0, "gato": 1, "outros": 0}, "restricoes": [], "interesses": ["skincare", "cafe"], "nunca": ["alcool"]},
-  "cotidiano": {"mercado": ["sab"], "farmacia": ["qua"], "avisar": "vespera"},
+  "cotidiano": {"mercado": ["sab"], "farmacia": ["qua"], "avisar": "vespera", "estoque": "pouco|normal|bastante"},
+  "roteiro": {"paradas": 2, "escopo": "tudo|acabando", "online": true},
   "ocultas": ["giassi-cerveja-12"]
 }
 ```
@@ -63,7 +70,9 @@ O servidor só aceita conexões do ingress (`172.30.32.2`). Para testar fora do 
   "versao": 2,
   "gerado_em": "2026-10-19T07:52:00-03:00",
   "proxima_atualizacao": "2026-10-26T07:52:00-03:00",
-  "lista": [{"produto": "Café torrado e moído · 500 g", "precos": {"giassi": 19.9, "angeloni": 17.98}}],
+  "lista": [{"produto": "Lysoform", "precos": {"giassi": 21.9, "atacadao": 17.49},
+             "base": {"quantidade": 1, "unidade": "L"},
+             "tamanhos": [{"rede": "atacadao", "embalagem": "Galão 5 L", "quantidade": 5, "preco": 79.9}]}],
   "categorias": [{
     "id": "mercados", "nome": "Mercados", "singular": "Mercado",
     "redes":   [{"id": "giassi", "nome": "Giassi", "curto": "Giassi", "nota": "texto opcional"}],
@@ -79,6 +88,8 @@ O servidor só aceita conexões do ingress (`172.30.32.2`). Para testar fora do 
 - `ofertas[].id` precisa ser estável entre semanas: é o que o botão "Não mostrar" guarda.
 - `redes[].id` é único entre todas as categorias.
 - `lista[].produto` usa o mesmo texto da lista do `config.json`.
+- `lista[].base` é o tamanho a que `precos` se refere, em `L`, `kg`, `un` (com `rotulo`, como `"rolo"`) ou `m`. `tamanhos` traz as outras embalagens, com a quantidade total na mesma unidade e o preço do pacote inteiro (online, com `frete` e `prazo_dias`). Ofertas podem ter `tamanho: {quantidade, unidade}` para mostrar o preço por litro ou quilo.
+- Se duas categorias usarem bases diferentes para o mesmo item, os preços da segunda viram `tamanhos`.
 - Categoria `online`: ofertas têm também `frete`, `prazo_dias`, `vendedor`, `oficial`, `importado` e `unidades`; na `lista`, o preço de um marketplace é um objeto `{"preco", "frete", "prazo_dias", "obs"}`. O painel compara `preco + frete` com o preço das lojas.
 - `config.online`: `{"marketplaces": ["mercadolivre", "amazon"], "assinaturas": ["prime", "melimais"]}`.
 

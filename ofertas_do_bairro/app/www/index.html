@@ -262,6 +262,49 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .dchip{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:var(--bg);color:var(--ink)}
 .dchip.on{background:var(--accent);color:var(--on-accent)}
 .dchip.warn{background:var(--warn-soft);color:var(--warn)}
+.i-tam{display:flex;flex-direction:column;align-items:flex-start;gap:4px;border-top:1px dashed var(--line);padding-top:8px;font-size:13px;color:var(--muted)}
+.i-tam details{align-self:stretch}
+.i-tam summary{cursor:pointer;font-size:12.5px;font-weight:600;color:var(--accent);list-style:none;padding:2px 0}
+.i-tam summary::-webkit-details-marker{display:none}
+.i-tam summary::before{content:"▸ "}
+.i-tam details[open] summary::before{content:"▾ "}
+.tam-list{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.tam-list li{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;font-size:12.5px;padding:5px 8px;border:1px solid var(--line);border-radius:7px}
+.tam-list li.top{border-color:var(--accent)}
+.tam-list b{color:var(--ink);font-weight:600}
+.tam-list .pu{margin-left:auto;color:var(--ink);font-weight:600;white-space:nowrap}
+.confirma{display:flex;flex-direction:column;gap:10px;background:var(--deal-soft);border-radius:10px;padding:12px;font-size:13.5px}
+.btn.perigo{background:var(--deal);color:var(--surface)}
+.link{background:none;border:0;padding:0;color:var(--accent);font:inherit;font-weight:600;text-decoration:underline;cursor:pointer}
+.rot-ctrl{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end}
+.set-line{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer}
+#rotRes{display:flex;flex-direction:column;gap:12px}
+.rot-total{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;background:var(--accent-soft);border-radius:10px;padding:10px 12px}
+.rot-total .lbl{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.rot-sub{font-size:13px;color:var(--ink)}
+.paradas{display:flex;flex-direction:column;gap:10px}
+.parada{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.parada-h{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
+.parada-h b{font-weight:650}
+.parada-h .sub{margin-left:auto;font-size:13px;color:var(--muted)}
+.parada-n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--on-accent);font-weight:700;font-size:13px;flex:none}
+.parada ul{display:flex;flex-direction:column;gap:3px;font-size:13px}
+.parada li{display:flex;justify-content:space-between;gap:10px}
+.parada li span:first-child{min-width:0;overflow-wrap:anywhere}
+.parada li span:last-child{white-space:nowrap;font-weight:600}
+.rot-ops{display:flex;flex-direction:column;gap:6px}
+.r-dica{display:block;color:var(--accent);font-size:12px;font-weight:600}
+.foto-box{display:flex;flex-direction:column;gap:10px;border:1px dashed var(--accent);border-radius:12px;padding:12px}
+.arq{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.fotos{display:flex;flex-wrap:wrap;gap:8px}
+.fotos img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.foto-box textarea{resize:vertical;min-height:72px;font:inherit}
+.foto-itens{display:flex;flex-direction:column;gap:6px}
+.foto-itens li{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.foto-itens .field{flex:1 1 160px}
+.foto-itens input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent);flex:none;margin:0}
+.rot-op{width:100%;display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 12px;font:inherit;font-size:13.5px;color:var(--ink);text-align:left;cursor:pointer}
+.rot-op[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 
 /* lojas */
 .rows{display:flex;flex-direction:column}
@@ -302,12 +345,13 @@ footer{font-size:12.5px;color:var(--muted)}
   "lista": [
     {"produto": "Café torrado e moído · 500 g", "precos": {"giassi": 19.90, "condor": 18.49, "angeloni": 17.98, "clubek": 19.49, "atacadao": 18.90, "amazon": {"preco": 18.99, "frete": 0, "prazo_dias": 2}, "mercadolivre": {"preco": 17.49, "frete": 9.90, "prazo_dias": 3}}},
     {"produto": "Leite UHT integral · 1 L", "precos": {"giassi": 5.49, "condor": 5.19, "angeloni": 5.69, "clubek": 5.39, "atacadao": 4.79}},
-    {"produto": "Papel higiênico folha dupla · 12 rolos", "precos": {"pp": 23.90, "dc": 22.49, "giassi": 17.90, "condor": 18.49, "clubek": 19.90, "atacadao": 16.99, "amazon": {"preco": 18.45, "frete": 0, "prazo_dias": 2, "obs": "kit de 24 rolos, valor por 12"}}},
-    {"produto": "Creme dental Colgate Total 12 · 90 g", "precos": {"pp": 14.99, "dc": 15.49, "panvel": 15.90, "raia": 16.99, "giassi": 9.98, "condor": 10.49, "angeloni": 11.49, "atacadao": 8.99, "mercadolivre": {"preco": 7.48, "frete": 0, "prazo_dias": 2, "obs": "kit com 6, valor por unidade"}}},
+    {"produto": "Papel higiênico folha dupla · 12 rolos", "base": {"quantidade": 12, "unidade": "un", "rotulo": "rolo"}, "precos": {"pp": 23.90, "dc": 22.49, "giassi": 17.90, "condor": 18.49, "clubek": 19.90, "atacadao": 16.99}, "tamanhos": [{"rede": "giassi", "embalagem": "Pacote 24 rolos", "quantidade": 24, "preco": 35.90}, {"rede": "amazon", "embalagem": "Kit 24 rolos", "quantidade": 24, "preco": 36.90, "frete": 0, "prazo_dias": 2}]},
+    {"produto": "Lysoform", "base": {"quantidade": 1, "unidade": "L"}, "precos": {"pp": 22.90, "dc": 23.49, "giassi": 21.90, "condor": 19.98, "angeloni": 20.49, "atacadao": 17.49, "amazon": {"preco": 19.90, "frete": 0, "prazo_dias": 2}}, "tamanhos": [{"rede": "atacadao", "embalagem": "Galão 5 L", "quantidade": 5, "preco": 79.90}, {"rede": "angeloni", "embalagem": "Galão 5 L", "quantidade": 5, "preco": 89.90}, {"rede": "amazon", "embalagem": "Galão 5 L", "quantidade": 5, "preco": 84.90, "frete": 0, "prazo_dias": 2}, {"rede": "mercadolivre", "embalagem": "Kit 3 × 1 L", "quantidade": 3, "preco": 54.90, "frete": 0, "prazo_dias": 3}]},
+    {"produto": "Creme dental Colgate Total 12 · 90 g", "base": {"quantidade": 0.09, "unidade": "kg"}, "precos": {"pp": 14.99, "dc": 15.49, "panvel": 15.90, "raia": 16.99, "giassi": 9.98, "condor": 10.49, "angeloni": 11.49, "atacadao": 8.99}, "tamanhos": [{"rede": "mercadolivre", "embalagem": "Kit 6 × 90 g", "quantidade": 0.54, "preco": 44.90, "frete": 0, "prazo_dias": 2}]},
     {"produto": "Protetor solar facial FPS 50 · 40 g", "precos": {"pp": 69.90, "dc": 66.90, "panvel": 59.90, "raia": 64.90, "saojoao": 68.90, "angeloni": 62.90, "shopee": {"preco": 52.90, "frete": 12.90, "prazo_dias": 6}}},
     {"produto": "Losartana potássica 50 mg · 30 comp. (genérico)", "precos": {"pp": 9.90, "dc": 10.49, "panvel": 12.90, "raia": 14.29, "saojoao": 11.50}},
     {"produto": "Ração para gatos adultos · 10,1 kg", "precos": {"condor": 159.90, "giassi": 172.90, "petz": 179.90, "cobasi": 184.90, "petbairro": 189.90, "amazon": {"preco": 164.90, "frete": 0, "prazo_dias": 2}}},
-    {"produto": "Areia higiênica para gatos · 4 kg", "precos": {"giassi": 27.90, "atacadao": 25.49, "petz": 24.90, "cobasi": 26.90, "petbairro": 29.90, "mercadolivre": {"preco": 21.63, "frete": 0, "prazo_dias": 3, "obs": "kit com 3, valor por unidade"}}}
+    {"produto": "Areia higiênica para gatos · 4 kg", "base": {"quantidade": 4, "unidade": "kg"}, "precos": {"giassi": 27.90, "atacadao": 25.49, "petz": 24.90, "cobasi": 26.90, "petbairro": 29.90}, "tamanhos": [{"rede": "mercadolivre", "embalagem": "Kit 3 × 4 kg", "quantidade": 12, "preco": 64.90, "frete": 0, "prazo_dias": 3}, {"rede": "cobasi", "embalagem": "Pacote 12 kg", "quantidade": 12, "preco": 71.90}]}
   ],
   "categorias": [
     {
@@ -392,11 +436,12 @@ footer{font-size:12.5px;color:var(--muted)}
       ],
       "ofertas": [
         {"id": "giassi-arroz-5kg", "rede": "giassi", "produto": "Arroz branco tipo 1 · 5 kg", "preco_normal": 27.90, "preco_oferta": 21.90, "tipo": "promo", "tags": ["alimentos"]},
-        {"id": "angeloni-cafe-500", "rede": "angeloni", "produto": "Café torrado e moído · 500 g", "preco_normal": 22.98, "preco_oferta": 17.98, "tipo": "clube", "tags": ["alimentos", "cafe"]},
+        {"id": "angeloni-cafe-500", "rede": "angeloni", "produto": "Café torrado e moído · 500 g", "preco_normal": 22.98, "preco_oferta": 17.98, "tipo": "clube", "tamanho": {"quantidade": 0.5, "unidade": "kg"}, "tags": ["alimentos", "cafe"]},
         {"id": "atacadao-leite-1l", "rede": "atacadao", "produto": "Leite UHT integral · 1 L", "preco_normal": 5.29, "preco_oferta": 4.79, "tipo": "atacado", "condicao": "A partir de 12 unidades", "tags": ["alimentos", "lactose"]},
         {"id": "condor-patinho-kg", "rede": "condor", "produto": "Patinho moído", "preco_normal": 46.90, "preco_oferta": 39.90, "tipo": "clube", "unidade": "kg", "tags": ["alimentos", "carnes"]},
         {"id": "imperatriz-azeite-500", "rede": "imperatriz", "produto": "Azeite extra virgem · 500 ml", "preco_normal": 36.90, "preco_oferta": 29.90, "tipo": "clube", "tags": ["alimentos"]},
         {"id": "clubek-papel-12", "rede": "clubek", "produto": "Papel higiênico folha dupla · 12 rolos", "preco_normal": 24.90, "preco_oferta": 19.90, "tipo": "promo", "tags": ["limpeza"]},
+        {"id": "atacadao-lysoform-5l", "rede": "atacadao", "produto": "Lysoform Bruto Original · galão 5 L", "preco_normal": 94.90, "preco_oferta": 79.90, "tipo": "promo", "tamanho": {"quantidade": 5, "unidade": "L"}, "tags": ["limpeza"]},
         {"id": "condor-racao-gato", "rede": "condor", "produto": "Ração para gatos adultos · 10,1 kg", "preco_normal": 189.90, "preco_oferta": 159.90, "tipo": "clube", "tags": ["pet", "gato"]},
         {"id": "giassi-cerveja-12", "rede": "giassi", "produto": "Cerveja pilsen lata 350 ml · 12 un.", "preco_normal": 47.88, "preco_oferta": 39.90, "tipo": "promo", "tags": ["alimentos", "alcool"]}
       ],
@@ -477,6 +522,7 @@ footer{font-size:12.5px;color:var(--muted)}
       {"produto": "Café torrado e moído · 500 g", "compras": ["2026-09-20", "2026-09-30", "2026-10-10"]},
       {"produto": "Leite UHT integral · 1 L", "compras": ["2026-09-29", "2026-10-06", "2026-10-13"], "origem": "ha"},
       {"produto": "Papel higiênico folha dupla · 12 rolos", "compras": ["2026-08-30", "2026-09-24"]},
+      {"produto": "Lysoform", "compras": ["2026-08-25", "2026-09-24"]},
       {"produto": "Creme dental Colgate Total 12 · 90 g", "compras": ["2026-09-05"]},
       {"produto": "Protetor solar facial FPS 50 · 40 g", "compras": []},
       {"produto": "Losartana potássica 50 mg · 30 comp. (genérico)", "compras": ["2026-09-21"]},
@@ -484,7 +530,8 @@ footer{font-size:12.5px;color:var(--muted)}
       {"produto": "Areia higiênica para gatos · 4 kg", "compras": ["2026-09-28", "2026-10-08"]}
     ],
     "perfil": {"adultos": 2, "criancas": 0, "bebes": 0, "pets": {"cachorro": 0, "gato": 1, "outros": 0}, "restricoes": [], "interesses": ["skincare", "cafe"], "nunca": []},
-    "cotidiano": {"mercado": ["sab"], "farmacia": ["qua"], "avisar": "vespera"},
+    "cotidiano": {"mercado": ["sab"], "farmacia": ["qua"], "avisar": "vespera", "estoque": "normal"},
+    "roteiro": {"paradas": 2, "escopo": "tudo", "online": true},
     "sync": {"ativo": true, "entidade": "todo.shopping_list", "enviar_novos": true, "enviar_acabando": true},
     "ocultas": []
   }
@@ -546,14 +593,40 @@ footer{font-size:12.5px;color:var(--muted)}
       <div class="row-form"><button type="button" class="btn" data-ir="mais">Preencher o perfil</button><button type="button" class="ghost big" data-ir="importar">Importar lista</button></div>
     </div>
     <section class="panel" aria-labelledby="h-lista">
-      <div class="sec-head"><h2 id="h-lista">Itens da lista</h2></div>
-      <p class="sec-meta">Uma lista só para farmácias, mercados, pet shops e compras online. O que está acabando aparece primeiro. Toque em "Comprei hoje" quando comprar: o painel aprende de quanto em quanto tempo cada coisa acaba.</p>
-      <ul class="wish-grid" id="wish"></ul>
+      <div class="sec-head"><h2 id="h-lista">Itens da lista</h2><button type="button" class="rm" id="limpar" hidden>Limpar lista</button></div>
       <form class="row-form" id="addForm" novalidate>
-        <input class="field" id="novoItem" name="novoItem" placeholder="Ex.: Atorvastatina 20 mg, Café 500 g, Sabão em pó" aria-label="Produto para acompanhar">
+        <input class="field" id="novoItem" name="novoItem" placeholder="Ex.: Lysoform, Café 500 g, Atorvastatina 20 mg" aria-label="Produto para acompanhar">
         <button class="btn" type="submit">Adicionar</button>
       </form>
       <p class="hint" id="addMsg" aria-live="polite"></p>
+      <div class="row-form"><button type="button" class="ghost big" id="fotoBtn" aria-expanded="false" aria-controls="fotoBox"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Da foto ou do ZAP</button></div>
+      <div class="foto-box" id="fotoBox" hidden>
+        <p class="sec-meta">Escolha o print da conversa, a foto da lista escrita à mão ou da embalagem que acabou. Ou cole o texto da mensagem. A IA do Home Assistant lê e sugere os itens.</p>
+        <div class="row-form"><label class="ghost big" for="fotoArq"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>Escolher fotos</label></div>
+        <input type="file" id="fotoArq" class="arq" accept="image/*" multiple>
+        <div class="fotos" id="fotoPrev"></div>
+        <textarea class="field" id="fotoTxt" rows="3" placeholder="Ou cole aqui a mensagem, ex.: compra 2 leites, Lysoform e pão de forma" aria-label="Mensagem com itens para comprar"></textarea>
+        <div class="row-form"><button type="button" class="btn" id="fotoLer">Ler com a IA</button><button type="button" class="ghost big" id="fotoFechar">Fechar</button></div>
+        <p class="hint" id="fotoMsg" aria-live="polite"></p>
+        <ul class="foto-itens" id="fotoItens"></ul>
+        <div class="row-form" id="fotoAddRow" hidden><button type="button" class="btn" id="fotoAdd">Adicionar à lista</button></div>
+      </div>
+      <div class="confirma" id="limparConf" hidden>
+        <p id="limparTxt"></p>
+        <div class="row-form"><button type="button" class="btn perigo" id="limparSim">Apagar tudo</button><button type="button" class="ghost big" id="limparNao">Cancelar</button></div>
+      </div>
+      <p class="sec-meta">Uma lista só para farmácias, mercados, pet shops e compras online. Pode escrever só o produto, como "Lysoform": o EconomIA compara os tamanhos e diz se o maior compensa. O que está acabando aparece primeiro; toque em "Comprei hoje" quando comprar.</p>
+      <ul class="wish-grid" id="wish"></ul>
+    </section>
+    <section class="panel" aria-labelledby="h-rot" id="roteiro">
+      <div class="sec-head"><h2 id="h-rot">Roteiro de compras</h2></div>
+      <p class="sec-meta">Diga em quantas lojas você topa parar. O EconomIA testa as combinações e mostra onde comprar cada item para economizar mais.</p>
+      <div class="rot-ctrl">
+        <div class="group"><h3>Paradas, no máximo</h3><div class="seg" id="rotParadas" role="group" aria-label="Paradas, no máximo"></div></div>
+        <div class="group"><h3>O que comprar</h3><div class="seg" id="rotEscopo" role="group" aria-label="O que comprar"></div></div>
+        <label class="set-line" id="rotOnlineRow"><input type="checkbox" class="switch" id="rotOnline"><span>Pedir online o que sair mais barato com frete</span></label>
+      </div>
+      <div id="rotRes" aria-live="polite"></div>
     </section>
   </section>
 
@@ -632,6 +705,15 @@ footer{font-size:12.5px;color:var(--muted)}
             </select>
           </div>
           <div class="aviso" id="proxAviso"></div>
+          <div class="group">
+            <h3><label for="estoque">Espaço para estoque</label></h3>
+            <select class="field" id="estoque" style="align-self:flex-start">
+              <option value="pouco">Pouco: até 2 meses de estoque</option>
+              <option value="normal">Normal: até 6 meses</option>
+              <option value="bastante">Bastante: até 1 ano</option>
+            </select>
+            <p class="hint">O EconomIA só recomenda embalagem maior se ela acabar dentro desse prazo, no seu ritmo de consumo.</p>
+          </div>
         </section>
       </div>
 
@@ -703,7 +785,7 @@ footer{font-size:12.5px;color:var(--muted)}
       </div>
     </section>
     <section class="panel settings" aria-labelledby="h-sobre">
-      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.7.0. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
+      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.8.0. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
     </section>
   </section>
 
@@ -811,7 +893,7 @@ footer{font-size:12.5px;color:var(--muted)}
   function n0(v, d){ v = Number(v); return isFinite(v) && v >= 0 ? Math.min(Math.round(v), 20) : d; }
   function normaliza(c){
     c = c && typeof c === 'object' ? JSON.parse(JSON.stringify(c)) : {};
-    var p = c.perfil || {}, r = c.cotidiano || {}, l = c.lojas || {}, sy = c.sync || {}, on = c.online || null;
+    var p = c.perfil || {}, r = c.cotidiano || {}, l = c.lojas || {}, sy = c.sync || {}, on = c.online || null, ro = c.roteiro || {};
     var cats = arr(c.categorias).slice();
     if (!on && cats.length && cats.indexOf('online') < 0) cats.push('online');  // quem já usava ganha a aba Online
     on = on || {};
@@ -825,7 +907,8 @@ footer{font-size:12.5px;color:var(--muted)}
       lojas: {ignorar: arr(l.ignorar), manter: arr(l.manter), adicionar: arr(l.adicionar)},
       lista: arr(c.lista).map(function(i){ return typeof i === 'string' ? {produto:i, compras:[]} : {produto:String(i.produto || ''), compras:arr(i.compras), origem:i.origem === 'ha' ? 'ha' : undefined}; }).filter(function(i){ return i.produto; }),
       perfil: {adultos:n0(p.adultos, 1), criancas:n0(p.criancas, 0), bebes:n0(p.bebes, 0), pets:petsDe(p.pets), restricoes:arr(p.restricoes), interesses:arr(p.interesses), nunca:arr(p.nunca)},
-      cotidiano: {mercado:arr(r.mercado), farmacia:arr(r.farmacia), avisar:r.avisar || 'vespera'},
+      cotidiano: {mercado:arr(r.mercado), farmacia:arr(r.farmacia), avisar:r.avisar || 'vespera', estoque:['pouco', 'normal', 'bastante'].indexOf(r.estoque) >= 0 ? r.estoque : 'normal'},
+      roteiro: {paradas:Math.min(4, Math.max(1, Math.round(Number(ro.paradas)) || 2)), escopo:ro.escopo === 'acabando' ? 'acabando' : 'tudo', online:ro.online !== false},
       ocultas: arr(c.ocultas)
     };
   }
@@ -1001,7 +1084,7 @@ footer{font-size:12.5px;color:var(--muted)}
     return '<li class="deal' + (oc ? ' muted' : '') + '">'
       + '<div><p class="d-prod">' + esc(o.produto) + '</p>' + why
       + '<p class="d-meta"><span>' + esc(G[o.rede].nome) + '</span>' + cond + rec + fonteLink(o.fonte) + acao + '</p></div>'
-      + '<div class="price num"><span class="de">' + ROT_PRECO[tipo] + ' <s>' + brl.format(o.preco_normal) + '</s></span><span class="por">' + tag + brl.format(o.preco_oferta) + un + '</span>' + (o.unidades > 1 ? '<span class="de">' + brl.format(o.preco_oferta / o.unidades) + ' cada</span>' : '') + '</div>'
+      + '<div class="price num"><span class="de">' + ROT_PRECO[tipo] + ' <s>' + brl.format(o.preco_normal) + '</s></span><span class="por">' + tag + brl.format(o.preco_oferta) + un + '</span>' + (o.tamanho && Number(o.tamanho.quantidade) > 0 && !o.unidade ? '<span class="de">' + porUn(o.preco_oferta, Number(o.tamanho.quantidade), o.tamanho) + '</span>' : o.unidades > 1 ? '<span class="de">' + brl.format(o.preco_oferta / o.unidades) + ' cada</span>' : '') + '</div>'
       + '<span class="off num">−' + pct(o) + '%</span>'
       + menu + '</li>';
   }
@@ -1052,9 +1135,10 @@ footer{font-size:12.5px;color:var(--muted)}
     var fim = dias < 0 ? 'já deve ter acabado' : dias === 0 ? 'deve acabar hoje' : dias === 1 ? 'deve acabar amanhã' : 'deve acabar em ' + dias + ' dias';
     return {txt:'Você compra a cada ~' + media + ' dias · ' + fim, dias:dias, media:media};
   }
+  function itemDe(produto){ var k = norm(produto); return arr(D.lista).filter(function(i){ return norm(i.produto) === k; })[0]; }
   function precosDe(produto){
-    var k = norm(produto), item = arr(D.lista).filter(function(i){ return norm(i.produto) === k; })[0];
-    if (!item) return [];
+    var item = itemDe(produto);
+    if (!item || !item.precos) return [];
     return Object.keys(item.precos).filter(function(id){ return catAtiva(id) && acompanha(id); })
       .map(function(id){
         var v = item.precos[id];
@@ -1092,6 +1176,99 @@ footer{font-size:12.5px;color:var(--muted)}
     }
     return '<div class="i-online">' + chip + '<p>' + esc(linha) + '</p>' + (nota ? '<p class="i-nota">' + esc(nota) + '</p>' : '') + '</div>';
   }
+  // ===== Melhor tamanho: 1 L, 5 L ou 5 × 1 L? =====
+  var ESTOQUE = {pouco:60, normal:180, bastante:365};
+  function fmtQ(q){ return String(Math.round(q * 1000) / 1000).replace('.', ','); }
+  function medidaTxt(q, b){
+    if (b.unidade === 'L' && q < 1) return fmtQ(q * 1000) + ' ml';
+    if (b.unidade === 'kg' && q < 1) return fmtQ(q * 1000) + ' g';
+    if (b.unidade === 'un') return fmtQ(q) + ' ' + (b.rotulo ? b.rotulo + (q > 1 ? 's' : '') : (q > 1 ? 'unidades' : 'unidade'));
+    return fmtQ(q) + ' ' + b.unidade;
+  }
+  function porUn(total, q, b){ return brl.format(total / q) + (b.unidade === 'un' ? ' por ' + (b.rotulo || 'unidade') : '/' + b.unidade); }
+  function tempoTxt(d){ return d < 45 ? d + ' dias' : Math.round(d / 30) + ' meses'; }
+  function igualQ(a, b){ return Math.abs(a - b) <= b * 0.01; }
+  function opcoesTamanho(info, p){
+    var q0 = Number(info.base.quantidade), ops = [];
+    p.forEach(function(y){ ops.push({id:y.id, q:q0, total:y.v, preco:y.online ? y.preco : y.v, frete:y.online ? y.frete : 0, online:!!y.online, prazo:y.prazo, emb:''}); });
+    arr(info.tamanhos).forEach(function(t){
+      var q = Number(t.quantidade), pr = Number(t.preco), fr = Number(t.frete) || 0;
+      if (!(q > 0 && pr > 0) || !G[t.rede] || !catAtiva(t.rede) || !acompanha(t.rede)) return;
+      ops.push({id:t.rede, q:q, total:Math.round((pr + fr) * 100) / 100, preco:pr, frete:fr, online:t.frete != null, prazo:t.prazo_dias == null ? null : Number(t.prazo_dias), emb:t.embalagem || ''});
+    });
+    return ops;
+  }
+  // jeito mais barato de levar a quantidade Q: um pacote de Q ou vários iguais menores, na mesma loja
+  function jeitoPara(Q, ops){
+    var m = null;
+    ops.forEach(function(o){
+      var n = Q / o.q, ni = Math.round(n);
+      if (ni < 1 || ni > 24 || Math.abs(n - ni) > 0.02) return;
+      var total = Math.round((ni * o.preco + o.frete) * 100) / 100;
+      if (!m || total < m.total - 0.004) m = {Q:Q, n:ni, o:o, total:total};
+    });
+    return m;
+  }
+  function comoTxt(j, b){ return j.n === 1 ? (j.o.emb || medidaTxt(j.o.q, b)) : j.n + ' × ' + medidaTxt(j.o.q, b); }
+  function ondeTxt(o){ return G[o.id].nome + (o.online ? (o.frete ? ', com frete' : ', frete grátis') : ''); }
+  function melhorTamanho(it, r, p){
+    var info = itemDe(it.produto);
+    if (!info || !info.base || !arr(info.tamanhos).length) return null;
+    var b = info.base, q0 = Number(b.quantidade), ops = opcoesTamanho(info, p);
+    if (!(q0 > 0) || ops.length < 2) return null;
+    var tams = [];
+    ops.forEach(function(o){ if (o.q >= q0 * 0.99 && !tams.some(function(q){ return igualQ(o.q, q); })) tams.push(o.q); });
+    tams.sort(function(x, y){ return x - y; });
+    var js = tams.map(function(Q){ return jeitoPara(Q, ops); }).filter(Boolean);
+    if (js.length < 2) return null;
+    var ref = js[0], limite = ESTOQUE[estado.cotidiano.estoque] || 180;
+    var dura = function(Q){ return r.media ? Math.round(Q / q0 * r.media) : null; };
+    var pu = function(j){ return j.total / j.Q; };
+    var porPu = function(x, y){ return pu(x) - pu(y); };
+    var best = js.filter(function(j){ var d = dura(j.Q); return j === ref || d == null || d <= limite; }).sort(porPu)[0];
+    var bestAll = js.slice().sort(porPu)[0];
+    // quanto custaria a mesma quantidade comprando no tamanho de sempre
+    var noRef = function(Q){
+      var j = jeitoPara(Q, ops.filter(function(o){ return igualQ(o.q, ref.Q); }));
+      return j ? {n:j.n, total:j.total, o:j.o} : {n:null, total:Math.round(pu(ref) * Q * 100) / 100};
+    };
+    var economia = function(j){ return Math.round((noRef(j.Q).total - j.total) * 100) / 100; };
+    var vale = function(j){ return j !== ref && economia(j) >= Math.max(2, noRef(j.Q).total * 0.05); };
+    var det = ops.slice().sort(function(x, y){ return x.total / x.q - y.total / y.q; }).slice(0, 8).map(function(o, i){
+      return '<li' + (i === 0 ? ' class="top"' : '') + '><b>' + esc(o.emb || medidaTxt(o.q, b)) + '</b><span>' + esc(G[o.id].curto) + '</span><span>' + brl.format(o.total) + (o.online ? (o.frete ? ' com frete' : ' frete grátis') : '') + '</span><span class="pu">' + esc(porUn(o.total, o.q, b)) + '</span></li>';
+    }).join('');
+    var chip, linha, nota = [], eco = 0, dica = null;
+    if (best !== ref && vale(best)){
+      var nr = noRef(best.Q), d = dura(best.Q);
+      eco = economia(best);
+      dica = {id:best.o.id, txt:comoTxt(best, b) + ' por ' + brl.format(best.total)};
+      chip = '<span class="dchip on">Compensa o maior</span>';
+      linha = comoTxt(best, b) + ' por ' + brl.format(best.total) + ' (' + ondeTxt(best.o) + ') · ' + porUn(best.total, best.Q, b);
+      nota.push('Economia de ' + brl.format(eco) + ' em relação a ' + (nr.n ? nr.n + ' de ' + medidaTxt(ref.Q, b) + ' (' + brl.format(nr.total) + ')' : 'comprar o de ' + medidaTxt(ref.Q, b)) + '.');
+      nota.push(d != null ? 'No seu ritmo, dura uns ' + tempoTxt(d) + '.' : 'Rende ' + fmtQ(best.Q / ref.Q) + ' vezes o de ' + medidaTxt(ref.Q, b) + '.');
+      if (best.o.online && best.o.prazo != null && r.dias != null && best.o.prazo > r.dias) nota.push('Chega em ' + best.o.prazo + (best.o.prazo > 1 ? ' dias' : ' dia') + ', depois de acabar: compre o de sempre agora e peça este para a próxima.');
+      if (bestAll !== best && vale(bestAll) && dura(bestAll.Q) != null) nota.push(comoTxt(bestAll, b) + ' sai ainda mais barato, mas duraria uns ' + tempoTxt(dura(bestAll.Q)) + ', mais do que você costuma guardar.');
+    } else if (bestAll !== ref && vale(bestAll)){
+      chip = '<span class="dchip warn">Compensa, mas dura muito</span>';
+      linha = comoTxt(bestAll, b) + ' por ' + brl.format(bestAll.total) + ' (' + ondeTxt(bestAll.o) + ') · ' + porUn(bestAll.total, bestAll.Q, b);
+      nota.push('Economiza ' + brl.format(economia(bestAll)) + ', mas no seu ritmo dura uns ' + tempoTxt(dura(bestAll.Q)) + ', mais do que você costuma guardar. Fique no de ' + medidaTxt(ref.Q, b) + ' ou mude o espaço para estoque em Mais.');
+    } else {
+      chip = '<span class="dchip">Tamanho de sempre</span>';
+      linha = medidaTxt(ref.Q, b) + ' sai ' + porUn(ref.total, ref.Q, b) + ' (' + ondeTxt(ref.o) + ')';
+      var maior = js[js.length - 1];
+      var unico = ops.filter(function(o){ return igualQ(o.q, maior.Q); }).sort(function(x, y){ return x.total - y.total; })[0];
+      if (unico){
+        var nm = noRef(maior.Q), rotulo = unico.emb || medidaTxt(unico.q, b);
+        if (nm.n && nm.total <= unico.total) nota.push(nm.n + ' × ' + medidaTxt(ref.Q, b) + ' sai ' + brl.format(nm.total) + ' (' + ondeTxt(nm.o) + '), menos que ' + rotulo + ' por ' + brl.format(unico.total) + ' (' + ondeTxt(unico) + ').');
+        else if (nm.total > unico.total) nota.push(rotulo + ' economiza só ' + brl.format(nm.total - unico.total) + ': não vale o estoque.');
+        else nota.push(rotulo + ' sai ' + porUn(unico.total, unico.q, b) + ', mais caro que o de ' + medidaTxt(ref.Q, b) + '.');
+      }
+    }
+    return {economia:eco, dica:dica, html:'<div class="i-tam">' + chip + '<p>' + esc(linha) + '</p>' + (nota.length ? '<p class="i-nota">' + esc(nota.join(' ')) + '</p>' : '')
+      + '<details><summary>Comparar tamanhos (' + ops.length + ')</summary><ul class="tam-list num">' + det + '</ul></details></div>'};
+  }
+  function nomeCurto(prod){ var n = String(prod).split(' · ')[0]; return n.length > 24 ? n.slice(0, 23) + '…' : n; }
+
   function plural(n, cat){ var c = D.categorias.filter(function(x){ return x.id === cat; })[0]; return n + ' ' + (n > 1 ? c.nome : c.singular).toLowerCase(); }
   function pintaLista(){
     var itens = estado.lista.map(function(it, i){ var r = ritmo(it.compras); return {it:it, i:i, r:r}; })
@@ -1099,6 +1276,9 @@ footer{font-size:12.5px;color:var(--muted)}
         var x = a.r.dias == null ? 9999 : a.r.dias, y = b.r.dias == null ? 9999 : b.r.dias;
         return x - y || a.i - b.i;
       });
+    $('limpar').hidden = !itens.length;
+    if (!itens.length) $('limparConf').hidden = true;
+    pintaRoteiro();
     if (!itens.length){ pintaHero(); $('wish').innerHTML = '<li class="empty">Sua lista está vazia. Adicione o que você compra sempre.</li>'; return; }
     pintaHero();
     $('wish').innerHTML = itens.map(function(x){
@@ -1118,6 +1298,7 @@ footer{font-size:12.5px;color:var(--muted)}
         + '<div class="i-best"><span class="lbl">Mais barato</span><span class="por num">' + brl.format(best.v) + '</span><span class="i-store">' + esc(G[best.id].nome) + ' <span class="chip">' + esc(G[best.id].singular) + '</span></span></div>'
         + (p.length > 1 ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li>' + esc(G[y.id].curto) + ' <b>' + brl.format(y.v) + '</b></li>'; }).join('') + '</ul>' : '')
         + decisaoOnline(x.r, p)
+        + ((melhorTamanho(x.it, x.r, p) || {}).html || '')
         + acoes + '<span class="i-foot">Em ' + onde + '</span></div></li>';
     }).join('');
   }
@@ -1133,24 +1314,281 @@ footer{font-size:12.5px;color:var(--muted)}
       estado.lista.splice(Number(b.dataset.rm), 1); salvar('"' + nome + '" saiu da lista'); pintaLista(); pintaOfertasTela();
     }
   });
+  var listaApagada = null;
+  $('limpar').addEventListener('click', function(){
+    var n = estado.lista.length; if (!n) return;
+    $('limparTxt').textContent = 'Apagar ' + (n === 1 ? 'o item' : 'os ' + n + ' itens') + ' da lista, junto com o histórico de compras?' + (estado.sync.ativo ? ' A lista do Home Assistant não muda.' : '');
+    $('limparConf').hidden = false; $('limparSim').focus();
+  });
+  $('limparNao').addEventListener('click', function(){ $('limparConf').hidden = true; });
+  $('limparSim').addEventListener('click', function(){
+    listaApagada = estado.lista; estado.lista = [];
+    $('limparConf').hidden = true;
+    $('addMsg').className = 'hint ok';
+    $('addMsg').innerHTML = 'Lista limpa. <button type="button" class="link" id="desfazer">Desfazer</button>';
+    salvar('Lista limpa'); pintaLista(); pintaOfertasTela();
+  });
+  $('addMsg').addEventListener('click', function(e){
+    if (!e.target.closest('#desfazer') || !listaApagada) return;
+    var volta = listaApagada; listaApagada = null;
+    estado.lista = volta.concat(estado.lista.filter(function(i){ return !volta.some(function(x){ return norm(x.produto) === norm(i.produto); }); }));
+    this.className = 'hint ok'; this.textContent = 'Sua lista voltou.';
+    salvar('Lista de volta'); pintaLista(); pintaOfertasTela();
+  });
+  // ===== Ler itens de fotos ou do texto do WhatsApp =====
+  var fotosSel = [], leituraT = null;
+  function abreFoto(abrir){
+    $('fotoBox').hidden = !abrir; $('fotoBtn').setAttribute('aria-expanded', String(abrir));
+    if (abrir) return;
+    clearTimeout(leituraT); fotosSel = [];
+    $('fotoPrev').innerHTML = ''; $('fotoTxt').value = ''; $('fotoItens').innerHTML = ''; $('fotoAddRow').hidden = true; $('fotoMsg').textContent = ''; $('fotoLer').disabled = false;
+  }
+  $('fotoBtn').addEventListener('click', function(){ abreFoto($('fotoBox').hidden); });
+  $('fotoFechar').addEventListener('click', function(){ abreFoto(false); });
+  function reduz(f){
+    return new Promise(function(ok, falha){
+      var url = URL.createObjectURL(f), img = new Image();
+      img.onload = function(){
+        var k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(img.naturalWidth * k)); c.height = Math.max(1, Math.round(img.naturalHeight * k));
+        var g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url); ok(c.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = function(){ URL.revokeObjectURL(url); falha(); };
+      img.src = url;
+    });
+  }
+  $('fotoArq').addEventListener('change', function(){
+    var inp = this, todos = [].slice.call(inp.files || []), arqs = todos.slice(0, 4 - fotosSel.length), msg = $('fotoMsg');
+    if (!arqs.length){ if (todos.length) toast('Até 4 fotos por vez'); inp.value = ''; return; }
+    msg.className = 'hint'; msg.textContent = 'Preparando as fotos…';
+    Promise.all(arqs.map(reduz)).then(function(urls){
+      fotosSel = fotosSel.concat(urls); inp.value = '';
+      $('fotoPrev').innerHTML = fotosSel.map(function(u, i){ return '<img src="' + u + '" alt="Foto ' + (i + 1) + '">'; }).join('');
+      msg.textContent = (fotosSel.length > 1 ? fotosSel.length + ' fotos prontas.' : '1 foto pronta.') + ' Toque em Ler com a IA.';
+    }, function(){ msg.className = 'hint err'; msg.textContent = 'Não consegui abrir essa imagem.'; inp.value = ''; });
+  });
+  // no exemplo não há IA: o texto é separado aqui mesmo e a foto mostra itens de demonstração
+  function exemploLeitura(txt){
+    if (!txt) return [{produto:'Lysoform', quantidade:'1'}, {produto:'Detergente 500 ml', quantidade:'3'}, {produto:'Pão de forma'}, {produto:'Leite UHT integral · 1 L', quantidade:'6'}];
+    var CUMPRIMENTO = /^(amor|vida|oi|ol[aá]|bom dia|boa tarde|boa noite|m[aã]e|pai|querid[ao]|por favor|obrigad[ao])$/i;
+    return txt.split(/\n|,|;|\s+e\s+/i).filter(function(t){ t = t.trim(); return t && !/:$/.test(t) && !CUMPRIMENTO.test(t); }).map(function(t){
+      var m = t.replace(/^[\s\-•*]+/, '').replace(/^e\s+/i, '').match(/^(\d+\s*(?:x|un\.?|unidades?|pacotes?|caixas?)?\s*(?:de\s+)?)?(.*)$/i);
+      var nome = (m[2] || '').replace(/^(compra|comprar|traz|trazer|pega|pegar|precisa de|preciso de)\s+/i, '').trim();
+      return {produto:nome.charAt(0).toUpperCase() + nome.slice(1), quantidade:m[1] ? m[1].replace(/\s*de\s*$/i, '').trim() : ''};
+    }).filter(function(i){ return i.produto.length > 1; }).slice(0, 15);
+  }
+  function mostraLidos(itens){
+    var msg = $('fotoMsg');
+    itens = arr(itens).map(function(i){ var n = String(i.produto || '').trim(); return {produto:n, quantidade:i.quantidade || '', ja:estado.lista.some(function(x){ return norm(x.produto) === norm(n); })}; })
+      .filter(function(i){ return i.produto; });
+    if (!itens.length){ msg.className = 'hint err'; msg.textContent = 'Não achei itens de compra. Tente outra foto ou cole o texto.'; $('fotoItens').innerHTML = ''; $('fotoAddRow').hidden = true; return; }
+    msg.className = 'hint ok'; msg.textContent = (itens.length > 1 ? 'Achei ' + itens.length + ' itens.' : 'Achei 1 item.') + ' Confira, ajuste o nome se precisar e adicione.';
+    $('fotoItens').innerHTML = itens.map(function(i){
+      return '<li><input type="checkbox"' + (i.ja ? ' disabled' : ' checked') + ' aria-label="Adicionar ' + esc(i.produto) + '">'
+        + '<input type="text" class="field" value="' + esc(i.produto) + '"' + (i.ja ? ' disabled' : '') + ' aria-label="Nome do item">'
+        + (i.quantidade ? '<span class="chip">Qtd. ' + esc(i.quantidade) + '</span>' : '') + (i.ja ? '<span class="chip">Já na lista</span>' : '') + '</li>';
+    }).join('');
+    $('fotoAddRow').hidden = !itens.some(function(i){ return !i.ja; });
+  }
+  function esperaLeitura(id, n){
+    leituraT = setTimeout(function(){
+      fetch('api/ler-lista?id=' + encodeURIComponent(id), {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
+        if (j.status === 'lendo' && n < 120) return esperaLeitura(id, n + 1);
+        $('fotoLer').disabled = false;
+        if (j.status === 'pronto') mostraLidos(j.itens);
+        else { $('fotoMsg').className = 'hint err'; $('fotoMsg').textContent = j.erro || 'A leitura demorou demais. Tente de novo.'; }
+      }).catch(function(){ if (n < 120) esperaLeitura(id, n + 1); else $('fotoLer').disabled = false; });
+    }, 1500);
+  }
+  $('fotoLer').addEventListener('click', function(){
+    var txt = $('fotoTxt').value.trim(), msg = $('fotoMsg'), b = this;
+    if (!fotosSel.length && !txt){ msg.className = 'hint err'; msg.textContent = 'Escolha uma foto ou cole o texto da mensagem.'; return; }
+    msg.className = 'hint'; msg.textContent = 'A IA está lendo…'; b.disabled = true;
+    if (MODO !== 'addon'){
+      leituraT = setTimeout(function(){ b.disabled = false; mostraLidos(exemploLeitura(txt)); if ($('fotoItens').children.length) msg.textContent += ' No Home Assistant, a IA do seu HA lê a foto de verdade.'; }, 900);
+      return;
+    }
+    fetch('api/ler-lista', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({imagens:fotosSel, texto:txt})})
+      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if (!r.ok) throw new Error(j.erro || 'Não deu para enviar. As fotos podem estar grandes demais.'); return j; }); })
+      .then(function(j){ esperaLeitura(j.id, 0); })
+      .catch(function(e){ b.disabled = false; msg.className = 'hint err'; msg.textContent = e.message; });
+  });
+  $('fotoAdd').addEventListener('click', function(){
+    var novos = 0;
+    [].forEach.call($('fotoItens').querySelectorAll('li'), function(li){
+      var c = li.querySelector('input[type=checkbox]'), nome = li.querySelector('input[type=text]').value.trim().slice(0, 120);
+      if (!c.checked || c.disabled || nome.length < 2 || estado.lista.some(function(x){ return norm(x.produto) === norm(nome); })) return;
+      estado.lista.push({produto:nome, compras:[]}); novos++;
+    });
+    if (!novos){ $('fotoMsg').className = 'hint err'; $('fotoMsg').textContent = 'Marque pelo menos um item.'; return; }
+    abreFoto(false);
+    $('addMsg').className = 'hint ok'; $('addMsg').textContent = (novos > 1 ? novos + ' itens entraram' : '1 item entrou') + ' na lista. Os preços aparecem depois da próxima busca.';
+    salvar('Adicionado à lista'); pintaLista(); pintaOfertasTela();
+  });
+
   $('addForm').addEventListener('submit', function(e){
     e.preventDefault();
     var nome = $('novoItem').value.trim(), msg = $('addMsg');
     if (nome.length < 3){ msg.className = 'hint err'; msg.textContent = 'Escreva o nome do produto, com tamanho ou dosagem se tiver.'; return; }
     if (estado.lista.some(function(i){ return norm(i.produto) === norm(nome); })){ msg.className = 'hint err'; msg.textContent = 'Esse produto já está na lista.'; return; }
     estado.lista.push({produto:nome, compras:[]}); $('novoItem').value = '';
-    msg.className = 'hint ok'; msg.textContent = '"' + nome + '" entrou na lista. Os preços aparecem depois da próxima busca, em todas as lojas que você acompanha.';
+    msg.className = 'hint ok'; msg.textContent = '"' + nome + '" entrou na lista. Os preços e os tamanhos aparecem depois da próxima busca, em todas as lojas que você acompanha.';
     salvar('Adicionado à lista'); pintaLista(); pintaOfertasTela();
   });
 
+  // ===== Roteiro de compras: em até N lojas, onde comprar cada item =====
+  var rotVer = null;  // plano que a pessoa tocou para ver (null = o recomendado)
+  function distLoja(id){ var l = LOJA[id]; return l && l.distancia_km != null ? l.distancia_km : 5; }
+  function itensDoRoteiro(){
+    return estado.lista.map(function(it){ return {it:it, r:ritmo(it.compras), p:precosDe(it.produto)}; })
+      .filter(function(x){ return estado.roteiro.escopo !== 'acabando' || (x.r.dias != null && x.r.dias <= 7); });
+  }
+  function avaliaPlano(itens, combo, online){
+    var pl = {lojas:{}, online:[], fora:[], total:0, cobre:0};
+    itens.forEach(function(x){
+      var loja = x.p.filter(function(y){ return !y.online && combo.indexOf(y.id) >= 0; })[0];
+      var net = online ? x.p.filter(function(y){ return y.online; })[0] : null;
+      if (net && (!loja || net.v < loja.v)){ pl.online.push({x:x, y:net}); pl.total += net.v; pl.cobre++; return; }
+      if (!loja){ pl.fora.push(x); return; }
+      (pl.lojas[loja.id] = pl.lojas[loja.id] || []).push({x:x, y:loja}); pl.total += loja.v; pl.cobre++;
+    });
+    pl.total = Math.round(pl.total * 100) / 100;
+    pl.ids = Object.keys(pl.lojas).sort(function(a, b){ return distLoja(a) - distLoja(b); });
+    pl.dist = pl.ids.reduce(function(s, id){ return s + distLoja(id); }, 0);
+    return pl;
+  }
+  function melhorPlano(a, b){
+    if (!b) return true;
+    if (a.cobre !== b.cobre) return a.cobre > b.cobre;
+    if (Math.abs(a.total - b.total) > 0.004) return a.total < b.total;
+    if (a.ids.length !== b.ids.length) return a.ids.length < b.ids.length;
+    return a.dist < b.dist;
+  }
+  function planos(itens, K, online){
+    var nota = {};
+    itens.forEach(function(x){
+      var min = (x.p.filter(function(y){ return !y.online; })[0] || {}).v;
+      x.p.forEach(function(y){ if (!y.online) nota[y.id] = (nota[y.id] || 0) + min / y.v; });
+    });
+    // no máximo 16 lojas candidatas, as que mais aparecem com bom preço
+    var ids = Object.keys(nota).sort(function(a, b){ return nota[b] - nota[a]; }).slice(0, 16);
+    var porK = [], melhor = null;
+    for (var k = 1; k <= Math.min(K, ids.length); k++){
+      var c = [];
+      (function vai(ini){
+        if (c.length === k){ var pl = avaliaPlano(itens, c, online); if (melhorPlano(pl, melhor)) melhor = pl; return; }
+        for (var i = ini; i < ids.length; i++){ c.push(ids[i]); vai(i + 1); c.pop(); }
+      })(0);
+      porK.push({k:k, pl:melhor});
+    }
+    if (!porK.length) porK.push({k:0, pl:avaliaPlano(itens, [], online)});
+    return porK;
+  }
+  function economiaPlano(pl){
+    var e = 0;
+    pl.online.concat.apply(pl.online, pl.ids.map(function(id){ return pl.lojas[id]; })).forEach(function(z){
+      var p = z.x.p; e += p.reduce(function(s, y){ return s + y.v; }, 0) / p.length - z.y.v;
+    });
+    return Math.max(0, Math.round(e * 100) / 100);
+  }
+  function calculaRoteiro(){
+    var ro = estado.roteiro, itens = itensDoRoteiro(), comPreco = itens.filter(function(x){ return x.p.length; });
+    var out = {itens:itens, comPreco:comPreco, semPreco:itens.filter(function(x){ return !x.p.length; })};
+    if (!comPreco.length) return out;
+    var online = ro.online && estado.categorias.indexOf('online') >= 0;
+    out.porK = planos(comPreco, ro.paradas, online);
+    var max = out.porK[out.porK.length - 1].pl;
+    // menos paradas quando a parada a mais economiza pouco
+    out.rec = out.porK.filter(function(r){ return r.pl.cobre === max.cobre && r.pl.total - max.total < Math.max(5, Math.min(15, max.total * 0.03)); })[0] || out.porK[out.porK.length - 1];
+    out.max = max;
+    var ideal = 0, lojasIdeal = {};
+    comPreco.forEach(function(x){
+      var y = x.p.filter(function(z){ return online || !z.online; })[0];
+      if (!y) return;
+      ideal += y.v; if (!y.online) lojasIdeal[y.id] = 1;
+    });
+    out.ideal = {total:Math.round(ideal * 100) / 100, n:Object.keys(lojasIdeal).length};
+    return out;
+  }
+  function linkRota(ids){
+    var casa = estado.cep ? estado.cep + ', Brasil' : '';
+    var pts = ids.map(function(id){ var l = LOJA[id] || {}; return G[id].nome + (l.endereco ? ', ' + l.endereco : '') + (estado.cep ? ', ' + estado.cep : ''); });
+    var u = 'https://www.google.com/maps/dir/?api=1&travelmode=driving';
+    if (casa){ u += '&origin=' + encodeURIComponent(casa) + '&destination=' + encodeURIComponent(casa) + '&waypoints=' + pts.map(encodeURIComponent).join('%7C'); }
+    else { u += '&destination=' + encodeURIComponent(pts[pts.length - 1]) + (pts.length > 1 ? '&waypoints=' + pts.slice(0, -1).map(encodeURIComponent).join('%7C') : ''); }
+    return u;
+  }
+  function paradasTxt(n){ return n + (n > 1 ? ' paradas' : ' parada'); }
+  function pintaRotCtrl(){
+    var ro = estado.roteiro;
+    $('rotParadas').innerHTML = [1, 2, 3, 4].map(function(n){ return '<button type="button" data-v="' + n + '" aria-pressed="' + (ro.paradas === n) + '">' + n + '</button>'; }).join('');
+    $('rotEscopo').innerHTML = [['tudo', 'Lista toda'], ['acabando', 'Acabando']].map(function(t){ return '<button type="button" data-v="' + t[0] + '" aria-pressed="' + (ro.escopo === t[0]) + '">' + t[1] + '</button>'; }).join('');
+    $('rotOnline').checked = ro.online;
+    $('rotOnlineRow').hidden = estado.categorias.indexOf('online') < 0;
+  }
+  function pintaRoteiro(){
+    pintaRotCtrl();
+    var el = $('rotRes');
+    if (!estado.lista.length){ el.innerHTML = '<p class="empty">Adicione itens à lista para montar o roteiro.</p>'; return; }
+    var c = calculaRoteiro();
+    if (!c.itens.length){ el.innerHTML = '<p class="empty">Nada acaba nos próximos 7 dias. Escolha "Lista toda" para montar o roteiro com tudo.</p>'; return; }
+    if (!c.porK){ el.innerHTML = '<p class="empty">Os preços aparecem depois da próxima busca. Aí o roteiro fica pronto.</p>'; return; }
+    var ver = c.rec;
+    if (rotVer != null) c.porK.forEach(function(r){ if (r.k === rotVer) ver = r; });
+    var pl = ver.pl, n = pl.ids.length, eco = economiaPlano(pl);
+    var h = '<div class="rot-total"><span class="lbl">Total</span><span class="por num">' + brl.format(pl.total) + '</span><span class="rot-sub">'
+      + (n ? 'em ' + paradasTxt(n) : 'sem sair de casa') + (pl.online.length && n ? ' + pedido online' : '') + (eco > 0 ? ' · economia de ' + brl.format(eco) + ' sobre o preço médio' : '') + '</span></div>';
+    if (ver === c.rec && c.max.ids.length > n && c.max.cobre === pl.cobre){
+      var dif = pl.total - c.max.total;
+      h += '<p class="i-nota">' + esc(dif > 0.004 ? 'Com ' + paradasTxt(c.max.ids.length) + ' a economia sobe só ' + brl.format(dif) + ', por isso recomendo ' + paradasTxt(n) + '. Compare as opções abaixo.' : 'Mais paradas não baixariam o total.') + '</p>';
+    }
+    var lis = pl.ids.map(function(id, i){
+      var its = pl.lojas[id], sub = its.reduce(function(s, z){ return s + z.y.v; }, 0), l = LOJA[id];
+      return '<li class="parada"><div class="parada-h"><span class="parada-n">' + (i + 1) + '</span><b>' + esc(G[id].nome) + '</b><span class="chip">' + esc(G[id].singular) + '</span><span class="sub num">' + (l && l.distancia_km != null ? km(l.distancia_km) + ' · ' : '') + brl.format(sub) + '</span></div>'
+        + '<ul>' + its.map(function(z){
+          var mt = melhorTamanho(z.x.it, z.x.r, z.x.p), dica = mt && mt.dica && mt.dica.id === id ? '<small class="r-dica">Compensa levar ' + esc(mt.dica.txt) + '</small>' : '';
+          return '<li><span>' + esc(z.x.it.produto) + dica + '</span><span class="num">' + brl.format(z.y.v) + '</span></li>';
+        }).join('') + '</ul></li>';
+    });
+    var porNet = {};
+    pl.online.forEach(function(z){ (porNet[z.y.id] = porNet[z.y.id] || []).push(z); });
+    Object.keys(porNet).forEach(function(id){
+      var its = porNet[id], sub = its.reduce(function(s, z){ return s + z.y.v; }, 0), prazo = Math.max.apply(null, its.map(function(z){ return z.y.prazo || 0; }));
+      lis.push('<li class="parada"><div class="parada-h"><span class="chip">Online</span><b>' + esc(G[id].nome) + '</b><span class="sub num">' + (prazo ? 'chega em ' + prazo + (prazo > 1 ? ' dias' : ' dia') + ' · ' : '') + brl.format(sub) + '</span></div>'
+        + '<ul>' + its.map(function(z){ return '<li><span>' + esc(z.x.it.produto) + '</span><span class="num">' + brl.format(z.y.v) + (z.y.frete ? ' c/ frete' : '') + '</span></li>'; }).join('') + '</ul></li>');
+    });
+    h += '<ol class="paradas">' + lis.join('') + '</ol>';
+    if (n) h += '<p class="hint">Ordem sugerida: da loja mais perto para a mais longe.</p><div class="row-form"><a class="ghost big" href="' + esc(linkRota(pl.ids)) + '" target="_blank" rel="noopener">Abrir rota no Maps</a></div>';
+    if (pl.fora.length) h += '<p class="hint">Sem preço nas lojas deste roteiro: ' + esc(pl.fora.map(function(x){ return nomeCurto(x.it.produto); }).join(', ')) + '.</p>';
+    if (c.semPreco.length) h += '<p class="hint">Ainda sem preço: ' + esc(c.semPreco.map(function(x){ return nomeCurto(x.it.produto); }).join(', ')) + '.</p>';
+    var vistos = {}, ops = [];
+    c.porK.forEach(function(r){
+      var chaveP = r.pl.ids.slice().sort().join('|') + '#' + r.pl.online.length;
+      if (vistos[chaveP]) return; vistos[chaveP] = 1;
+      var m = r.pl.ids.length, falta = c.comPreco.length - r.pl.cobre;
+      ops.push('<li><button type="button" class="rot-op" data-rotk="' + r.k + '" aria-pressed="' + (r === ver) + '"><span>' + (m ? paradasTxt(m) : 'Só online') + (r === c.rec ? ' · recomendado' : '') + '</span><span class="num">' + brl.format(r.pl.total) + (falta ? ' · sem ' + falta + (falta > 1 ? ' itens' : ' item') : economiaPlano(r.pl) > 0 ? ' · economia de ' + brl.format(economiaPlano(r.pl)) : '') + '</span></button></li>');
+    });
+    if (ops.length > 1) h += '<div class="group"><h3>Compare</h3><ul class="rot-ops">' + ops.join('') + '</ul></div>';
+    if (c.ideal.n > n && c.ideal.total < pl.total - 0.004) h += '<p class="hint">Sem limite de paradas: ' + c.ideal.n + ' lojas, ' + brl.format(c.ideal.total) + '.</p>';
+    el.innerHTML = h;
+  }
+  $('rotParadas').addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; estado.roteiro.paradas = Number(b.dataset.v); rotVer = null; salvar(); pintaRoteiro(); pintaHero(); });
+  $('rotEscopo').addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; estado.roteiro.escopo = b.dataset.v; rotVer = null; salvar(); pintaRoteiro(); pintaHero(); });
+  $('rotOnline').addEventListener('change', function(){ estado.roteiro.online = this.checked; rotVer = null; salvar(); pintaRoteiro(); pintaHero(); });
+  $('rotRes').addEventListener('click', function(e){ var b = e.target.closest('[data-rotk]'); if (!b) return; rotVer = Number(b.dataset.rotk); pintaRoteiro(); });
+
   // ===== Abertura: oportunidades de economia =====
   function oportunidades(){
-    var o = {total:0, acabando:0, paraVoce:0, cupom:null};
+    var o = {total:0, acabando:0, paraVoce:0, cupom:null, tam:[], rot:null};
     estado.lista.forEach(function(it){
-      var p = precosDe(it.produto);
+      var p = precosDe(it.produto), r = ritmo(it.compras), mt = p.length ? melhorTamanho(it, r, p) : null;
       if (p.length > 1) o.total += p[p.length - 1].v - p[0].v;
-      var r = ritmo(it.compras); if (r.dias != null && r.dias <= 3) o.acabando++;
+      if (r.dias != null && r.dias <= 3) o.acabando++;
+      if (mt && mt.economia > 0) o.tam.push({nome:nomeCurto(it.produto), e:mt.economia});
     });
+    var c = estado.lista.length ? calculaRoteiro() : {};
+    if (c.rec && c.rec.pl.ids.length) o.rot = {n:c.rec.pl.ids.length, eco:economiaPlano(c.rec.pl), total:c.rec.pl.total};
     D.categorias.forEach(function(c){
       if (estado.categorias.indexOf(c.id) < 0) return;
       arr(c.ofertas).forEach(function(of){ if (acompanha(of.rede) && !escondida(of) && porQue(of)) o.paraVoce++; });
@@ -1174,6 +1612,8 @@ footer{font-size:12.5px;color:var(--muted)}
       $('heroSub').textContent = vazio ? 'Farmácias, mercados e pet shops perto de casa' : 'Toque em Buscar para descobrir quanto dá para economizar na sua lista';
     }
     var chips = [];
+    if (o.rot) chips.push('<button type="button" class="hchip" data-ir="roteiro">Roteiro em ' + paradasTxt(o.rot.n) + (o.rot.eco > 0 ? ' economiza ' + brl.format(o.rot.eco) : ': ' + brl.format(o.rot.total)) + '</button>');
+    if (o.tam.length) chips.push('<button type="button" class="hchip" data-ir="itens">' + (o.tam.length === 1 ? esc(o.tam[0].nome) + ': o tamanho maior economiza ' + brl.format(o.tam[0].e) : o.tam.length + ' itens compensam no tamanho maior') + '</button>');
     if (o.acabando) chips.push('<button type="button" class="hchip" data-ir="itens">' + o.acabando + (o.acabando > 1 ? ' itens acabando' : ' item acabando') + '</button>');
     if (o.paraVoce) chips.push('<button type="button" class="hchip" data-ir="ofertas">' + o.paraVoce + (o.paraVoce > 1 ? ' ofertas combinam com você' : ' oferta combina com você') + '</button>');
     if (o.cupom) chips.push('<button type="button" class="hchip" data-ir="ofertas" data-cat="' + o.cupom.cat + '">Cupom ' + esc(o.cupom.c.codigo) + ' ' + (o.cupom.n === 0 ? 'vence hoje' : 'vence em ' + o.cupom.n + (o.cupom.n > 1 ? ' dias' : ' dia')) + '</button>');
@@ -1184,6 +1624,7 @@ footer{font-size:12.5px;color:var(--muted)}
     var b = e.target.closest('[data-ir]'); if (!b) return;
     var ir = b.dataset.ir;
     if (ir === 'itens'){ $('wish').scrollIntoView({behavior:'smooth', block:'start'}); return; }
+    if (ir === 'roteiro'){ $('roteiro').scrollIntoView({behavior:'smooth', block:'start'}); return; }
     if (ir === 'importar'){ irPara('mais'); $('h-imp').scrollIntoView({block:'start'}); return; }
     if (b.dataset.cat){ ui.aba = b.dataset.cat; salvarUI(); filtro = 'todas'; pintaOfertasTela(); }
     irPara(ir); window.scrollTo(0, 0);
@@ -1281,7 +1722,7 @@ footer{font-size:12.5px;color:var(--muted)}
     picks('pAss', ASS, estado.online.assinaturas);
     picks('dMercado', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.mercado);
     picks('dFarmacia', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.farmacia);
-    $('avisar').value = r.avisar;
+    $('avisar').value = r.avisar; $('estoque').value = r.estoque;
     pintaAviso(); pintaTema(); pintaSyncUI();
   }
   function pintaTema(){
@@ -1399,6 +1840,7 @@ footer{font-size:12.5px;color:var(--muted)}
     });
   });
   $('avisar').addEventListener('change', function(){ estado.cotidiano.avisar = this.value; salvar(); pintaAviso(); });
+  $('estoque').addEventListener('change', function(){ estado.cotidiano.estoque = this.value; salvar(); pintaLista(); });
 
   function mascara(v){ var d = v.replace(/\D/g, '').slice(0, 8); return d.length > 5 ? d.slice(0, 5) + '-' + d.slice(5) : d; }
   $('cep').addEventListener('input', function(){ this.value = mascara(this.value); });

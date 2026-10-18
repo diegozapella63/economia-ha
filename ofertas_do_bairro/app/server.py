@@ -18,9 +18,12 @@ Rotas:
 - GET  /api/exportar/lista.xlsx | lista.json   exporta a lista
 - GET  /api/todos    listas de tarefas do Home Assistant
 - POST /api/sincronizar-lista   sincroniza agora com a lista do Home Assistant
+- POST /api/ler-lista   lê fotos ou texto (do WhatsApp, por exemplo) e sugere itens
+- GET  /api/ler-lista?id=...   resultado da leitura
 
 Só usa a biblioteca padrão do Python.
 """
+import base64
 import io
 import json
 import os
@@ -49,6 +52,11 @@ HA_API = os.environ.get("OFERTAS_HA_API", "http://supervisor/core/api")
 INGRESS_IPS = {"172.30.32.2", "127.0.0.1", "::1"}
 ALLOW_ALL = os.environ.get("OFERTAS_ALLOW_ALL") == "1"  # só para testes fora do HA
 MAX_BODY = 2 * 1024 * 1024
+MAX_FOTOS_BODY = 16 * 1024 * 1024
+# fotos ficam um instante na pasta de mídia do HA, para a IA ler, e são apagadas em seguida
+MEDIA = os.environ.get("OFERTAS_MEDIA", "/media")
+MEDIA_URI = os.environ.get("OFERTAS_MEDIA_URI", "media-source://media_source/local")
+LEITURAS = {}
 
 CATEGORIAS = {
     "farmacias": {"nome": "Farmácias", "singular": "Farmácia", "o_que": "farmácias e drogarias, de rede ou independentes"},
@@ -138,6 +146,28 @@ def valor_total(v):
         preco = numero(v.get("preco"))
         return round(preco + (frete_ok(v.get("frete")) or 0), 2) if preco else None
     return numero(v)
+
+
+UNIDADES = {"l": ("L", 1), "lt": ("L", 1), "litro": ("L", 1), "litros": ("L", 1), "ml": ("L", 0.001),
+            "kg": ("kg", 1), "g": ("kg", 0.001), "gr": ("kg", 0.001),
+            "un": ("un", 1), "und": ("un", 1), "unid": ("un", 1), "unidade": ("un", 1), "unidades": ("un", 1),
+            "m": ("m", 1), "metro": ("m", 1), "metros": ("m", 1)}
+
+
+def medida(q, u):
+    """Quantidade numa unidade comum: litro, quilo, unidade ou metro."""
+    try:
+        q = float(q)
+    except (TypeError, ValueError):
+        return None
+    f = UNIDADES.get(str(u or "").strip().lower().rstrip("."))
+    if not f or not (0 < q < 100000):
+        return None
+    return round(q * f[1], 4), f[0]
+
+
+def mesmo_tamanho(qa, qb):
+    return abs(qa - qb) <= qb * 0.01
 
 
 def url_ok(u):
@@ -290,7 +320,8 @@ def sincronizar_lista():
                 pendentes.add(k)
                 mandou += 1
         enviados.add(k)
-    estado["enviados"] = sorted(enviados)
+    atuais = {norm(nome_item(i)) for i in cfg.get("lista") or [] if isinstance(i, dict)}
+    estado["enviados"] = sorted(k for k in enviados if k in atuais)
     gravar_json(SYNC_FILE, estado)
     SYNC.update({"ultima": agora(), "erro": None, "chegaram": SYNC["chegaram"] + len(mudancas), "enviados": SYNC["enviados"] + mandou})
 
@@ -312,11 +343,13 @@ def opcoes():
     return ler_json(OPTIONS, {}) or {}
 
 
-def chamar_ai_task(nome, instrucoes):
+def chamar_ai_task(nome, instrucoes, anexos=None):
     token = os.environ.get("SUPERVISOR_TOKEN")
     if not token:
         raise ErroBusca("O add-on não tem acesso ao Home Assistant. Reinstale a versão mais nova do add-on.")
     corpo = {"task_name": nome, "instructions": instrucoes}
+    if anexos:
+        corpo["attachments"] = anexos
     entidade = str(opcoes().get("ai_task_entity") or "").strip()
     if entidade:
         corpo["entity_id"] = entidade
@@ -336,6 +369,9 @@ def chamar_ai_task(nome, instrucoes):
                             "(ou outra com AI Task) em Configurações → Dispositivos e serviços.") from e
         if e.code == 401:
             raise ErroBusca("O add-on não tem permissão para usar o Home Assistant. Reinstale a versão mais nova.") from e
+        if anexos and "attachment" in corpo_erro.lower():
+            raise ErroBusca("A IA escolhida no Home Assistant não lê imagens. Use uma que leia, como a Anthropic, "
+                            "ou cole o texto da mensagem.") from e
         raise ErroBusca(f"A IA do Home Assistant recusou o pedido ({e.code}): {corpo_erro}") from e
     except urllib.error.URLError as e:
         raise ErroBusca("Não consegui falar com o Home Assistant. Tente de novo em instantes.") from e
@@ -373,12 +409,43 @@ def descreve_casa(cfg):
     return "; ".join(partes), excluir, restr, p.get("interesses") or []
 
 
+TAMANHOS_TXT = ("Para cada item da lista: \"base\" é o tamanho do item (se a lista indicar \"base\", use essa; se o item não diz "
+                "o tamanho, use o mais vendido, por exemplo 1 L) e \"precos\" traz só embalagens desse tamanho. Em \"tamanhos\", traga as outras embalagens "
+                "do mesmo produto que achar (maiores, menores, kits, fardos e leve X pague Y), cada uma com a quantidade total "
+                "e o preço total do pacote, sem dividir. Unidades: L, ml, kg, g, un ou m; com \"un\", diga em \"rotulo\" o que "
+                "é contado, no singular (rolo, cápsula, fralda). Em \"ofertas\", informe \"tamanho\" quando souber.")
+
+
+def fmt_base(b):
+    q, u = float(b.get("quantidade") or 0), b.get("unidade")
+    if u == "L" and q < 1:
+        return f"{q * 1000:g} ml"
+    if u == "kg" and q < 1:
+        return f"{q * 1000:g} g"
+    if u == "un":
+        return f"{q:g} {b.get('rotulo') or 'un'}"
+    return f"{q:g} {u}"
+
+
+def itens_prompt(cfg):
+    of = ler_json(OFERTAS, {}) or {}
+    bases = {norm(i.get("produto") or ""): i["base"] for i in of.get("lista") or []
+             if isinstance(i, dict) and isinstance(i.get("base"), dict) and i["base"].get("quantidade")}
+    out = []
+    for i in cfg.get("lista") or []:
+        n = nome_item(i)
+        if n:
+            b = bases.get(norm(n))
+            out.append(f"{n} (base: {fmt_base(b)})" if b else n)
+    return out
+
+
 def instrucoes_online(cfg):
     casa, excluir, restr, interesses = descreve_casa(cfg)
     on = cfg.get("online") or {}
     mkts = [MARKETPLACES.get(m, m) for m in (on.get("marketplaces") or ["mercadolivre", "amazon"])]
     assin = [ASSINATURAS.get(a, a) for a in (on.get("assinaturas") or [])]
-    lista = [nome_item(i) for i in (cfg.get("lista") or []) if nome_item(i)]
+    lista = itens_prompt(cfg)
     return f"""Encontre preços válidos hoje ({hoje_br()}) em {', '.join(mkts)} para entrega no CEP {cfg.get('cep')}, no Brasil.
 
 Use a busca na web agora. Use só o que encontrar nas páginas: não invente produtos, preços, fretes nem prazos. Se não conseguir usar a busca na web, responda apenas {{"erro": "sem_busca"}}.
@@ -387,15 +454,16 @@ Assinaturas do morador: {', '.join(assin) or 'nenhuma'}. Quando a assinatura der
 Casa: {casa}.
 Não traga: {', '.join(excluir) or 'nada a excluir'}.
 Restrições: {', '.join(restr) or 'nenhuma'}. Interesses, que devem vir primeiro: {', '.join(interesses) or 'nenhum'}.
-Lista de compras: {'; '.join(lista) or 'vazia'}. Para cada item, informe o preço equivalente à quantidade do item; se só houver kit maior, divida e explique em "obs".
+Lista de compras: {'; '.join(lista) or 'vazia'}.
+{TAMANHOS_TXT} Em "tamanhos", informe também o frete e o prazo de cada opção.
 
 Regras: só lojas oficiais ou vendedores bem avaliados. Marque "importado": true quando o envio for internacional. Não inclua remédios que exigem receita. Informe frete e prazo de entrega para este CEP. Em kits, informe "unidades". Até 15 ofertas, priorizando os itens da lista e os interesses.
 
 Responda somente com um objeto JSON, sem texto antes ou depois, neste formato:
 {{
   "cupons": [{{"rede": "Mercado Livre", "codigo": "CODIGO", "valor": 20, "beneficio": "R$ 20 de desconto", "condicao": "Acima de R$ 200", "valido_ate": "AAAA-MM-DD ou null", "oficial": true, "fonte": "URL"}}],
-  "ofertas": [{{"rede": "Amazon", "produto": "Nome · tamanho", "preco_normal": 10.0, "preco_oferta": 8.0, "frete": 0, "prazo_dias": 2, "vendedor": "nome do vendedor", "oficial": true, "importado": false, "unidades": 1, "tipo": "promo", "tags": ["alimentos"], "fonte": "URL"}}],
-  "lista": [{{"produto": "texto exato do item da lista", "precos": [{{"rede": "Amazon", "preco": 9.9, "frete": 0, "prazo_dias": 2, "obs": "kit com 6, valor por unidade", "fonte": "URL"}}]}}]
+  "ofertas": [{{"rede": "Amazon", "produto": "Nome · tamanho", "preco_normal": 10.0, "preco_oferta": 8.0, "frete": 0, "prazo_dias": 2, "vendedor": "nome do vendedor", "oficial": true, "importado": false, "unidades": 1, "tamanho": {{"quantidade": 1, "unidade": "L"}}, "tipo": "promo", "tags": ["alimentos"], "fonte": "URL"}}],
+  "lista": [{{"produto": "texto exato do item da lista", "base": {{"quantidade": 1, "unidade": "L", "rotulo": null}}, "precos": [{{"rede": "Amazon", "preco": 9.9, "frete": 0, "prazo_dias": 2, "fonte": "URL"}}], "tamanhos": [{{"rede": "Mercado Livre", "embalagem": "Kit 6 × 1 L", "quantidade": 6, "unidade": "L", "preco": 49.9, "frete": 0, "prazo_dias": 3, "fonte": "URL"}}]}}]
 }}
 
 Etiquetas permitidas em "tags": {', '.join(sorted(TAGS))}."""
@@ -407,7 +475,7 @@ def instrucoes_para(cat_id, cfg):
     cat = CATEGORIAS[cat_id]
     casa, excluir, restr, interesses = descreve_casa(cfg)
     lojas = cfg.get("lojas") or {}
-    lista = [i.get("produto") if isinstance(i, dict) else str(i) for i in (cfg.get("lista") or [])]
+    lista = itens_prompt(cfg)
     adicionadas = [a.get("nome") for a in (lojas.get("adicionar") or []) if isinstance(a, dict) and a.get("categoria") == cat_id]
     extra = ""
     if cat_id == "farmacias":
@@ -422,14 +490,15 @@ Casa: {casa}.
 Não traga: {', '.join(excluir) or 'nada a excluir'}.
 Restrições: {', '.join(restr) or 'nenhuma'}. Interesses, que devem vir primeiro: {', '.join(interesses) or 'nenhum'}.
 Lista de compras (procure o preço atual de cada item nestas lojas): {'; '.join(lista) or 'vazia'}.
+{TAMANHOS_TXT}
 Lojas para ignorar: {', '.join(lojas.get('ignorar') or []) or 'nenhuma'}. Lojas para incluir mesmo mais longe: {', '.join(lojas.get('manter') or []) or 'nenhuma'}. Lojas indicadas pelo morador: {', '.join(adicionadas) or 'nenhuma'}.
 
 Responda somente com um objeto JSON, sem texto antes ou depois, neste formato:
 {{
   "lojas": [{{"rede": "nome da rede ou da loja", "endereco": "rua e número", "distancia_km": 1.2, "horario": "Aberta até 22h", "fontes": ["Site", "App", "Encarte", "Clube", "Instagram", "WhatsApp", "Tiendeo"]}}],
   "cupons": [{{"rede": "...", "codigo": "CODIGO", "valor": 20, "beneficio": "R$ 20 de desconto", "condicao": "Pedidos acima de R$ 200", "valido_ate": "AAAA-MM-DD ou null", "oficial": true, "fonte": "URL"}}],
-  "ofertas": [{{"rede": "...", "produto": "Nome · tamanho", "preco_normal": 10.0, "preco_oferta": 8.0, "tipo": "promo", "unidade": null, "condicao": null, "tags": ["alimentos"], "fonte": "URL"}}],
-  "lista": [{{"produto": "texto exato do item da lista", "precos": [{{"rede": "...", "preco": 9.9, "fonte": "URL"}}]}}]
+  "ofertas": [{{"rede": "...", "produto": "Nome · tamanho", "preco_normal": 10.0, "preco_oferta": 8.0, "tipo": "promo", "unidade": null, "tamanho": {{"quantidade": 500, "unidade": "g"}}, "condicao": null, "tags": ["alimentos"], "fonte": "URL"}}],
+  "lista": [{{"produto": "texto exato do item da lista", "base": {{"quantidade": 1, "unidade": "L", "rotulo": null}}, "precos": [{{"rede": "...", "preco": 9.9, "fonte": "URL"}}], "tamanhos": [{{"rede": "...", "embalagem": "Galão 5 L", "quantidade": 5, "unidade": "L", "preco": 39.9, "fonte": "URL"}}]}}]
 }}
 
 Regras: até 15 ofertas, priorizando os interesses e os maiores descontos. "tipo" é "promo", "clube" (preço para membros) ou "atacado" (preço por quantidade). "oficial" é true só se o cupom estiver no site ou app da própria loja. Etiquetas permitidas em "tags": {', '.join(sorted(TAGS))}.{extra}"""
@@ -499,6 +568,10 @@ def normalizar(cat_id, bruto, cfg):
                 item[campo] = texto(o.get(campo), lim)
         if o.get("receita") in ("tarja", "mip"):
             item["receita"] = o["receita"]
+        tam = o.get("tamanho") if isinstance(o.get("tamanho"), dict) else {}
+        m = medida(tam.get("quantidade"), tam.get("unidade"))
+        if m and not item.get("unidade"):
+            item["tamanho"] = {"quantidade": m[0], "unidade": m[1]}
         if cat_id == "online":
             frete = frete_ok(o.get("frete"))
             if frete is None or item.get("receita") == "tarja":
@@ -518,31 +591,72 @@ def normalizar(cat_id, bruto, cfg):
 
     nomes_lista = {norm(i.get("produto") if isinstance(i, dict) else i): (i.get("produto") if isinstance(i, dict) else i)
                    for i in (cfg.get("lista") or [])}
+    def valor_lista(p):
+        """(rede, valor) de um preço da lista; online precisa de frete."""
+        if not isinstance(p, dict) or not url_ok(p.get("fonte")):
+            return None, None
+        rid, preco = rede_id(p.get("rede")), numero(p.get("preco"))
+        if not (rid and preco):
+            return None, None
+        if cat_id != "online":
+            return rid, preco
+        frete = frete_ok(p.get("frete"))
+        if frete is None:
+            return None, None
+        valor = {"preco": preco, "frete": frete}
+        if inteiro(p.get("prazo_dias")) is not None:
+            valor["prazo_dias"] = inteiro(p.get("prazo_dias"))
+        if texto(p.get("obs"), 60):
+            valor["obs"] = texto(p.get("obs"), 60)
+        return rid, valor
+
     lista = {}
     for it in bruto.get("lista") or []:
         if not isinstance(it, dict):
             continue
-        original = nomes_lista.get(norm(it.get("produto") or ""))
+        original = nomes_lista.get(norm(re.sub(r"\s*\(base:[^)]*\)\s*$", "", str(it.get("produto") or ""))))
         if not original:
             continue
+        ent = lista.setdefault(original, {"precos": {}, "base": None, "tamanhos": []})
         for p in it.get("precos") or []:
-            if not isinstance(p, dict) or not url_ok(p.get("fonte")):
+            rid, valor = valor_lista(p)
+            if rid:
+                ent["precos"][rid] = valor
+        b = it.get("base") if isinstance(it.get("base"), dict) else {}
+        base = medida(b.get("quantidade"), b.get("unidade"))
+        if not base:
+            continue
+        if not ent["base"]:
+            ent["base"] = {"quantidade": base[0], "unidade": base[1]}
+            if base[1] == "un" and texto(b.get("rotulo"), 14):
+                ent["base"]["rotulo"] = texto(b.get("rotulo"), 14).lower()
+        bq, bu = ent["base"]["quantidade"], ent["base"]["unidade"]
+        vistos = {(t["rede"], t["quantidade"]) for t in ent["tamanhos"]}
+        for t in it.get("tamanhos") or []:
+            if not isinstance(t, dict):
                 continue
-            rid, preco = rede_id(p.get("rede")), numero(p.get("preco"))
-            if not (rid and preco):
+            m = medida(t.get("quantidade"), t.get("unidade") or bu)
+            if not m or m[1] != bu:
                 continue
-            if cat_id == "online":
-                frete = frete_ok(p.get("frete"))
-                if frete is None:
-                    continue
-                valor = {"preco": preco, "frete": frete}
-                if inteiro(p.get("prazo_dias")) is not None:
-                    valor["prazo_dias"] = inteiro(p.get("prazo_dias"))
-                if texto(p.get("obs"), 60):
-                    valor["obs"] = texto(p.get("obs"), 60)
-                lista.setdefault(original, {})[rid] = valor
+            rid, valor = valor_lista(t)
+            if not rid:
+                continue
+            if mesmo_tamanho(m[0], bq):  # é o tamanho da base: vale como preço da loja
+                ent["precos"].setdefault(rid, valor)
+                continue
+            if (rid, m[0]) in vistos:
+                continue
+            vistos.add((rid, m[0]))
+            tam = {"rede": rid, "quantidade": m[0]}
+            if texto(t.get("embalagem"), 40):
+                tam["embalagem"] = texto(t.get("embalagem"), 40)
+            if isinstance(valor, dict):
+                tam.update({k: valor[k] for k in ("preco", "frete", "prazo_dias") if k in valor})
             else:
-                lista.setdefault(original, {})[rid] = preco
+                tam["preco"] = valor
+            tam["fonte"] = t["fonte"]
+            ent["tamanhos"].append(tam)
+    lista = {k: v for k, v in lista.items() if v["precos"] or v["tamanhos"]}
 
     # toda rede citada precisa de uma loja, para o painel saber se a acompanha
     online = cat_id == "online"
@@ -562,6 +676,65 @@ def normalizar(cat_id, bruto, cfg):
     }, lista
 
 
+def juntar_item(dest, ent):
+    """Junta o que uma categoria achou para um item da lista ao que as outras já acharam."""
+    b, nb = dest.get("base"), ent.get("base")
+    if not b and nb:
+        dest["base"] = b = nb
+    if not (b and nb) or (nb["unidade"] == b["unidade"] and mesmo_tamanho(nb["quantidade"], b["quantidade"])):
+        dest["precos"].update(ent["precos"])
+        if b and nb:
+            dest["tamanhos"] += ent["tamanhos"]
+        return
+    if nb["unidade"] != b["unidade"]:  # medidas diferentes não dá para comparar
+        dest["precos"].update(ent["precos"])
+        return
+    # esta categoria usou outro tamanho como base: os preços dela viram tamanhos
+    for rid, v in ent["precos"].items():
+        t = {"rede": rid, "quantidade": nb["quantidade"]}
+        if isinstance(v, dict):
+            t.update({k: v[k] for k in ("preco", "frete", "prazo_dias") if k in v})
+        else:
+            t["preco"] = v
+        dest["tamanhos"].append(t)
+    for t in ent["tamanhos"]:
+        if mesmo_tamanho(t["quantidade"], b["quantidade"]):
+            v = {k: t[k] for k in ("preco", "frete", "prazo_dias") if k in t}
+            dest["precos"].setdefault(t["rede"], v if "frete" in v else v["preco"])
+        else:
+            dest["tamanhos"].append(t)
+
+
+def juntar_categorias(parciais):
+    """Junta os itens da lista de todas as categorias usando, para cada um, a base com mais preços."""
+    lista = {}
+    for prod in dict.fromkeys(p for parcial in parciais for p in parcial):
+        ents = [parcial[prod] for parcial in parciais if prod in parcial]
+        votos = {}
+        for e in ents:
+            if e.get("base"):
+                k = (e["base"]["unidade"], e["base"]["quantidade"])
+                votos[k] = votos.get(k, 0) + len(e["precos"]) + 0.5
+        dest = {"precos": {}, "base": None, "tamanhos": []}
+        if votos:
+            un, q = max(votos, key=votos.get)
+            dest["base"] = next(e["base"] for e in ents if e.get("base") and (e["base"]["unidade"], e["base"]["quantidade"]) == (un, q))
+        for e in ents:
+            juntar_item(dest, e)
+        lista[prod] = dest
+    return lista
+
+
+def item_ofertas(prod, ent):
+    out = {"produto": prod, "precos": ent["precos"]}
+    if ent.get("base"):
+        out["base"] = ent["base"]
+        if ent["tamanhos"]:
+            por_un = lambda t: (t["preco"] + (t.get("frete") or 0)) / t["quantidade"]  # noqa: E731
+            out["tamanhos"] = sorted(ent["tamanhos"], key=por_un)[:12]
+    return out
+
+
 def buscar():
     cfg = ler_json(CONFIG, {}) or {}
     cats = [c for c in (cfg.get("categorias") or list(CATEGORIAS)) if c in CATEGORIAS]
@@ -571,7 +744,7 @@ def buscar():
             raise ErroBusca("Salve o CEP em Mais antes de buscar.")
         anterior = ler_json(OFERTAS, {}) or {}
         antigas = {c.get("id"): c for c in (anterior.get("categorias") or []) if isinstance(c, dict)}
-        novas, lista, falhas = [], {}, []
+        novas, parciais, falhas = [], [], []
         for i, cat_id in enumerate(cats, 1):
             BUSCA.update({"atual": i, "etapa": CATEGORIAS[cat_id]["nome"].lower()})
             log(f"buscando {cat_id}")
@@ -585,13 +758,13 @@ def buscar():
                     novas.append(antigas[cat_id])
                 continue
             novas.append(cat)
-            for prod, precos in parcial.items():
-                lista.setdefault(prod, {}).update(precos)
+            parciais.append(parcial)
+        lista = juntar_categorias(parciais)
         if not novas or len(falhas) == len(cats):
             raise ErroBusca(falhas[0] if falhas else "A busca não trouxe resultados.")
         gravar_json(OFERTAS, {
             "versao": 2, "gerado_em": agora(), "origem": "ia_home_assistant",
-            "lista": [{"produto": p, "precos": v} for p, v in lista.items()],
+            "lista": [item_ofertas(p, v) for p, v in lista.items()],
             "categorias": novas,
         })
         if falhas:
@@ -605,6 +778,97 @@ def buscar():
         log(BUSCA["erro"])
     finally:
         BUSCA.update({"rodando": False, "etapa": None, "terminou_em": agora()})
+
+
+# ---------- ler a lista de fotos ou texto ----------
+def instrucoes_leitura(texto_msg, n_fotos, cfg):
+    atuais = [nome_item(i) for i in (cfg.get("lista") or []) if nome_item(i)]
+    partes = []
+    if n_fotos:
+        partes.append(f"{n_fotos} imagem(ns) em anexo")
+    if texto_msg:
+        partes.append("o texto abaixo")
+    return f"""Alguém mandou, provavelmente pelo WhatsApp, coisas para comprar. Você recebe {' e '.join(partes)}.
+Pode ser print de conversa, lista escrita à mão, foto de produto ou de embalagem vazia, encarte ou receita.
+
+Extraia só os itens a comprar, em português do Brasil, um por item, do jeito que se escreve numa lista de compras: o nome do produto e, se aparecer, a marca, o tamanho ou a dosagem (por exemplo "Lysoform", "Leite integral 1 L", "Dipirona 500 mg"). A quantidade (por exemplo "2" ou "3 pacotes") vai em "quantidade", não no nome. Junte itens repetidos. Ignore conversa que não seja item de compra, preços, horários e nomes de pessoas.
+Itens que já estão na lista: {'; '.join(atuais) or 'nenhum'}. Se um item for o mesmo de um desses, use exatamente o nome que já está na lista.
+{('Texto:' + chr(10) + chr(34) * 3 + texto_msg + chr(34) * 3) if texto_msg else ''}
+
+Responda somente com um objeto JSON, sem texto antes ou depois:
+{{"itens": [{{"produto": "Leite integral 1 L", "quantidade": "2", "obs": null}}]}}
+Se não achar nenhum item, responda {{"itens": []}}."""
+
+
+def ler_lista(job, fotos, texto_msg):
+    pasta = os.path.join(MEDIA, "economia")
+    arquivos, anexos = [], []
+    try:
+        if fotos:
+            try:
+                os.makedirs(pasta, exist_ok=True)
+            except OSError as e:
+                raise ErroBusca("O add-on não consegue usar a pasta de mídia do Home Assistant. Reinstale a versão mais nova.") from e
+            for n, (dado, tipo) in enumerate(fotos):
+                ext = "png" if tipo == "image/png" else "webp" if tipo == "image/webp" else "jpg"
+                nome = f"lista-{job}-{n}.{ext}"
+                with open(os.path.join(pasta, nome), "wb") as f:
+                    f.write(dado)
+                arquivos.append(os.path.join(pasta, nome))
+                anexos.append({"media_content_id": f"{MEDIA_URI}/economia/{nome}", "media_content_type": tipo})
+        cfg = ler_config()
+        bruto = chamar_ai_task("EconomIA: ler lista", instrucoes_leitura(texto_msg, len(anexos), cfg), anexos)
+        atuais = {norm(nome_item(i)): nome_item(i) for i in (cfg.get("lista") or []) if nome_item(i)}
+        itens, vistos = [], set()
+        for it in (bruto.get("itens") if isinstance(bruto, dict) else None) or []:
+            if not isinstance(it, dict):
+                continue
+            prod = texto(it.get("produto"), 80)
+            if not prod or len(prod) < 2 or norm(prod) in vistos:
+                continue
+            vistos.add(norm(prod))
+            item = {"produto": atuais.get(norm(prod), prod), "ja_na_lista": norm(prod) in atuais}
+            if texto(it.get("quantidade"), 20):
+                item["quantidade"] = texto(it.get("quantidade"), 20)
+            if texto(it.get("obs"), 60):
+                item["obs"] = texto(it.get("obs"), 60)
+            itens.append(item)
+        LEITURAS[job].update({"status": "pronto", "itens": itens[:40]})
+        log(f"leitura {job}: {len(itens)} item(ns)")
+    except ErroBusca as e:
+        LEITURAS[job].update({"status": "erro", "erro": str(e)})
+    except Exception as e:  # noqa: BLE001
+        LEITURAS[job].update({"status": "erro", "erro": f"Erro inesperado ao ler: {e}"})
+        log(LEITURAS[job]["erro"])
+    finally:
+        for a in arquivos:
+            try:
+                os.remove(a)
+            except OSError:
+                pass
+
+
+def comeca_leitura(dado):
+    fotos = []
+    for img in (dado.get("imagens") or [])[:4]:
+        m = re.match(r"^data:(image/(?:jpeg|png|webp));base64,(.+)$", str(img), re.S)
+        if not m:
+            continue
+        try:
+            bruto = base64.b64decode(m.group(2), validate=False)
+        except ValueError:
+            continue
+        if 0 < len(bruto) <= 6 * 1024 * 1024:
+            fotos.append((bruto, m.group(1)))
+    texto_msg = str(dado.get("texto") or "").strip()[:4000]
+    if not fotos and not texto_msg:
+        return None
+    job = datetime.now().strftime("%H%M%S") + "-" + os.urandom(3).hex()
+    for antigo in sorted(LEITURAS)[:-20]:
+        LEITURAS.pop(antigo, None)
+    LEITURAS[job] = {"status": "lendo", "itens": [], "erro": None}
+    threading.Thread(target=ler_lista, args=(job, fotos, texto_msg), daemon=True).start()
+    return job
 
 
 # ---------- exportar a lista ----------
@@ -724,7 +988,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.7"
+    server_version = "EconomIA/0.8"
 
     def log_message(self, fmt, *args):
         pass
@@ -744,9 +1008,9 @@ class Painel(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(corpo)
 
-    def _corpo(self):
+    def _corpo(self, limite=MAX_BODY):
         tamanho = int(self.headers.get("Content-Length") or 0)
-        if tamanho <= 0 or tamanho > MAX_BODY:
+        if tamanho <= 0 or tamanho > limite:
             self._json(413, {"erro": "Conteúdo vazio ou grande demais."})
             return None
         try:
@@ -786,6 +1050,11 @@ class Painel(BaseHTTPRequestHandler):
                 self._json(502, {"erro": str(e)})
         elif rota == "/api/busca":
             self._json(200, BUSCA)
+        elif rota == "/api/ler-lista":
+            job = (urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("id") or [""])[0]
+            if job not in LEITURAS:
+                return self._json(404, {"erro": "Leitura não encontrada."})
+            self._json(200, LEITURAS[job])
         elif rota in ("/api/exportar/lista.xlsx", "/api/exportar/lista.json"):
             formato = "json" if rota.endswith(".json") else "xlsx"
             corpo, tipo = exportar(formato)
@@ -841,6 +1110,14 @@ class Painel(BaseHTTPRequestHandler):
             except ErroBusca as e:
                 SYNC["erro"] = str(e)
             return self._json(200, {"sync": SYNC, "rev": int(ler_config().get("rev") or 0)})
+        if urllib.parse.urlsplit(self.path).path == "/api/ler-lista":
+            dado = self._corpo(MAX_FOTOS_BODY)
+            if dado is None:
+                return
+            job = comeca_leitura(dado)
+            if not job:
+                return self._json(400, {"erro": "Escolha uma foto ou cole o texto da mensagem."})
+            return self._json(202, {"id": job})
         if urllib.parse.urlsplit(self.path).path != "/api/buscar":
             return self._json(404, {"erro": "Não encontrado"})
         with _trava:

@@ -15,10 +15,33 @@ Se você tiver mais de uma tarefa de IA, escolha qual usar na opção `ai_task_e
 
 1. Abra **EconomIA** no menu lateral do Home Assistant.
 2. Em **Mais**, preencha o CEP, quem mora na casa (incluindo quantos pets), restrições, interesses e os dias em que você costuma comprar.
-3. Em **Minha lista**, adicione o que você compra sempre. Toque em **Comprei hoje** quando comprar: o painel aprende de quanto em quanto tempo cada coisa acaba.
+3. Em **Minha lista**, adicione o que você compra sempre, pelo campo do topo ou por **Da foto ou do ZAP**. Toque em **Comprei hoje** quando comprar: o painel aprende de quanto em quanto tempo cada coisa acaba. **Limpar lista** apaga tudo, com opção de desfazer.
 4. Toque em **Buscar**, no centro do menu de baixo. A busca leva alguns minutos e você pode continuar usando o painel.
 5. Em **Ofertas**, use **Não mostrar** em qualquer oferta que não faça sentido para você. Cada oferta tem um link para a fonte.
 6. Em **Lojas**, desmarque as lojas que não quer acompanhar ou adicione uma que não apareceu.
+
+## Itens pela foto ou pelo ZAP
+
+Em **Minha lista → Da foto ou do ZAP**, escolha até 4 fotos (print da conversa do WhatsApp, lista escrita à mão, foto da embalagem que acabou) ou cole o texto da mensagem. Toque em **Ler com a IA**: a IA do Home Assistant devolve os itens, você confere, ajusta o nome se quiser e adiciona.
+
+Para ler fotos, a IA escolhida precisa aceitar imagens (a Anthropic aceita). A foto fica um instante na pasta de mídia do Home Assistant, só para a IA ler, e é apagada em seguida.
+
+## Melhor tamanho
+
+Pode escrever só o produto, como **Lysoform**. Na busca, o EconomIA traz também as outras embalagens (galão de 5 L, kits, fardos, leve 3 pague 2) e compara o **preço por litro, quilo ou unidade**:
+
+- **Compensa o maior**: diz qual embalagem levar, onde, quanto economiza em relação a comprar a mesma quantidade no tamanho de sempre e quanto tempo dura no seu ritmo.
+- **Tamanho de sempre**: o maior não compensa. Quando é o caso, mostra que, por exemplo, 5 de 1 L saem mais baratos que 1 de 5 L.
+- **Compensa, mas dura muito**: o maior é mais barato, mas duraria mais do que você costuma guardar. Ajuste em **Mais → Rotina de compras → Espaço para estoque**.
+
+## Roteiro de compras
+
+No fim da **Minha lista**, diga em até quantas lojas você topa parar (1 a 4) e se é a lista toda ou só o que está acabando. O EconomIA testa as combinações de lojas e mostra:
+
+- o total e a economia sobre o preço médio;
+- o que comprar em cada parada, da loja mais perto para a mais longe, com link para a rota no Maps;
+- o que compensa pedir online (pode desligar);
+- quanto uma parada a mais economizaria. Se for pouco, ele recomenda menos paradas, e dá para comparar as opções com um toque.
 
 ## Compras online
 
