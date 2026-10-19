@@ -1,0 +1,6 @@
+configuration:
+  ai_task_entity:
+    name: AI task (optional)
+    description: >-
+      ai_task entity used when nothing is chosen in Mais → IA do Home Assistant.
+      Leave empty to use Home Assistant's preferred AI.

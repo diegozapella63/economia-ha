@@ -1,0 +1,6 @@
+configuration:
+  ai_task_entity:
+    name: Tarefa de IA (opcional)
+    description: >-
+      Entidade ai_task usada quando nada foi escolhido em Mais → IA do Home Assistant.
+      Em branco, o app usa a IA preferida do Home Assistant.

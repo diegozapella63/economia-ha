@@ -1,4 +1,4 @@
-# EconomIA — add-on do Home Assistant
+# EconomIA: detalhes técnicos
 
 Painel de cupons, ofertas e lista de compras de farmácias, mercados e pet shops perto de casa, aberto pelo menu lateral do Home Assistant (ingress).
 
@@ -11,7 +11,7 @@ Todos os dados ficam no Home Assistant, na pasta `/data` do add-on:
 
 Sem `ofertas.json`, o painel mostra um exemplo embutido.
 
-Tipografia: Barlow (texto) e Barlow Condensed (títulos e números), embutidas em `app/www/fonts` como WOFF (subconjunto latino, licença SIL OFL em `fonts/OFL.txt`), para funcionar sem internet.
+Tipografia: Barlow (texto) e Barlow Condensed (títulos e números), embutidas em `economia/app/www/fonts` como WOFF (subconjunto latino, licença SIL OFL em `fonts/OFL.txt`), para funcionar sem internet.
 
 ## Busca de ofertas
 
@@ -49,7 +49,7 @@ No outro sentido, usa `todo.add_item` para itens novos do painel e para os que d
 `config.json` tem `rev`, que sobe a cada gravação; se o painel salvar com uma revisão antiga, o servidor junta as mudanças que vieram do HA antes de gravar.
 
 O servidor só aceita conexões do ingress (`172.30.32.2`). Para testar fora do HA:
-`OFERTAS_ALLOW_ALL=1 OFERTAS_DATA=/tmp/ofertas python3 app/server.py`
+`OFERTAS_ALLOW_ALL=1 OFERTAS_DATA=/tmp/ofertas python3 economia/app/server.py`
 
 ## config.json
 
