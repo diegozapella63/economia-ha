@@ -250,6 +250,11 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .de s{text-decoration-thickness:1px}
 .por{display:inline-flex;align-items:baseline;gap:4px;font-family:var(--font-display);font-stretch:70%;font-weight:800;font-size:1.6rem;letter-spacing:.005em;white-space:nowrap}
 .chip.selo{background:var(--accent-soft);color:var(--accent)}
+.off-enc{visibility:hidden}
+.sem-precos{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;background:var(--warn-soft);border-radius:10px;padding:10px 12px;font-size:14px}
+.sem-precos b{color:var(--warn)}
+.site-form{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:8px;padding-top:4px}
+.site-form .field{flex:1 1 200px}
 .cores{display:flex;flex-wrap:wrap;gap:12px;max-width:340px}
 .cor{width:42px;height:42px;border-radius:50%;border:0;padding:0;background:var(--sw);display:grid;place-items:center;cursor:pointer}
 .cor[aria-pressed="true"]{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--sw)}
@@ -557,7 +562,8 @@ h3{font-size:13px;font-weight:600}
         {"id": "angeloni", "nome": "Angeloni", "curto": "Angeloni"},
         {"id": "clubek", "nome": "Clube K", "curto": "Clube K"},
         {"id": "atacadao", "nome": "Atacadão", "curto": "Atacadão"},
-        {"id": "imperatriz", "nome": "Imperatriz", "curto": "Imperatriz"}
+        {"id": "imperatriz", "nome": "Imperatriz", "curto": "Imperatriz"},
+        {"id": "mercadinho", "nome": "Mercadinho do bairro", "curto": "Mercadinho"}
       ],
       "lojas": [
         {"rede": "giassi", "distancia_km": 0.8, "horario": "Aberto até 22h", "fontes": ["Site", "Encarte", "App"]},
@@ -565,7 +571,8 @@ h3{font-size:13px;font-weight:600}
         {"rede": "angeloni", "distancia_km": 1.5, "horario": "Aberto até 22h", "fontes": ["Site", "Encarte"]},
         {"rede": "clubek", "distancia_km": 1.7, "horario": "Aberto até 21h", "fontes": ["Encarte", "Clube"]},
         {"rede": "atacadao", "distancia_km": 1.9, "horario": "Aberto até 22h", "fontes": ["Tiendeo", "App"]},
-        {"rede": "imperatriz", "distancia_km": 3.6, "horario": "Aberto até 22h", "fontes": ["Encarte", "Clube"]}
+        {"rede": "imperatriz", "distancia_km": 3.6, "horario": "Aberto até 22h", "fontes": ["Encarte", "Clube"]},
+        {"rede": "mercadinho", "distancia_km": 0.3, "horario": "Aberto até 20h", "fontes": ["Instagram"]}
       ],
       "cupons": [
         {"rede": "condor", "codigo": null, "beneficio": "Ofertas do Clube Condor", "condicao": "As ofertas que você ativa no app aparecem aqui depois do login.", "valido_ate": null, "status": "login"},
@@ -580,6 +587,7 @@ h3{font-size:13px;font-weight:600}
         {"id": "condor-patinho-kg", "rede": "condor", "produto": "Patinho moído", "preco_normal": 46.90, "preco_oferta": 39.90, "tipo": "clube", "unidade": "kg", "tags": ["alimentos", "carnes"]},
         {"id": "imperatriz-azeite-500", "rede": "imperatriz", "produto": "Azeite extra virgem · 500 ml", "preco_normal": 36.90, "preco_oferta": 29.90, "tipo": "clube", "tags": ["alimentos"]},
         {"id": "clubek-papel-12", "rede": "clubek", "produto": "Papel higiênico folha dupla · 12 rolos", "preco_normal": 24.90, "preco_oferta": 19.90, "tipo": "promo", "tags": ["limpeza"]},
+        {"id": "clubek-encarte-sabao", "rede": "clubek", "produto": "Sabão em pó Omo · 1,6 kg", "preco_normal": null, "preco_oferta": 26.90, "tipo": "encarte", "encarte": true, "valido_ate": "2026-10-21", "tags": ["limpeza"]},
         {"id": "atacadao-lysoform-5l", "rede": "atacadao", "produto": "Lysoform Bruto Original · galão 5 L", "preco_normal": 94.90, "preco_oferta": 79.90, "tipo": "promo", "tamanho": {"quantidade": 5, "unidade": "L"}, "tags": ["limpeza"]},
         {"id": "condor-racao-gato", "rede": "condor", "produto": "Ração para gatos adultos · 10,1 kg", "preco_normal": 189.90, "preco_oferta": 159.90, "tipo": "clube", "tags": ["pet", "gato"]},
         {"id": "giassi-cerveja-12", "rede": "giassi", "produto": "Cerveja pilsen lata 350 ml · 12 un.", "preco_normal": 47.88, "preco_oferta": 39.90, "tipo": "promo", "tags": ["alimentos", "alcool"]}
@@ -695,6 +703,7 @@ h3{font-size:13px;font-weight:600}
     <div class="catbar">
       <div class="cats" id="cats" role="group" aria-label="Categoria"></div>
       <p class="cat-note" id="catNote"></p>
+      <div class="sem-precos" id="semPrecos" hidden></div>
     </div>
     <div class="summary" aria-label="Resumo">
       <div class="fact"><span class="k">Melhor cupom agora</span><span class="v num" id="sumCupom">—</span><span class="s" id="sumCupomS"></span></div>
@@ -858,7 +867,7 @@ h3{font-size:13px;font-weight:600}
           <div class="sec-head"><h2 id="h-online">Compras online</h2></div>
           <div class="group"><h3>Onde procurar</h3><div class="picks" id="pMkt"></div></div>
           <div class="group"><h3>Assinaturas com frete grátis</h3><div class="picks" id="pAss"></div></div>
-          <p class="hint">Prime e Meli+ não zeram o frete de tudo: valem para os produtos elegíveis (na Amazon, os com selo Prime). O EconomIA usa o frete que aparece para o seu CEP em cada item, já contando a assinatura. Remédios de receita ficam só nas farmácias.</p>
+          <p class="hint">iFood e Rappi trazem os preços dos mercados e farmácias do bairro no app, com a taxa de entrega somada. O Clube iFood zera a taxa nas lojas participantes. Prime e Meli+ não zeram o frete de tudo: valem para os produtos elegíveis (na Amazon, os com selo Prime). O EconomIA usa o frete que aparece para o seu CEP em cada item, já contando a assinatura. Remédios de receita ficam só nas farmácias.</p>
         </section>
       </div>
     </div>
@@ -924,7 +933,7 @@ h3{font-size:13px;font-weight:600}
       </div>
     </section>
     <section class="panel settings" aria-labelledby="h-sobre">
-      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.9.4. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
+      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.10.0. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
     </section>
 
     <div class="group" id="lojasSec"><h2 class="big">Lojas</h2></div>
@@ -936,6 +945,7 @@ h3{font-size:13px;font-weight:600}
         <form class="row-form" id="addLoja" novalidate>
           <input class="field" id="novaLoja" name="novaLoja" placeholder="Loja que não apareceu, ex.: Mercado da esquina" aria-label="Nome da loja">
           <select class="field" id="novaLojaCat" name="novaLojaCat" aria-label="Tipo de loja" style="flex:0 0 auto"></select>
+          <input class="field" id="novaLojaSite" name="novaLojaSite" type="url" inputmode="url" placeholder="Site de ofertas (opcional), ex.: mercadosalles.com.br/ofertas" aria-label="Site de ofertas da loja">
           <button class="btn" type="submit">Adicionar</button>
         </form>
         <p class="hint" id="lojaMsg" aria-live="polite"></p>
@@ -1008,7 +1018,7 @@ h3{font-size:13px;font-weight:600}
     if (n <= 31) return {t:'Vence em ' + n + ' dias', k:'warn'};
     return {t:'Até ' + dataBR(c.valido_ate) + '/' + c.valido_ate.slice(0, 4), k:''};
   }
-  function pct(o){ return Math.round((1 - o.preco_oferta / o.preco_normal) * 100); }
+  function pct(o){ return o.preco_normal ? Math.round((1 - o.preco_oferta / o.preco_normal) * 100) : 0; }
   function km(v){ return v == null || !isFinite(v) ? '—' : v.toFixed(1).replace('.', ',') + ' km'; }
   function fonteLink(u){ return /^https?:\/\//.test(u || '') ? '<a href="' + esc(u) + '" target="_blank" rel="noopener">fonte</a>' : ''; }
 
@@ -1029,8 +1039,8 @@ h3{font-size:13px;font-weight:600}
   function descrevePets(p){
     return PETS.filter(function(x){ return p[x.id] > 0; }).map(function(x){ return p[x.id] + ' ' + (p[x.id] > 1 ? x.varios : x.um); }).join(' e ');
   }
-  var MKT = [{id:'mercadolivre', nome:'Mercado Livre'}, {id:'amazon', nome:'Amazon'}, {id:'shopee', nome:'Shopee'}, {id:'magalu', nome:'Magalu'}, {id:'americanas', nome:'Americanas'}, {id:'casasbahia', nome:'Casas Bahia'}];
-  var ASS = [{id:'prime', nome:'Amazon Prime'}, {id:'melimais', nome:'Meli+'}];
+  var MKT = [{id:'ifood', nome:'iFood'}, {id:'rappi', nome:'Rappi'}, {id:'mercadolivre', nome:'Mercado Livre'}, {id:'amazon', nome:'Amazon'}, {id:'shopee', nome:'Shopee'}, {id:'magalu', nome:'Magalu'}, {id:'americanas', nome:'Americanas'}, {id:'casasbahia', nome:'Casas Bahia'}];
+  var ASS = [{id:'prime', nome:'Amazon Prime'}, {id:'melimais', nome:'Meli+'}, {id:'clubeifood', nome:'Clube iFood'}];
   var DIAS = [{id:'dom', n:'Dom'}, {id:'seg', n:'Seg'}, {id:'ter', n:'Ter'}, {id:'qua', n:'Qua'}, {id:'qui', n:'Qui'}, {id:'sex', n:'Sex'}, {id:'sab', n:'Sáb'}];
   function cap(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
 
@@ -1179,6 +1189,9 @@ h3{font-size:13px;font-weight:600}
     if (!ativas.some(function(c){ return c.id === ui.aba; })) ui.aba = ativas[0].id;
     CAT = ativas.filter(function(c){ return c.id === ui.aba; })[0];
     $('cats').innerHTML = ativas.map(function(c){ return '<button type="button" data-cat="' + c.id + '" aria-pressed="' + (c.id === CAT.id) + '">' + esc(c.nome) + '</button>'; }).join('');
+    var sp = semPrecos(CAT);
+    $('semPrecos').hidden = !sp.length;
+    $('semPrecos').innerHTML = sp.length ? '<span><b>Sem preços de:</b> ' + esc(sp.map(function(l){ return G[l.rede].nome; }).join(', ')) + '. Se tiver site de ofertas, adicione que o EconomIA lê o encarte.</span><button type="button" class="linkbtn" data-ir="lojasSec">Adicionar site</button>' : '';
     $('catNote').textContent = CAT.id === 'petshops' && !petsTotal() ? 'Sem pets no seu perfil, as ofertas daqui ficam escondidas. Ajuste em Mais.' : (exemplo && CAT.aviso ? CAT.aviso : '');
     $('ofertasMeta').textContent = CAT.id === 'farmacias'
       ? 'O que combina com você aparece primeiro. Preço do site; na loja pode ser outro.'
@@ -1204,7 +1217,7 @@ h3{font-size:13px;font-weight:600}
     $('sumCupomS').textContent = cup ? G[cup.rede].nome + ' · ' + (/^R\$/.test(cup.beneficio) ? cup.beneficio : cup.beneficio.charAt(0).toLowerCase() + cup.beneficio.slice(1)) + ' · ' + validade(cup).t.toLowerCase() : 'Os cupons dos clubes aparecem depois do login';
     var lista = ofertasDaAba(), vis = lista.filter(function(o){ return !escondida(o); }).sort(function(a, b){ return nota(b) - nota(a); });
     var top = vis[0];
-    $('sumTop').textContent = top ? '−' + pct(top) + '%' : '—';
+    $('sumTop').textContent = top ? (top.preco_normal ? '−' + pct(top) + '%' : brl.format(top.preco_oferta)) : '—';
     $('sumTopS').textContent = top ? top.produto.split(' · ')[0] + ' · ' + G[top.rede].nome + (porQue(top) ? ' · ' + porQue(top).toLowerCase() : '') : 'Nada por enquanto';
     var esc_ = lista.length - vis.length;
     $('sumHid').textContent = String(esc_);
@@ -1242,7 +1255,8 @@ h3{font-size:13px;font-weight:600}
     var rec = o.receita === 'tarja' ? '<span class="tarja">Tarja vermelha · com receita</span>' : o.receita === 'mip' ? '<span class="tarja mip">Sem receita</span>' : '';
     var cond = o.condicao ? '<span>' + esc(o.condicao) + '</span>' : '';
     if (typeof o.frete === 'number') cond += '<span>' + (o.frete ? 'Frete ' + brl.format(o.frete) : 'Frete grátis') + '</span>';
-    if (o.prazo_dias != null) cond += '<span>Chega em ' + o.prazo_dias + (o.prazo_dias > 1 ? ' dias' : ' dia') + '</span>';
+    if (o.prazo_dias != null) cond += '<span>' + (o.prazo_dias === 0 ? 'Chega hoje' : 'Chega em ' + o.prazo_dias + (o.prazo_dias > 1 ? ' dias' : ' dia')) + '</span>';
+    if (o.valido_ate) cond += '<span>Até ' + dataBR(o.valido_ate) + '</span>';
     if (o.vendedor) cond += '<span>' + (o.oficial ? 'Loja oficial' : 'Vendido por ' + esc(o.vendedor)) + '</span>';
     if (o.importado) cond += '<span class="chip warn">Importado</span>';
     var selo = tipo === 'clube' ? (estado.clubes.indexOf(o.rede) >= 0 ? '<span class="chip selo">Seu clube</span>' : '<span class="chip">Preço de clube</span>') : tipo === 'atacado' ? '<span class="chip selo">Atacado</span>' : '';
@@ -1267,8 +1281,8 @@ h3{font-size:13px;font-weight:600}
     return '<li class="deal' + (oc ? ' muted' : '') + '">'
       + '<div><p class="d-prod">' + esc(o.produto) + '</p>' + why
       + '<p class="d-meta"><span>' + esc(G[o.rede].nome) + '</span>' + selo + cond + rec + fonteLink(o.fonte) + acao + '</p></div>'
-      + '<div class="price num"><span class="de">' + ROT_PRECO[tipo] + ' <s>' + brl.format(o.preco_normal) + '</s></span><span class="por">' + brl.format(o.preco_oferta) + un + '</span>' + (o.tamanho && Number(o.tamanho.quantidade) > 0 && !o.unidade ? '<span class="de">' + porUn(o.preco_oferta, Number(o.tamanho.quantidade), o.tamanho) + '</span>' : o.unidades > 1 ? '<span class="de">' + brl.format(o.preco_oferta / o.unidades) + ' cada</span>' : '') + '</div>'
-      + '<span class="off num">−' + pct(o) + '%</span>'
+      + '<div class="price num"><span class="de">' + (o.preco_normal ? ROT_PRECO[tipo] + ' <s>' + brl.format(o.preco_normal) + '</s>' : 'Encarte') + '</span><span class="por">' + brl.format(o.preco_oferta) + un + '</span>' + (o.tamanho && Number(o.tamanho.quantidade) > 0 && !o.unidade ? '<span class="de">' + porUn(o.preco_oferta, Number(o.tamanho.quantidade), o.tamanho) + '</span>' : o.unidades > 1 ? '<span class="de">' + brl.format(o.preco_oferta / o.unidades) + ' cada</span>' : '') + '</div>'
+      + (o.preco_normal ? '<span class="off num">−' + pct(o) + '%</span>' : '<span class="off off-enc" aria-hidden="true">−0%</span>')
       + menu + '</li>';
   }
   $('deals').addEventListener('click', function(e){
@@ -1346,7 +1360,7 @@ h3{font-size:13px;font-weight:600}
     if (!net) return '';
     var dia = function(n){ return n + (n > 1 ? ' dias' : ' dia'); };
     var linha = (avulso ? 'Avulso online: ' : 'Online: ') + brl.format(net.v) + ' na ' + G[net.id].nome + (net.frete ? ' (frete ' + brl.format(net.frete) + ')' : ' (frete grátis)')
-      + (net.prazo != null ? ', chega em ' + dia(net.prazo) : '') + (net.obs ? ' · ' + net.obs : '');
+      + (net.prazo != null ? (net.prazo === 0 ? ', chega hoje' : ', chega em ' + dia(net.prazo)) : '') + (net.obs ? ' · ' + net.obs : '');
     var chip, nota = '';
     // data limite para o pedido chegar antes de acabar (um dia de folga)
     var pedirAte = r.dias != null && net.prazo != null ? soma(hojeSP(), r.dias - net.prazo - 1) : null;
@@ -1875,12 +1889,23 @@ h3{font-size:13px;font-weight:600}
     var b = e.target.closest('[data-ir]'); if (!b) return;
     var ir = b.dataset.ir;
     if (ir === 'itens'){ $('wish').scrollIntoView({behavior:'smooth', block:'start'}); return; }
+    if (ir === 'lojasSec'){ irPara('mais'); $('lojasSec').scrollIntoView({block:'start'}); return; }
     if (ir === 'importar'){ irPara('mais'); $('h-imp').scrollIntoView({block:'start'}); return; }
     if (b.dataset.cat){ ui.aba = b.dataset.cat; salvarUI(); filtro = 'todas'; pintaOfertasTela(); }
     irPara(ir); window.scrollTo(0, 0);
   });
 
   // ===== Lojas =====
+  // loja que a busca achou perto, mas sem nenhum preço (nem oferta, nem item da lista)
+  function semPrecos(c){
+    var com = {};
+    arr(c.ofertas).forEach(function(o){ com[o.rede] = 1; });
+    arr(D.lista).forEach(function(i){ Object.keys(i.precos || {}).forEach(function(r){ com[r] = 1; }); arr(i.tamanhos).forEach(function(t){ com[t.rede] = 1; }); });
+    return arr(c.lojas).filter(function(l){ return G[l.rede] && !com[l.rede] && acompanha(l.rede) && c.id !== 'online'; });
+  }
+  function siteManual(nome){ return estado.lojas.adicionar.filter(function(a){ return a.site && norm(a.nome).indexOf(norm(nome)) === 0; })[0]; }
+  function host(u){ return String(u || '').replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]; }
+  var siteAberto = null;
   function pintaLojas(){
     var ativas = D.categorias.filter(function(c){ return estado.categorias.indexOf(c.id) >= 0; });
     $('lojasCats').innerHTML = ativas.map(function(c){
@@ -1891,16 +1916,44 @@ h3{font-size:13px;font-weight:600}
         return '<li class="row has-track' + (on ? '' : ' out') + '">'
           + '<label class="track"><input type="checkbox" data-rede="' + l.rede + '"' + (on ? ' checked' : '') + '><span class="r-name">' + esc(G[l.rede].nome) + '</span></label>'
           + '<span class="r-val num">' + km(l.distancia_km) + '</span>'
-          + '<span class="r-sub"><span>' + esc(txt) + '</span>' + (l.endereco ? '<span>' + esc(l.endereco) + '</span>' : '') + arr(l.fontes).map(function(f){ return '<span class="src">' + esc(f) + '</span>'; }).join('') + '</span></li>';
+          + '<span class="r-sub"><span>' + esc(txt) + '</span>' + (l.endereco ? '<span>' + esc(l.endereco) + '</span>' : '') + arr(l.fontes).map(function(f){ return '<span class="src">' + esc(f) + '</span>'; }).join('')
+          + (l.encarte_auto ? '<span>Encarte lido do site ' + esc(host(l.site)) + '</span>' : '') + avisoSemPreco(c, l) + '</span>'
+          + (siteAberto === l.rede ? '<form class="site-form" novalidate data-site-form="' + esc(l.rede) + '" data-cat="' + c.id + '"><input class="field" type="url" inputmode="url" value="' + esc(l.site || '') + '" placeholder="Endereço da página de ofertas" aria-label="Site de ofertas de ' + esc(G[l.rede].nome) + '"><button class="btn" type="submit">Salvar</button><button type="button" class="ghost big" data-site-fecha="1">Cancelar</button></form>' : '')
+          + '</li>';
       });
       estado.lojas.adicionar.forEach(function(a, i){
         if (a.categoria !== c.id) return;
-        rows.push('<li class="row"><span class="r-name">' + esc(a.nome) + '</span><button type="button" class="rm" data-loja="' + i + '">remover</button><span class="r-sub"><span>Adicionada por você · entra na próxima busca</span></span></li>');
+        rows.push('<li class="row"><span class="r-name">' + esc(a.nome) + '</span><button type="button" class="rm" data-loja="' + i + '">remover</button><span class="r-sub"><span>Adicionada por você · ' + (a.site ? 'o encarte de ' + esc(host(a.site)) + ' é lido a cada busca' : 'entra na próxima busca') + '</span></span></li>');
       });
       return '<div class="group"><h3>' + esc(c.nome) + '</h3><ul class="rows">' + rows.join('') + '</ul></div>';
     }).join('');
     $('novaLojaCat').innerHTML = ativas.map(function(c){ return '<option value="' + c.id + '">' + esc(c.singular) + '</option>'; }).join('');
   }
+  function avisoSemPreco(c, l){
+    if (semPrecos(c).indexOf(l) < 0) return '';
+    var man = siteManual(G[l.rede].nome);
+    if (man) return '<span class="chip warn">Sem preços</span><span>O site ' + esc(host(man.site)) + ' entra na próxima busca</span>';
+    return '<span class="chip warn">Sem preços</span>' + (l.site_sem_encarte ? '<span>Não achei encarte em ' + esc(host(l.site)) + '</span>' : '')
+      + '<button type="button" class="linkbtn" data-site="' + esc(l.rede) + '">Adicionar site de ofertas</button>';
+  }
+  function salvaSite(rid, cat, url){
+    url = url.trim(); if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
+    if (!/^https?:\/\/[^\s.]+\.[^\s]+$/i.test(url)){ toast('Esse endereço não parece um site.'); return false; }
+    var nome = G[rid].nome, man = estado.lojas.adicionar.filter(function(a){ return norm(a.nome).indexOf(norm(nome)) === 0; })[0];
+    if (man){ man.site = url; man.categoria = man.categoria || cat; } else estado.lojas.adicionar.push({categoria:cat, nome:nome, site:url});
+    salvar('Site de ofertas salvo: o encarte de ' + nome + ' entra na próxima busca');
+    return true;
+  }
+  $('lojasCats').addEventListener('click', function(e){
+    var b = e.target.closest('[data-site]');
+    if (b){ siteAberto = b.dataset.site; pintaLojas(); var f = document.querySelector('[data-site-form] input'); if (f) f.focus(); return; }
+    if (e.target.closest('[data-site-fecha]')){ siteAberto = null; pintaLojas(); }
+  });
+  $('lojasCats').addEventListener('submit', function(e){
+    var f = e.target.closest('[data-site-form]'); if (!f) return;
+    e.preventDefault();
+    if (salvaSite(f.dataset.siteForm, f.dataset.cat, f.querySelector('input').value)){ siteAberto = null; tudo(); }
+  });
   $('lojasCats').addEventListener('change', function(e){
     var c = e.target.closest('input[data-rede]'); if (!c) return;
     setAcompanha(c.dataset.rede, c.checked);
@@ -1915,8 +1968,11 @@ h3{font-size:13px;font-weight:600}
     e.preventDefault();
     var nome = $('novaLoja').value.trim(), msg = $('lojaMsg');
     if (nome.length < 3){ msg.className = 'hint err'; msg.textContent = 'Escreva o nome da loja e, se souber, a rua.'; return; }
-    estado.lojas.adicionar.push({categoria:$('novaLojaCat').value, nome:nome}); $('novaLoja').value = '';
-    msg.className = 'hint ok'; msg.textContent = '"' + nome + '" entra na próxima busca.';
+    var site = $('novaLojaSite').value.trim();
+    if (site && !/^https?:\/\//i.test(site)) site = 'https://' + site;
+    if (site && !/^https?:\/\/[^\s.]+\.[^\s]+$/i.test(site)){ msg.className = 'hint err'; msg.textContent = 'O site de ofertas não parece um endereço válido.'; return; }
+    estado.lojas.adicionar.push(site ? {categoria:$('novaLojaCat').value, nome:nome, site:site} : {categoria:$('novaLojaCat').value, nome:nome}); $('novaLoja').value = ''; $('novaLojaSite').value = '';
+    msg.className = 'hint ok'; msg.textContent = '"' + nome + '" entra na próxima busca' + (site ? ', com o encarte do site.' : '.');
     salvar('Loja adicionada'); pintaLojas();
   });
 

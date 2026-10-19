@@ -58,7 +58,7 @@ O servidor só aceita conexões do ingress (`172.30.32.2`). Para testar fora do 
   "cep": "89200-000",
   "raio_km": 2,
   "categorias": ["farmacias", "mercados", "petshops"],
-  "lojas": {"ignorar": ["raia"], "manter": ["imperatriz"], "adicionar": [{"categoria": "mercados", "nome": "Mercado da esquina"}]},
+  "lojas": {"ignorar": ["raia"], "manter": ["imperatriz"], "adicionar": [{"categoria": "mercados", "nome": "Mercado Salles", "site": "https://www.mercadosalles.com.br/ofertas"}]},
   "lista": [{"produto": "Café torrado e moído · 500 g", "compras": ["2026-09-20", "2026-09-30"]}],
   "perfil": {"adultos": 2, "criancas": 0, "bebes": 0, "pets": {"cachorro": 0, "gato": 1, "outros": 0}, "restricoes": [], "interesses": ["skincare", "cafe"], "nunca": ["alcool"]},
   "cotidiano": {"mercado": ["sab"], "farmacia": ["qua"], "avisar": "vespera", "estoque": "pouco|normal|bastante"},
@@ -97,6 +97,7 @@ O servidor só aceita conexões do ingress (`172.30.32.2`). Para testar fora do 
 - `lista[].produto` usa o mesmo texto da lista do `config.json`.
 - `lista[].base` é o tamanho a que `precos` se refere, em `L`, `kg`, `un` (com `rotulo`, como `"rolo"`) ou `m`. `tamanhos` traz as outras embalagens, com a quantidade total na mesma unidade e o preço do pacote inteiro (online, com `frete` e `prazo_dias`). Ofertas podem ter `tamanho: {quantidade, unidade}` para mostrar o preço por litro ou quilo.
 - Se duas categorias usarem bases diferentes para o mesmo item, os preços da segunda viram `tamanhos`.
+- Encarte do site: para cada loja em `lojas.adicionar` com `site` (e até `OFERTAS_AUTO_ENCARTES`=2 lojas achadas pela busca com `site` e sem preço), o add-on baixa a página, pega as imagens grandes e PDFs (no Wix pede a versão de 1600 px) e manda para a IA de fotos. Ofertas de encarte têm `encarte: true`, `valido_ate` e podem vir sem `preco_normal` (`tipo: "encarte"`). Lojas ganham `site`, `encarte_auto` ou `site_sem_encarte`.
 - Loja com preço de clube: `precos[rede] = {"preco": 18.49, "clube": 16.99}`. O painel e a exportação usam `clube` só para as redes em `config.clubes`.
 - `config.ia.busca` pode ser uma tarefa de IA (`ai_task.*`, chamada com `ai_task.generate_data`) ou um assistente de conversa (`conversation.*`, chamado com `conversation.process`); a leitura de fotos sempre usa tarefa de IA (`config.ia.fotos`).
 - Categoria `online`: ofertas têm também `frete`, `prazo_dias`, `vendedor`, `oficial`, `importado` e `unidades`; na `lista`, o preço de um marketplace é um objeto `{"preco", "frete", "prazo_dias", "obs"}`. O painel compara `preco + frete` com o preço das lojas.

@@ -26,6 +26,7 @@ Rotas:
 Só usa a biblioteca padrão do Python.
 """
 import base64
+import html as html_mod
 import io
 import json
 import os
@@ -50,6 +51,7 @@ OPTIONS = os.path.join(DATA, "options.json")
 SYNC_FILE = os.path.join(DATA, "sync_ha.json")
 SYNC_INTERVALO = int(os.environ.get("OFERTAS_SYNC_SEG", "60"))
 ESPERA_COTA = int(os.environ.get("OFERTAS_ESPERA_COTA", "60"))
+AUTO_ENCARTES = int(os.environ.get("OFERTAS_AUTO_ENCARTES", "2"))  # sites lidos sozinhos por busca
 HA_API = os.environ.get("OFERTAS_HA_API", "http://supervisor/core/api")
 # O ingress do Supervisor chega sempre deste endereço.
 INGRESS_IPS = {"172.30.32.2", "127.0.0.1", "::1"}
@@ -67,9 +69,9 @@ CATEGORIAS = {
     "petshops": {"nome": "Pet shops", "singular": "Pet shop", "o_que": "pet shops e lojas de produtos para animais"},
     "online": {"nome": "Online", "singular": "Online", "o_que": "marketplaces com entrega no CEP"},
 }
-MARKETPLACES = {"mercadolivre": "Mercado Livre", "amazon": "Amazon", "shopee": "Shopee", "magalu": "Magalu",
+MARKETPLACES = {"ifood": "iFood", "rappi": "Rappi", "mercadolivre": "Mercado Livre", "amazon": "Amazon", "shopee": "Shopee", "magalu": "Magalu",
                 "americanas": "Americanas", "casasbahia": "Casas Bahia"}
-ASSINATURAS = {"prime": "Amazon Prime", "melimais": "Meli+"}
+ASSINATURAS = {"prime": "Amazon Prime", "melimais": "Meli+", "clubeifood": "Clube iFood"}
 TAGS = {"bebe", "pet", "gato", "cachorro", "alcool", "medicamento", "maquiagem", "geriatrico", "skincare", "suplementos",
         "cafe", "bucal", "limpeza", "carnes", "alimentos", "higiene", "lactose", "gluten", "acucar"}
 FONTES = {"Site", "App", "Encarte", "Clube", "Instagram", "WhatsApp", "Tiendeo"}
@@ -595,6 +597,12 @@ def itens_prompt(cfg):
     return out
 
 
+APPS_TXT = ("No iFood e no Rappi, procure mercados, farmácias e pet shops que entregam neste CEP, inclusive lojas do bairro, "
+            "e use \"rede\": \"iFood · nome da loja\" (ou \"Rappi · nome da loja\"). Nesses apps, \"frete\" é a taxa de entrega "
+            "e \"prazo_dias\" é 0 para entrega no mesmo dia. Com Clube iFood, use frete 0 nas lojas participantes do Clube e diga "
+            "o pedido mínimo do benefício em \"obs\". O preço no app pode ser diferente do preço no balcão: use o do app.")
+
+
 def instrucoes_online(cfg):
     casa, excluir, restr, interesses = descreve_casa(cfg)
     on = cfg.get("online") or {}
@@ -606,6 +614,7 @@ def instrucoes_online(cfg):
 Use a busca na web agora. Use só o que encontrar nas páginas: não invente produtos, preços, fretes nem prazos. Se não conseguir usar a busca na web, responda apenas {{"erro": "sem_busca"}}.
 
 Assinaturas do morador: {', '.join(assin) or 'nenhuma'}. Quando a assinatura der frete grátis no item, use frete 0.
+{APPS_TXT if any(m in (on.get("marketplaces") or []) for m in ("ifood", "rappi")) else ""}
 Casa: {casa}.
 Não traga: {', '.join(excluir) or 'nada a excluir'}.
 Restrições: {', '.join(restr) or 'nenhuma'}. Interesses, que devem vir primeiro: {', '.join(interesses) or 'nenhum'}.
@@ -631,7 +640,8 @@ def instrucoes_para(cat_id, cfg):
     casa, excluir, restr, interesses = descreve_casa(cfg)
     lojas = cfg.get("lojas") or {}
     lista = itens_prompt(cfg)
-    adicionadas = [a.get("nome") for a in (lojas.get("adicionar") or []) if isinstance(a, dict) and a.get("categoria") == cat_id]
+    adicionadas = [a.get("nome") + (f" (site: {a['site']})" if url_ok(a.get("site")) else "")
+                   for a in (lojas.get("adicionar") or []) if isinstance(a, dict) and a.get("categoria") == cat_id and a.get("nome")]
     extra = ""
     if cat_id == "farmacias":
         extra = ' Em remédios, inclua "receita": "tarja" (venda sob prescrição) ou "mip" (sem receita).'
@@ -650,13 +660,13 @@ Lojas para ignorar: {', '.join(lojas.get('ignorar') or []) or 'nenhuma'}. Lojas 
 
 Responda somente com um objeto JSON, sem texto antes ou depois, neste formato:
 {{
-  "lojas": [{{"rede": "nome da rede ou da loja", "endereco": "rua e número", "distancia_km": 1.2, "horario": "Aberta até 22h", "fontes": ["Site", "App", "Encarte", "Clube", "Instagram", "WhatsApp", "Tiendeo"]}}],
+  "lojas": [{{"rede": "nome da rede ou da loja", "endereco": "rua e número", "distancia_km": 1.2, "site": "URL da página de ofertas ou do site da loja, ou null", "horario": "Aberta até 22h", "fontes": ["Site", "App", "Encarte", "Clube", "Instagram", "WhatsApp", "Tiendeo"]}}],
   "cupons": [{{"rede": "...", "codigo": "CODIGO", "valor": 20, "beneficio": "R$ 20 de desconto", "condicao": "Pedidos acima de R$ 200", "valido_ate": "AAAA-MM-DD ou null", "oficial": true, "fonte": "URL"}}],
   "ofertas": [{{"rede": "...", "produto": "Nome · tamanho", "preco_normal": 10.0, "preco_oferta": 8.0, "tipo": "promo", "unidade": null, "tamanho": {{"quantidade": 500, "unidade": "g"}}, "condicao": null, "tags": ["alimentos"], "fonte": "URL"}}],
   "lista": [{{"produto": "texto exato do item da lista", "base": {{"quantidade": 1, "unidade": "L", "rotulo": null}}, "precos": [{{"rede": "...", "preco": 9.9, "preco_clube": 8.9, "fonte": "URL"}}], "tamanhos": [{{"rede": "...", "embalagem": "Galão 5 L", "quantidade": 5, "unidade": "L", "preco": 39.9, "fonte": "URL"}}]}}]
 }}
 
-Regras: até 15 ofertas, priorizando os interesses e os maiores descontos. Nos preços da lista, "preco" é o preço para todo mundo; se a loja tiver preço de clube (cadastro por CPF ou app), informe também "preco_clube", senão null. "tipo" é "promo", "clube" (preço para membros) ou "atacado" (preço por quantidade). "oficial" é true só se o cupom estiver no site ou app da própria loja. Etiquetas permitidas em "tags": {', '.join(sorted(TAGS))}.{extra}"""
+Regras: em "lojas", inclua também mercadinhos e lojas independentes do raio, mesmo sem preços encontrados, com o site ou a página de ofertas quando houver. Até 15 ofertas, priorizando os interesses e os maiores descontos. Nos preços da lista, "preco" é o preço para todo mundo; se a loja tiver preço de clube (cadastro por CPF ou app), informe também "preco_clube", senão null. "tipo" é "promo", "clube" (preço para membros) ou "atacado" (preço por quantidade). "oficial" é true só se o cupom estiver no site ou app da própria loja. Etiquetas permitidas em "tags": {', '.join(sorted(TAGS))}.{extra}"""
 
 
 def normalizar(cat_id, bruto, cfg):
@@ -689,6 +699,8 @@ def normalizar(cat_id, bruto, cfg):
         lojas[rid] = {"rede": rid, "distancia_km": d, "horario": texto(l.get("horario"), 60) or "",
                       "endereco": texto(l.get("endereco"), 90),
                       "fontes": [f for f in (l.get("fontes") or []) if f in FONTES][:5] or ["Site"]}
+        if url_ok(l.get("site")):
+            lojas[rid]["site"] = l["site"][:300]
 
     cupons = []
     for c in bruto.get("cupons") or []:
@@ -708,7 +720,10 @@ def normalizar(cat_id, bruto, cfg):
             continue
         rid, prod = rede_id(o.get("rede")), texto(o.get("produto"), 100)
         normal, oferta = numero(o.get("preco_normal")), numero(o.get("preco_oferta"))
-        if not (rid and prod and normal and oferta and oferta < normal):
+        encarte = o.get("encarte") is True
+        if encarte and not (normal and oferta and oferta < normal):
+            normal = None  # encarte costuma mostrar só o preço da oferta
+        if not (rid and prod and oferta and (encarte or (normal and oferta < normal))):
             continue
         oid = rid + "-" + slug(prod)
         if oid in ids:
@@ -717,6 +732,12 @@ def normalizar(cat_id, bruto, cfg):
         item = {"id": oid, "rede": rid, "produto": prod, "preco_normal": normal, "preco_oferta": oferta,
                 "tipo": o.get("tipo") if o.get("tipo") in ("promo", "clube", "atacado") else "promo",
                 "tags": [t for t in (o.get("tags") or []) if t in TAGS], "fonte": o["fonte"]}
+        if encarte:
+            item["encarte"] = True
+            if normal is None:
+                item["tipo"] = "encarte"
+            if data_ok(o.get("valido_ate")):
+                item["valido_ate"] = data_ok(o.get("valido_ate"))
         for campo, lim in (("unidade", 12), ("condicao", 80)):
             if texto(o.get(campo), lim):
                 item[campo] = texto(o.get(campo), lim)
@@ -831,6 +852,144 @@ def normalizar(cat_id, bruto, cfg):
     }, lista
 
 
+# ---------- encarte do site da loja ----------
+URL_ATTR_RE = re.compile(r"""(?:src|data-src|data-original|href|content|srcset)\s*=\s*["']([^"']+)["']""", re.I)
+RUIDO_IMG = ("logo", "icon", "favicon", "sprite", "avatar", "whatsapp", "facebook", "instagram", "pixel", "loading")
+NAVEGADOR = "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Mobile Safari/537.36"
+
+
+def baixar(url, limite, timeout=25):
+    req = urllib.request.Request(url, headers={"User-Agent": NAVEGADOR, "Accept-Language": "pt-BR,pt;q=0.9"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        tipo = (r.headers.get("Content-Type") or "").split(";")[0].strip().lower()
+        dado = r.read(limite + 1)
+    if len(dado) > limite:
+        raise ValueError("arquivo grande demais")
+    return dado, tipo
+
+
+def candidatos_encarte(pagina_html, base):
+    """Imagens e PDFs da página, na ordem em que aparecem (Wix: pede uma versão de até 1600 px)."""
+    vistos, out = set(), []
+    for valor in URL_ATTR_RE.findall(pagina_html):
+        for parte in valor.split(","):
+            u = parte.strip().split(" ")[0].replace("&amp;", "&")
+            if not u or u.startswith("data:"):
+                continue
+            u = urllib.parse.urljoin(base, u)
+            low = u.lower()
+            wix = re.match(r"(https?://static\.wixstatic\.com/media/[^/?#]+?\.(?:jpe?g|png|webp))", u, re.I)
+            if wix:
+                chave, u = wix.group(1).lower(), wix.group(1) + "/v1/fit/w_1600,h_3200,q_85/encarte.jpg"
+            elif re.search(r"\.(jpe?g|png|webp|pdf)([?#].*)?$", low):
+                chave = low.split("?")[0].split("#")[0]
+            else:
+                continue
+            if chave in vistos or any(r in low.rsplit("/", 1)[-1] for r in RUIDO_IMG):
+                continue
+            vistos.add(chave)
+            out.append(u)
+    return out
+
+
+def texto_da_pagina(pagina_html):
+    t = re.sub(r"(?is)<(script|style|noscript|svg)[^>]*>.*?</\1>", " ", pagina_html)
+    t = re.sub(r"(?s)<[^>]+>", " ", t)
+    return " ".join(html_mod.unescape(t).split())[:5000]
+
+
+def instrucoes_encarte(loja, texto_pag, n, cfg):
+    aspas = chr(34) * 3
+    fonte = f"{n} imagem(ns) ou PDF do encarte de ofertas" if n else "o texto da página de ofertas"
+    return f"""Você recebe {fonte} do site da loja "{loja['nome']}" ({loja['site']}). Hoje é {hoje_br()}.
+{('Texto da página: ' + aspas + texto_pag[:4000] + aspas) if texto_pag else ''}
+
+Extraia as ofertas legíveis: "produto" com marca e tamanho (por exemplo "Café Pilão 500 g"), "preco" (o preço da oferta), "preco_normal" só se o encarte mostrar o preço "de", "unidade" ("kg" quando o preço for por quilo), "condicao" (por exemplo "leve 3 pague 2", "no cartão da loja", "clube"), "tipo" ("clube" quando for preço de clube, senão "promo") e "tamanho". Não invente nada que não esteja legível.
+Lista de compras do morador: {'; '.join(itens_prompt(cfg)) or 'vazia'}. Para cada item da lista que aparecer no encarte, informe o preço em "lista".
+{TAMANHOS_TXT}
+
+Responda somente com um objeto JSON, sem texto antes ou depois:
+{{"validade": "AAAA-MM-DD ou null", "ofertas": [{{"produto": "Café Pilão 500 g", "preco": 15.98, "preco_normal": null, "unidade": null, "condicao": null, "tipo": "promo", "tamanho": {{"quantidade": 500, "unidade": "g"}}, "tags": ["alimentos", "cafe"]}}], "lista": [{{"produto": "texto exato do item da lista", "base": {{"quantidade": 1, "unidade": "L", "rotulo": null}}, "precos": [{{"preco": 9.9}}], "tamanhos": []}}]}}
+Etiquetas permitidas em "tags": {', '.join(sorted(TAGS))}. Até 40 ofertas, priorizando os itens da lista e os interesses."""
+
+
+def ler_encarte(loja, cfg):
+    """Abre o site de ofertas, baixa o encarte e pede para a IA de fotos ler. Devolve (categoria, lista)."""
+    try:
+        pagina, tipo = baixar(loja["site"], 3 * 1024 * 1024)
+    except Exception as e:  # noqa: BLE001
+        raise ErroBusca(f"não consegui abrir o site ({e})") from e
+    dados, texto_pag = [], ""
+    if tipo == "application/pdf" or pagina[:4] == b"%PDF":
+        dados.append((pagina, "application/pdf"))
+    elif tipo.startswith("image/"):
+        dados.append((pagina, tipo))
+    else:
+        html_txt = pagina.decode("utf-8", "ignore")
+        texto_pag = texto_da_pagina(html_txt)
+        for u in candidatos_encarte(html_txt, loja["site"])[:16]:
+            if len(dados) >= 6:
+                break
+            try:
+                dado, t = baixar(u, 9 * 1024 * 1024 if u.lower().endswith(".pdf") else 4_500_000)
+            except Exception:  # noqa: BLE001
+                continue
+            if t == "application/pdf" or dado[:4] == b"%PDF":
+                if sum(1 for _, x in dados if x == "application/pdf") < 2:
+                    dados.append((dado, "application/pdf"))
+            elif t in ("image/jpeg", "image/png", "image/webp") and len(dado) >= 45_000:  # logos e ícones são pequenos
+                dados.append((dado, t))
+    if not dados and len(texto_pag) < 200:
+        raise ErroBusca("não achei encarte nem ofertas no site")
+    pasta = os.path.join(MEDIA, "economia")
+    arquivos, anexos = [], []
+    try:
+        if dados:
+            os.makedirs(pasta, exist_ok=True)
+        marca = datetime.now().strftime("%H%M%S") + os.urandom(2).hex()
+        for n, (dado, t) in enumerate(dados):
+            ext = {"application/pdf": "pdf", "image/png": "png", "image/webp": "webp"}.get(t, "jpg")
+            nome = f"encarte-{marca}-{n}.{ext}"
+            with open(os.path.join(pasta, nome), "wb") as f:
+                f.write(dado)
+            arquivos.append(os.path.join(pasta, nome))
+            anexos.append({"media_content_id": f"{MEDIA_URI}/economia/{nome}", "media_content_type": t})
+        r = chamar_ai_task(f"EconomIA: encarte {loja['nome']}", instrucoes_encarte(loja, texto_pag, len(anexos), cfg), anexos or None, uso="fotos")
+    finally:
+        for a in arquivos:
+            try:
+                os.remove(a)
+            except OSError:
+                pass
+    nome, url, val = loja["nome"], loja["site"], data_ok(r.get("validade"))
+    marca_rede = lambda x: dict(x, rede=nome, fonte=url)  # noqa: E731
+    bruto = {
+        "lojas": [{"rede": nome, "endereco": None, "distancia_km": None, "fontes": ["Site", "Encarte"]}],
+        "cupons": [],
+        "ofertas": [dict(o, rede=nome, preco_oferta=o.get("preco"), fonte=url, encarte=True, valido_ate=val)
+                    for o in r.get("ofertas") or [] if isinstance(o, dict)],
+        "lista": [dict(it, precos=[marca_rede(x) for x in it.get("precos") or [] if isinstance(x, dict)],
+                       tamanhos=[marca_rede(x) for x in it.get("tamanhos") or [] if isinstance(x, dict)])
+                  for it in r.get("lista") or [] if isinstance(it, dict)],
+    }
+    log(f"encarte de {nome}: {len(dados)} arquivo(s), {len(bruto['ofertas'])} oferta(s)")
+    return normalizar(loja["categoria"], bruto, cfg)
+
+
+def juntar_categoria(dest, cat):
+    """Junta o resultado de um encarte à categoria que veio da busca."""
+    ids_redes = {r["id"] for r in dest.get("redes") or []}
+    dest.setdefault("redes", []).extend(r for r in cat["redes"] if r["id"] not in ids_redes)
+    lojas = {l["rede"]: l for l in dest.get("lojas") or []}
+    for l in cat["lojas"]:
+        if l["rede"] in lojas:
+            lojas[l["rede"]]["fontes"] = sorted(set(lojas[l["rede"]].get("fontes") or []) | set(l["fontes"]))
+        else:
+            dest.setdefault("lojas", []).append(l)
+    ids = {o["id"] for o in dest.get("ofertas") or []}
+    dest.setdefault("ofertas", []).extend(o for o in cat["ofertas"] if o["id"] not in ids)
+
+
 def juntar_item(dest, ent):
     """Junta o que uma categoria achou para um item da lista ao que as outras já acharam."""
     b, nb = dest.get("base"), ent.get("base")
@@ -923,8 +1082,62 @@ def buscar():
                 continue
             novas.append(cat)
             parciais.append(parcial)
+        falhou_tudo = not novas or len(falhas) == len(cats)
+        sites = [a for a in ((cfg.get("lojas") or {}).get("adicionar") or [])
+                 if isinstance(a, dict) and url_ok(a.get("site")) and a.get("categoria") in cats and texto(a.get("nome"), 60)]
+        BUSCA["total"] = len(cats) + len(sites)
+        for j, loja in enumerate(sites, 1):
+            loja = {"nome": texto(loja["nome"], 60).split(",")[0].strip(), "site": loja["site"], "categoria": loja["categoria"]}
+            BUSCA.update({"atual": len(cats) + j, "etapa": "encarte de " + loja["nome"]})
+            try:
+                cat_e, parcial_e = ler_encarte(loja, cfg)
+            except ErroBusca as e:
+                falhas.append(f"Encarte de {loja['nome']}: {e}")
+                continue
+            alvo = next((c for c in novas if c.get("id") == cat_e["id"]), None)
+            if alvo is None:
+                novas.append(cat_e)
+            else:
+                juntar_categoria(alvo, cat_e)
+            parciais.append(parcial_e)
+            falhou_tudo = False
+        # lojas do raio que a busca achou com site, mas sem nenhum preço: tenta ler o encarte do site
+        com_preco = {r for parcial in parciais for ent in parcial.values() for r in list(ent["precos"]) + [t["rede"] for t in ent["tamanhos"]]}
+        manuais = {norm(l["nome"]) for l in sites}
+        ignorar = set((cfg.get("lojas") or {}).get("ignorar") or [])
+        try:
+            raio = float(cfg.get("raio_km") or 2)
+        except (TypeError, ValueError):
+            raio = 2.0
+        auto = []
+        for c in novas:
+            if c.get("id") not in cats or c.get("id") == "online":
+                continue
+            nomes = {r["id"]: r["nome"] for r in c.get("redes") or []}
+            ofertou = {o["rede"] for o in c.get("ofertas") or []}
+            for l in c.get("lojas") or []:
+                rid = l.get("rede")
+                d = l.get("distancia_km")
+                if (url_ok(l.get("site")) and rid not in ofertou and rid not in com_preco and rid not in ignorar
+                        and (d is None or d <= raio) and norm(nomes.get(rid, "")) not in manuais):
+                    auto.append((c, l, nomes.get(rid, rid)))
+        for c, l, nome in auto[:AUTO_ENCARTES]:
+            BUSCA.update({"etapa": "encarte de " + nome})
+            try:
+                cat_e, parcial_e = ler_encarte({"nome": nome, "site": l["site"], "categoria": c["id"]}, cfg)
+            except ErroBusca as e:
+                l["site_sem_encarte"] = True
+                log(f"encarte automático de {nome}: {e}")
+                continue
+            if not cat_e["ofertas"] and not parcial_e:
+                l["site_sem_encarte"] = True
+                continue
+            juntar_categoria(c, cat_e)
+            parciais.append(parcial_e)
+            l["encarte_auto"] = True
+            l["fontes"] = sorted(set(l.get("fontes") or []) | {"Encarte"})
         lista = juntar_categorias(parciais)
-        if not novas or len(falhas) == len(cats):
+        if falhou_tudo:
             raise ErroBusca(falhas[0] if falhas else "A busca não trouxe resultados.")
         gravar_json(OFERTAS, {
             "versao": 2, "gerado_em": agora(), "origem": "ia_home_assistant",
@@ -1196,7 +1409,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.9.4"
+    server_version = "EconomIA/0.10.0"
 
     def log_message(self, fmt, *args):
         pass

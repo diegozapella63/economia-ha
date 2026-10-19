@@ -52,9 +52,21 @@ Em **Mais → Lojas → Clubes e cupons do app**:
 
 O EconomIA não entra na sua conta das lojas: esses apps não têm acesso aberto e pedem código por SMS.
 
+## Mercadinhos e encartes no site
+
+A busca na web lê texto; muitos mercados do bairro publicam as ofertas como **imagem de encarte** no site. Por isso:
+
+- A busca procura também mercadinhos e lojas independentes do raio. Se achar o site de uma loja sem nenhum preço, o EconomIA abre o site, baixa o encarte e a IA de fotos lê os preços (até 2 lojas por busca).
+- Loja que continua sem preço aparece com o selo **Sem preços** em Mais → Lojas e um aviso nas Ofertas. Toque em **Adicionar site de ofertas** e cole o endereço da página do encarte (por exemplo `mercadosalles.com.br/ofertas`): a partir da próxima busca, o encarte é lido sempre.
+- Também dá para informar o site ao **Adicionar loja**.
+
+As ofertas de encarte aparecem com o rótulo "Encarte" e a validade, e os preços entram na comparação da lista e no roteiro.
+
 ## Compras online
 
-A aba **Online** compara Mercado Livre, Amazon e outros marketplaces que você marcar em **Mais → Compras online**. Marque também as assinaturas que dão frete grátis (Amazon Prime, Meli+).
+A aba **Online** compara iFood, Rappi, Mercado Livre, Amazon e outros que você marcar em **Mais → Compras online**. Marque também as assinaturas que dão frete grátis (Amazon Prime, Meli+, Clube iFood).
+
+- **iFood e Rappi**: trazem os preços dos mercados, farmácias e pet shops do bairro no app, com a taxa de entrega somada. O preço no app pode ser maior que no balcão. Com Clube iFood, a taxa fica zerada nas lojas participantes; os cupons pessoais do Clube entram pelo print, em Cupons do app.
 
 - O preço considerado é o **preço mais o frete** para o seu CEP. Kits aparecem com o preço por unidade.
 - Prime e Meli+ dão frete grátis só nos produtos elegíveis (na Amazon, os com selo Prime). O frete de cada item já vem com a assinatura considerada.
