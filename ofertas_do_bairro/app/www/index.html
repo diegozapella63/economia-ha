@@ -271,7 +271,27 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .deal.muted .off{background:var(--bg);color:var(--muted)}
 
 /* abertura: etiqueta de preço com a economia possível */
-.hero{display:flex;flex-direction:column;gap:14px;padding-top:36px}
+.hero{display:flex;flex-direction:column;gap:18px;padding-top:8px}
+/* abertura: cupom fiscal saindo da impressora, na cor do app */
+.recibo-wrap{position:relative;max-width:560px;padding-top:7px}
+.recibo-wrap::before{content:"";position:absolute;z-index:2;left:-8px;right:-8px;top:0;height:14px;border-radius:999px;background:var(--line);box-shadow:inset 0 -4px 0 rgba(0,0,0,.28)}
+.recibo{position:relative;background:var(--tag-bg);color:var(--tag-ink);padding:24px 20px 36px;--zz:14px;
+  -webkit-mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/var(--zz) 100%;
+  mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/var(--zz) 100%}
+.rc-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-family:var(--font-display);font-weight:600;font-size:15px;letter-spacing:.1em;text-transform:uppercase;opacity:.8}
+.rc-itens{list-style:none;margin:14px 0 0;padding:12px 0 0;border-top:2px dashed var(--tag-line);display:flex;flex-direction:column;gap:6px;font-size:15px}
+.rc-itens li{display:flex;align-items:baseline;gap:8px;min-width:0}
+.rc-itens .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.rc-itens .pt{flex:1 1 12px;min-width:12px;border-bottom:2px dotted var(--tag-line);transform:translateY(-4px)}
+.rc-itens .v{font-family:var(--font-display);font-weight:600;font-size:18px;white-space:nowrap}
+.rc-itens .mais{font-size:14px;opacity:.75}
+.rc-total{display:flex;flex-direction:column;align-items:flex-start;gap:2px;margin-top:14px;padding-top:12px;border-top:2px dashed var(--tag-line)}
+.rc-k{font-family:var(--font-display);font-weight:600;font-size:17px;line-height:1.1;text-transform:uppercase;letter-spacing:.08em;opacity:.85}
+.rc-v{font-family:var(--font-display);font-weight:700;font-size:clamp(48px,16vw,76px);line-height:.95;max-width:100%;overflow-wrap:anywhere}
+.rc-sub{font-size:14px;opacity:.85;margin-top:8px}
+.rc-barras{height:28px;max-width:190px;margin-top:14px;opacity:.75;background:repeating-linear-gradient(90deg,var(--tag-ink) 0 2px,transparent 2px 5px,var(--tag-ink) 5px 6px,transparent 6px 8px,var(--tag-ink) 8px 11px,transparent 11px 13px,var(--tag-ink) 13px 14px,transparent 14px 17px)}
+@media (prefers-reduced-motion:no-preference){.recibo{animation:imprime 1.3s cubic-bezier(.25,.8,.3,1) .1s both}}
+@keyframes imprime{from{transform:translateY(-100%);clip-path:inset(100% 0 0 0)}to{transform:none;clip-path:inset(0)}}
 .tag-wrap{position:relative;max-width:640px;transform:rotate(-1.4deg);transform-origin:45px -34px}
 .tag-wrap::before{content:"";position:absolute;z-index:2;left:44px;top:-36px;bottom:50%;width:2px;border-radius:2px;background:var(--muted);transform:rotate(-3deg);transform-origin:top}
 @media (prefers-reduced-motion:no-preference){.tag-wrap{animation:balanca 1.8s cubic-bezier(.2,.7,.3,1) both}}
@@ -698,12 +718,13 @@ h3{font-size:13px;font-weight:600}
   <!-- MINHA LISTA -->
   <section class="view" id="v-lista" aria-label="Minha lista" hidden>
     <section class="hero" aria-label="Oportunidades de economia">
-      <div class="tag-wrap">
-        <div class="tag">
-          <span class="tag-hole" aria-hidden="true"></span>
-          <p class="tag-eyebrow" id="heroOla">Bem-vindo</p>
-          <p class="tag-valor num" id="heroValor">EconomIA</p>
-          <p class="tag-sub" id="heroSub">Farmácias, mercados e pet shops perto de casa</p>
+      <div class="recibo-wrap">
+        <div class="recibo" id="recibo">
+          <div class="rc-top"><span id="heroOla">Cupom de economia</span><span class="num" id="heroData"></span></div>
+          <ul class="rc-itens num" id="heroItens" hidden></ul>
+          <div class="rc-total"><span class="rc-k" id="heroK">Bem-vindo ao</span><span class="rc-v num" id="heroValor">EconomIA</span></div>
+          <p class="rc-sub" id="heroSub">Farmácias, mercados e pet shops perto de casa</p>
+          <div class="rc-barras" aria-hidden="true"></div>
         </div>
       </div>
       <div class="opps" id="heroChips" hidden></div>
@@ -903,7 +924,7 @@ h3{font-size:13px;font-weight:600}
       </div>
     </section>
     <section class="panel settings" aria-labelledby="h-sobre">
-      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.9.3. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
+      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.9.4. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
     </section>
 
     <div class="group" id="lojasSec"><h2 class="big">Lojas</h2></div>
@@ -1788,10 +1809,10 @@ h3{font-size:13px;font-weight:600}
 
   // ===== Abertura: oportunidades de economia =====
   function oportunidades(){
-    var o = {total:0, acabando:0, acabandoNomes:[], paraVoce:0, cupom:null, tam:[], rot:null};
+    var o = {total:0, itens:[], acabando:0, acabandoNomes:[], paraVoce:0, cupom:null, tam:[], rot:null};
     estado.lista.forEach(function(it){
       var p = precosDe(it.produto), r = ritmo(it.compras), mt = p.length ? melhorTamanho(it, r, p) : null;
-      if (p.length > 1) o.total += p[p.length - 1].v - p[0].v;
+      if (p.length > 1){ o.total += p[p.length - 1].v - p[0].v; o.itens.push({nome:nomeCurto(it.produto), e:p[p.length - 1].v - p[0].v}); }
       if (r.dias != null && r.dias <= 3){ o.acabando++; o.acabandoNomes.push(nomeCurto(it.produto)); }
       if (mt && mt.economia > 0) o.tam.push({nome:nomeCurto(it.produto), e:mt.economia});
     });
@@ -1825,12 +1846,18 @@ h3{font-size:13px;font-weight:600}
   }
   function pintaHero(){
     var o = oportunidades(), vazio = !estado.lista.length;
-    $('heroOla').textContent = usuario ? 'Olá, ' + usuario : 'Bem-vindo';
+    $('heroData').textContent = dataBR(hojeSP());
     $('comecar').hidden = !vazio;
+    var top = o.itens.sort(function(a, b){ return b.e - a.e; });
+    $('heroItens').hidden = !top.length;
+    $('heroItens').innerHTML = top.slice(0, 3).map(function(x){ return '<li><span class="n">' + esc(x.nome) + '</span><span class="pt" aria-hidden="true"></span><span class="v">' + brl.format(x.e) + '</span></li>'; }).join('')
+      + (top.length > 3 ? '<li class="mais">+ ' + (top.length - 3) + (top.length - 3 > 1 ? ' itens' : ' item') + '</li>' : '');
     if (o.total > 0){
+      $('heroK').textContent = 'Economia possível';
       $('heroValor').textContent = brl.format(o.total);
-      $('heroSub').textContent = 'de economia possível na sua lista, comprando cada item onde está mais barato';
+      $('heroSub').textContent = 'comprando cada item da sua lista onde está mais barato';
     } else {
+      $('heroK').textContent = 'Bem-vindo ao';
       $('heroValor').textContent = 'EconomIA';
       $('heroSub').textContent = vazio ? 'Farmácias, mercados e pet shops perto de casa' : 'Toque em Buscar para descobrir quanto dá para economizar na sua lista';
     }

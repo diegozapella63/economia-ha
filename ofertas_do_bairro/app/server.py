@@ -49,6 +49,7 @@ OFERTAS = os.path.join(DATA, "ofertas.json")
 OPTIONS = os.path.join(DATA, "options.json")
 SYNC_FILE = os.path.join(DATA, "sync_ha.json")
 SYNC_INTERVALO = int(os.environ.get("OFERTAS_SYNC_SEG", "60"))
+ESPERA_COTA = int(os.environ.get("OFERTAS_ESPERA_COTA", "60"))
 HA_API = os.environ.get("OFERTAS_HA_API", "http://supervisor/core/api")
 # O ingress do Supervisor chega sempre deste endereço.
 INGRESS_IPS = {"172.30.32.2", "127.0.0.1", "::1"}
@@ -83,6 +84,19 @@ SYNC = {"ultima": None, "erro": None, "chegaram": 0, "enviados": 0}
 
 class ErroBusca(Exception):
     pass
+
+
+class ErroCota(ErroBusca):
+    """A IA recusou por limite de uso (erro 429 / cota)."""
+    def __init__(self, provedor=""):
+        super().__init__(("A cota da IA acabou" + (f" ({provedor})" if provedor else "") +
+                          ": ela recusou por excesso de pedidos (erro 429). No plano gratuito há limite por minuto e por dia. "
+                          "Espere alguns minutos e tente de novo, ou ative o faturamento da chave (no Google, em aistudio.google.com)."))
+
+
+def e_cota(txt):
+    t = str(txt or "").lower()
+    return "429" in t or "quota" in t or "resource_exhausted" in t or "rate limit" in t
 
 
 class ErroFormato(ErroBusca):
@@ -436,8 +450,10 @@ def chamar_conversa(agente, instrucoes):
                {"text": instrucoes, "agent_id": agente}, timeout=900) or {}
     resp = ((r.get("service_response") or {}).get("response")) or {}
     fala = ((resp.get("speech") or {}).get("plain") or {}).get("speech") or ""
-    if resp.get("response_type") == "error":
-        raise ErroBusca("O assistente de conversa respondeu com erro: " + fala[:200])
+    if resp.get("response_type") == "error" or (e_cota(fala) and "{" not in fala[:1]):
+        if e_cota(fala):
+            raise ErroCota("Google Gemini" if "google" in fala.lower() else "")
+        raise ErroBusca("O assistente de conversa respondeu com erro: " + " ".join(fala.split())[:160])
     return extrai_json(fala)
 
 
@@ -471,6 +487,8 @@ def chamar_ai_task(nome, instrucoes, anexos=None, uso="busca"):
                             "em Configurações → Dispositivos e serviços e escolha-a em Mais → IA do Home Assistant.") from e
         if e.code == 401:
             raise ErroBusca("O add-on não tem permissão para usar o Home Assistant. Reinstale a versão mais nova.") from e
+        if e.code == 429 or e_cota(corpo_erro):
+            raise ErroCota() from e
         if anexos and "attachment" in corpo_erro.lower():
             raise ErroBusca("A IA escolhida no Home Assistant não lê imagens. Use uma que leia, como a Anthropic, "
                             "ou cole o texto da mensagem.") from e
@@ -886,8 +904,17 @@ def buscar():
             BUSCA.update({"atual": i, "etapa": CATEGORIAS[cat_id]["nome"].lower()})
             log(f"buscando {cat_id}")
             try:
-                cat, parcial = normalizar(cat_id, chamar_ai_task(f"EconomIA: {cat_id}", instrucoes_para(cat_id, cfg)), cfg)
+                try:
+                    cat, parcial = normalizar(cat_id, chamar_ai_task(f"EconomIA: {cat_id}", instrucoes_para(cat_id, cfg)), cfg)
+                except ErroCota:
+                    BUSCA["etapa"] = CATEGORIAS[cat_id]["nome"].lower() + " (a IA pediu uma pausa, tentando de novo em 1 minuto)"
+                    log("cota da IA: esperando 60 s")
+                    time.sleep(ESPERA_COTA)
+                    BUSCA["etapa"] = CATEGORIAS[cat_id]["nome"].lower()
+                    cat, parcial = normalizar(cat_id, chamar_ai_task(f"EconomIA: {cat_id}", instrucoes_para(cat_id, cfg)), cfg)
             except ErroBusca as e:
+                if isinstance(e, ErroCota):
+                    raise
                 if any(t in str(e) for t in ("Falta uma IA", "não usou a busca na web", "não tem acesso", "não tem permissão", "assistente de conversa")):
                     raise
                 falhas.append(f"{CATEGORIAS[cat_id]['nome']}: {e}")
@@ -1169,7 +1196,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.9.3"
+    server_version = "EconomIA/0.9.4"
 
     def log_message(self, fmt, *args):
         pass
