@@ -775,7 +775,7 @@ h3{font-size:13px;font-weight:600}
         <p id="limparTxt"></p>
         <div class="row-form"><button type="button" class="btn perigo" id="limparSim">Apagar tudo</button><button type="button" class="ghost big" id="limparNao">Cancelar</button></div>
       </div>
-      <p class="sec-meta">Uma lista só para farmácias, mercados, pet shops e compras online. Pode escrever só o produto, como "Lysoform": o EconomIA compara os tamanhos e diz se o maior compensa. O que está acabando aparece primeiro; toque em "Comprei hoje" quando comprar.</p>
+      <p class="sec-meta">Uma lista só para farmácias, mercados, pet shops e compras online. Pode escrever só o produto, como "Lysoform": o EconomIA compara os tamanhos pelo preço por quilo ou litro e diz qual compensa. O que está acabando aparece primeiro; toque em "Comprei hoje" quando comprar.</p>
       <ul class="wish-grid" id="wish"></ul>
     </section>
   </section>
@@ -943,7 +943,7 @@ h3{font-size:13px;font-weight:600}
       </div>
     </section>
     <section class="panel settings" aria-labelledby="h-sobre">
-      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.10.3. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
+      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.10.4. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
     </section>
 
     <div class="group" id="lojasSec"><h2 class="big">Lojas</h2></div>
@@ -1385,9 +1385,14 @@ h3{font-size:13px;font-weight:600}
     return {id:id, v:Number(v)};
   }
   // compensa pedir online ou comprar na loja?
-  function decisaoOnline(r, p, avulso){
+  function decisaoOnline(r, p, dc){
+    var avulso = !!dc;
     var loja = p.filter(function(y){ return !y.online; })[0], net = p.filter(function(y){ return y.online; })[0];
     if (!net) return '';
+    if (dc && !dc.online && dc.porBase < net.v - 0.004){
+      return '<div class="i-online"><span class="dchip">Compra na loja</span><p>' + esc('Avulso online: ' + brl.format(net.v) + ' na ' + G[net.id].nome + (net.frete ? ' (frete ' + brl.format(net.frete) + ')' : ' (frete grátis)')) + '</p>'
+        + '<p class="i-nota">' + esc(dc.como + ' na ' + G[dc.id].nome + ' sai ' + brl.format(dc.porBase) + ' por ' + dc.base + ', ' + brl.format(net.v - dc.porBase) + ' a menos que pedir online.') + '</p></div>';
+    }
     var dia = function(n){ return n + (n > 1 ? ' dias' : ' dia'); };
     var linha = (avulso ? 'Avulso online: ' : 'Online: ') + brl.format(net.v) + ' na ' + G[net.id].nome + (net.frete ? ' (frete ' + brl.format(net.frete) + ')' : ' (frete grátis)')
       + (net.prazo != null ? (net.prazo === 0 ? ', chega hoje' : ', chega em ' + dia(net.prazo)) : '') + (net.obs ? ' · ' + net.obs : '');
@@ -1452,12 +1457,14 @@ h3{font-size:13px;font-weight:600}
     if (!info || !info.base || !arr(info.tamanhos).length) return null;
     var b = info.base, q0 = Number(b.quantidade), ops = opcoesTamanho(info, p);
     if (!(q0 > 0) || ops.length < 2) return null;
-    var tams = [];
-    ops.forEach(function(o){ if (o.q >= q0 * 0.99 && !tams.some(function(q){ return igualQ(o.q, q); })) tams.push(o.q); });
+    var tams = [q0];
+    ops.forEach(function(o){ if (!tams.some(function(q){ return igualQ(o.q, q); })) tams.push(o.q); });
     tams.sort(function(x, y){ return x - y; });
     var js = tams.map(function(Q){ return jeitoPara(Q, ops); }).filter(Boolean);
     if (js.length < 2) return null;
-    var ref = js[0], limite = ESTOQUE[estado.cotidiano.estoque] || 180;
+    // referência: o tamanho de sempre (a base); sem preço nele, o menor acima dela
+    var ref = js.filter(function(j){ return igualQ(j.Q, q0); })[0] || js.filter(function(j){ return j.Q >= q0 * 0.99; })[0] || js[0];
+    var limite = ESTOQUE[estado.cotidiano.estoque] || 180;
     var dura = function(Q){ return r.media ? Math.round(Q / q0 * r.media) : null; };
     var pu = function(j){ return j.total / j.Q; };
     var porPu = function(x, y){ return pu(x) - pu(y); };
@@ -1480,21 +1487,29 @@ h3{font-size:13px;font-weight:600}
       dica = {id:best.o.id, link:best.o.link, txt:comoTxt(best, b) + ' por ' + brl.format(best.total), como:comoTxt(best, b), total:best.total, online:best.o.online, frete:best.o.frete,
               porBase:Math.round(best.total / (best.Q / q0) * 100) / 100, base:medidaTxt(q0, b)};
       principal = !(best.o.online && best.o.prazo != null && r.dias != null && best.o.prazo > r.dias);
-      chip = '<span class="dchip on">Compensa o maior</span>';
+      var menor = best.Q < ref.Q;
+      chip = '<span class="dchip on">' + (menor ? 'Compensa o menor' : 'Compensa o maior') + '</span>';
       linha = comoTxt(best, b) + ' por ' + brl.format(best.total) + ' (' + ondeTxt(best.o) + ') · ' + porUn(best.total, best.Q, b);
-      nota.push('Economia de ' + brl.format(eco) + ' em relação a ' + (nr.n ? nr.n + ' de ' + medidaTxt(ref.Q, b) + ' (' + brl.format(nr.total) + ')' : 'comprar o de ' + medidaTxt(ref.Q, b)) + '.');
-      nota.push(d != null ? 'No seu ritmo, dura uns ' + tempoTxt(d) + '.' : 'Rende ' + fmtQ(best.Q / ref.Q) + ' vezes o de ' + medidaTxt(ref.Q, b) + '.');
+      if (menor){
+        nota.push('Sai ' + porUn(best.total, best.Q, b) + ', contra ' + porUn(ref.total, ref.Q, b) + ' no de ' + medidaTxt(ref.Q, b) + ' mais barato (' + ondeTxt(ref.o) + ').');
+        if (d != null) nota.push('No seu ritmo, dura uns ' + tempoTxt(d) + '.');
+      } else {
+        nota.push('Economia de ' + brl.format(eco) + ' em relação a ' + (nr.n ? nr.n + ' de ' + medidaTxt(ref.Q, b) + ' (' + brl.format(nr.total) + ')' : 'comprar o de ' + medidaTxt(ref.Q, b)) + '.');
+        nota.push(d != null ? 'No seu ritmo, dura uns ' + tempoTxt(d) + '.' : 'Rende ' + fmtQ(best.Q / ref.Q) + ' vezes o de ' + medidaTxt(ref.Q, b) + '.');
+      }
       if (best.o.online && best.o.prazo != null && r.dias != null && best.o.prazo > r.dias) nota.push('Chega em ' + best.o.prazo + (best.o.prazo > 1 ? ' dias' : ' dia') + ', depois de acabar: compre o de sempre agora e peça este para a próxima.');
       if (bestAll !== best && vale(bestAll) && dura(bestAll.Q) != null) nota.push(comoTxt(bestAll, b) + ' sai ainda mais barato, mas duraria uns ' + tempoTxt(dura(bestAll.Q)) + ', mais do que você costuma guardar.');
     } else if (bestAll !== ref && vale(bestAll)){
-      chip = '<span class="dchip warn">Compensa, mas dura muito</span>';
+      chip = '<span class="dchip warn">' + (bestAll.Q < ref.Q ? 'Compensa o menor' : 'Compensa, mas dura muito') + '</span>';
       linha = comoTxt(bestAll, b) + ' por ' + brl.format(bestAll.total) + ' (' + ondeTxt(bestAll.o) + ') · ' + porUn(bestAll.total, bestAll.Q, b);
-      nota.push('Economiza ' + brl.format(economia(bestAll)) + ', mas no seu ritmo dura uns ' + tempoTxt(dura(bestAll.Q)) + ', mais do que você costuma guardar. Fique no de ' + medidaTxt(ref.Q, b) + ' ou mude o espaço para estoque em Mais.');
+      nota.push(bestAll.Q < ref.Q ? 'Sai ' + porUn(bestAll.total, bestAll.Q, b) + ', contra ' + porUn(ref.total, ref.Q, b) + ' no de ' + medidaTxt(ref.Q, b) + '.'
+        : 'Economiza ' + brl.format(economia(bestAll)) + ', mas no seu ritmo dura uns ' + tempoTxt(dura(bestAll.Q)) + ', mais do que você costuma guardar. Fique no de ' + medidaTxt(ref.Q, b) + ' ou mude o espaço para estoque em Mais.');
     } else {
       chip = '<span class="dchip">Tamanho de sempre</span>';
       linha = medidaTxt(ref.Q, b) + ' sai ' + porUn(ref.total, ref.Q, b) + ' (' + ondeTxt(ref.o) + ')';
       var maior = js[js.length - 1];
-      var unico = ops.filter(function(o){ return igualQ(o.q, maior.Q); }).sort(function(x, y){ return x.total - y.total; })[0];
+      if (maior.Q <= ref.Q) maior = null;
+      var unico = maior && ops.filter(function(o){ return igualQ(o.q, maior.Q); }).sort(function(x, y){ return x.total - y.total; })[0];
       if (unico){
         var nm = noRef(maior.Q), rotulo = unico.emb || medidaTxt(unico.q, b);
         if (nm.n && nm.total <= unico.total) nota.push(nm.n + ' × ' + medidaTxt(ref.Q, b) + ' sai ' + brl.format(nm.total) + ' (' + ondeTxt(nm.o) + '), menos que ' + rotulo + ' por ' + brl.format(unico.total) + ' (' + ondeTxt(unico) + ').');
@@ -1549,7 +1564,7 @@ h3{font-size:13px;font-weight:600}
             + (best.obs && !best.online ? '<p class="i-avulso">Produto: ' + esc(best.obs) + '</p>' : ''))
         + (p.length > 1 ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li>' + abreLink(linkCompra(y.id, y.obs || x.it.produto, y.link), 'i-chip', esc(G[y.id].curto) + ' <b>' + brl.format(y.v) + '</b>' + (y.online && y.frete ? ' com frete' : '') + (y.clube ? ' clube' : '')) + '</li>'; }).join('') + '</ul>' : '')
         + dicaClube(p, best)
-        + decisaoOnline(x.r, p, !!dc)
+        + decisaoOnline(x.r, p, dc)
         + ((mt || {}).html || '')
         + acoes + '<span class="i-foot">Em ' + onde + '</span></div></li>';
     }).join('');
@@ -1914,7 +1929,7 @@ h3{font-size:13px;font-weight:600}
     var chips = [], somaTam = o.tam.reduce(function(s_, t){ return s_ + t.e; }, 0);
     var nomes = function(l){ return l.length > 2 ? l.slice(0, 2).join(', ') + ' e mais ' + (l.length - 2) : l.join(' e '); };
     if (o.rot) chips.push(linhaOpp('', 'roteiro', '', ICONE.rota, 'Roteiro em ' + paradasTxt(o.rot.n), nomes(o.rot.ids.map(function(id){ return G[id].nome; })) + (o.rot.online ? ' + online' : ''), o.rot.eco > 0 ? brl.format(o.rot.eco) : brl.format(o.rot.total), o.rot.eco > 0 ? 'economia' : 'total'));
-    if (o.tam.length) chips.push(linhaOpp('', 'itens', '', ICONE.caixa, 'Tamanho maior', 'Compensa em ' + nomes(o.tam.map(function(t){ return t.nome; })), brl.format(somaTam), 'economia'));
+    if (o.tam.length) chips.push(linhaOpp('', 'itens', '', ICONE.caixa, 'Melhor tamanho', 'Compensa em ' + nomes(o.tam.map(function(t){ return t.nome; })), brl.format(somaTam), 'economia'));
     if (o.acabando) chips.push(linhaOpp('warn', 'itens', '', ICONE.relogio, o.acabando > 1 ? 'Itens acabando' : 'Item acabando', nomes(o.acabandoNomes), String(o.acabando), o.acabando > 1 ? 'itens' : 'item'));
     if (o.paraVoce) chips.push(linhaOpp('neutro', 'ofertas', '', ICONE.etiqueta, 'Ofertas para você', estado.perfil.interesses.length ? 'Combinam com ' + nomes(estado.perfil.interesses.map(function(t){ return ROTULO_TAG[t] || t; })) : 'Combinam com o perfil da casa', String(o.paraVoce), o.paraVoce > 1 ? 'ofertas' : 'oferta'));
     if (o.cupom) chips.push(linhaOpp('deal', 'ofertas', o.cupom.cat, ICONE.cupom, o.cupom.c.codigo ? 'Cupom ' + o.cupom.c.codigo : 'Seu cupom', G[o.cupom.c.rede].nome + ' · ' + o.cupom.c.beneficio, o.cupom.n === 0 ? 'Hoje' : o.cupom.n + (o.cupom.n > 1 ? ' dias' : ' dia'), o.cupom.n === 0 ? 'vence' : 'para vencer'));

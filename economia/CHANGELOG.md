@@ -1,5 +1,10 @@
 # Mudanças
 
+## 0.10.4
+
+- **Melhor tamanho** também considera embalagens menores: um pote de 700 g a R$ 34,27/kg ganha do pacote de 1 kg a R$ 47,30/kg ("Compensa o menor").
+- **Compensa pedir online?** compara com a melhor compra por quilo ou litro, não só com o tamanho de sempre.
+
 ## 0.10.3
 
 - **Abrir na loja**: toque no preço mais barato, na melhor compra, nos outros preços ou em Comparar tamanhos para abrir o anúncio (por exemplo, no Mercado Livre). Quando a busca não trouxe o link, o botão vira **Procurar** e abre a busca do produto na loja.
