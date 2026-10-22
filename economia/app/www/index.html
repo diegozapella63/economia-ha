@@ -346,6 +346,7 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .i-avulso{font-size:13px;color:var(--muted)}
 .i-avulso b{color:var(--ink);font-weight:600}
 .item.wait .i-best{background:var(--bg)}
+.i-best .i-busca{margin-left:auto;min-height:34px;padding:0 12px;font-size:14px}
 .i-others{display:flex;flex-wrap:wrap;gap:5px}
 .i-others li{font-size:12.5px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;color:var(--muted);white-space:nowrap}
 .i-others b{color:var(--ink);font-weight:600}
@@ -933,7 +934,7 @@ h3{font-size:13px;font-weight:600}
       </div>
     </section>
     <section class="panel settings" aria-labelledby="h-sobre">
-      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.10.1. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
+      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.10.2. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
     </section>
 
     <div class="group" id="lojasSec"><h2 class="big">Lojas</h2></div>
@@ -1281,7 +1282,7 @@ h3{font-size:13px;font-weight:600}
     return '<li class="deal' + (oc ? ' muted' : '') + '">'
       + '<div><p class="d-prod">' + esc(o.produto) + '</p>' + why
       + '<p class="d-meta"><span>' + esc(G[o.rede].nome) + '</span>' + selo + cond + rec + fonteLink(o.fonte) + acao + '</p></div>'
-      + '<div class="price num"><span class="de">' + (o.preco_normal ? ROT_PRECO[tipo] + ' <s>' + brl.format(o.preco_normal) + '</s>' : 'Encarte') + '</span><span class="por">' + brl.format(o.preco_oferta) + un + '</span>' + (o.tamanho && Number(o.tamanho.quantidade) > 0 && !o.unidade ? '<span class="de">' + porUn(o.preco_oferta, Number(o.tamanho.quantidade), o.tamanho) + '</span>' : o.unidades > 1 ? '<span class="de">' + brl.format(o.preco_oferta / o.unidades) + ' cada</span>' : '') + '</div>'
+      + '<div class="price num"><span class="de">' + (o.preco_normal ? ROT_PRECO[tipo] + ' <s>' + brl.format(o.preco_normal) + '</s>' : o.encarte || tipo === 'encarte' ? 'Encarte' : 'Preço atual') + '</span><span class="por">' + brl.format(o.preco_oferta) + un + '</span>' + (o.tamanho && Number(o.tamanho.quantidade) > 0 && !o.unidade ? '<span class="de">' + porUn(o.preco_oferta, Number(o.tamanho.quantidade), o.tamanho) + '</span>' : o.unidades > 1 ? '<span class="de">' + brl.format(o.preco_oferta / o.unidades) + ' cada</span>' : '') + '</div>'
       + (o.preco_normal ? '<span class="off num">−' + pct(o) + '%</span>' : '<span class="off off-enc" aria-hidden="true">−0%</span>')
       + menu + '</li>';
   }
@@ -1349,7 +1350,7 @@ h3{font-size:13px;font-weight:600}
         }
         if (v && typeof v === 'object'){  // loja com preço de clube: vale só para quem é do clube
           var pn = Number(v.preco) || 0, cl = Number(v.clube) || 0, socio = estado.clubes.indexOf(id) >= 0, temClube = cl > 0 && (!pn || cl < pn);
-          return {id:id, v:socio && temClube ? cl : pn, clube:socio && temClube, precoClube:temClube ? cl : 0, socio:socio};
+          return {id:id, v:socio && temClube ? cl : pn, clube:socio && temClube, precoClube:temClube ? cl : 0, socio:socio, obs:v.obs || ''};
         }
         return {id:id, v:Number(v)};
       }).filter(function(x){ return x.v > 0; }).sort(function(a, b){ return a.v - b.v; });
@@ -1498,9 +1499,13 @@ h3{font-size:13px;font-weight:600}
       var p = precosDe(x.it.produto), soon = x.r.dias != null && x.r.dias <= 3;
       var acoes = '<div class="i-actions"><button type="button" class="ghost" data-comprei="' + x.i + '">Comprei hoje</button><button type="button" class="rm" data-rm="' + x.i + '">remover</button>' + (x.it.origem === 'ha' ? '<span class="chip">Veio do Home Assistant</span>' : '');
       if (!p.length){
+        var procurou = arr((D.relatorio || {}).sem_preco).map(norm).indexOf(norm(x.it.produto)) >= 0;
+        var buscando = buscaItem === x.it.produto;
         return '<li class="item wait"><div class="i-head"><p class="i-prod">' + esc(x.it.produto) + '</p></div>'
           + '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>'
-          + '<div class="i-best"><span class="lbl">Sem preço ainda</span><span class="i-wait">Os preços aparecem depois da próxima busca.</span></div>'
+          + '<div class="i-best"><span class="lbl">Sem preço ainda</span><span class="i-wait">'
+          + (procurou ? 'A última busca não achou preço. Com marca e tamanho fica mais fácil, por exemplo “Detergente Ypê 500 ml”.' : 'Os preços aparecem depois da próxima busca.')
+          + '</span><button type="button" class="ghost i-busca" data-buscaitem="' + x.i + '"' + (buscando ? ' disabled' : '') + '>' + (buscando ? 'Buscando…' : 'Buscar este item') + '</button></div>'
           + acoes + '</div></li>';
       }
       var best = p[0], max = p[p.length - 1].v, conta = {}, mt = melhorTamanho(x.it, x.r, p), dc = mt && mt.principal ? mt.dica : null;
@@ -1511,7 +1516,8 @@ h3{font-size:13px;font-weight:600}
         + (dc
           ? '<div class="i-best"><span class="lbl">Melhor compra</span><span class="por num">' + brl.format(dc.porBase) + '<span class="un">por ' + esc(dc.base) + '</span></span><span class="i-store">' + esc(dc.como) + ' por ' + brl.format(dc.total) + ' · ' + esc(G[dc.id].nome) + ' <span class="chip">' + esc(G[dc.id].singular) + '</span></span></div>'
             + '<p class="i-avulso num">Avulso, o mais barato: <b>' + brl.format(best.v) + '</b> (' + esc(G[best.id].nome) + ')</p>'
-          : '<div class="i-best"><span class="lbl">Mais barato</span><span class="por num">' + brl.format(best.v) + '</span><span class="i-store">' + esc(G[best.id].nome) + ' <span class="chip">' + esc(G[best.id].singular) + '</span>' + (best.clube ? ' <span class="chip selo">Clube</span>' : '') + '</span></div>')
+          : '<div class="i-best"><span class="lbl">Mais barato</span><span class="por num">' + brl.format(best.v) + '</span><span class="i-store">' + esc(G[best.id].nome) + ' <span class="chip">' + esc(G[best.id].singular) + '</span>' + (best.clube ? ' <span class="chip selo">Clube</span>' : '') + '</span></div>'
+            + (best.obs && !best.online ? '<p class="i-avulso">Produto: ' + esc(best.obs) + '</p>' : ''))
         + (p.length > 1 ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li>' + esc(G[y.id].curto) + ' <b>' + brl.format(y.v) + '</b>' + (y.online && y.frete ? ' com frete' : '') + (y.clube ? ' clube' : '') + '</li>'; }).join('') + '</ul>' : '')
         + dicaClube(p, best)
         + decisaoOnline(x.r, p, !!dc)
@@ -1521,6 +1527,7 @@ h3{font-size:13px;font-weight:600}
   }
   $('wish').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.buscaitem != null){ buscarItem(estado.lista[Number(b.dataset.buscaitem)].produto); return; }
     if (b.dataset.comprei != null){
       var it = estado.lista[Number(b.dataset.comprei)], hoje = hojeSP();
       if (it.compras.indexOf(hoje) < 0) it.compras.push(hoje);
@@ -2336,15 +2343,37 @@ h3{font-size:13px;font-weight:600}
   function pintaSync(){
     $('syncText').textContent = exemplo
       ? (MODO === 'addon' ? 'Nenhuma busca ainda' : 'Exemplo com ofertas de farmácia de 18/10')
-      : 'Última busca ' + quando(D.gerado_em);
+      : 'Última busca ' + quando(D.gerado_em) + resumoBusca();
     $('banner').hidden = !exemplo;
     $('bannerTxt').textContent = MODO === 'addon'
       ? 'Salve o CEP em Mais e toque em Buscar, no menu de baixo, para trocar este exemplo pelas lojas e ofertas perto de você.'
       : 'Algumas ofertas de farmácia são reais, de 18/10. O resto é ilustrativo. No Home Assistant, o botão Buscar traz as do seu CEP.';
   }
 
+  function resumoBusca(){
+    var rel = D.relatorio || {}, partes = [];
+    var sem = estado.lista.filter(function(it){ return !precosDe(it.produto).length; }).length;
+    if (sem && estado.lista.length) partes.push(sem === 1 ? '1 item sem preço' : sem + ' itens sem preço');
+    var falhou = Object.keys(rel.categorias || {}).filter(function(k){ return rel.categorias[k] && rel.categorias[k].ok === false; });
+    if (falhou.length) partes.push('falhou em ' + falhou.map(function(k){ var c = D.categorias.filter(function(x){ return x.id === k; })[0]; return c ? c.nome.toLowerCase() : k; }).join(' e '));
+    return partes.length ? ' · ' + partes.join(' · ') : '';
+  }
+
   // ----- busca na hora -----
-  var buscaT = null;
+  var buscaT = null, buscaItem = null;
+  function buscarItem(nome){
+    if (MODO !== 'addon'){ toast('No Home Assistant, este botão procura o preço só deste item.'); return; }
+    if (!estado.cep){ irPara('mais'); window.scrollTo(0, 0); toast('Salve o CEP antes de buscar.'); return; }
+    buscaItem = nome; pintaLista(); botaoBusca(true, 'Começando');
+    fetch('api/buscar-itens', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({itens:[nome]})})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+      .then(function(x){
+        if (!x.ok){ buscaItem = null; pintaLista(); mostraBusca({erro:x.j.erro || 'Não deu para começar a busca.'}); return; }
+        if (x.j.ja_rodando){ buscaItem = null; pintaLista(); toast('Já tem uma busca rodando. Espere ela terminar.'); acompanhaBusca(false); return; }
+        toast('Procurando o preço de ' + nome + '. Leva cerca de 1 minuto.'); acompanhaBusca(false);
+      })
+      .catch(function(){ buscaItem = null; pintaLista(); mostraBusca({erro:'Sem conexão com o Home Assistant. Tente de novo.'}); });
+  }
   function botaoBusca(rodando, txt){
     var b = $('buscar');
     b.disabled = rodando; b.classList.toggle('girando', rodando);
@@ -2369,7 +2398,10 @@ h3{font-size:13px;font-weight:600}
     fetch('api/busca', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(st){
       mostraBusca(st, inicial);
       if (st.rodando) buscaT = setTimeout(function(){ acompanhaBusca(false); }, 3000);
-      else if (!inicial && !st.erro) recarrega();
+      else {
+        if (buscaItem){ buscaItem = null; pintaLista(); }
+        if (!inicial && !st.erro) recarrega();
+      }
     }).catch(function(){ buscaT = setTimeout(function(){ acompanhaBusca(inicial); }, 5000); });
   }
   function recarrega(){

@@ -25,7 +25,8 @@ O botão **Buscar** chama `ai_task.generate_data` pela API do Home Assistant (`h
 | GET | `/api/estado` | `{config, ofertas, usuario}`. `usuario` vem do cabeçalho `X-Remote-User-Display-Name` do ingress. |
 | PUT | `/api/config` | Grava `config.json`. |
 | PUT | `/api/ofertas` | Grava `ofertas.json` (precisa ter `categorias`). |
-| POST | `/api/buscar` | Começa a busca agora, uma categoria por vez, pela ação `ai_task.generate_data` do HA. |
+| POST | `/api/buscar` | Começa a busca agora, uma categoria por vez, pela ação `ai_task.generate_data` do HA. No fim, faz uma pergunta só sobre os itens que ficaram sem preço. |
+| POST | `/api/buscar-itens` | `{itens: ["Pó lava louça"]}` (até 8 itens da lista): busca só esses itens e junta ao `ofertas.json` atual. |
 | GET | `/api/busca` | Andamento: `{rodando, etapa, atual, total, erro, avisos, terminou_em}`. |
 | GET | `/api/exportar/lista.xlsx` | Lista em Excel: loja mais barata, preços, economia e datas de compra. |
 | GET | `/api/exportar/lista.json` | A mesma lista em JSON. |
@@ -92,6 +93,8 @@ O servidor só aceita conexões do ingress (`172.30.32.2`). Para testar fora do 
 }
 ```
 
+- `relatorio`: `{categorias: {id: {ok, ofertas, lojas, precos} | {ok: false, erro}}, sem_preco: ["item"], falhas: []}`, da última busca. O registro do add-on mostra, por categoria, quantas lojas, ofertas e preços vieram e quantos foram descartados, e por quê.
+- A IA recebe os itens da lista numerados e responde `"item": 1`; o add-on também aceita o nome exato ou parecido. Preço sem link é aceito (`fonte: null`); oferta sem preço "de" vira `tipo: "preco"` (ou `"encarte"`). Preço de loja pode ter `obs` com o produto achado: `{"preco": 32.9, "obs": "Finish 1 kg"}`.
 - `ofertas[].id` precisa ser estável entre semanas: é o que o botão "Não mostrar" guarda.
 - `redes[].id` é único entre todas as categorias.
 - `lista[].produto` usa o mesmo texto da lista do `config.json`.

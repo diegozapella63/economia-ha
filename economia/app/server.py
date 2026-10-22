@@ -14,6 +14,7 @@ Rotas:
 - PUT  /api/config   grava a configuração
 - PUT  /api/ofertas  grava um ofertas.json pronto
 - POST /api/buscar   começa a busca agora
+- POST /api/buscar-itens   {"itens": [...]} busca só esses itens e junta ao resultado
 - GET  /api/busca    andamento da busca
 - GET  /api/exportar/lista.xlsx | lista.json   exporta a lista
 - GET  /api/todos    listas de tarefas do Home Assistant
@@ -146,6 +147,10 @@ def slug(texto, limite=40):
 
 
 def numero(v):
+    if isinstance(v, str):  # "R$ 12,90", "1.299,90"
+        v = re.sub(r"[^\d,.]", "", v)
+        if "," in v:
+            v = v.replace(".", "").replace(",", ".")
     try:
         n = round(float(v), 2)
     except (TypeError, ValueError):
@@ -204,6 +209,41 @@ def mesmo_tamanho(qa, qb):
 
 def url_ok(u):
     return isinstance(u, str) and u.startswith(("https://", "http://")) and len(u) < 600
+
+
+def fonte_ok(u):
+    """Link da fonte; aceita "loja.com.br/x" sem https. Sem link válido, None."""
+    if url_ok(u):
+        return u
+    u = str(u or "").strip()
+    if u and " " not in u and re.match(r"^[\w-]+(\.[\w-]+)+(/.*)?$", u) and len(u) < 600:
+        return "https://" + u
+    return None
+
+
+def casar_item(it, nomes):
+    """Qual item da lista é este: pelo número, pelo nome exato ou por nome parecido."""
+    try:
+        k = int(it.get("item"))
+        if 1 <= k <= len(nomes):
+            return nomes[k - 1]
+    except (TypeError, ValueError):
+        pass
+    alvo = norm(re.sub(r"\s*\(base:[^)]*\)\s*$", "", str(it.get("produto") or "")))
+    exatos = {norm(n): n for n in nomes}
+    if alvo in exatos:
+        return exatos[alvo]
+    raiz = lambda w: w[:-1] if len(w) > 3 and w.endswith("s") else w  # noqa: E731
+    vazias = {"de", "da", "do", "das", "dos", "para", "com", "em", "e", "a", "o"}
+    pa = {raiz(w) for w in alvo.split()} - vazias
+    melhor, nota = None, 0.0
+    for n in nomes:
+        pn = {raiz(w) for w in norm(n).split()} - vazias
+        if pn:
+            comum = len(pn & pa) / len(pn)
+            if comum > nota:
+                melhor, nota = n, comum
+    return melhor if nota >= 0.75 else None
 
 
 def texto(v, limite=120):
@@ -570,7 +610,9 @@ TAMANHOS_TXT = ("Para cada item da lista: \"base\" é o tamanho do item (se a li
                 "o tamanho, use o mais vendido, por exemplo 1 L) e \"precos\" traz só embalagens desse tamanho. Em \"tamanhos\", traga as outras embalagens "
                 "do mesmo produto que achar (maiores, menores, kits, fardos e leve X pague Y), cada uma com a quantidade total "
                 "e o preço total do pacote, sem dividir. Unidades: L, ml, kg, g, un ou m; com \"un\", diga em \"rotulo\" o que "
-                "é contado, no singular (rolo, cápsula, fralda). Em \"ofertas\", informe \"tamanho\" quando souber.")
+                "é contado, no singular (rolo, cápsula, fralda). Em \"lista\", \"item\" é o número do item na lista de compras. "
+                "Se o item for genérico (por exemplo \"pó lava louça\"), use o produto mais vendido desse tipo e diga qual em \"obs\". "
+                "Em \"ofertas\", informe \"tamanho\" quando souber.")
 
 
 def fmt_base(b):
@@ -593,7 +635,7 @@ def itens_prompt(cfg):
         n = nome_item(i)
         if n:
             b = bases.get(norm(n))
-            out.append(f"{n} (base: {fmt_base(b)})" if b else n)
+            out.append(f"{len(out) + 1}) " + (f"{n} (base: {fmt_base(b)})" if b else n))
     return out
 
 
@@ -627,7 +669,7 @@ Responda somente com um objeto JSON, sem texto antes ou depois, neste formato:
 {{
   "cupons": [{{"rede": "Mercado Livre", "codigo": "CODIGO", "valor": 20, "beneficio": "R$ 20 de desconto", "condicao": "Acima de R$ 200", "valido_ate": "AAAA-MM-DD ou null", "oficial": true, "fonte": "URL"}}],
   "ofertas": [{{"rede": "Amazon", "produto": "Nome · tamanho", "preco_normal": 10.0, "preco_oferta": 8.0, "frete": 0, "prazo_dias": 2, "vendedor": "nome do vendedor", "oficial": true, "importado": false, "unidades": 1, "tamanho": {{"quantidade": 1, "unidade": "L"}}, "tipo": "promo", "tags": ["alimentos"], "fonte": "URL"}}],
-  "lista": [{{"produto": "texto exato do item da lista", "base": {{"quantidade": 1, "unidade": "L", "rotulo": null}}, "precos": [{{"rede": "Amazon", "preco": 9.9, "frete": 0, "prazo_dias": 2, "fonte": "URL"}}], "tamanhos": [{{"rede": "Mercado Livre", "embalagem": "Kit 6 × 1 L", "quantidade": 6, "unidade": "L", "preco": 49.9, "frete": 0, "prazo_dias": 3, "fonte": "URL"}}]}}]
+  "lista": [{{"item": 1, "produto": "texto exato do item da lista", "base": {{"quantidade": 1, "unidade": "L", "rotulo": null}}, "precos": [{{"rede": "Amazon", "preco": 9.9, "frete": 0, "prazo_dias": 2, "fonte": "URL"}}], "tamanhos": [{{"rede": "Mercado Livre", "embalagem": "Kit 6 × 1 L", "quantidade": 6, "unidade": "L", "preco": 49.9, "frete": 0, "prazo_dias": 3, "fonte": "URL"}}]}}]
 }}
 
 Etiquetas permitidas em "tags": {', '.join(sorted(TAGS))}."""
@@ -663,7 +705,7 @@ Responda somente com um objeto JSON, sem texto antes ou depois, neste formato:
   "lojas": [{{"rede": "nome da rede ou da loja", "endereco": "rua e número", "distancia_km": 1.2, "site": "URL da página de ofertas ou do site da loja, ou null", "horario": "Aberta até 22h", "fontes": ["Site", "App", "Encarte", "Clube", "Instagram", "WhatsApp", "Tiendeo"]}}],
   "cupons": [{{"rede": "...", "codigo": "CODIGO", "valor": 20, "beneficio": "R$ 20 de desconto", "condicao": "Pedidos acima de R$ 200", "valido_ate": "AAAA-MM-DD ou null", "oficial": true, "fonte": "URL"}}],
   "ofertas": [{{"rede": "...", "produto": "Nome · tamanho", "preco_normal": 10.0, "preco_oferta": 8.0, "tipo": "promo", "unidade": null, "tamanho": {{"quantidade": 500, "unidade": "g"}}, "condicao": null, "tags": ["alimentos"], "fonte": "URL"}}],
-  "lista": [{{"produto": "texto exato do item da lista", "base": {{"quantidade": 1, "unidade": "L", "rotulo": null}}, "precos": [{{"rede": "...", "preco": 9.9, "preco_clube": 8.9, "fonte": "URL"}}], "tamanhos": [{{"rede": "...", "embalagem": "Galão 5 L", "quantidade": 5, "unidade": "L", "preco": 39.9, "fonte": "URL"}}]}}]
+  "lista": [{{"item": 1, "produto": "texto exato do item da lista", "base": {{"quantidade": 1, "unidade": "L", "rotulo": null}}, "precos": [{{"rede": "...", "preco": 9.9, "preco_clube": 8.9, "fonte": "URL"}}], "tamanhos": [{{"rede": "...", "embalagem": "Galão 5 L", "quantidade": 5, "unidade": "L", "preco": 39.9, "fonte": "URL"}}]}}]
 }}
 
 Regras: em "lojas", inclua também mercadinhos e lojas independentes do raio, mesmo sem preços encontrados, com o site ou a página de ofertas quando houver. Até 15 ofertas, priorizando os interesses e os maiores descontos. Nos preços da lista, "preco" é o preço para todo mundo; se a loja tiver preço de clube (cadastro por CPF ou app), informe também "preco_clube", senão null. "tipo" é "promo", "clube" (preço para membros) ou "atacado" (preço por quantidade). "oficial" é true só se o cupom estiver no site ou app da própria loja. Etiquetas permitidas em "tags": {', '.join(sorted(TAGS))}.{extra}"""
@@ -702,9 +744,17 @@ def normalizar(cat_id, bruto, cfg):
         if url_ok(l.get("site")):
             lojas[rid]["site"] = l["site"][:300]
 
+    descartes = {}
+
+    def descarta(motivo):
+        descartes[motivo] = descartes.get(motivo, 0) + 1
+
     cupons = []
     for c in bruto.get("cupons") or []:
-        if not isinstance(c, dict) or not url_ok(c.get("fonte")) or not texto(c.get("codigo"), 40):
+        if isinstance(c, dict):
+            c = dict(c, fonte=fonte_ok(c.get("fonte")))
+        if not isinstance(c, dict) or not c["fonte"] or not texto(c.get("codigo"), 40):
+            descarta("cupom sem link ou sem código")
             continue
         rid = rede_id(c.get("rede"))
         if not rid:
@@ -716,28 +766,29 @@ def normalizar(cat_id, bruto, cfg):
 
     ofertas, ids = [], set()
     for o in bruto.get("ofertas") or []:
-        if not isinstance(o, dict) or not url_ok(o.get("fonte")):
+        if not isinstance(o, dict):
             continue
         rid, prod = rede_id(o.get("rede")), texto(o.get("produto"), 100)
-        normal, oferta = numero(o.get("preco_normal")), numero(o.get("preco_oferta"))
+        normal, oferta = numero(o.get("preco_normal")), numero(o.get("preco_oferta") or o.get("preco"))
         encarte = o.get("encarte") is True
-        if encarte and not (normal and oferta and oferta < normal):
-            normal = None  # encarte costuma mostrar só o preço da oferta
-        if not (rid and prod and oferta and (encarte or (normal and oferta < normal))):
+        if not (rid and prod and oferta):
+            descarta("oferta sem loja, produto ou preço")
             continue
+        if not (normal and oferta < normal):
+            normal = None  # encarte e site costumam mostrar só o preço da oferta
         oid = rid + "-" + slug(prod)
         if oid in ids:
             continue
         ids.add(oid)
         item = {"id": oid, "rede": rid, "produto": prod, "preco_normal": normal, "preco_oferta": oferta,
                 "tipo": o.get("tipo") if o.get("tipo") in ("promo", "clube", "atacado") else "promo",
-                "tags": [t for t in (o.get("tags") or []) if t in TAGS], "fonte": o["fonte"]}
+                "tags": [t for t in (o.get("tags") or []) if t in TAGS], "fonte": fonte_ok(o.get("fonte"))}
+        if normal is None:
+            item["tipo"] = "encarte" if encarte else "preco"
         if encarte:
             item["encarte"] = True
-            if normal is None:
-                item["tipo"] = "encarte"
-            if data_ok(o.get("valido_ate")):
-                item["valido_ate"] = data_ok(o.get("valido_ate"))
+        if data_ok(o.get("valido_ate")):
+            item["valido_ate"] = data_ok(o.get("valido_ate"))
         for campo, lim in (("unidade", 12), ("condicao", 80)):
             if texto(o.get(campo), lim):
                 item[campo] = texto(o.get(campo), lim)
@@ -764,20 +815,27 @@ def normalizar(cat_id, bruto, cfg):
                 item["importado"] = True
         ofertas.append(item)
 
-    nomes_lista = {norm(i.get("produto") if isinstance(i, dict) else i): (i.get("produto") if isinstance(i, dict) else i)
-                   for i in (cfg.get("lista") or [])}
     def valor_lista(p):
         """(rede, valor) de um preço da lista; online precisa de frete."""
-        if not isinstance(p, dict) or not url_ok(p.get("fonte")):
+        if not isinstance(p, dict):
             return None, None
         rid, preco = rede_id(p.get("rede")), numero(p.get("preco"))
         if not (rid and preco):
+            descarta("preço da lista sem loja ou valor")
             return None, None
         if cat_id != "online":
-            clube = numero(p.get("preco_clube"))
-            return rid, ({"preco": preco, "clube": clube} if clube and clube < preco else preco)
+            clube, obs = numero(p.get("preco_clube")), texto(p.get("obs"), 60)
+            if not (clube and clube < preco) and not obs:
+                return rid, preco
+            valor = {"preco": preco}
+            if clube and clube < preco:
+                valor["clube"] = clube
+            if obs:
+                valor["obs"] = obs
+            return rid, valor
         frete = frete_ok(p.get("frete"))
         if frete is None:
+            descarta("preço online sem frete")
             return None, None
         valor = {"preco": preco, "frete": frete}
         if inteiro(p.get("prazo_dias")) is not None:
@@ -786,15 +844,19 @@ def normalizar(cat_id, bruto, cfg):
             valor["obs"] = texto(p.get("obs"), 60)
         return rid, valor
 
+    nomes = [nome_item(i) for i in (cfg.get("lista") or []) if nome_item(i)]
     lista = {}
     for it in bruto.get("lista") or []:
         if not isinstance(it, dict):
             continue
-        original = nomes_lista.get(norm(re.sub(r"\s*\(base:[^)]*\)\s*$", "", str(it.get("produto") or ""))))
+        original = casar_item(it, nomes)
         if not original:
+            descarta("item que não está na lista")
             continue
         ent = lista.setdefault(original, {"precos": {}, "base": None, "tamanhos": []})
         for p in it.get("precos") or []:
+            if isinstance(p, dict) and not p.get("rede") and it.get("rede"):
+                p = dict(p, rede=it["rede"])
             rid, valor = valor_lista(p)
             if rid:
                 ent["precos"][rid] = valor
@@ -830,16 +892,23 @@ def normalizar(cat_id, bruto, cfg):
                 tam.update({k: valor[k] for k in ("preco", "frete", "prazo_dias") if k in valor})
             else:
                 tam["preco"] = valor
-            tam["fonte"] = t["fonte"]
+            if fonte_ok(t.get("fonte")):
+                tam["fonte"] = fonte_ok(t.get("fonte"))
             ent["tamanhos"].append(tam)
     lista = {k: v for k, v in lista.items() if v["precos"] or v["tamanhos"]}
 
-    # toda rede citada precisa de uma loja, para o painel saber se a acompanha
+    # só as redes que ficaram com loja, cupom, oferta ou preço; cada uma precisa de uma loja
+    usadas = set(lojas) | {c["rede"] for c in cupons} | {o["rede"] for o in ofertas}
+    usadas |= {r for v in lista.values() for r in list(v["precos"]) + [t["rede"] for t in v["tamanhos"]]}
+    redes = {k: v for k, v in redes.items() if k in usadas}
     online = cat_id == "online"
     for rid in redes:
         lojas.setdefault(rid, {"rede": rid, "distancia_km": None, "horario": "Entrega no seu CEP" if online else "",
                                "endereco": None, "fontes": ["Site", "App"] if online else ["Site"]})
 
+    n_precos = sum(len(v["precos"]) + len(v["tamanhos"]) for v in lista.values())
+    log(f"{cat_id}: {len(lojas)} loja(s), {len(ofertas)} oferta(s), {len(cupons)} cupom(ns), {n_precos} preço(s) da lista"
+        + (" | descartados: " + ", ".join(f"{n} {m}" for m, n in descartes.items()) if descartes else ""))
     cat = CATEGORIAS[cat_id]
     return {
         "id": cat_id, "nome": cat["nome"], "singular": cat["singular"],
@@ -909,7 +978,7 @@ Lista de compras do morador: {'; '.join(itens_prompt(cfg)) or 'vazia'}. Para cad
 {TAMANHOS_TXT}
 
 Responda somente com um objeto JSON, sem texto antes ou depois:
-{{"validade": "AAAA-MM-DD ou null", "ofertas": [{{"produto": "Café Pilão 500 g", "preco": 15.98, "preco_normal": null, "unidade": null, "condicao": null, "tipo": "promo", "tamanho": {{"quantidade": 500, "unidade": "g"}}, "tags": ["alimentos", "cafe"]}}], "lista": [{{"produto": "texto exato do item da lista", "base": {{"quantidade": 1, "unidade": "L", "rotulo": null}}, "precos": [{{"preco": 9.9}}], "tamanhos": []}}]}}
+{{"validade": "AAAA-MM-DD ou null", "ofertas": [{{"produto": "Café Pilão 500 g", "preco": 15.98, "preco_normal": null, "unidade": null, "condicao": null, "tipo": "promo", "tamanho": {{"quantidade": 500, "unidade": "g"}}, "tags": ["alimentos", "cafe"]}}], "lista": [{{"item": 1, "produto": "texto exato do item da lista", "base": {{"quantidade": 1, "unidade": "L", "rotulo": null}}, "precos": [{{"preco": 9.9}}], "tamanhos": []}}]}}
 Etiquetas permitidas em "tags": {', '.join(sorted(TAGS))}. Até 40 ofertas, priorizando os itens da lista e os interesses."""
 
 
@@ -1049,6 +1118,99 @@ def item_ofertas(prod, ent):
     return out
 
 
+MAX_FOCADA = 8
+
+
+def instrucoes_focada(cfg, itens, cats):
+    on = cfg.get("online") or {}
+    locais = [CATEGORIAS[c]["o_que"] for c in cats if c != "online"]
+    mkts = [MARKETPLACES.get(m, m) for m in (on.get("marketplaces") or ["mercadolivre", "amazon"])] if "online" in cats else []
+    assin = [ASSINATURAS.get(a, a) for a in (on.get("assinaturas") or [])]
+    numerados = [f"{k}) {n}" for k, n in enumerate(itens, 1)]
+    return f"""Preciso do preço atual ({hoje_br()}) destes itens de uma lista de compras, para o CEP {cfg.get('cep')}, no Brasil: {'; '.join(numerados)}.
+
+Use a busca na web agora e procure item por item: no site e no app das lojas, em encartes, no Google Shopping e em comparadores de preço. Use só o que encontrar: não invente preços. Se não conseguir usar a busca na web, responda apenas {{"erro": "sem_busca"}}.
+
+Onde procurar: {', '.join(locais) or 'nenhuma loja física'}{f' num raio de {cfg.get("raio_km") or 2} km do CEP' if locais else ''}{('; e online em ' + ', '.join(mkts) + ' com entrega no CEP') if mkts else ''}.
+Assinaturas do morador: {', '.join(assin) or 'nenhuma'}.
+Se o item for genérico (por exemplo "pó lava louça"), procure as marcas mais vendidas e diga em "obs" qual produto e tamanho é cada preço. Traga até 4 preços por item, de lojas diferentes.
+"categoria" é {', '.join(f'"{c}"' for c in cats)}. Online, informe "frete" (0 se grátis) e "prazo_dias".
+
+Responda somente com um objeto JSON, sem texto antes ou depois:
+{{"lista": [{{"item": 1, "produto": "texto do item", "base": {{"quantidade": 1, "unidade": "kg", "rotulo": null}}, "precos": [{{"rede": "nome da loja", "categoria": "mercados", "preco": 12.9, "preco_clube": null, "frete": null, "prazo_dias": null, "obs": "Marca 1 kg", "fonte": "URL"}}]}}]}}"""
+
+
+def categoria_do_preco(p, cats):
+    """Em que categoria entra um preço da busca focada."""
+    c = p.get("categoria")
+    if c in cats:
+        return c
+    nome = norm(p.get("rede") or "")
+    if "online" in cats and (frete_ok(p.get("frete")) is not None
+                             or any(norm(m) in nome for m in list(MARKETPLACES.values()) + ["shopee", "magazine"])):
+        return "online"
+    pistas = {"farmacias": ("drog", "farm", "raia", "pacheco", "panvel", "pague menos"),
+              "petshops": ("pet", "cobasi", "petz", "agro")}
+    for cat, palavras in pistas.items():
+        if cat in cats and any(w in nome for w in palavras):
+            return cat
+    locais = [c for c in cats if c != "online"]
+    return "mercados" if "mercados" in locais else (locais[0] if locais else None)
+
+
+def busca_focada(cfg, itens, cats):
+    """Uma pergunta só sobre os itens que ficaram sem preço. Devolve [(categoria, parcial)]."""
+    itens = itens[:MAX_FOCADA]
+    if not itens or not cats:
+        return []
+    try:
+        r = chamar_ai_task("EconomIA: itens sem preço", instrucoes_focada(cfg, itens, cats))
+    except ErroCota:
+        log("cota da IA na busca dos itens sem preço: esperando 60 s")
+        time.sleep(ESPERA_COTA)
+        r = chamar_ai_task("EconomIA: itens sem preço", instrucoes_focada(cfg, itens, cats))
+    if not isinstance(r, dict):
+        raise ErroBusca("A IA respondeu fora do formato esperado.")
+    if r.get("erro") == "sem_busca":
+        raise ErroBusca(SEM_BUSCA)
+    por_cat = {}
+    for it in r.get("lista") or []:
+        if not isinstance(it, dict):
+            continue
+        for p in it.get("precos") or []:
+            if not isinstance(p, dict):
+                continue
+            c = categoria_do_preco(p, cats)
+            if not c:
+                continue
+            alvo = por_cat.setdefault(c, {})
+            k = it.get("item") or it.get("produto")
+            ent = alvo.setdefault(str(k), dict(it, precos=[], tamanhos=[]))
+            ent["precos"].append(p)
+    cfg_itens = dict(cfg, lista=[{"produto": n} for n in itens])
+    out = []
+    for c, ents in por_cat.items():
+        cat, parcial = normalizar(c, {"lojas": [], "cupons": [], "ofertas": [], "lista": list(ents.values())}, cfg_itens)
+        out.append((cat, parcial))
+    achados = {p for _, parcial in out for p in parcial}
+    log(f"itens sem preço: {len(achados)} de {len(itens)} encontrados")
+    return out
+
+
+def juntar_focada(novas, parciais, resultado):
+    for cat, parcial in resultado:
+        alvo = next((c for c in novas if c.get("id") == cat["id"]), None)
+        if alvo is None:
+            novas.append(cat)
+        else:
+            juntar_categoria(alvo, cat)
+        parciais.append(parcial)
+
+
+def nomes_da_lista(cfg):
+    return [nome_item(i) for i in (cfg.get("lista") or []) if nome_item(i)]
+
+
 def buscar():
     cfg = ler_json(CONFIG, {}) or {}
     cats = [c for c in (cfg.get("categorias") or list(CATEGORIAS)) if c in CATEGORIAS]
@@ -1059,6 +1221,7 @@ def buscar():
         anterior = ler_json(OFERTAS, {}) or {}
         antigas = {c.get("id"): c for c in (anterior.get("categorias") or []) if isinstance(c, dict)}
         novas, parciais, falhas = [], [], []
+        relatorio = {"categorias": {}, "sem_preco": [], "falhas": []}
         for i, cat_id in enumerate(cats, 1):
             BUSCA.update({"atual": i, "etapa": CATEGORIAS[cat_id]["nome"].lower()})
             log(f"buscando {cat_id}")
@@ -1077,11 +1240,14 @@ def buscar():
                 if any(t in str(e) for t in ("Falta uma IA", "não usou a busca na web", "não tem acesso", "não tem permissão", "assistente de conversa")):
                     raise
                 falhas.append(f"{CATEGORIAS[cat_id]['nome']}: {e}")
+                relatorio["categorias"][cat_id] = {"ok": False, "erro": str(e)[:200]}
                 if cat_id in antigas:
                     novas.append(antigas[cat_id])
                 continue
             novas.append(cat)
             parciais.append(parcial)
+            relatorio["categorias"][cat_id] = {"ok": True, "ofertas": len(cat["ofertas"]), "lojas": len(cat["lojas"]),
+                                               "precos": sum(len(v["precos"]) for v in parcial.values())}
         falhou_tudo = not novas or len(falhas) == len(cats)
         sites = [a for a in ((cfg.get("lojas") or {}).get("adicionar") or [])
                  if isinstance(a, dict) and url_ok(a.get("site")) and a.get("categoria") in cats and texto(a.get("nome"), 60)]
@@ -1139,17 +1305,67 @@ def buscar():
         lista = juntar_categorias(parciais)
         if falhou_tudo:
             raise ErroBusca(falhas[0] if falhas else "A busca não trouxe resultados.")
+        # itens que ninguém achou: uma pergunta só sobre eles
+        faltam = [n for n in nomes_da_lista(cfg) if n not in lista]
+        if faltam:
+            BUSCA.update({"etapa": f"{len(faltam)} item(ns) sem preço"})
+            try:
+                juntar_focada(novas, parciais, busca_focada(cfg, faltam, cats))
+                lista = juntar_categorias(parciais)
+            except ErroBusca as e:
+                log(f"busca dos itens sem preço: {e}")
+        relatorio["sem_preco"] = [n for n in nomes_da_lista(cfg) if n not in lista]
+        relatorio["falhas"] = falhas
         gravar_json(OFERTAS, {
             "versao": 2, "gerado_em": agora(), "origem": "ia_home_assistant",
             "lista": [item_ofertas(p, v) for p, v in lista.items()],
             "categorias": novas,
+            "relatorio": relatorio,
         })
         if falhas:
             BUSCA["avisos"] = ["Algumas buscas falharam e mantive o resultado anterior: " + " | ".join(falhas)]
-        log("busca concluída")
+        log("busca concluída" + (f"; sem preço: {', '.join(relatorio['sem_preco'])}" if relatorio["sem_preco"] else ""))
     except ErroBusca as e:
         BUSCA["erro"] = str(e)
         log(f"busca falhou: {e}")
+    except Exception as e:  # noqa: BLE001
+        BUSCA["erro"] = f"Erro inesperado na busca: {e}"
+        log(BUSCA["erro"])
+    finally:
+        BUSCA.update({"rodando": False, "etapa": None, "terminou_em": agora()})
+
+
+def buscar_itens(itens):
+    cfg = ler_json(CONFIG, {}) or {}
+    cats = [c for c in (cfg.get("categorias") or list(CATEGORIAS)) if c in CATEGORIAS]
+    BUSCA.update({"rodando": True, "erro": None, "avisos": [], "atual": 1, "total": 1,
+                  "etapa": (itens[0] if len(itens) == 1 else f"{len(itens)} itens").lower()})
+    try:
+        if not cfg.get("cep"):
+            raise ErroBusca("Salve o CEP em Mais antes de buscar.")
+        resultado = busca_focada(cfg, itens, cats)
+        anterior = ler_json(OFERTAS, {}) or {}
+        novas = [c for c in (anterior.get("categorias") or []) if isinstance(c, dict)]
+        base = {}
+        for i in anterior.get("lista") or []:
+            if isinstance(i, dict) and i.get("produto"):
+                base[i["produto"]] = {"precos": dict(i.get("precos") or {}), "base": i.get("base"),
+                                      "tamanhos": list(i.get("tamanhos") or [])}
+        parciais = [base]
+        juntar_focada(novas, parciais, resultado)
+        lista = juntar_categorias(parciais)
+        relatorio = anterior.get("relatorio") if isinstance(anterior.get("relatorio"), dict) else {}
+        achados = [n for n in itens if n in lista and any(n in p for _, p in resultado)]
+        relatorio["sem_preco"] = [n for n in nomes_da_lista(cfg) if n not in lista]
+        gravar_json(OFERTAS, dict(anterior, versao=2, origem="ia_home_assistant", gerado_em=anterior.get("gerado_em") or agora(),
+                                  atualizado_em=agora(), lista=[item_ofertas(p, v) for p, v in lista.items()],
+                                  categorias=novas, relatorio=relatorio))
+        if not achados:
+            BUSCA["avisos"] = ["Não achei preço para " + ", ".join(itens) + ". Tente com marca e tamanho, por exemplo \"Detergente Ypê 500 ml\"."]
+        log(f"busca de itens: {len(achados)} de {len(itens)} com preço")
+    except ErroBusca as e:
+        BUSCA["erro"] = str(e)
+        log(f"busca de itens falhou: {e}")
     except Exception as e:  # noqa: BLE001
         BUSCA["erro"] = f"Erro inesperado na busca: {e}"
         log(BUSCA["erro"])
@@ -1409,7 +1625,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.10.1"
+    server_version = "EconomIA/0.10.2"
 
     def log_message(self, fmt, *args):
         pass
@@ -1563,8 +1779,17 @@ class Painel(BaseHTTPRequestHandler):
             if not job:
                 return self._json(400, {"erro": "Escolha uma foto ou cole o texto da mensagem."})
             return self._json(202, {"id": job})
-        if urllib.parse.urlsplit(self.path).path != "/api/buscar":
+        rota = urllib.parse.urlsplit(self.path).path
+        if rota not in ("/api/buscar", "/api/buscar-itens"):
             return self._json(404, {"erro": "Não encontrado"})
+        alvo, args = buscar, ()
+        if rota == "/api/buscar-itens":
+            dado = self._corpo() or {}
+            nomes = {norm(n): n for n in nomes_da_lista(ler_json(CONFIG, {}) or {})}
+            itens = list(dict.fromkeys(nomes[norm(i)] for i in (dado.get("itens") or []) if isinstance(i, str) and norm(i) in nomes))
+            if not itens:
+                return self._json(400, {"erro": "Esse item não está na lista."})
+            alvo, args = buscar_itens, (itens[:MAX_FOCADA],)
         with _trava:
             if BUSCA["rodando"]:
                 return self._json(202, {"ok": True, "ja_rodando": True})
@@ -1572,7 +1797,7 @@ class Painel(BaseHTTPRequestHandler):
             if not cfg.get("cep"):
                 return self._json(400, {"erro": "Salve o CEP em Mais antes de buscar."})
             BUSCA["rodando"] = True
-        threading.Thread(target=buscar, daemon=True).start()
+        threading.Thread(target=alvo, args=args, daemon=True).start()
         self._json(202, {"ok": True})
 
 

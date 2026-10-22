@@ -1,5 +1,13 @@
 # Mudanças
 
+## 0.10.2
+
+- **Itens sem preço**: no fim da busca, o app faz uma pergunta só sobre os itens que ficaram sem preço, procurando item por item. Em item genérico, como "Pó lava louça", a IA escolhe as marcas mais vendidas e o cartão mostra qual produto é.
+- Botão **Buscar este item** no cartão sem preço, que procura só aquele item em cerca de 1 minuto.
+- Preço que veio sem link ou sem o valor "de" passa a valer: aparece como **Preço atual** nas Ofertas.
+- Os itens vão numerados para a IA, então nome escrito diferente não perde mais o preço. Preço escrito como "R$ 12,90" também é lido.
+- A linha da última busca diz quantos itens ficaram sem preço, e o registro do app mostra o que veio de cada categoria e o que foi descartado.
+
 ## 0.10.1
 
 - Novo ícone e logo: o cupom fiscal da abertura.
