@@ -663,7 +663,7 @@ Restrições: {', '.join(restr) or 'nenhuma'}. Interesses, que devem vir primeir
 Lista de compras: {'; '.join(lista) or 'vazia'}.
 {TAMANHOS_TXT} Em "tamanhos", informe também o frete e o prazo de cada opção.
 
-Regras: só lojas oficiais ou vendedores bem avaliados. Marque "importado": true quando o envio for internacional. Não inclua remédios que exigem receita. Informe frete e prazo de entrega para este CEP. Em kits, informe "unidades". Até 15 ofertas, priorizando os itens da lista e os interesses.
+Regras: em "fonte", use o link da página do produto. Só lojas oficiais ou vendedores bem avaliados. Marque "importado": true quando o envio for internacional. Não inclua remédios que exigem receita. Informe frete e prazo de entrega para este CEP. Em kits, informe "unidades". Até 15 ofertas, priorizando os itens da lista e os interesses.
 
 Responda somente com um objeto JSON, sem texto antes ou depois, neste formato:
 {{
@@ -853,13 +853,15 @@ def normalizar(cat_id, bruto, cfg):
         if not original:
             descarta("item que não está na lista")
             continue
-        ent = lista.setdefault(original, {"precos": {}, "base": None, "tamanhos": []})
+        ent = lista.setdefault(original, {"precos": {}, "base": None, "tamanhos": [], "links": {}})
         for p in it.get("precos") or []:
             if isinstance(p, dict) and not p.get("rede") and it.get("rede"):
                 p = dict(p, rede=it["rede"])
             rid, valor = valor_lista(p)
             if rid:
                 ent["precos"][rid] = valor
+                if fonte_ok(p.get("fonte")):
+                    ent["links"][rid] = fonte_ok(p.get("fonte"))
         b = it.get("base") if isinstance(it.get("base"), dict) else {}
         base = medida(b.get("quantidade"), b.get("unidade"))
         if not base:
@@ -881,6 +883,8 @@ def normalizar(cat_id, bruto, cfg):
                 continue
             if mesmo_tamanho(m[0], bq):  # é o tamanho da base: vale como preço da loja
                 ent["precos"].setdefault(rid, valor)
+                if fonte_ok(t.get("fonte")):
+                    ent["links"].setdefault(rid, fonte_ok(t.get("fonte")))
                 continue
             if (rid, m[0]) in vistos:
                 continue
@@ -1062,15 +1066,18 @@ def juntar_categoria(dest, cat):
 def juntar_item(dest, ent):
     """Junta o que uma categoria achou para um item da lista ao que as outras já acharam."""
     b, nb = dest.get("base"), ent.get("base")
+    links, dlinks = ent.get("links") or {}, dest.setdefault("links", {})
     if not b and nb:
         dest["base"] = b = nb
     if not (b and nb) or (nb["unidade"] == b["unidade"] and mesmo_tamanho(nb["quantidade"], b["quantidade"])):
         dest["precos"].update(ent["precos"])
+        dlinks.update(links)
         if b and nb:
             dest["tamanhos"] += ent["tamanhos"]
         return
     if nb["unidade"] != b["unidade"]:  # medidas diferentes não dá para comparar
         dest["precos"].update(ent["precos"])
+        dlinks.update(links)
         return
     # esta categoria usou outro tamanho como base: os preços dela viram tamanhos
     for rid, v in ent["precos"].items():
@@ -1079,11 +1086,15 @@ def juntar_item(dest, ent):
             t.update({k: v[k] for k in ("preco", "frete", "prazo_dias") if k in v})
         else:
             t["preco"] = v
+        if links.get(rid):
+            t["fonte"] = links[rid]
         dest["tamanhos"].append(t)
     for t in ent["tamanhos"]:
         if mesmo_tamanho(t["quantidade"], b["quantidade"]):
             v = {k: t[k] for k in ("preco", "frete", "prazo_dias") if k in t}
             dest["precos"].setdefault(t["rede"], v if "frete" in v else v["preco"])
+            if t.get("fonte"):
+                dlinks.setdefault(t["rede"], t["fonte"])
         else:
             dest["tamanhos"].append(t)
 
@@ -1098,7 +1109,7 @@ def juntar_categorias(parciais):
             if e.get("base"):
                 k = (e["base"]["unidade"], e["base"]["quantidade"])
                 votos[k] = votos.get(k, 0) + len(e["precos"]) + 0.5
-        dest = {"precos": {}, "base": None, "tamanhos": []}
+        dest = {"precos": {}, "base": None, "tamanhos": [], "links": {}}
         if votos:
             un, q = max(votos, key=votos.get)
             dest["base"] = next(e["base"] for e in ents if e.get("base") and (e["base"]["unidade"], e["base"]["quantidade"]) == (un, q))
@@ -1110,6 +1121,9 @@ def juntar_categorias(parciais):
 
 def item_ofertas(prod, ent):
     out = {"produto": prod, "precos": ent["precos"]}
+    links = {r: u for r, u in (ent.get("links") or {}).items() if r in ent["precos"]}
+    if links:
+        out["links"] = links
     if ent.get("base"):
         out["base"] = ent["base"]
         if ent["tamanhos"]:
@@ -1135,6 +1149,8 @@ Onde procurar: {', '.join(locais) or 'nenhuma loja física'}{f' num raio de {cfg
 Assinaturas do morador: {', '.join(assin) or 'nenhuma'}.
 Se o item for genérico (por exemplo "pó lava louça"), procure as marcas mais vendidas e diga em "obs" qual produto e tamanho é cada preço. Traga até 4 preços por item, de lojas diferentes.
 "categoria" é {', '.join(f'"{c}"' for c in cats)}. Online, informe "frete" (0 se grátis) e "prazo_dias".
+
+Em "fonte", ponha o link da página do produto (o anúncio no Mercado Livre, a página na Amazon, o produto no site da loja), não a página inicial.
 
 Responda somente com um objeto JSON, sem texto antes ou depois:
 {{"lista": [{{"item": 1, "produto": "texto do item", "base": {{"quantidade": 1, "unidade": "kg", "rotulo": null}}, "precos": [{{"rede": "nome da loja", "categoria": "mercados", "preco": 12.9, "preco_clube": null, "frete": null, "prazo_dias": null, "obs": "Marca 1 kg", "fonte": "URL"}}]}}]}}"""
@@ -1177,16 +1193,17 @@ def busca_focada(cfg, itens, cats):
     for it in r.get("lista") or []:
         if not isinstance(it, dict):
             continue
-        for p in it.get("precos") or []:
-            if not isinstance(p, dict):
-                continue
-            c = categoria_do_preco(p, cats)
-            if not c:
-                continue
-            alvo = por_cat.setdefault(c, {})
-            k = it.get("item") or it.get("produto")
-            ent = alvo.setdefault(str(k), dict(it, precos=[], tamanhos=[]))
-            ent["precos"].append(p)
+        for campo in ("precos", "tamanhos"):
+            for p in it.get(campo) or []:
+                if not isinstance(p, dict):
+                    continue
+                c = categoria_do_preco(p, cats)
+                if not c:
+                    continue
+                alvo = por_cat.setdefault(c, {})
+                k = it.get("item") or it.get("produto")
+                ent = alvo.setdefault(str(k), dict(it, precos=[], tamanhos=[]))
+                ent[campo].append(p)
     cfg_itens = dict(cfg, lista=[{"produto": n} for n in itens])
     out = []
     for c, ents in por_cat.items():
@@ -1350,7 +1367,7 @@ def buscar_itens(itens):
         for i in anterior.get("lista") or []:
             if isinstance(i, dict) and i.get("produto"):
                 base[i["produto"]] = {"precos": dict(i.get("precos") or {}), "base": i.get("base"),
-                                      "tamanhos": list(i.get("tamanhos") or [])}
+                                      "tamanhos": list(i.get("tamanhos") or []), "links": dict(i.get("links") or {})}
         parciais = [base]
         juntar_focada(novas, parciais, resultado)
         lista = juntar_categorias(parciais)
@@ -1625,7 +1642,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.10.2"
+    server_version = "EconomIA/0.10.3"
 
     def log_message(self, fmt, *args):
         pass

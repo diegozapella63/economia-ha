@@ -93,6 +93,7 @@ O servidor só aceita conexões do ingress (`172.30.32.2`). Para testar fora do 
 }
 ```
 
+- `lista[].links`: `{rede: URL}` da página do produto de cada preço; `tamanhos[].fonte` é o link de cada embalagem. Sem link, o painel abre a busca do produto na loja (Mercado Livre, Amazon, Shopee, Magalu) ou no Google.
 - `relatorio`: `{categorias: {id: {ok, ofertas, lojas, precos} | {ok: false, erro}}, sem_preco: ["item"], falhas: []}`, da última busca. O registro do add-on mostra, por categoria, quantas lojas, ofertas e preços vieram e quantos foram descartados, e por quê.
 - A IA recebe os itens da lista numerados e responde `"item": 1`; o add-on também aceita o nome exato ou parecido. Preço sem link é aceito (`fonte: null`); oferta sem preço "de" vira `tipo: "preco"` (ou `"encarte"`). Preço de loja pode ter `obs` com o produto achado: `{"preco": 32.9, "obs": "Finish 1 kg"}`.
 - `ofertas[].id` precisa ser estável entre semanas: é o que o botão "Não mostrar" guarda.

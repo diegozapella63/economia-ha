@@ -346,6 +346,15 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .i-avulso{font-size:13px;color:var(--muted)}
 .i-avulso b{color:var(--ink);font-weight:600}
 .item.wait .i-best{background:var(--bg)}
+a.i-link{color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
+a.i-link:active{filter:brightness(.96)}
+.i-abrir{margin-left:auto;align-self:center;display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:600;color:var(--accent);white-space:nowrap}
+.i-abrir svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.i-others li{padding:0}
+.i-others a.i-chip{display:block;padding:2px 8px;color:inherit;text-decoration:none}
+a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
+.tam-list li{padding:0}
+.tam-list a.tam-a{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;width:100%;padding:5px 8px;color:inherit;text-decoration:none}
 .i-best .i-busca{margin-left:auto;min-height:34px;padding:0 12px;font-size:14px}
 .i-others{display:flex;flex-wrap:wrap;gap:5px}
 .i-others li{font-size:12.5px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;color:var(--muted);white-space:nowrap}
@@ -934,7 +943,7 @@ h3{font-size:13px;font-weight:600}
       </div>
     </section>
     <section class="panel settings" aria-labelledby="h-sobre">
-      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.10.2. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
+      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.10.3. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
     </section>
 
     <div class="group" id="lojasSec"><h2 class="big">Lojas</h2></div>
@@ -1338,22 +1347,42 @@ h3{font-size:13px;font-weight:600}
     return {txt:'Você compra a cada ~' + media + ' dias · ' + fim, dias:dias, media:media};
   }
   function itemDe(produto){ var k = norm(produto); return arr(D.lista).filter(function(i){ return norm(i.produto) === k; })[0]; }
+  // onde comprar: o link que a busca trouxe ou, sem ele, a busca do produto na própria loja
+  function linkCompra(id, produto, link){
+    if (/^https?:\/\//.test(link || '')) return {url:link, achado:true};
+    var nome = (G[id] || {}).nome || '', n = norm(nome), q = String(produto || '').split(' · ')[0].trim();
+    var base = n.indexOf('mercado livre') >= 0 ? 'https://lista.mercadolivre.com.br/' + norm(q).replace(/ /g, '-')
+      : n.indexOf('amazon') >= 0 ? 'https://www.amazon.com.br/s?k=' + encodeURIComponent(q)
+      : n.indexOf('shopee') >= 0 ? 'https://shopee.com.br/search?keyword=' + encodeURIComponent(q)
+      : n.indexOf('magalu') >= 0 || n.indexOf('magazine') >= 0 ? 'https://www.magazineluiza.com.br/busca/' + encodeURIComponent(q) + '/'
+      : 'https://www.google.com/search?q=' + encodeURIComponent(nome.replace(/^(iFood|Rappi) · /, '') + ' ' + q);
+    return {url:base, achado:false};
+  }
+  function abreLink(l, cls, dentro){
+    return '<a class="' + cls + '" href="' + esc(l.url) + '" target="_blank" rel="noopener">' + dentro + '</a>';
+  }
+  function setaLink(l){ return '<span class="i-abrir">' + (l.achado ? 'Abrir' : 'Procurar') + ' <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></span>'; }
   function precosDe(produto){
     var item = itemDe(produto);
     if (!item || !item.precos) return [];
+    var links = item.links || {};
     return Object.keys(item.precos).filter(function(id){ return catAtiva(id) && acompanha(id); })
       .map(function(id){
-        var v = item.precos[id];
-        if (v && typeof v === 'object' && v.frete != null){
-          var pr = Number(v.preco) || 0, fr = Number(v.frete) || 0;
-          return {id:id, v:Math.round((pr + fr) * 100) / 100, preco:pr, frete:fr, prazo:v.prazo_dias == null ? null : Number(v.prazo_dias), obs:v.obs || '', online:true};
-        }
-        if (v && typeof v === 'object'){  // loja com preço de clube: vale só para quem é do clube
-          var pn = Number(v.preco) || 0, cl = Number(v.clube) || 0, socio = estado.clubes.indexOf(id) >= 0, temClube = cl > 0 && (!pn || cl < pn);
-          return {id:id, v:socio && temClube ? cl : pn, clube:socio && temClube, precoClube:temClube ? cl : 0, socio:socio, obs:v.obs || ''};
-        }
-        return {id:id, v:Number(v)};
+        var x = precoDe(id, item.precos[id]);
+        x.link = links[id] || '';
+        return x;
       }).filter(function(x){ return x.v > 0; }).sort(function(a, b){ return a.v - b.v; });
+  }
+  function precoDe(id, v){
+    if (v && typeof v === 'object' && v.frete != null){
+      var pr = Number(v.preco) || 0, fr = Number(v.frete) || 0;
+      return {id:id, v:Math.round((pr + fr) * 100) / 100, preco:pr, frete:fr, prazo:v.prazo_dias == null ? null : Number(v.prazo_dias), obs:v.obs || '', online:true};
+    }
+    if (v && typeof v === 'object'){  // loja com preço de clube: vale só para quem é do clube
+      var pn = Number(v.preco) || 0, cl = Number(v.clube) || 0, socio = estado.clubes.indexOf(id) >= 0, temClube = cl > 0 && (!pn || cl < pn);
+      return {id:id, v:socio && temClube ? cl : pn, clube:socio && temClube, precoClube:temClube ? cl : 0, socio:socio, obs:v.obs || ''};
+    }
+    return {id:id, v:Number(v)};
   }
   // compensa pedir online ou comprar na loja?
   function decisaoOnline(r, p, avulso){
@@ -1397,11 +1426,11 @@ h3{font-size:13px;font-weight:600}
   function igualQ(a, b){ return Math.abs(a - b) <= b * 0.01; }
   function opcoesTamanho(info, p){
     var q0 = Number(info.base.quantidade), ops = [];
-    p.forEach(function(y){ ops.push({id:y.id, q:q0, total:y.v, preco:y.online ? y.preco : y.v, frete:y.online ? y.frete : 0, online:!!y.online, prazo:y.prazo, emb:''}); });
+    p.forEach(function(y){ ops.push({id:y.id, q:q0, total:y.v, preco:y.online ? y.preco : y.v, frete:y.online ? y.frete : 0, online:!!y.online, prazo:y.prazo, emb:'', link:y.link || '', obs:y.obs || ''}); });
     arr(info.tamanhos).forEach(function(t){
       var q = Number(t.quantidade), pr = Number(t.preco), fr = Number(t.frete) || 0;
       if (!(q > 0 && pr > 0) || !G[t.rede] || !catAtiva(t.rede) || !acompanha(t.rede)) return;
-      ops.push({id:t.rede, q:q, total:Math.round((pr + fr) * 100) / 100, preco:pr, frete:fr, online:t.frete != null, prazo:t.prazo_dias == null ? null : Number(t.prazo_dias), emb:t.embalagem || ''});
+      ops.push({id:t.rede, q:q, total:Math.round((pr + fr) * 100) / 100, preco:pr, frete:fr, online:t.frete != null, prazo:t.prazo_dias == null ? null : Number(t.prazo_dias), emb:t.embalagem || '', link:t.fonte || ''});
     });
     return ops;
   }
@@ -1442,13 +1471,13 @@ h3{font-size:13px;font-weight:600}
     var economia = function(j){ return Math.round((noRef(j.Q).total - j.total) * 100) / 100; };
     var vale = function(j){ return j !== ref && economia(j) >= Math.max(2, noRef(j.Q).total * 0.05); };
     var det = ops.slice().sort(function(x, y){ return x.total / x.q - y.total / y.q; }).slice(0, 8).map(function(o, i){
-      return '<li' + (i === 0 ? ' class="top"' : '') + '><b>' + esc(o.emb || medidaTxt(o.q, b)) + '</b><span>' + esc(G[o.id].curto) + '</span><span>' + brl.format(o.total) + (o.online ? (o.frete ? ' com frete' : ' frete grátis') : '') + '</span><span class="pu">' + esc(porUn(o.total, o.q, b)) + '</span></li>';
+      return '<li' + (i === 0 ? ' class="top"' : '') + '>' + abreLink(linkCompra(o.id, o.obs || (it.produto + (o.emb ? ' ' + o.emb : '')), o.link), 'tam-a', '<b>' + esc(o.emb || medidaTxt(o.q, b)) + '</b><span>' + esc(G[o.id].curto) + '</span><span>' + brl.format(o.total) + (o.online ? (o.frete ? ' com frete' : ' frete grátis') : '') + '</span><span class="pu">' + esc(porUn(o.total, o.q, b)) + '</span>') + '</li>';
     }).join('');
     var chip, linha, nota = [], eco = 0, dica = null, principal = false;
     if (best !== ref && vale(best)){
       var nr = noRef(best.Q), d = dura(best.Q);
       eco = economia(best);
-      dica = {id:best.o.id, txt:comoTxt(best, b) + ' por ' + brl.format(best.total), como:comoTxt(best, b), total:best.total, online:best.o.online, frete:best.o.frete,
+      dica = {id:best.o.id, link:best.o.link, txt:comoTxt(best, b) + ' por ' + brl.format(best.total), como:comoTxt(best, b), total:best.total, online:best.o.online, frete:best.o.frete,
               porBase:Math.round(best.total / (best.Q / q0) * 100) / 100, base:medidaTxt(q0, b)};
       principal = !(best.o.online && best.o.prazo != null && r.dias != null && best.o.prazo > r.dias);
       chip = '<span class="dchip on">Compensa o maior</span>';
@@ -1514,11 +1543,11 @@ h3{font-size:13px;font-weight:600}
       return '<li class="item"><div class="i-head"><p class="i-prod">' + esc(x.it.produto) + '</p>' + (p.length > 1 || dc ? '<span class="i-save num">economia de ' + brl.format(max - (dc ? dc.porBase : best.v)) + '</span>' : '') + '</div>'
         + '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>'
         + (dc
-          ? '<div class="i-best"><span class="lbl">Melhor compra</span><span class="por num">' + brl.format(dc.porBase) + '<span class="un">por ' + esc(dc.base) + '</span></span><span class="i-store">' + esc(dc.como) + ' por ' + brl.format(dc.total) + ' · ' + esc(G[dc.id].nome) + ' <span class="chip">' + esc(G[dc.id].singular) + '</span></span></div>'
-            + '<p class="i-avulso num">Avulso, o mais barato: <b>' + brl.format(best.v) + '</b> (' + esc(G[best.id].nome) + ')</p>'
-          : '<div class="i-best"><span class="lbl">Mais barato</span><span class="por num">' + brl.format(best.v) + '</span><span class="i-store">' + esc(G[best.id].nome) + ' <span class="chip">' + esc(G[best.id].singular) + '</span>' + (best.clube ? ' <span class="chip selo">Clube</span>' : '') + '</span></div>'
+          ? abreLink(linkCompra(dc.id, x.it.produto + ' ' + dc.como, dc.link), 'i-best i-link', '<span class="lbl">Melhor compra</span><span class="por num">' + brl.format(dc.porBase) + '<span class="un">por ' + esc(dc.base) + '</span></span><span class="i-store">' + esc(dc.como) + ' por ' + brl.format(dc.total) + ' · ' + esc(G[dc.id].nome) + ' <span class="chip">' + esc(G[dc.id].singular) + '</span></span>' + setaLink(linkCompra(dc.id, '', dc.link)))
+            + '<p class="i-avulso num">Avulso, o mais barato: <b>' + brl.format(best.v) + '</b> (' + abreLink(linkCompra(best.id, best.obs || x.it.produto, best.link), 'i-txtlink', esc(G[best.id].nome)) + ')</p>'
+          : abreLink(linkCompra(best.id, best.obs || x.it.produto, best.link), 'i-best i-link', '<span class="lbl">Mais barato</span><span class="por num">' + brl.format(best.v) + '</span><span class="i-store">' + esc(G[best.id].nome) + ' <span class="chip">' + esc(G[best.id].singular) + '</span>' + (best.clube ? ' <span class="chip selo">Clube</span>' : '') + '</span>' + setaLink(linkCompra(best.id, '', best.link)))
             + (best.obs && !best.online ? '<p class="i-avulso">Produto: ' + esc(best.obs) + '</p>' : ''))
-        + (p.length > 1 ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li>' + esc(G[y.id].curto) + ' <b>' + brl.format(y.v) + '</b>' + (y.online && y.frete ? ' com frete' : '') + (y.clube ? ' clube' : '') + '</li>'; }).join('') + '</ul>' : '')
+        + (p.length > 1 ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li>' + abreLink(linkCompra(y.id, y.obs || x.it.produto, y.link), 'i-chip', esc(G[y.id].curto) + ' <b>' + brl.format(y.v) + '</b>' + (y.online && y.frete ? ' com frete' : '') + (y.clube ? ' clube' : '')) + '</li>'; }).join('') + '</ul>' : '')
         + dicaClube(p, best)
         + decisaoOnline(x.r, p, !!dc)
         + ((mt || {}).html || '')

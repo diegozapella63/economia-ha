@@ -1,5 +1,10 @@
 # Mudanças
 
+## 0.10.3
+
+- **Abrir na loja**: toque no preço mais barato, na melhor compra, nos outros preços ou em Comparar tamanhos para abrir o anúncio (por exemplo, no Mercado Livre). Quando a busca não trouxe o link, o botão vira **Procurar** e abre a busca do produto na loja.
+- A busca pede o link da página do produto, não da loja.
+
 ## 0.10.2
 
 - **Itens sem preço**: no fim da busca, o app faz uma pergunta só sobre os itens que ficaram sem preço, procurando item por item. Em item genérico, como "Pó lava louça", a IA escolhe as marcas mais vendidas e o cartão mostra qual produto é.
