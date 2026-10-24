@@ -15,6 +15,7 @@ Rotas:
 - PUT  /api/ofertas  grava um ofertas.json pronto
 - POST /api/buscar   começa a busca agora
 - POST /api/buscar-itens   {"itens": [...]} busca só esses itens e junta ao resultado
+- GET  /api/uso-ia   chamadas de IA por dia, tipo e resultado (também em sensor.economia_ia_hoje)
 - GET  /api/busca    andamento da busca
 - GET  /api/exportar/lista.xlsx | lista.json   exporta a lista
 - GET  /api/todos    listas de tarefas do Home Assistant
@@ -49,6 +50,7 @@ PORT = int(os.environ.get("OFERTAS_PORT", "8099"))
 CONFIG = os.path.join(DATA, "config.json")
 OFERTAS = os.path.join(DATA, "ofertas.json")
 OPTIONS = os.path.join(DATA, "options.json")
+USO_FILE = os.path.join(DATA, "uso_ia.json")
 SYNC_FILE = os.path.join(DATA, "sync_ha.json")
 SYNC_INTERVALO = int(os.environ.get("OFERTAS_SYNC_SEG", "60"))
 ESPERA_COTA = int(os.environ.get("OFERTAS_ESPERA_COTA", "60"))
@@ -417,6 +419,8 @@ def sincronizar_lista():
 
 def laco_sincronizacao():
     while True:
+        if _sensor_dia["dia"] != hoje_br() and token_ha():
+            publica_sensor_uso()
         try:
             sincronizar_lista()
         except ErroBusca as e:
@@ -499,7 +503,122 @@ def chamar_conversa(agente, instrucoes):
     return extrai_json(fala)
 
 
+# ---------- uso da IA: o HA não devolve tokens nem custo, então o add-on conta as chamadas ----------
+_uso_trava = threading.Lock()
+_uso_local = threading.local()  # quantas chamadas a busca desta thread fez
+SENSOR_USO = "sensor.economia_ia_hoje"
+DIAS_USO = 120
+
+
+def tipo_uso(nome):
+    n = str(nome or "").replace("EconomIA: ", "")
+    if n == "teste":
+        return "teste"
+    if n.startswith("encarte"):
+        return "encarte"
+    if n == "itens sem preço":
+        return "itens"
+    if n == "ler cupons":
+        return "cupons"
+    if n == "ler lista":
+        return "fotos"
+    return "busca"
+
+
+def registra_uso(nome, entidade, entrada, saida, imagens, segundos, resultado):
+    dia, tipo = hoje_br(), tipo_uso(nome)
+    tokens = round((entrada + saida) / 4)  # estimativa: uns 4 caracteres por token
+    with _uso_trava:
+        u = ler_json(USO_FILE, {}) or {}
+        dias = u.setdefault("dias", {})
+        d = dias.setdefault(dia, {})
+        for k, v in (("chamadas", 1), ("tokens", tokens), ("imagens", imagens), ("segundos", round(segundos, 1)),
+                     ("erros", 1 if resultado not in ("ok", "cota") else 0), ("cota", 1 if resultado == "cota" else 0)):
+            d[k] = round(d.get(k, 0) + v, 1)
+        tipos, ia = d.setdefault("tipos", {}), entidade or "padrão do Home Assistant"
+        tipos[tipo] = tipos.get(tipo, 0) + 1
+        ias = d.setdefault("ias", {})
+        ias[ia] = ias.get(ia, 0) + 1
+        for k in sorted(dias)[:-DIAS_USO]:
+            del dias[k]
+        ultimas = u.setdefault("ultimas", [])
+        ultimas.insert(0, {"quando": agora(), "tipo": tipo, "ia": ia, "resultado": resultado,
+                           "segundos": round(segundos, 1), "tokens": tokens, "imagens": imagens})
+        del ultimas[40:]
+        gravar_json(USO_FILE, u)
+    if hasattr(_uso_local, "chamadas"):
+        _uso_local.chamadas += 1
+    threading.Thread(target=publica_sensor_uso, daemon=True).start()
+
+
+def uso_resumo():
+    u = ler_json(USO_FILE, {}) or {}
+    dias = u.get("dias") or {}
+    hoje = hoje_br()
+    d0 = datetime.strptime(hoje, "%Y-%m-%d")
+    semana = [(d0 - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(6, -1, -1)]
+
+    def soma(chaves):
+        t = {"chamadas": 0, "erros": 0, "cota": 0, "tokens": 0, "imagens": 0, "segundos": 0, "tipos": {}, "ias": {}}
+        for k in chaves:
+            d = dias.get(k) or {}
+            for c in ("chamadas", "erros", "cota", "tokens", "imagens", "segundos"):
+                t[c] = round(t[c] + (d.get(c) or 0), 1)
+            for grupo in ("tipos", "ias"):
+                for nome, n in (d.get(grupo) or {}).items():
+                    t[grupo][nome] = t[grupo].get(nome, 0) + n
+        return t
+
+    return {"hoje": soma([hoje]), "semana": soma(semana), "mes": soma([k for k in dias if k[:7] == hoje[:7]]),
+            "dias": [dict(dia=k, **{c: (dias.get(k) or {}).get(c, 0) for c in ("chamadas", "erros", "cota")}) for k in semana],
+            "ultimas": (u.get("ultimas") or [])[:12], "desde": min(dias) if dias else None, "sensor": SENSOR_USO}
+
+
+_sensor_dia = {"dia": None}
+
+
+def publica_sensor_uso():
+    """Sensor no HA com as chamadas de hoje, para gráfico e automação."""
+    try:
+        r = uso_resumo()
+        h = r["hoje"]
+        ha_api("POST", "/states/" + SENSOR_USO, {"state": int(h["chamadas"]), "attributes": {
+            "friendly_name": "EconomIA: chamadas de IA hoje", "icon": "mdi:robot-outline",
+            "unit_of_measurement": "chamadas", "state_class": "total_increasing",
+            "erros": int(h["erros"]), "cota_excedida": int(h["cota"]), "tokens_texto_estimados": int(h["tokens"]),
+            "imagens": int(h["imagens"]), "por_tipo": h["tipos"], "ultimos_7_dias": int(r["semana"]["chamadas"]),
+            "este_mes": int(r["mes"]["chamadas"]), "ultima_chamada": (r["ultimas"][0]["quando"] if r["ultimas"] else None)}})
+        _sensor_dia["dia"] = hoje_br()
+    except Exception as e:  # noqa: BLE001
+        if _sensor_dia["dia"] != hoje_br():
+            log(f"sensor de uso da IA: {e}")
+        _sensor_dia["dia"] = hoje_br()
+
+
 def chamar_ai_task(nome, instrucoes, anexos=None, uso="busca"):
+    inicio, resultado, saida = time.time(), "erro", 0
+    try:
+        r = _chamar_ai_task(nome, instrucoes, anexos, uso)
+        resultado = "ok"
+        try:
+            saida = len(json.dumps(r, ensure_ascii=False))
+        except (TypeError, ValueError):
+            pass
+        return r
+    except ErroCota:
+        resultado = "cota"
+        raise
+    except ErroFormato:
+        resultado = "formato"
+        raise
+    finally:
+        try:
+            registra_uso(nome, ia_escolhida(uso), len(instrucoes or ""), saida, len(anexos or []), time.time() - inicio, resultado)
+        except Exception as e:  # noqa: BLE001
+            log(f"uso da IA: {e}")
+
+
+def _chamar_ai_task(nome, instrucoes, anexos=None, uso="busca"):
     token = token_ha()
     if not token:
         raise ErroBusca("O add-on não tem acesso ao Home Assistant. Reinstale a versão mais nova do add-on.")
@@ -1231,7 +1350,7 @@ def nomes_da_lista(cfg):
 def buscar():
     cfg = ler_json(CONFIG, {}) or {}
     cats = [c for c in (cfg.get("categorias") or list(CATEGORIAS)) if c in CATEGORIAS]
-    BUSCA.update({"rodando": True, "erro": None, "avisos": [], "atual": 0, "total": len(cats), "etapa": None})
+    BUSCA.update({"rodando": True, "erro": None, "avisos": [], "atual": 0, "total": len(cats), "etapa": None, "chamadas_ia": None})
     try:
         if not cfg.get("cep"):
             raise ErroBusca("Salve o CEP em Mais antes de buscar.")
@@ -1239,6 +1358,7 @@ def buscar():
         antigas = {c.get("id"): c for c in (anterior.get("categorias") or []) if isinstance(c, dict)}
         novas, parciais, falhas = [], [], []
         relatorio = {"categorias": {}, "sem_preco": [], "falhas": []}
+        _uso_local.chamadas = 0
         for i, cat_id in enumerate(cats, 1):
             BUSCA.update({"atual": i, "etapa": CATEGORIAS[cat_id]["nome"].lower()})
             log(f"buscando {cat_id}")
@@ -1333,6 +1453,8 @@ def buscar():
                 log(f"busca dos itens sem preço: {e}")
         relatorio["sem_preco"] = [n for n in nomes_da_lista(cfg) if n not in lista]
         relatorio["falhas"] = falhas
+        relatorio["chamadas_ia"] = _uso_local.chamadas
+        BUSCA["chamadas_ia"] = _uso_local.chamadas
         gravar_json(OFERTAS, {
             "versao": 2, "gerado_em": agora(), "origem": "ia_home_assistant",
             "lista": [item_ofertas(p, v) for p, v in lista.items()],
@@ -1341,7 +1463,7 @@ def buscar():
         })
         if falhas:
             BUSCA["avisos"] = ["Algumas buscas falharam e mantive o resultado anterior: " + " | ".join(falhas)]
-        log("busca concluída" + (f"; sem preço: {', '.join(relatorio['sem_preco'])}" if relatorio["sem_preco"] else ""))
+        log(f"busca concluída com {_uso_local.chamadas} chamada(s) de IA" + (f"; sem preço: {', '.join(relatorio['sem_preco'])}" if relatorio["sem_preco"] else ""))
     except ErroBusca as e:
         BUSCA["erro"] = str(e)
         log(f"busca falhou: {e}")
@@ -1355,7 +1477,8 @@ def buscar():
 def buscar_itens(itens):
     cfg = ler_json(CONFIG, {}) or {}
     cats = [c for c in (cfg.get("categorias") or list(CATEGORIAS)) if c in CATEGORIAS]
-    BUSCA.update({"rodando": True, "erro": None, "avisos": [], "atual": 1, "total": 1,
+    _uso_local.chamadas = 0
+    BUSCA.update({"rodando": True, "erro": None, "avisos": [], "atual": 1, "total": 1, "chamadas_ia": None,
                   "etapa": (itens[0] if len(itens) == 1 else f"{len(itens)} itens").lower()})
     try:
         if not cfg.get("cep"):
@@ -1379,7 +1502,8 @@ def buscar_itens(itens):
                                   categorias=novas, relatorio=relatorio))
         if not achados:
             BUSCA["avisos"] = ["Não achei preço para " + ", ".join(itens) + ". Tente com marca e tamanho, por exemplo \"Detergente Ypê 500 ml\"."]
-        log(f"busca de itens: {len(achados)} de {len(itens)} com preço")
+        BUSCA["chamadas_ia"] = _uso_local.chamadas
+        log(f"busca de itens: {len(achados)} de {len(itens)} com preço, {_uso_local.chamadas} chamada(s) de IA")
     except ErroBusca as e:
         BUSCA["erro"] = str(e)
         log(f"busca de itens falhou: {e}")
@@ -1642,7 +1766,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.10.4"
+    server_version = "EconomIA/0.10.5"
 
     def log_message(self, fmt, *args):
         pass
@@ -1709,6 +1833,7 @@ class Painel(BaseHTTPRequestHandler):
                 "usuario": self.headers.get("X-Remote-User-Display-Name") or self.headers.get("X-Remote-User-Name") or None,
                 "busca": BUSCA,
                 "sync": SYNC,
+                "uso_ia": uso_resumo(),
             })
         elif rota == "/api/todos":
             try:
@@ -1717,6 +1842,8 @@ class Painel(BaseHTTPRequestHandler):
                 self._json(502, {"erro": str(e)})
         elif rota == "/api/busca":
             self._json(200, BUSCA)
+        elif rota == "/api/uso-ia":
+            self._json(200, uso_resumo())
         elif rota == "/api/ias":
             try:
                 self._json(200, ias_disponiveis())

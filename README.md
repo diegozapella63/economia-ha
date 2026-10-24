@@ -41,6 +41,7 @@ Para buscar ofertas, o app usa a IA do seu Home Assistant (Anthropic, OpenAI, Go
 - **Clubes**: marque "Sou do clube" e o preço de clube entra nas contas. Cupons da carteira do app entram por print.
 - **Leitura por IA**: prints, lista escrita à mão ou mensagem do WhatsApp viram itens da lista. Você confere antes de adicionar.
 - **Lista por voz**: sincroniza com a lista de compras do Home Assistant (Assist, Alexa, Google Tasks).
+- **Uso da IA**: quantas chamadas a busca e a leitura de fotos fizeram por dia, erros de cota e tokens estimados, com o sensor `sensor.economia_ia_hoje` para painel e automação.
 - **Perfil da casa**: quem mora, pets, restrições e interesses decidem o que aparece.
 - **Exportação** para Excel e JSON, importação, tema claro ou escuro e 10 cores.
 

@@ -266,6 +266,29 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .ia-st.ok{color:var(--ink)}
 .ia-st.ok::before{background:var(--accent)}
 .ia-st.erro::before{background:var(--deal)}
+.uso-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:4px 0 12px}
+.uso-tile{background:var(--bg);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.uso-tile .k{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.uso-tile .v{font-family:var(--font-display);font-weight:700;font-size:30px;line-height:1.05;color:var(--ink);font-variant-numeric:tabular-nums}
+.uso-tile .s{font-size:12.5px;color:var(--muted);line-height:1.3}
+.uso-tile .s.alerta{color:var(--deal);font-weight:600}
+.uso-chart{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;align-items:end;height:118px;padding-top:6px;border-bottom:1px solid var(--line)}
+.uso-bar{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;background:none;border:0;padding:0 4px;cursor:pointer;font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
+.uso-bar i{display:block;width:100%;max-width:26px;min-height:2px;border-radius:4px 4px 0 0;background:var(--accent);opacity:.45}
+.uso-bar.hoje i,.uso-bar[aria-pressed="true"] i{opacity:1}
+.uso-bar:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.uso-dias{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;font-size:12px;color:var(--muted);text-align:center;padding-top:4px}
+.uso-cap{font-size:13px;color:var(--muted);padding:6px 0 10px;min-height:1.5em}
+.uso-cap b{color:var(--ink);font-weight:600}
+.uso-tipos{display:flex;flex-wrap:wrap;gap:5px;padding-bottom:10px}
+.uso-tipos li{font-size:12.5px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;color:var(--muted)}
+.uso-tipos b{color:var(--ink);font-weight:600}
+.uso-ult{padding:4px 0 8px}
+.uso-ult summary{font-size:14px;font-weight:600;color:var(--accent);cursor:pointer;padding:6px 0}
+.uso-ult li{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;font-size:13px;padding:7px 0;border-top:1px solid var(--line);color:var(--muted)}
+.uso-ult li b{color:var(--ink);font-weight:600}
+.uso-ult li .r-erro{color:var(--deal);font-weight:600}
+.uso-ult li .t{flex-basis:100%;font-size:12.5px}
 .ia-st.erro{color:var(--deal)}
 #cupMeus{border-top:1px solid var(--line);padding-top:14px}
 .cup-row .r-name{display:flex;flex-direction:column;gap:2px}
@@ -896,6 +919,16 @@ h3{font-size:13px;font-weight:600}
       <div class="row-form"><button type="button" class="ghost big" id="iaTestar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>Verificar de novo</button></div>
       <p class="hint">Google Gemini: a Pesquisa Google funciona num <b>assistente de conversa</b> com "Enable Google Search tool" ligado e "Controlar o Home Assistant" em nenhum. Escolha esse assistente em "Para buscar ofertas" e deixe o Google AI Task para ler fotos.</p>
     </section>
+    <section class="panel settings" aria-labelledby="h-uso">
+      <div class="set-head"><h2 id="h-uso">Uso da IA</h2><p class="sec-meta">Cada busca, foto ou teste é uma chamada para a IA do Home Assistant. O Home Assistant não informa tokens nem custo, então o EconomIA conta as chamadas e estima os tokens pelo tamanho do texto.</p></div>
+      <div class="uso-tiles" id="usoTiles"></div>
+      <div class="uso-chart" id="usoChart" role="group" aria-label="Chamadas de IA nos últimos 7 dias"></div>
+      <p class="uso-cap num" id="usoCap" aria-live="polite"></p>
+      <ul class="uso-tipos num" id="usoTipos"></ul>
+      <details class="uso-ult"><summary>Últimas chamadas</summary><ul class="num" id="usoUlt"></ul></details>
+      <p class="hint" id="usoProv"></p>
+      <p class="hint">No Home Assistant, o sensor <code>sensor.economia_ia_hoje</code> traz as chamadas de hoje, com erros, cota e tokens estimados, para pôr num painel ou numa automação (por exemplo, avisar quando passar de 50 no dia).</p>
+    </section>
     <section class="panel settings" aria-labelledby="h-ha">
       <div class="set-head"><h2 id="h-ha">Lista do Home Assistant</h2><p class="sec-meta">Fale com o Assist, por exemplo "adicione café na lista de compras", e o item aparece aqui. Marcou como comprado lá, conta como "Comprei hoje" aqui.</p></div>
       <div class="set-row">
@@ -943,7 +976,7 @@ h3{font-size:13px;font-weight:600}
       </div>
     </section>
     <section class="panel settings" aria-labelledby="h-sobre">
-      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.10.4. Seus dados ficam em <code>config.json</code> e <code>ofertas.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
+      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.10.5. Seus dados ficam em <code>config.json</code>, <code>ofertas.json</code> e <code>uso_ia.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
     </section>
 
     <div class="group" id="lojasSec"><h2 class="big">Lojas</h2></div>
@@ -1183,6 +1216,7 @@ h3{font-size:13px;font-weight:600}
   // ---------- telas ----------
   function irPara(v){
     ui.view = v; salvarUI();
+    if (v === 'mais' && typeof carregaUso === 'function' && USO) carregaUso();
     $('screenTitle').textContent = TITULOS[v];
     VIEWS.forEach(function(x){ $('v-' + x).hidden = x !== v; });
     Array.prototype.forEach.call($('views').querySelectorAll('button[data-view]'), function(b){
@@ -2221,6 +2255,80 @@ h3{font-size:13px;font-weight:600}
 
   // IA do Home Assistant
   var IAS = null, IA_ST = {busca:null, fotos:null};
+
+  // ----- uso da IA -----
+  var USO = null, usoDia = null;
+  var USO_TIPO = {busca:'Busca de ofertas', itens:'Itens sem preço', encarte:'Encartes', fotos:'Fotos e mensagens', cupons:'Cupons por print', teste:'Testes'};
+  var USO_RES = {ok:'', cota:'cota excedida', formato:'fora do formato', erro:'erro'};
+  var DIA_SEM = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+  function usoExemplo(){
+    var h = hojeSP(), dias = [3, 0, 9, 4, 0, 14, 6].map(function(n, i){ return {dia:soma(h, i - 6), chamadas:n, erros:i === 5 ? 1 : 0, cota:i === 5 ? 1 : 0}; });
+    var ult = [['fotos', 'ai_task.google_ai_task', 'ok', 6.2, 1800, 2], ['busca', 'conversation.google_generative_ai', 'ok', 41.5, 5200, 0], ['itens', 'conversation.google_generative_ai', 'ok', 23.1, 2600, 0], ['busca', 'conversation.google_generative_ai', 'ok', 38.0, 4900, 0]];
+    return {hoje:{chamadas:6, erros:0, cota:0, tokens:21000, imagens:2, tipos:{busca:3, itens:1, encarte:1, fotos:1}, ias:{'conversation.google_generative_ai':4, 'ai_task.google_ai_task':2}},
+      semana:{chamadas:36, erros:1, cota:1, tokens:118000, imagens:7, tipos:{busca:20, itens:6, encarte:5, fotos:3, teste:2}, ias:{'conversation.google_generative_ai':28, 'ai_task.google_ai_task':8}},
+      mes:{chamadas:92, erros:2, cota:1, tokens:301000, imagens:15, tipos:{}, ias:{}}, dias:dias, sensor:'sensor.economia_ia_hoje',
+      ultimas:ult.map(function(x, i){ return {quando:new Date(Date.now() - (i * 7 + 3) * 60000).toISOString(), tipo:x[0], ia:x[1], resultado:x[2], segundos:x[3], tokens:x[4], imagens:x[5]}; })};
+  }
+  var fmtHora = new Intl.DateTimeFormat('pt-BR', {timeZone:TZ, hour:'2-digit', minute:'2-digit'});
+  var fmtDiaSP = new Intl.DateTimeFormat('en-CA', {timeZone:TZ, year:'numeric', month:'2-digit', day:'2-digit'});
+  function quandoCurto(iso){ var d = new Date(iso), dia = fmtDiaSP.format(d); return (dia === hojeSP() ? 'hoje' : dataBR(dia)) + ' ' + fmtHora.format(d); }
+  function milTokens(n){ n = Number(n) || 0; return n >= 1e6 ? (n / 1e6).toFixed(1).replace('.', ',') + ' mi' : n >= 1000 ? Math.round(n / 1000) + ' mil' : String(Math.round(n)); }
+  function nomeIA(id){
+    var t = (IAS && arr(IAS.tarefas).concat(arr(IAS.agentes))) || [], x = t.filter(function(y){ return y.id === id; })[0];
+    return x ? x.nome : String(id || '').replace(/^[a-z_]+\./, '').replace(/_/g, ' ');
+  }
+  function provedorIA(ids){
+    var j = norm(ids.join(' '));
+    if (/google|gemini/.test(j)) return 'google';
+    if (/openai|chatgpt|gpt/.test(j)) return 'openai';
+    if (/anthropic|claude/.test(j)) return 'anthropic';
+    return '';
+  }
+  function carregaUso(){
+    if (MODO !== 'addon'){ USO = usoExemplo(); pintaUso(); return; }
+    fetch('api/uso-ia', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){ USO = j; pintaUso(); }).catch(function(){});
+  }
+  function pintaUso(){
+    var u = USO; if (!u || !u.hoje) return;
+    var sub = function(t){
+      if (t.cota) return '<span class="s alerta">' + t.cota + (t.cota > 1 ? ' vezes' : ' vez') + ' sem cota</span>';
+      if (t.erros) return '<span class="s alerta">' + t.erros + (t.erros > 1 ? ' com erro' : ' com erro') + '</span>';
+      return '<span class="s">≈ ' + milTokens(t.tokens) + ' tokens</span>';
+    };
+    var tile = function(k, t){ return '<div class="uso-tile"><span class="k">' + k + '</span><span class="v">' + (t.chamadas || 0) + '</span>' + sub(t) + '</div>'; };
+    $('usoTiles').innerHTML = tile('Hoje', u.hoje) + tile('7 dias', u.semana) + tile('Este mês', u.mes);
+    var dias = arr(u.dias), max = Math.max.apply(null, dias.map(function(d){ return d.chamadas; }).concat([1])), hoje = hojeSP();
+    if (!usoDia || !dias.some(function(d){ return d.dia === usoDia; })) usoDia = hoje;
+    $('usoChart').innerHTML = dias.map(function(d){
+      var h = d.chamadas ? Math.max(4, Math.round(d.chamadas / max * 100)) : 0, dt = new Date(utc(d.dia));
+      var rot = DIA_SEM[dt.getUTCDay()] + ', ' + dataBR(d.dia) + ': ' + d.chamadas + (d.chamadas === 1 ? ' chamada' : ' chamadas');
+      return '<button type="button" class="uso-bar' + (d.dia === hoje ? ' hoje' : '') + '" data-dia="' + d.dia + '" aria-pressed="' + (d.dia === usoDia) + '" aria-label="' + esc(rot) + '"><i style="height:' + h + '%"></i></button>';
+    }).join('') ;
+    var lbl = '<div class="uso-dias" aria-hidden="true">' + dias.map(function(d){ return '<span>' + (d.dia === hoje ? 'hoje' : DIA_SEM[new Date(utc(d.dia)).getUTCDay()]) + '</span>'; }).join('') + '</div>';
+    var ch = $('usoChart'); if (ch.nextElementSibling && ch.nextElementSibling.classList.contains('uso-dias')) ch.nextElementSibling.remove();
+    ch.insertAdjacentHTML('afterend', lbl);
+    var sel = dias.filter(function(d){ return d.dia === usoDia; })[0] || {chamadas:0, erros:0, cota:0, dia:hoje};
+    $('usoCap').innerHTML = (sel.dia === hoje ? 'Hoje' : esc(DIA_SEM[new Date(utc(sel.dia)).getUTCDay()] + ', ' + dataBR(sel.dia))) + ': <b>' + sel.chamadas + (sel.chamadas === 1 ? ' chamada' : ' chamadas') + '</b>'
+      + (sel.erros ? ', ' + sel.erros + ' com erro' : '') + (sel.cota ? ', ' + sel.cota + ' sem cota' : '') + '.';
+    var tipos = u.semana.tipos || {};
+    $('usoTipos').innerHTML = Object.keys(tipos).sort(function(a, b){ return tipos[b] - tipos[a]; })
+      .map(function(k){ return '<li>' + esc(USO_TIPO[k] || k) + ' <b>' + tipos[k] + '</b></li>'; }).join('');
+    $('usoTipos').hidden = !Object.keys(tipos).length;
+    var ult = arr(u.ultimas);
+    $('usoUlt').innerHTML = ult.length ? ult.map(function(c){
+      var res = USO_RES[c.resultado];
+      return '<li><b>' + esc(USO_TIPO[c.tipo] || c.tipo) + '</b><span>' + esc(nomeIA(c.ia)) + '</span>' + (res ? '<span class="r-erro">' + esc(res) + '</span>' : '')
+        + '<span class="t">' + String(c.segundos).replace('.', ',') + ' s · ≈ ' + milTokens(c.tokens) + ' tokens' + (c.imagens ? ' · ' + c.imagens + (c.imagens > 1 ? ' imagens' : ' imagem') : '') + ' · ' + esc(quandoCurto(c.quando)) + '</span></li>';
+    }).join('') : '<li>Nenhuma chamada ainda.</li>';
+    var ids = Object.keys((u.mes && u.mes.ias) || {}).concat(Object.keys(u.semana.ias || {}), [estado.ia.busca || '', estado.ia.fotos || '']);
+    var prov = provedorIA(ids), txt = '';
+    if (prov === 'google') txt = 'Consumo exato do Gemini: no <a href="https://console.cloud.google.com/apis/dashboard" target="_blank" rel="noopener">Google Cloud Console</a>, abra APIs e serviços ativados → Generative Language API; o gráfico de tráfego mostra os pedidos e os erros 429 de cota. Os limites do plano grátis estão no <a href="https://aistudio.google.com/" target="_blank" rel="noopener">Google AI Studio</a>. A cota diária volta à meia-noite do horário do Pacífico, de madrugada no Brasil (4h ou 5h).';
+    else if (prov === 'openai') txt = 'Consumo exato e custo da OpenAI: <a href="https://platform.openai.com/usage" target="_blank" rel="noopener">platform.openai.com/usage</a>.';
+    else if (prov === 'anthropic') txt = 'Consumo exato e custo da Anthropic: <a href="https://platform.claude.com/usage" target="_blank" rel="noopener">Claude Console → Usage</a>.';
+    else txt = 'O consumo exato e o custo ficam no painel do provedor da sua IA (Google, OpenAI, Anthropic...).';
+    $('usoProv').innerHTML = txt + ' A estimativa de tokens daqui conta só o texto; a busca na web, as imagens e as instruções do assistente somam mais.';
+  }
+  $('usoChart').addEventListener('click', function(e){ var b = e.target.closest('button[data-dia]'); if (b){ usoDia = b.dataset.dia; pintaUso(); } });
   function carregaIAs(){
     if (MODO !== 'addon'){
       IAS = {tarefas:[{id:'ai_task.google_ai_task', nome:'Google AI Task', anexos:true}], agentes:[{id:'conversation.google_generative_ai', nome:'Google Generative AI'}]};
@@ -2241,6 +2349,7 @@ h3{font-size:13px;font-weight:600}
       el.className = 'ia-st' + (st && st.ok === true ? ' ok' : st && st.ok === false ? ' erro' : '');
       el.textContent = st ? st.msg : x[2];
     });
+    pintaUso();
   }
   function testaIA(uso){
     IA_ST[uso] = {ok:null, msg:uso === 'busca' ? 'Testando a busca na web… pode levar até um minuto.' : 'Verificando…'}; pintaIA();
@@ -2434,7 +2543,7 @@ h3{font-size:13px;font-weight:600}
     }
     botaoBusca(false, 'Buscar');
     if (st.erro){ m.hidden = false; m.className = 'busca-msg err'; m.textContent = st.erro; }
-    else if (!inicial && st.terminou_em){ m.hidden = false; m.className = 'busca-msg ok'; m.textContent = 'Busca concluída.' + (arr(st.avisos).length ? ' ' + st.avisos.join(' ') : ''); }
+    else if (!inicial && st.terminou_em){ m.hidden = false; m.className = 'busca-msg ok'; m.textContent = 'Busca concluída' + (st.chamadas_ia ? ', com ' + st.chamadas_ia + (st.chamadas_ia > 1 ? ' chamadas' : ' chamada') + ' de IA.' : '.') + (arr(st.avisos).length ? ' ' + st.avisos.join(' ') : ''); }
     else m.hidden = true;
   }
   function acompanhaBusca(inicial){
@@ -2450,6 +2559,7 @@ h3{font-size:13px;font-weight:600}
   }
   function recarrega(){
     fetch('api/estado', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(api){
+      if (api.uso_ia){ USO = api.uso_ia; pintaUso(); }
       if (api.ofertas && api.ofertas.categorias){ D = api.ofertas; exemplo = false; indexa(); pintaSync(); tudo(); toast('Ofertas atualizadas'); }
     }).catch(function(){});
   }
@@ -2466,7 +2576,7 @@ h3{font-size:13px;font-weight:600}
   function iniciar(){
     $('hello').innerHTML = '<span class="brand">Econom<span>IA</span></span>' + (usuario ? ' · Olá, ' + esc(usuario) : '');
     pintaSync(); tudo(); irPara(ui.view);
-    carregaListas(); carregaIAs();
+    carregaListas(); carregaIAs(); carregaUso();
     if (MODO === 'addon'){
       testaIA('fotos');
       acompanhaBusca(true);

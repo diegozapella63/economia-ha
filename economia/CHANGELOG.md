@@ -1,5 +1,12 @@
 # Mudanças
 
+## 0.10.5
+
+- **Uso da IA** em Mais: chamadas de hoje, dos últimos 7 dias e do mês, gráfico por dia, tipo de uso (busca, itens sem preço, encartes, fotos, cupons, testes), erros e cota excedida, e as últimas chamadas com tempo e tokens estimados.
+- Sensor **sensor.economia_ia_hoje** no Home Assistant, com as chamadas de hoje e os detalhes nos atributos, para painel e automação.
+- A mensagem do fim da busca diz quantas chamadas de IA ela usou.
+- Atalho para o painel de consumo do provedor (Google Cloud Console, OpenAI ou Claude Console).
+
 ## 0.10.4
 
 - **Melhor tamanho** também considera embalagens menores: um pote de 700 g a R$ 34,27/kg ganha do pacote de 1 kg a R$ 47,30/kg ("Compensa o menor").

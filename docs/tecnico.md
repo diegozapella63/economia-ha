@@ -36,7 +36,13 @@ O botão **Buscar** chama `ai_task.generate_data` pela API do Home Assistant (`h
 | GET | `/api/ler-lista?id=...` | `{status: "lendo|pronto|erro", itens: [{produto, quantidade, ja_na_lista}], erro}`. |
 | GET | `/api/ias` | `{tarefas: [{id, nome, anexos}], agentes: [{id, nome}]}`: entidades `ai_task.*` e `conversation.*`. |
 | POST | `/api/testar-ia` | `{uso: "busca"|"fotos"}` → `{ok, msg}`. A busca faz uma pergunta curta que exige busca na web. |
+| GET | `/api/uso-ia` | `{hoje, semana, mes: {chamadas, erros, cota, tokens, imagens, segundos, tipos, ias}, dias: [{dia, chamadas, erros, cota}], ultimas: [...]}`. Também vai em `/api/estado` como `uso_ia`. |
 | GET | `/api/saude` | Verificação simples. |
+
+### Uso da IA
+
+As ações `ai_task.generate_data` e `conversation.process` não devolvem tokens nem custo. O add-on conta cada chamada em `uso_ia.json` (por dia, até 120 dias): tipo (`busca`, `itens`, `encarte`, `fotos`, `cupons`, `teste`), entidade, resultado (`ok`, `cota`, `formato`, `erro`), segundos, imagens e tokens estimados (caracteres do pedido e da resposta ÷ 4).
+A cada chamada, e na virada do dia, publica `sensor.economia_ia_hoje` pela API de estados do HA: o estado é o número de chamadas de hoje (`state_class: total_increasing`) e os atributos trazem `erros`, `cota_excedida`, `tokens_texto_estimados`, `imagens`, `por_tipo`, `ultimos_7_dias`, `este_mes` e `ultima_chamada`. O sensor some se o HA reiniciar e volta no minuto seguinte.
 
 ### Leitura de fotos
 

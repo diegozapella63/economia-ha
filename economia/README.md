@@ -12,4 +12,5 @@ Sua lista de compras comparada nas farmácias, mercados e pet shops perto de cas
 - Preço de clube e cupons do app por print
 - Itens da lista por foto, print ou mensagem do WhatsApp
 - Lista por voz com a lista de compras do Home Assistant
+- Uso da IA: chamadas por dia e sensor no Home Assistant
 - Tema claro e escuro, com 10 cores
