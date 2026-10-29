@@ -1,5 +1,10 @@
 # Mudanças
 
+## 0.11.1
+
+- **Escolher fotos, Colar mensagem e Falar numa linha só**, em quadrinhos com o ícone em cima.
+- Os cartões da lista não repetem mais o mesmo texto: "Toque em Comprei hoje..." e "Os preços aparecem depois da próxima busca" aparecem uma vez só, acima da lista, e só quando valem para algum item.
+
 ## 0.11.0
 
 - **Falar**, como no GerencIA, no ResolvIA, no CronologIA e no InventarIA: o microfone no alto da tela, à direita (e em Minha lista › Falar). Fale os itens; o Home Assistant transcreve com a fala para texto do assistente de voz (com o Home Assistant Cloud já vem pronta) e a IA separa os itens para você conferir e adicionar. Até 2 minutos por vez. O Uso da IA conta o Falar como um tipo próprio.

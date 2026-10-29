@@ -378,7 +378,7 @@ a.i-link:active{filter:brightness(.96)}
 a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .tam-list li{padding:0}
 .tam-list a.tam-a{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;width:100%;padding:5px 8px;color:inherit;text-decoration:none}
-.i-best .i-busca{margin-left:auto;min-height:34px;padding:0 12px;font-size:14px}
+.i-best .i-busca{margin-left:auto;align-self:center;min-height:34px;padding:0 12px;font-size:14px}
 .i-others{display:flex;flex-wrap:wrap;gap:5px}
 .i-others li{font-size:12.5px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;color:var(--muted);white-space:nowrap}
 .i-others b{color:var(--ink);font-weight:600}
@@ -517,6 +517,12 @@ h3{font-size:13px;font-weight:600}
 .h-ic svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 /* Usar IA desligado: some tudo o que usa IA */
 .sem-ia .so-ia{display:none!important}
+/* Escolher fotos, Colar mensagem e Falar numa linha só, em quadrinhos */
+.ler-tiles{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:8px}
+.ler-tile{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;min-height:76px;padding:14px 6px 10px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit;font-size:14px;font-weight:500;line-height:1.2;text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.ler-tile:hover{border-color:var(--accent)}
+.ler-tile:active{transform:scale(.98)}
+.ler-tile svg{width:22px;height:22px;flex:none;fill:none;stroke:var(--accent);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .sem-ia .tabbar-in{grid-template-columns:repeat(4,minmax(0,1fr))}
 /* Mais em abas, presas no alto ao rolar */
 .mais-abas{position:sticky;top:0;z-index:12;display:flex;gap:2px;padding:4px;border-radius:14px;background:color-mix(in srgb,var(--surface) 45%,var(--bg));border:1px solid var(--line);box-shadow:0 0 0 8px var(--bg);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
@@ -919,9 +925,9 @@ h3{font-size:13px;font-weight:600}
         <button class="btn" type="submit">Adicionar</button>
       </form>
       <p class="hint" id="addMsg" aria-live="polite"></p>
-      <div class="row-form so-ia"><label class="ghost big" for="fotoArq" id="fotoBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Escolher fotos</label><button type="button" class="ghost big" id="textoBtn" aria-controls="fotoBox"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Colar mensagem</button><button type="button" class="ghost big so-voz" id="falarBtn" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Falar</button></div>
+      <div class="ler-tiles so-ia"><label class="ler-tile" for="fotoArq" id="fotoBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Escolher fotos</label><button type="button" class="ler-tile" id="textoBtn" aria-controls="fotoBox"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Colar mensagem</button><button type="button" class="ler-tile so-voz" id="falarBtn" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Falar</button></div>
       <input type="file" id="fotoArq" class="arq" accept="image/*" multiple>
-      <p class="hint so-ia">Foto da lista escrita à mão, print da conversa ou da embalagem que acabou: a IA do Home Assistant lê e sugere os itens.</p>
+      <p class="hint so-ia">Foto da lista escrita à mão, print da conversa, a embalagem que acabou ou o que você falar: a IA do Home Assistant lê e sugere os itens.</p>
       <div class="foto-box" id="fotoBox" hidden>
         <div class="fotos" id="fotoPrev"></div>
         <textarea class="field" id="fotoTxt" rows="3" hidden placeholder="Cole aqui a mensagem, ex.: compra 2 leites, Lysoform e pão de forma" aria-label="Mensagem com itens para comprar"></textarea>
@@ -940,7 +946,7 @@ h3{font-size:13px;font-weight:600}
         <p id="limparTxt"></p>
         <div class="row-form"><button type="button" class="btn perigo" id="limparSim">Apagar tudo</button><button type="button" class="ghost big" id="limparNao">Cancelar</button></div>
       </div>
-      <p class="sec-meta">Uma lista só para farmácias, mercados, pet shops e compras online. Pode escrever só o produto, como "Lysoform": o EconomIA compara os tamanhos pelo preço por quilo ou litro e diz qual compensa. O que está acabando aparece primeiro; toque em "Comprei hoje" quando comprar.</p>
+      <p class="sec-meta" id="wishDica">Uma lista só para farmácias, mercados, pet shops e compras online. Pode escrever só o produto, como "Lysoform": o EconomIA compara os tamanhos pelo preço por quilo ou litro e diz qual compensa. O que está acabando aparece primeiro.</p>
       <ul class="wish-grid" id="wish"></ul>
     </section>
   </section>
@@ -1198,7 +1204,7 @@ h3{font-size:13px;font-weight:600}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.11.0</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.11.1</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
   </section>
 
   <footer>Preço do site pode ser diferente do preço na loja. Confira validade e regras do cupom no carrinho.</footer>
@@ -1590,8 +1596,8 @@ h3{font-size:13px;font-weight:600}
   // ===== Minha lista =====
   function ritmo(compras){
     var c = arr(compras).slice().sort();
-    if (!c.length) return {txt:'Toque em "Comprei hoje" quando comprar para o painel aprender seu ritmo.', dias:null};
-    if (c.length < 2) return {txt:'Última compra em ' + dataBR(c[0]) + '. Mais uma compra e o painel já prevê a próxima.', dias:null};
+    if (!c.length) return {txt:'', dias:null};  // a explicação aparece uma vez só, acima da lista
+    if (c.length < 2) return {txt:'Última compra em ' + dataBR(c[0]) + '.', dias:null};
     var soma_ = 0; for (var i = 1; i < c.length; i++) soma_ += (utc(c[i]) - utc(c[i-1])) / 86400000;
     var media = Math.max(1, Math.round(soma_ / (c.length - 1)));
     var dias = diasAte(soma(c[c.length - 1], media));
@@ -1791,6 +1797,14 @@ h3{font-size:13px;font-weight:600}
     pintaRoteiro();
     if (!itens.length){ pintaHero(); $('wish').innerHTML = '<li class="empty">Sua lista está vazia. Adicione o que você compra sempre.</li>'; return; }
     pintaHero();
+    // o que vale para vários itens é dito uma vez só, aqui em cima, e não em cada cartão
+    var semCompra = itens.some(function(x){ return !arr(x.it.compras).length; });
+    var semPreco = itens.filter(function(x){ return !precosDe(x.it.produto).length; });
+    var naoAchou = semPreco.some(function(x){ return arr((D.relatorio || {}).sem_preco).map(norm).indexOf(norm(x.it.produto)) >= 0; });
+    $('wishDica').textContent = 'Pode escrever só o produto, como "Lysoform": o EconomIA compara os tamanhos pelo preço por quilo ou litro. O que está acabando aparece primeiro.'
+      + (semCompra ? ' Toque em "Comprei hoje" quando comprar: o painel aprende de quanto em quanto tempo cada item acaba.' : '')
+      + (semPreco.length && !naoAchou ? ' Os itens sem preço ganham preço na próxima busca.' : '')
+      + (naoAchou ? ' Quando a busca não acha um item, escreva com marca e tamanho, como "Detergente Ypê 500 ml", ou toque em Buscar este item.' : '');
     $('wish').innerHTML = itens.map(function(x){
       var p = precosDe(x.it.produto), soon = x.r.dias != null && x.r.dias <= 3;
       var acoes = '<div class="i-actions"><button type="button" class="ghost" data-comprei="' + x.i + '">Comprei hoje</button><button type="button" class="rm" data-rm="' + x.i + '">remover</button>' + (x.it.origem === 'ha' ? '<span class="chip">Veio do Home Assistant</span>' : '');
@@ -1798,17 +1812,17 @@ h3{font-size:13px;font-weight:600}
         var procurou = arr((D.relatorio || {}).sem_preco).map(norm).indexOf(norm(x.it.produto)) >= 0;
         var buscando = buscaItem === x.it.produto;
         return '<li class="item wait"><div class="i-head"><p class="i-prod">' + esc(x.it.produto) + '</p></div>'
-          + '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>'
-          + '<div class="i-best"><span class="lbl">Sem preço ainda</span><span class="i-wait">'
-          + (procurou ? 'A última busca não achou preço. Com marca e tamanho fica mais fácil, por exemplo “Detergente Ypê 500 ml”.' : 'Os preços aparecem depois da próxima busca.')
-          + '</span><button type="button" class="ghost i-busca so-ia" data-buscaitem="' + x.i + '"' + (buscando ? ' disabled' : '') + '>' + (buscando ? 'Buscando…' : 'Buscar este item') + '</button></div>'
+          + (x.r.txt ? '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>' : '')
+          + '<div class="i-best"><span class="lbl">Sem preço ainda</span>'
+          + (procurou ? '<span class="i-wait">A última busca não achou.</span>' : '')
+          + '<button type="button" class="ghost i-busca so-ia" data-buscaitem="' + x.i + '"' + (buscando ? ' disabled' : '') + '>' + (buscando ? 'Buscando…' : 'Buscar este item') + '</button></div>'
           + acoes + '</div></li>';
       }
       var best = p[0], max = p[p.length - 1].v, conta = {}, mt = melhorTamanho(x.it, x.r, p), dc = mt && mt.principal ? mt.dica : null;
       p.forEach(function(y){ conta[G[y.id].cat] = (conta[G[y.id].cat] || 0) + 1; });
       var onde = D.categorias.filter(function(c){ return conta[c.id]; }).map(function(c){ return plural(conta[c.id], c.id); }).join(' e ');
       return '<li class="item"><div class="i-head"><p class="i-prod">' + esc(x.it.produto) + '</p>' + (p.length > 1 || dc ? '<span class="i-save num">economia de ' + brl.format(max - (dc ? dc.porBase : best.v)) + '</span>' : '') + '</div>'
-        + '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>'
+        + (x.r.txt ? '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>' : '')
         + (dc
           ? abreLink(linkCompra(dc.id, x.it.produto + ' ' + dc.como, dc.link), 'i-best i-link', '<span class="lbl">Melhor compra</span><span class="por num">' + brl.format(dc.porBase) + '<span class="un">por ' + esc(dc.base) + '</span></span><span class="i-store">' + esc(dc.como) + ' por ' + brl.format(dc.total) + ' · ' + esc(G[dc.id].nome) + ' <span class="chip">' + esc(G[dc.id].singular) + '</span></span>' + setaLink(linkCompra(dc.id, '', dc.link)))
             + '<p class="i-avulso num">Avulso, o mais barato: <b>' + brl.format(best.v) + '</b> (' + abreLink(linkCompra(best.id, best.obs || x.it.produto, best.link), 'i-txtlink', esc(G[best.id].nome)) + ')</p>'
@@ -2992,7 +3006,7 @@ h3{font-size:13px;font-weight:600}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.11.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.11.1' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;
