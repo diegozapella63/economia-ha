@@ -1,5 +1,10 @@
 # Mudanças
 
+## 0.11.2
+
+- No cartão de cada item, o que fica à mostra é a **Melhor compra** (ou o Mais barato) e os outros preços. Comprar online ou na loja, o melhor tamanho e a comparação de tamanhos ficam juntos em **Online e tamanhos**, recolhido como o Comparar tamanhos. Aberto, continua aberto quando a lista atualiza.
+- Ícones em **Comprei hoje** e **Buscar este item**.
+
 ## 0.11.1
 
 - **Escolher fotos, Colar mensagem e Falar numa linha só**, em quadrinhos com o ícone em cima.

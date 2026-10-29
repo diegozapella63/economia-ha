@@ -368,7 +368,7 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .i-wait{font-size:13px;color:var(--muted)}
 .i-avulso{font-size:13px;color:var(--muted)}
 .i-avulso b{color:var(--ink);font-weight:600}
-.item.wait .i-best{background:var(--bg)}
+.item.wait .i-best{background:var(--bg);align-items:center}
 a.i-link{color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
 a.i-link:active{filter:brightness(.96)}
 .i-abrir{margin-left:auto;align-self:center;display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:600;color:var(--accent);white-space:nowrap}
@@ -397,6 +397,17 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .i-tam summary::before{content:"▸ "}
 .i-tam details[open] summary::before{content:"▾ "}
 .tam-list{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.i-det{align-self:stretch;border-top:1px dashed var(--line);padding-top:8px}
+.i-det > summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);list-style:none;padding:2px 0;-webkit-tap-highlight-color:transparent}
+.i-det > summary::-webkit-details-marker{display:none}
+.i-det > summary::before{content:"▸ "}
+.i-det[open] > summary::before{content:"▾ "}
+.i-det > summary + div{border-top:0;padding-top:6px}
+.i-det > div + div{margin-top:10px}
+.i-sub{font-size:13px;color:var(--muted)}
+.ghost.ic-btn{display:inline-flex;align-items:center;gap:7px}
+.ic-btn svg{width:17px;height:17px;flex:none;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ic-btn:disabled svg{stroke:var(--muted)}
 .tam-list li{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;font-size:12.5px;padding:5px 8px;border:1px solid var(--line);border-radius:7px}
 .tam-list li.top{border-color:var(--accent)}
 .tam-list b{color:var(--ink);font-weight:600}
@@ -1204,7 +1215,7 @@ h3{font-size:13px;font-weight:600}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.11.1</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.11.2</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
   </section>
 
   <footer>Preço do site pode ser diferente do preço na loja. Confira validade e regras do cupom no carrinho.</footer>
@@ -1775,8 +1786,8 @@ h3{font-size:13px;font-weight:600}
         else nota.push(rotulo + ' sai ' + porUn(unico.total, unico.q, b) + ', mais caro que o de ' + medidaTxt(ref.Q, b) + '.');
       }
     }
-    return {economia:eco, dica:dica, principal:principal, html:'<div class="i-tam">' + chip + (principal ? '' : '<p>' + esc(linha) + '</p>') + (nota.length ? '<p class="i-nota">' + esc(nota.join(' ')) + '</p>' : '')
-      + '<details><summary>Comparar tamanhos (' + ops.length + ')</summary><ul class="tam-list num">' + det + '</ul></details></div>'};
+    return {economia:eco, dica:dica, principal:principal, n:ops.length, lista:det, un:b.unidade === 'un' ? (b.rotulo || 'unidade') : b.unidade === 'L' ? 'litro' : b.unidade === 'kg' ? 'quilo' : 'metro',
+      html:'<div class="i-tam">' + chip + (principal ? '' : '<p>' + esc(linha) + '</p>') + (nota.length ? '<p class="i-nota">' + esc(nota.join(' ')) + '</p>' : '') + '</div>'};
   }
   // loja com preço de clube melhor, mas você não marcou que é do clube
   function dicaClube(p, best){
@@ -1807,7 +1818,7 @@ h3{font-size:13px;font-weight:600}
       + (naoAchou ? ' Quando a busca não acha um item, escreva com marca e tamanho, como "Detergente Ypê 500 ml", ou toque em Buscar este item.' : '');
     $('wish').innerHTML = itens.map(function(x){
       var p = precosDe(x.it.produto), soon = x.r.dias != null && x.r.dias <= 3;
-      var acoes = '<div class="i-actions"><button type="button" class="ghost" data-comprei="' + x.i + '">Comprei hoje</button><button type="button" class="rm" data-rm="' + x.i + '">remover</button>' + (x.it.origem === 'ha' ? '<span class="chip">Veio do Home Assistant</span>' : '');
+      var acoes = '<div class="i-actions"><button type="button" class="ghost ic-btn" data-comprei="' + x.i + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.3 14.2l2 2 3.6-3.7"/></svg>Comprei hoje</button><button type="button" class="rm" data-rm="' + x.i + '">remover</button>' + (x.it.origem === 'ha' ? '<span class="chip">Veio do Home Assistant</span>' : '');
       if (!p.length){
         var procurou = arr((D.relatorio || {}).sem_preco).map(norm).indexOf(norm(x.it.produto)) >= 0;
         var buscando = buscaItem === x.it.produto;
@@ -1815,7 +1826,7 @@ h3{font-size:13px;font-weight:600}
           + (x.r.txt ? '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>' : '')
           + '<div class="i-best"><span class="lbl">Sem preço ainda</span>'
           + (procurou ? '<span class="i-wait">A última busca não achou.</span>' : '')
-          + '<button type="button" class="ghost i-busca so-ia" data-buscaitem="' + x.i + '"' + (buscando ? ' disabled' : '') + '>' + (buscando ? 'Buscando…' : 'Buscar este item') + '</button></div>'
+          + '<button type="button" class="ghost ic-btn i-busca so-ia" data-buscaitem="' + x.i + '"' + (buscando ? ' disabled' : '') + '><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>' + (buscando ? 'Buscando…' : 'Buscar este item') + '</button></div>'
           + acoes + '</div></li>';
       }
       var best = p[0], max = p[p.length - 1].v, conta = {}, mt = melhorTamanho(x.it, x.r, p), dc = mt && mt.principal ? mt.dica : null;
@@ -1830,11 +1841,24 @@ h3{font-size:13px;font-weight:600}
             + (best.obs && !best.online ? '<p class="i-avulso">Produto: ' + esc(best.obs) + '</p>' : ''))
         + (p.length > 1 ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li>' + abreLink(linkCompra(y.id, y.obs || x.it.produto, y.link), 'i-chip', esc(G[y.id].curto) + ' <b>' + brl.format(y.v) + '</b>' + (y.online && y.frete ? ' com frete' : '') + (y.clube ? ' clube' : '')) + '</li>'; }).join('') + '</ul>' : '')
         + dicaClube(p, best)
-        + decisaoOnline(x.r, p, dc)
-        + ((mt || {}).html || '')
+        + detalhesCompra(x, p, dc, mt)
         + acoes + '<span class="i-foot">Em ' + onde + '</span></div></li>';
     }).join('');
   }
+  // online ou na loja e os tamanhos: recolhidos, como o Comparar tamanhos; o dia a dia é a Melhor compra, acima
+  var DET_ABERTO = {};
+  function detalhesCompra(x, p, dc, mt){
+    var on = decisaoOnline(x.r, p, dc);
+    if (!on && !mt) return '';
+    var k = norm(x.it.produto);
+    var rot = on && mt ? 'Online e tamanhos' : on ? 'Online ou na loja' : 'Comparar tamanhos (' + mt.n + ')';
+    return '<details class="i-det" data-det="' + esc(k) + '"' + (DET_ABERTO[k] ? ' open' : '') + '><summary>' + rot + '</summary>' + on
+      + (mt ? mt.html + '<div class="i-tam"><p class="i-sub">' + (on ? 'Tamanhos (' + mt.n + '), ' : '') + 'do mais barato por ' + esc(mt.un) + ' para o mais caro</p><ul class="tam-list num">' + mt.lista + '</ul></div>' : '')
+      + '</details>';
+  }
+  $('wish').addEventListener('toggle', function(e){
+    var d = e.target; if (d && d.classList && d.classList.contains('i-det')) DET_ABERTO[d.dataset.det] = d.open;
+  }, true);
   $('wish').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;
     if (b.dataset.buscaitem != null){ buscarItem(estado.lista[Number(b.dataset.buscaitem)].produto); return; }
@@ -3006,7 +3030,7 @@ h3{font-size:13px;font-weight:600}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.11.1' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.11.2' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;
