@@ -1,5 +1,9 @@
 # Mudanças
 
+## 0.11.4
+
+- Saem os textos antigos de "depois do login" nos cupons: os cupons do app da loja entram pelo print (Mais › Lojas › Cupons do app) e o preço de clube pelo **Sou do clube**.
+
 ## 0.11.3
 
 - **Opções em grade**: restrições, interesses, nunca mostrar, onde procurar online e assinaturas viram botões do mesmo tamanho em colunas que ocupam a largura toda (duas no celular, mais no computador), sem sobra no fim das linhas. Os dias de mercado e de farmácia ficam numa linha só.

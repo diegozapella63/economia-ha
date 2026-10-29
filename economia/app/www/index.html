@@ -707,7 +707,7 @@ h3{font-size:13px;font-weight:600}
         {"rede": "pp", "codigo": "APP10", "valor": 10, "beneficio": "R$ 10 de desconto", "condicao": "Primeira compra pelo app, acima de R$ 99,90", "valido_ate": "2027-01-01", "status": "confirmado"},
         {"rede": "panvel", "codigo": "PRIMEIRACOMPRA", "valor": 5, "beneficio": "R$ 5 de desconto", "condicao": "No site e no app", "valido_ate": null, "status": "confirmado"},
         {"rede": "dc", "codigo": null, "beneficio": "Testar QUERO20 e QUERO40", "condicao": "Mesma empresa da Preço Popular. Os cupons da Catarinense não apareceram no site.", "valido_ate": null, "status": "testar"},
-        {"rede": "panvel", "codigo": null, "beneficio": "Cupom Week da sua carteira", "condicao": "Os cupons da semana ficam em Meus Cupons e aparecem aqui depois do login.", "valido_ate": null, "status": "login"},
+        {"rede": "panvel", "codigo": null, "beneficio": "Cupom Week da sua carteira", "condicao": "Os cupons da semana ficam em Meus Cupons no app. Tire print e eles entram aqui pela IA.", "valido_ate": null, "status": "login"},
         {"rede": "raia", "codigo": null, "beneficio": "Cupons da sua conta Raia", "condicao": "A página de cupons só carrega para quem está logado.", "valido_ate": null, "status": "login"}
       ],
       "ofertas": [
@@ -757,10 +757,10 @@ h3{font-size:13px;font-weight:600}
         {"rede": "mercadinho", "distancia_km": 0.3, "horario": "Aberto até 20h", "fontes": ["Instagram"]}
       ],
       "cupons": [
-        {"rede": "condor", "codigo": null, "beneficio": "Ofertas do Clube Condor", "condicao": "As ofertas que você ativa no app aparecem aqui depois do login.", "valido_ate": null, "status": "login"},
-        {"rede": "clubek", "codigo": null, "beneficio": "Preços do Clube K", "condicao": "Preço de clube por CPF. Aparece depois do login.", "valido_ate": null, "status": "login"},
-        {"rede": "atacadao", "codigo": null, "beneficio": "Cupons do Meu Atacadão", "condicao": "Os cupons do app aparecem aqui depois do login.", "valido_ate": null, "status": "login"},
-        {"rede": "imperatriz", "codigo": null, "beneficio": "Super Clube Imperatriz", "condicao": "As ofertas do clube aparecem aqui depois do login.", "valido_ate": null, "status": "login"}
+        {"rede": "condor", "codigo": null, "beneficio": "Ofertas do Clube Condor", "condicao": "As ofertas que você ativa no app entram aqui pelo print do app, em Mais › Lojas › Cupons do app.", "valido_ate": null, "status": "login"},
+        {"rede": "clubek", "codigo": null, "beneficio": "Preços do Clube K", "condicao": "Preço de clube por CPF: marque Sou do clube em Mais › Lojas.", "valido_ate": null, "status": "login"},
+        {"rede": "atacadao", "codigo": null, "beneficio": "Cupons do Meu Atacadão", "condicao": "Os cupons do app entram aqui pelo print do app, em Mais › Lojas › Cupons do app.", "valido_ate": null, "status": "login"},
+        {"rede": "imperatriz", "codigo": null, "beneficio": "Super Clube Imperatriz", "condicao": "As ofertas do clube entram aqui pelo print do app, em Mais › Lojas › Cupons do app.", "valido_ate": null, "status": "login"}
       ],
       "ofertas": [
         {"id": "giassi-arroz-5kg", "rede": "giassi", "produto": "Arroz branco tipo 1 · 5 kg", "preco_normal": 27.90, "preco_oferta": 21.90, "tipo": "promo", "tags": ["alimentos"]},
@@ -797,8 +797,8 @@ h3{font-size:13px;font-weight:600}
         {"rede": "cobasi", "distancia_km": 3.1, "horario": "Aberto até 22h", "fontes": ["Site", "App", "Clube"]}
       ],
       "cupons": [
-        {"rede": "petz", "codigo": null, "beneficio": "Cupons da sua conta Petz", "condicao": "Os cupons de cliente cadastrado aparecem aqui depois do login.", "valido_ate": null, "status": "login"},
-        {"rede": "cobasi", "codigo": null, "beneficio": "Cupons da sua conta Cobasi", "condicao": "Os cupons de cliente cadastrado aparecem aqui depois do login.", "valido_ate": null, "status": "login"}
+        {"rede": "petz", "codigo": null, "beneficio": "Cupons da sua conta Petz", "condicao": "Os cupons de cliente cadastrado entram aqui pelo print do app, em Mais › Lojas › Cupons do app.", "valido_ate": null, "status": "login"},
+        {"rede": "cobasi", "codigo": null, "beneficio": "Cupons da sua conta Cobasi", "condicao": "Os cupons de cliente cadastrado entram aqui pelo print do app, em Mais › Lojas › Cupons do app.", "valido_ate": null, "status": "login"}
       ],
       "ofertas": [
         {"id": "petz-racao-gato-10", "rede": "petz", "produto": "Ração para gatos adultos castrados · 10,1 kg", "preco_normal": 219.90, "preco_oferta": 179.90, "tipo": "promo", "tags": ["pet", "gato"]},
@@ -1217,7 +1217,7 @@ h3{font-size:13px;font-weight:600}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.11.3</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.11.4</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
   </section>
 
   <footer>Preço do site pode ser diferente do preço na loja. Confira validade e regras do cupom no carrinho.</footer>
@@ -1258,7 +1258,7 @@ h3{font-size:13px;font-weight:600}
   function diaLongo(iso){ return fmtDia.format(new Date(utc(iso))); }
   function quando(iso){ return new Intl.DateTimeFormat('pt-BR', {timeZone:TZ, weekday:'long', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}).format(new Date(iso)); }
   function validade(c){
-    if (!c.valido_ate) return c.status === 'testar' ? {t:'Não confirmado', k:'warn'} : c.status === 'login' ? {t:'Depois do login', k:''} : {t:'Sem data de validade', k:''};
+    if (!c.valido_ate) return c.status === 'testar' ? {t:'Não confirmado', k:'warn'} : c.status === 'login' ? {t:'Pelo print do app', k:''} : {t:'Sem data de validade', k:''};
     var n = diasAte(c.valido_ate);
     if (n < 0) return {t:'Vencido', k:'deal'};
     if (n === 0) return {t:'Vence hoje', k:'deal'};
@@ -1495,7 +1495,7 @@ h3{font-size:13px;font-weight:600}
     var cup = arr(CAT.cupons).filter(function(c){ return acompanha(c.rede) && c.status === 'confirmado' && c.codigo && (!c.valido_ate || diasAte(c.valido_ate) >= 0); })
       .sort(function(a, b){ return (b.valor || 0) - (a.valor || 0); })[0];
     $('sumCupom').textContent = cup ? cup.codigo : '—';
-    $('sumCupomS').textContent = cup ? G[cup.rede].nome + ' · ' + (/^R\$/.test(cup.beneficio) ? cup.beneficio : cup.beneficio.charAt(0).toLowerCase() + cup.beneficio.slice(1)) + ' · ' + validade(cup).t.toLowerCase() : 'Os cupons dos clubes aparecem depois do login';
+    $('sumCupomS').textContent = cup ? G[cup.rede].nome + ' · ' + (/^R\$/.test(cup.beneficio) ? cup.beneficio : cup.beneficio.charAt(0).toLowerCase() + cup.beneficio.slice(1)) + ' · ' + validade(cup).t.toLowerCase() : 'Os cupons do app da loja entram pelo print, em Mais › Lojas';
     var lista = ofertasDaAba(), vis = lista.filter(function(o){ return !escondida(o); }).sort(function(a, b){ return nota(b) - nota(a); });
     var top = vis[0];
     $('sumTop').textContent = top ? (top.preco_normal ? '−' + pct(top) + '%' : brl.format(top.preco_oferta)) : '—';
@@ -1589,7 +1589,7 @@ h3{font-size:13px;font-weight:600}
       var v = validade(c);
       var stub = c.codigo
         ? '<code class="code" id="code-' + i + '">' + esc(c.codigo) + '</code><button type="button" class="copy" data-code="' + esc(c.codigo) + '" data-target="code-' + i + '">Copiar</button>'
-        : '<span class="lock">' + (c.meu ? 'Já está no app da loja' : c.status === 'login' ? 'Precisa de login' : 'Sem código próprio') + '</span>';
+        : '<span class="lock">' + (c.meu ? 'Já está no app da loja' : c.status === 'login' ? 'Entra pelo print' : 'Sem código próprio') + '</span>';
       return '<article class="ticket ' + esc(c.status) + '">'
         + '<div class="t-main"><p class="t-rede">' + esc(G[c.rede].nome) + (c.meu ? ' <span class="chip selo">Seu cupom</span>' : '') + '</p><p class="t-ben num">' + esc(c.beneficio) + '</p><p class="t-cond num">' + esc(c.condicao) + (fonteLink(c.fonte) ? ' · ' + fonteLink(c.fonte) : '') + '</p></div>'
         + '<div class="stub">' + stub + '<span class="chip ' + v.k + '">' + esc(v.t) + '</span></div></article>';
@@ -3032,7 +3032,7 @@ h3{font-size:13px;font-weight:600}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.11.3' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.11.4' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;
