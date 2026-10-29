@@ -40,10 +40,12 @@ Para buscar ofertas, o app usa a IA do seu Home Assistant (Anthropic, OpenAI, Go
 - **Online**: iFood, Rappi, Mercado Livre, Amazon e outros, com frete ou taxa de entrega somados e as assinaturas (Prime, Meli+, Clube iFood).
 - **Clubes**: marque "Sou do clube" e o preço de clube entra nas contas. Cupons da carteira do app entram por print.
 - **Leitura por IA**: prints, lista escrita à mão ou mensagem do WhatsApp viram itens da lista. Você confere antes de adicionar.
+- **Falar**: o microfone no alto da tela; o Home Assistant transcreve e a IA separa os itens para você conferir.
+- **No computador**: barra lateral com as telas e as ofertas por tipo de loja, e as ações no alto à direita.
 - **Lista por voz**: sincroniza com a lista de compras do Home Assistant (Assist, Alexa, Google Tasks).
 - **Uso da IA**: quantas chamadas a busca e a leitura de fotos fizeram por dia, erros de cota e tokens estimados, com o sensor `sensor.economia_ia_hoje` para painel e automação.
 - **Perfil da casa**: quem mora, pets, restrições e interesses decidem o que aparece.
-- **Exportação** para Excel e JSON, importação, tema claro ou escuro e 10 cores.
+- **Mais em abas** (Casa, Lojas, Integrações, Dados, Aparência e Opções), com **Usar IA**, sensores opcionais, versões anteriores, exportação para Excel e JSON, tema claro ou escuro e 10 cores.
 
 Mais detalhes em [economia/DOCS.md](economia/DOCS.md).
 
@@ -57,6 +59,7 @@ Sua lista, perfil e ofertas ficam só no seu Home Assistant, em arquivos abertos
 repository.yaml          repositório de apps
 economia/                o app (config, Dockerfile, ícone, documentação)
 economia/app/server.py   servidor, busca e leitura por IA (só biblioteca padrão do Python)
+economia/app/voz.py      Falar: fala para texto do Home Assistant (o mesmo módulo do GerencIA)
 economia/app/www/        interface (HTML, CSS e JavaScript num arquivo só, sem etapa de build) e fontes
 docs/                    imagens deste README e detalhes técnicos
 ```

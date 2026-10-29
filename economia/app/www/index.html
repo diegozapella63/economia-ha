@@ -509,6 +509,136 @@ h3{font-size:13px;font-weight:600}
   .fact .k{flex:1 0 100%}
   .panel{padding:15px}
 }
+
+/* ===== 0.11: padrões dos outros apps (InventarIA, GerencIA, ResolvIA, CronologIA) ===== */
+/* ícone num quadradinho no tom da cor do app, em cada título */
+.sec-head h2,.set-head h2{display:flex;align-items:center;gap:10px;min-width:0}
+.h-ic{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:10px;background:var(--accent-soft);color:var(--accent)}
+.h-ic svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+/* Usar IA desligado: some tudo o que usa IA */
+.sem-ia .so-ia{display:none!important}
+.sem-ia .tabbar-in{grid-template-columns:repeat(4,minmax(0,1fr))}
+/* Mais em abas, presas no alto ao rolar */
+.mais-abas{position:sticky;top:0;z-index:12;display:flex;gap:2px;padding:4px;border-radius:14px;background:color-mix(in srgb,var(--surface) 45%,var(--bg));border:1px solid var(--line);box-shadow:0 0 0 8px var(--bg);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.mais-abas::-webkit-scrollbar{display:none}
+.mais-abas button{flex:1 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:40px;padding:0 12px;border:0;border-radius:10px;background:none;color:var(--muted);font-size:15px;font-weight:500;white-space:nowrap}
+.mais-abas button:hover{color:var(--ink)}
+.mais-abas button[aria-selected="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.16),inset 0 0 0 1px var(--line)}
+.mais-abas svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.mais-abas button[aria-selected="true"] svg{color:var(--accent)}
+:root[data-theme="dark"] .mais-abas button[aria-selected="true"],:root[data-theme="dark"] .seg.temas button[aria-checked="true"]{background:color-mix(in srgb,var(--ink) 13%,var(--surface))}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .mais-abas button[aria-selected="true"],:root:not([data-theme="light"]) .seg.temas button[aria-checked="true"]{background:color-mix(in srgb,var(--ink) 13%,var(--surface))}}
+@media (max-width:600px){.mais-abas svg{display:none}.mais-abas button{padding:0 9px;font-size:14.5px}}
+.mais-painel{display:flex;flex-direction:column;gap:18px;min-height:60vh}
+.painel-lead{color:var(--muted);font-size:15px;max-width:64ch}
+.foot{margin:12px 0 0;text-align:center;color:var(--muted);font-size:13px;line-height:1.6}
+.foot b{font-family:var(--font-display);font-weight:600;font-size:19px;color:var(--ink)}
+/* tema: três botões iguais com o ícone em cima */
+.seg.temas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
+.seg.temas button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:66px;padding:10px 4px 9px;font-size:15px;font-weight:500}
+.seg.temas svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.seg.temas button[aria-checked="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.16),inset 0 0 0 1px var(--line)}
+.seg.temas button[aria-checked="true"] svg{color:var(--accent)}
+/* cor do app: etiquetas com nome */
+.tag-cores{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin:0 -6px}
+@media (min-width:700px){.tag-cores{grid-template-columns:repeat(10,minmax(0,1fr))}}
+.tsw{--sw-bg:var(--surface);position:relative;display:grid;justify-items:center;gap:4px;padding:8px 2px 7px;border:0;border-radius:10px;background:var(--sw-bg);min-width:0;-webkit-tap-highlight-color:transparent}
+@media (hover:hover){.tsw:hover{--sw-bg:var(--bg)}}
+.tsw svg{width:48px;height:36px;overflow:visible}
+.tsw .sw-fill{fill:var(--a);fill-rule:evenodd;stroke:color-mix(in srgb,var(--a) 80%,#000);stroke-width:1}
+.tsw .sw-ring,.tsw .sw-gap,.tsw .sw-check{fill:none;stroke-linejoin:round;stroke-linecap:round;visibility:hidden}
+.tsw .sw-ring{stroke:var(--ink);stroke-width:7}
+.tsw .sw-gap{stroke:var(--sw-bg);stroke-width:3.6}
+.tsw .sw-check{stroke:rgba(20,20,20,.85);stroke-width:2.4}
+.tsw span{font-size:13px;line-height:1.2;color:var(--muted);white-space:nowrap}
+.tsw[aria-checked="true"] .sw-ring,.tsw[aria-checked="true"] .sw-gap,.tsw[aria-checked="true"] .sw-check{visibility:visible}
+.tsw[aria-checked="true"] span{color:var(--ink);font-weight:600}
+/* Exportar: uma linha por arquivo */
+.opts{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.opts > li{display:flex;align-items:center;flex-wrap:wrap;gap:10px 14px;padding:14px 2px;border-bottom:1px solid var(--line)}
+.opts .ot{flex:1;min-width:220px}
+.opts .ot b{display:block;font-weight:600;font-size:15.5px}
+.opts .ot span{display:block;margin-top:2px;font-size:13.5px;line-height:1.4;color:var(--muted)}
+/* versões anteriores */
+.ver-lista{list-style:none;margin:6px 0 0;padding:0;border-top:1px solid var(--line)}
+.ver-lista li{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;padding:12px 2px;border-bottom:1px solid var(--line)}
+.ver-lista li > div{flex:1;min-width:200px}
+.ver-lista b{display:block;font-family:var(--font-display);font-weight:600;font-size:17px;line-height:1.2}
+.ver-lista span{font-size:13.5px;color:var(--muted)}
+.ver-lista .conf{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px}
+/* Falar: o microfone no alto da tela, à direita */
+.cab-topo{display:flex;align-items:center;gap:10px;min-height:26px}
+.cab-topo .eyebrow{flex:1;min-width:0}
+.mic-top{flex:none;width:44px;height:44px;margin:-6px -2px -6px 0;border:0;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);cursor:pointer}
+.mic-top svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.mic-top:active{transform:scale(.94)}
+.voz{display:flex;flex-direction:column;align-items:center;gap:10px;padding:18px 8px 6px;text-align:center}
+.voz-mic{position:relative;width:96px;height:96px;border:0;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--on-accent);box-shadow:0 6px 22px color-mix(in srgb,var(--accent) 35%,transparent);cursor:pointer}
+.voz-mic:disabled{opacity:.6;cursor:progress}
+.voz-mic svg{position:relative;width:40px;height:40px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.voz-anel{position:absolute;inset:-10px;border-radius:50%;background:color-mix(in srgb,var(--accent) 22%,transparent);transform:scale(calc(.85 + var(--lvl,0) * .45));transition:transform .12s ease-out}
+.voz.on .voz-anel{animation:respira 1.6s ease-in-out infinite}
+@keyframes respira{50%{opacity:.6}}
+@media (prefers-reduced-motion:reduce){.voz-anel{transition:none}.voz.on .voz-anel{animation:none}}
+.voz-estado{font-family:var(--font-display);font-weight:600;font-size:21px;line-height:1.2;margin-top:6px}
+.voz-tempo{color:var(--muted);font-variant-numeric:tabular-nums}
+.voz-dica{max-width:36ch;color:var(--muted);font-size:14px;line-height:1.45}
+.ouvido{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:12px;background:var(--bg);font-size:14.5px;line-height:1.4}
+.ouvido svg{flex:none;width:17px;height:17px;margin-top:2px;fill:none;stroke:var(--accent);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+/* computador (1000 px ou mais): barra lateral no lugar das abas de baixo, ações no alto à direita,
+   seções na página (sem cartões) com título grande e ícone, e o cupom ao lado das oportunidades */
+:root{--side-w:272px}
+#lado,.top-acts{display:none}
+.side-brand{font-family:var(--font-display);font-weight:700;font-size:25px;line-height:1;padding:4px 10px 18px;color:var(--ink)}
+.side-brand span{color:var(--accent)}
+.side-nav,.side-lista{display:grid;gap:2px}
+.side-link,.side-item{display:flex;align-items:center;gap:12px;width:100%;min-height:40px;padding:8px 10px;border:0;border-radius:10px;background:none;text-align:left;color:var(--ink);font-weight:500;font-size:15px;cursor:pointer}
+.side-link svg{width:20px;height:20px;flex:none;fill:none;stroke:var(--muted);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.side-link:hover,.side-item:hover{background:var(--surface)}
+.side-link[aria-current="page"],.side-item[aria-current="page"]{background:var(--surface);box-shadow:inset 3px 0 0 var(--accent);font-weight:600}
+.side-link[aria-current="page"] svg{stroke:var(--accent)}
+.side-busca{display:flex;align-items:center;justify-content:center;gap:8px;margin:16px 0 0;min-height:44px;border:0;border-radius:12px;background:var(--accent);color:var(--on-accent);font-weight:600;font-size:15px;cursor:pointer}
+.side-busca:disabled{opacity:.75;cursor:progress}
+.side-busca svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.side-sync{padding:8px 10px 0;font-size:13px;color:var(--muted)}
+.side-badge{margin-left:auto;min-width:22px;height:20px;padding:0 6px;border-radius:11px;background:var(--deal);color:var(--surface);font-size:13px;font-weight:600;line-height:20px;text-align:center;font-variant-numeric:tabular-nums}
+.side-h{display:flex;align-items:baseline;justify-content:space-between;padding:22px 10px 8px}
+.side-h span{font-family:var(--font-display);font-weight:600;font-size:17px;color:var(--ink)}
+.side-h small{font-size:13px;color:var(--muted)}
+.side-item{min-height:38px;padding:5px 10px;font-weight:400}
+.side-tile{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex:none;background:var(--accent-soft);color:var(--accent);font-family:var(--font-display);font-weight:700;font-size:14px}
+.sl-nome{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sl-num{margin-left:auto;font-family:var(--font-display);font-weight:500;font-size:15px;color:var(--muted);font-variant-numeric:tabular-nums}
+.side-foot{margin:auto 0 0;padding:18px 10px 0;font-size:13px;color:var(--muted)}
+@media (min-width:1000px){
+  body{padding-left:var(--side-w)}
+  #lado{display:flex;flex-direction:column;gap:2px;position:fixed;inset:0 auto 0 0;z-index:30;width:var(--side-w);padding:22px 14px 18px;overflow-y:auto;border-right:1px solid var(--line);background:var(--bg);scrollbar-width:thin}
+  .tabbar{display:none}
+  .wrap{max-width:1120px;padding:28px 40px 72px}
+  .eyebrow .brand,.eyebrow .eb-sep{display:none}
+  header.cab{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:20px;align-items:start}
+  .cab-topo{grid-column:1;grid-row:1}
+  .cab h1{grid-column:1;grid-row:2;font-size:46px}
+  .cab .sync{grid-column:1;grid-row:3}
+  .cab-topo .mic-top{display:none!important}
+  .top-acts{display:flex;grid-column:2;grid-row:1 / span 2;align-items:center;gap:8px}
+  .top-acts .mic-top{margin:0;width:40px;height:40px}
+  .top-acts .btn,.top-acts .ghost.big{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 16px;border-radius:10px}
+  .top-acts .btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .panel{background:none;border:0;border-radius:0;padding:0;box-shadow:none}
+  .cols,.cols.even{column-gap:40px;row-gap:36px}
+  .col{gap:36px}
+  .mais-painel{gap:36px}
+  .sec-head,.set-head{padding:0 0 12px;border-bottom:1px solid var(--line)}
+  .set-head + .set-row,.set-head + .opts{border-top:0}
+  .tsw{--sw-bg:var(--bg)}
+  .tsw:hover{--sw-bg:var(--surface)}
+  .h-ic{width:38px;height:38px;border-radius:11px}
+  .h-ic svg{width:21px;height:21px}
+  .hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 40px;align-items:center}
+  .hero .opps{max-width:none}
+  .toast{left:calc(50% + var(--side-w) / 2);bottom:24px}
+}
 @media (prefers-reduced-motion:no-preference){
   .btn,.copy,.ghost,.pick,.filters button,.cats button,.tab,.seg button{transition:filter .15s,border-color .15s,color .15s,background .15s}
 }
@@ -720,9 +850,15 @@ h3{font-size:13px;font-weight:600}
 }
 </script>
 
+<aside id="lado" aria-label="Menu"></aside>
 <div class="wrap">
-  <header>
-    <p class="eyebrow" id="hello"><span class="brand">Econom<span>IA</span></span></p>
+  <header class="cab">
+    <div class="cab-topo"><p class="eyebrow" id="hello"><span class="brand">Econom<span>IA</span></span></p><button type="button" class="mic-top so-voz" data-acao="falar" aria-label="Falar: adicionar itens falando" title="Falar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button></div>
+    <div class="top-acts">
+      <button type="button" class="mic-top so-voz" data-acao="falar" aria-label="Falar: adicionar itens falando" title="Falar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <button type="button" class="ghost big so-ia" data-acao="ler"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7-4.7-1.8 4.7-1.8z"/><path d="M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>Ler com IA</button>
+      <button type="button" class="btn" data-acao="adicionar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Adicionar item</button>
+    </div>
     <h1 id="screenTitle">Minha lista</h1>
     <p class="sync"><span class="dot" aria-hidden="true"></span><span id="syncText">Carregando…</span></p>
   </header>
@@ -745,13 +881,13 @@ h3{font-size:13px;font-weight:600}
     </div>
     <div class="cols">
       <section class="panel" aria-labelledby="h-ofertas">
-        <div class="sec-head"><h2 id="h-ofertas">Ofertas</h2></div>
+        <div class="sec-head"><h2 id="h-ofertas"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/></svg></span>Ofertas</h2></div>
         <p class="sec-meta" id="ofertasMeta"></p>
         <div class="filters" id="filters" role="group" aria-label="Filtrar por loja"></div>
         <ul class="deals" id="deals"></ul>
       </section>
       <section class="panel" aria-labelledby="h-cupons">
-        <div class="sec-head"><h2 id="h-cupons">Cupons e clubes</h2></div>
+        <div class="sec-head"><h2 id="h-cupons"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M14 7v2M14 11v2M14 15v2"/></svg></span>Cupons e clubes</h2></div>
         <div class="tickets" id="tickets"></div>
       </section>
     </div>
@@ -777,18 +913,24 @@ h3{font-size:13px;font-weight:600}
       <div class="row-form"><button type="button" class="btn" data-ir="mais">Preencher o perfil</button><button type="button" class="ghost big" data-ir="importar">Importar lista</button></div>
     </div>
     <section class="panel" aria-labelledby="h-lista">
-      <div class="sec-head"><h2 id="h-lista">Itens da lista</h2><button type="button" class="rm" id="limpar" hidden>Limpar lista</button></div>
+      <div class="sec-head"><h2 id="h-lista"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg></span>Itens da lista</h2><button type="button" class="rm" id="limpar" hidden>Limpar lista</button></div>
       <form class="row-form" id="addForm" novalidate>
         <input class="field" id="novoItem" name="novoItem" placeholder="Ex.: Lysoform, Café 500 g, Atorvastatina 20 mg" aria-label="Produto para acompanhar">
         <button class="btn" type="submit">Adicionar</button>
       </form>
       <p class="hint" id="addMsg" aria-live="polite"></p>
-      <div class="row-form"><label class="ghost big" for="fotoArq" id="fotoBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Escolher fotos</label><button type="button" class="ghost big" id="textoBtn" aria-controls="fotoBox"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Colar mensagem</button></div>
+      <div class="row-form so-ia"><label class="ghost big" for="fotoArq" id="fotoBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Escolher fotos</label><button type="button" class="ghost big" id="textoBtn" aria-controls="fotoBox"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Colar mensagem</button><button type="button" class="ghost big so-voz" id="falarBtn" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Falar</button></div>
       <input type="file" id="fotoArq" class="arq" accept="image/*" multiple>
-      <p class="hint">Foto da lista escrita à mão, print da conversa ou da embalagem que acabou: a IA do Home Assistant lê e sugere os itens.</p>
+      <p class="hint so-ia">Foto da lista escrita à mão, print da conversa ou da embalagem que acabou: a IA do Home Assistant lê e sugere os itens.</p>
       <div class="foto-box" id="fotoBox" hidden>
         <div class="fotos" id="fotoPrev"></div>
         <textarea class="field" id="fotoTxt" rows="3" hidden placeholder="Cole aqui a mensagem, ex.: compra 2 leites, Lysoform e pão de forma" aria-label="Mensagem com itens para comprar"></textarea>
+        <div class="voz" id="vozBox" hidden>
+          <button type="button" class="voz-mic" id="vozMic" style="--lvl:0" aria-label="Começar a falar"><span class="voz-anel"></span><svg class="vz-mic" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><svg class="vz-ok" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
+          <div class="voz-estado" id="vozEstado">Toque no microfone e fale</div>
+          <p class="voz-dica" id="vozDica"></p>
+        </div>
+        <p class="ouvido" id="vozOuvido" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span></span></p>
         <div class="row-form"><button type="button" class="btn" id="fotoLer" hidden>Digitalizar com IA</button><button type="button" class="ghost big" id="fotoFechar">Fechar</button></div>
         <p class="hint" id="fotoMsg" aria-live="polite"></p>
         <ul class="foto-itens" id="fotoItens"></ul>
@@ -806,7 +948,7 @@ h3{font-size:13px;font-weight:600}
   <!-- ROTEIRO -->
   <section class="view" id="v-roteiro" aria-label="Roteiro" hidden>
     <section class="panel" aria-labelledby="h-rot" id="roteiro">
-      <div class="sec-head"><h2 id="h-rot">Roteiro de compras</h2></div>
+      <div class="sec-head"><h2 id="h-rot"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H16a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h7.5"/></svg></span>Roteiro de compras</h2></div>
       <p class="sec-meta">Diga em quantas lojas você topa parar. O EconomIA testa as combinações e mostra onde comprar cada item para economizar mais.</p>
       <div class="rot-ctrl">
         <div class="group"><h3>Paradas, no máximo</h3><div class="seg" id="rotParadas" role="group" aria-label="Paradas, no máximo"></div></div>
@@ -819,11 +961,19 @@ h3{font-size:13px;font-weight:600}
 
   <!-- MAIS -->
   <section class="view" id="v-mais" aria-label="Mais" hidden>
-    <div class="group"><h2 class="big">Perfil da casa</h2><p class="sec-meta">O perfil decide o que aparece para você. Mudou aqui, muda na hora em todas as telas.</p></div>
-    <div class="cols even">
-      <div class="col">
+    <div class="mais-abas" id="maisAbas" role="tablist" aria-label="Seções de Mais">
+      <button type="button" role="tab" id="aba-casa" data-aba="casa" aria-controls="mp-casa" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Casa</span></button>
+      <button type="button" role="tab" id="aba-lojas" data-aba="lojas" aria-controls="mp-lojas" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 11v9h14v-9"/><path d="M10 20v-5h4v5"/></svg><span>Lojas</span></button>
+      <button type="button" role="tab" id="aba-integracoes" data-aba="integracoes" aria-controls="mp-integracoes" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14v7M14 17.5h7"/></svg><span>Integrações</span></button>
+      <button type="button" role="tab" id="aba-dados" data-aba="dados" aria-controls="mp-dados" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="5" rx="1"/><path d="M4.5 9v10a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1V9M10 13h4"/></svg><span>Dados</span></button>
+      <button type="button" role="tab" id="aba-aparencia" data-aba="aparencia" aria-controls="mp-aparencia" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0 0 18c1.1 0 1.8-.8 1.8-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14.5" cy="7" r="1"/></svg><span>Aparência</span></button>
+      <button type="button" role="tab" id="aba-opcoes" data-aba="opcoes" aria-controls="mp-opcoes" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="6"/><circle cx="16" cy="12" r="3"/></svg><span>Opções</span></button>
+    </div>
+    <div class="mais-painel" id="mp-casa" role="tabpanel" aria-labelledby="aba-casa" hidden>
+      <p class="painel-lead">O perfil decide o que aparece para você. Mudou aqui, muda na hora em todas as telas.</p>
+      <div class="cols even"><div class="col">
         <section class="panel" aria-labelledby="h-onde">
-          <div class="sec-head"><h2 id="h-onde">Onde</h2></div>
+          <div class="sec-head"><h2 id="h-onde"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span>Onde</h2></div>
           <form class="group" id="ondeForm" novalidate>
             <div class="row-form">
               <input class="field mono" type="text" id="cep" name="cep" inputmode="numeric" autocomplete="postal-code" placeholder="CEP 00000-000" maxlength="9" aria-label="CEP de casa">
@@ -838,9 +988,8 @@ h3{font-size:13px;font-weight:600}
             <p class="hint" id="ondeMsg">As lojas são procuradas a partir deste CEP.</p>
           </form>
         </section>
-
         <section class="panel" aria-labelledby="h-casa">
-          <div class="sec-head"><h2 id="h-casa">Quem mora</h2></div>
+          <div class="sec-head"><h2 id="h-casa"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"/></svg></span>Quem mora</h2></div>
           <div class="people">
             <label for="pAdultos">Adultos<input class="field num" type="number" id="pAdultos" min="0" max="20" inputmode="numeric"></label>
             <label for="pCriancas">Crianças<input class="field num" type="number" id="pCriancas" min="0" max="20" inputmode="numeric"></label>
@@ -855,9 +1004,8 @@ h3{font-size:13px;font-weight:600}
           </div>
           <p class="hint" id="casaHint"></p>
         </section>
-
         <section class="panel" aria-labelledby="h-rotina">
-          <div class="sec-head"><h2 id="h-rotina">Rotina de compras</h2></div>
+          <div class="sec-head"><h2 id="h-rotina"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></span>Rotina de compras</h2></div>
           <div class="group"><h3>Dias de mercado</h3><div class="picks" id="dMercado"></div></div>
           <div class="group"><h3>Dias de farmácia</h3><div class="picks" id="dFarmacia"></div></div>
           <div class="group">
@@ -879,110 +1027,28 @@ h3{font-size:13px;font-weight:600}
             <p class="hint">O EconomIA só recomenda embalagem maior se ela acabar dentro desse prazo, no seu ritmo de consumo.</p>
           </div>
         </section>
-      </div>
-
-      <div class="col">
+      </div><div class="col">
         <section class="panel" aria-labelledby="h-restr">
-          <div class="sec-head"><h2 id="h-restr">Restrições</h2></div>
+          <div class="sec-head"><h2 id="h-restr"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg></span>Restrições</h2></div>
           <div class="picks" id="pRestr"></div>
         </section>
         <section class="panel" aria-labelledby="h-int">
-          <div class="sec-head"><h2 id="h-int">Interesses</h2></div>
+          <div class="sec-head"><h2 id="h-int"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 7.5 3c0 5.4-7.5 10-7.5 10z"/></svg></span>Interesses</h2></div>
           <p class="sec-meta">Ofertas desses tipos aparecem primeiro.</p>
           <div class="picks" id="pInt"></div>
         </section>
         <section class="panel" aria-labelledby="h-nunca">
-          <div class="sec-head"><h2 id="h-nunca">Nunca mostrar</h2></div>
+          <div class="sec-head"><h2 id="h-nunca"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c5 0 9 4.5 10 7a13 13 0 0 1-2.7 3.9M6.6 6.6C4.4 8 2.8 10.2 2 12c1 2.5 5 7 10 7a9.6 9.6 0 0 0 4.4-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></span>Nunca mostrar</h2></div>
           <p class="sec-meta">O botão "Não mostrar" de cada oferta também adiciona tipos aqui.</p>
           <div class="picks" id="pNunca"></div>
         </section>
-        <section class="panel" aria-labelledby="h-online">
-          <div class="sec-head"><h2 id="h-online">Compras online</h2></div>
-          <div class="group"><h3>Onde procurar</h3><div class="picks" id="pMkt"></div></div>
-          <div class="group"><h3>Assinaturas com frete grátis</h3><div class="picks" id="pAss"></div></div>
-          <p class="hint">iFood e Rappi trazem os preços dos mercados e farmácias do bairro no app, com a taxa de entrega somada. O Clube iFood zera a taxa nas lojas participantes. Prime e Meli+ não zeram o frete de tudo: valem para os produtos elegíveis (na Amazon, os com selo Prime). O EconomIA usa o frete que aparece para o seu CEP em cada item, já contando a assinatura. Remédios de receita ficam só nas farmácias.</p>
-        </section>
-      </div>
+      </div></div>
     </div>
-
-    <div class="group"><h2 class="big">Dados e ajustes</h2></div>
-    <section class="panel settings" aria-labelledby="h-ia">
-      <div class="set-head"><h2 id="h-ia">IA do Home Assistant</h2><p class="sec-meta">O EconomIA usa a IA já configurada no seu Home Assistant (Anthropic Claude, OpenAI, Google Gemini ou outra). Para buscar ofertas ela precisa de busca na web; para ler fotos, precisa aceitar imagens. Dá para trocar quando quiser.</p></div>
-      <div class="set-row">
-        <div><h3 class="set-t"><label for="iaBusca">Para buscar ofertas</label></h3><p class="ia-st" id="iaBuscaSt">Toque em Verificar de novo para testar.</p></div>
-        <select class="field" id="iaBusca"></select>
-      </div>
-      <div class="set-row">
-        <div><h3 class="set-t"><label for="iaFotos">Para ler fotos</label></h3><p class="ia-st" id="iaFotosSt">Usando a IA preferida do Home Assistant.</p></div>
-        <select class="field" id="iaFotos"></select>
-      </div>
-      <div class="row-form"><button type="button" class="ghost big" id="iaTestar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>Verificar de novo</button></div>
-      <p class="hint">Google Gemini: a Pesquisa Google funciona num <b>assistente de conversa</b> com "Enable Google Search tool" ligado e "Controlar o Home Assistant" em nenhum. Escolha esse assistente em "Para buscar ofertas" e deixe o Google AI Task para ler fotos.</p>
-    </section>
-    <section class="panel settings" aria-labelledby="h-uso">
-      <div class="set-head"><h2 id="h-uso">Uso da IA</h2><p class="sec-meta">Cada busca, foto ou teste é uma chamada para a IA do Home Assistant. O Home Assistant não informa tokens nem custo, então o EconomIA conta as chamadas e estima os tokens pelo tamanho do texto.</p></div>
-      <div class="uso-tiles" id="usoTiles"></div>
-      <div class="uso-chart" id="usoChart" role="group" aria-label="Chamadas de IA nos últimos 7 dias"></div>
-      <p class="uso-cap num" id="usoCap" aria-live="polite"></p>
-      <ul class="uso-tipos num" id="usoTipos"></ul>
-      <details class="uso-ult"><summary>Últimas chamadas</summary><ul class="num" id="usoUlt"></ul></details>
-      <p class="hint" id="usoProv"></p>
-      <p class="hint">No Home Assistant, o sensor <code>sensor.economia_ia_hoje</code> traz as chamadas de hoje, com erros, cota e tokens estimados, para pôr num painel ou numa automação (por exemplo, avisar quando passar de 50 no dia).</p>
-    </section>
-    <section class="panel settings" aria-labelledby="h-ha">
-      <div class="set-head"><h2 id="h-ha">Lista do Home Assistant</h2><p class="sec-meta">Fale com o Assist, por exemplo "adicione café na lista de compras", e o item aparece aqui. Marcou como comprado lá, conta como "Comprei hoje" aqui.</p></div>
-      <div class="set-row">
-        <div><h3 class="set-t">Sincronizar com</h3><p class="sec-meta" id="syncInfo">Escolha uma lista de tarefas do Home Assistant, como a Lista de compras.</p></div>
-        <select class="field" id="syncEnt" aria-label="Lista do Home Assistant"></select>
-      </div>
-      <div class="set-row">
-        <div><h3 class="set-t"><label for="syncNovos">Itens novos daqui vão para lá</label></h3><p class="sec-meta">O que você adicionar no EconomIA aparece também na lista do Home Assistant.</p></div>
-        <input type="checkbox" class="switch" id="syncNovos">
-      </div>
-      <div class="set-row">
-        <div><h3 class="set-t"><label for="syncAcabando">Itens acabando entram sozinhos</label></h3><p class="sec-meta">Quando o seu ritmo de compra indicar que algo acaba amanhã, ele vai para a lista do Home Assistant.</p></div>
-        <input type="checkbox" class="switch" id="syncAcabando">
-      </div>
-    </section>
-    <section class="panel settings" aria-labelledby="h-exp">
-      <div class="set-head"><h2 id="h-exp">Exportar</h2><p class="sec-meta">Baixe sua lista para abrir no Excel, guardar ou levar para outro programa.</p></div>
-      <div class="set-row">
-        <div><h3 class="set-t">Planilha (Excel)</h3><p class="sec-meta">Um item por linha, com a loja mais barata, o preço em cada loja e as datas de compra.</p></div>
-        <a class="ghost big" id="expXlsx" href="api/exportar/lista.xlsx" download><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Baixar Excel</a>
-      </div>
-      <div class="set-row">
-        <div><h3 class="set-t">Dados completos (JSON)</h3><p class="sec-meta">Todos os campos, para backup ou para outro sistema.</p></div>
-        <a class="ghost big" id="expJson" href="api/exportar/lista.json" download><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Baixar JSON</a>
-      </div>
-    </section>
-    <section class="panel settings" aria-labelledby="h-imp">
-      <div class="set-head"><h2 id="h-imp">Importar</h2><p class="sec-meta">Traz uma lista de um arquivo .json exportado por aqui. Itens repetidos não duplicam, e as datas de compra são juntadas.</p></div>
-      <div class="set-row">
-        <div><h3 class="set-t">Importar lista (JSON)</h3><p class="sec-meta">Funciona pelo celular: escolha o arquivo nos seus downloads.</p></div>
-        <label class="ghost big" for="impArq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"/></svg>Escolher arquivo</label>
-        <input type="file" id="impArq" accept=".json,application/json" hidden>
-      </div>
-      <p class="hint" id="impMsg" aria-live="polite"></p>
-    </section>
-    <section class="panel settings" aria-labelledby="h-apar">
-      <div class="set-head"><h2 id="h-apar">Aparência</h2></div>
-      <div class="set-row">
-        <div><h3 class="set-t">Tema</h3><p class="sec-meta">Automático segue o modo claro ou escuro do aparelho.</p></div>
-        <div class="seg" id="tema" role="group" aria-label="Tema"></div>
-      </div>
-      <div class="set-row">
-        <div><h3 class="set-t">Cor do app</h3><p class="sec-meta">Muda botões, destaques e a etiqueta da abertura.</p></div>
-        <div class="cores" id="cores" role="group" aria-label="Cor do app"></div>
-      </div>
-    </section>
-    <section class="panel settings" aria-labelledby="h-sobre">
-      <div class="set-head"><h2 id="h-sobre">Sobre</h2><p class="sec-meta">EconomIA 0.10.5. Seus dados ficam em <code>config.json</code>, <code>ofertas.json</code> e <code>uso_ia.json</code>, dentro do add-on, e entram nos backups do Home Assistant. A busca de ofertas usa a integração de IA do Home Assistant.</p></div>
-    </section>
-
-    <div class="group" id="lojasSec"><h2 class="big">Lojas</h2></div>
-    <div class="cols even">
-      <section class="panel" aria-labelledby="h-lojas">
-        <div class="sec-head"><h2 id="h-lojas">Lojas perto de casa</h2></div>
+    <div class="mais-painel" id="mp-lojas" role="tabpanel" aria-labelledby="aba-lojas" hidden>
+      
+      <div class="cols even" id="lojasSec"><div class="col">
+        <section class="panel" aria-labelledby="h-lojas">
+        <div class="sec-head"><h2 id="h-lojas"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 11v9h14v-9"/><path d="M10 20v-5h4v5"/></svg></span>Lojas perto de casa</h2></div>
         <p class="sec-meta">Encontradas pelo seu CEP, de rede ou independentes. Desmarque uma loja para não ver mais as ofertas dela, ou marque uma mais longe para acompanhar também.</p>
         <div id="lojasCats" class="group"></div>
         <form class="row-form" id="addLoja" novalidate>
@@ -993,11 +1059,12 @@ h3{font-size:13px;font-weight:600}
         </form>
         <p class="hint" id="lojaMsg" aria-live="polite"></p>
       </section>
-      <section class="panel" aria-labelledby="h-contas">
-        <div class="sec-head"><h2 id="h-contas">Clubes e cupons do app</h2></div>
+      </div><div class="col">
+        <section class="panel" aria-labelledby="h-contas">
+        <div class="sec-head"><h2 id="h-contas"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M14 7v2M14 11v2M14 15v2"/></svg></span>Clubes e cupons do app</h2></div>
         <p class="sec-meta">Marque os clubes em que você é cadastrado (quase sempre é só o CPF no caixa). O EconomIA passa a usar o preço de clube dessas lojas na lista, no roteiro e nas ofertas.</p>
         <ul class="rows" id="contasList"></ul>
-        <div class="group" id="cupMeus">
+        <div class="group so-ia" id="cupMeus">
           <h3>Cupons do app</h3>
           <p class="sec-meta">Tire print da carteira de cupons do app da loja (Bem Panvel, Raia, Meu Atacadão…). A IA lê e eles aparecem em Ofertas como "Seu cupom".</p>
           <div class="row-form"><label class="ghost big" for="cupArq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Escolher prints</label></div>
@@ -1012,7 +1079,126 @@ h3{font-size:13px;font-weight:600}
           <ul class="rows" id="cupLista"></ul>
         </div>
       </section>
+        <section class="panel" aria-labelledby="h-online">
+          <div class="sec-head"><h2 id="h-online"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 6h11v10H2zM13 9h4l4 4v3h-8z"/><circle cx="6.5" cy="17.5" r="2"/><circle cx="17.5" cy="17.5" r="2"/></svg></span>Compras online</h2></div>
+          <div class="group"><h3>Onde procurar</h3><div class="picks" id="pMkt"></div></div>
+          <div class="group"><h3>Assinaturas com frete grátis</h3><div class="picks" id="pAss"></div></div>
+          <p class="hint">iFood e Rappi trazem os preços dos mercados e farmácias do bairro no app, com a taxa de entrega somada. O Clube iFood zera a taxa nas lojas participantes. Prime e Meli+ não zeram o frete de tudo: valem para os produtos elegíveis (na Amazon, os com selo Prime). O EconomIA usa o frete que aparece para o seu CEP em cada item, já contando a assinatura. Remédios de receita ficam só nas farmácias.</p>
+        </section>
+      </div></div>
     </div>
+    <div class="mais-painel" id="mp-integracoes" role="tabpanel" aria-labelledby="aba-integracoes" hidden>
+      
+      <section class="panel settings" aria-labelledby="h-ia">
+      <div class="set-head"><h2 id="h-ia"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7-4.7-1.8 4.7-1.8z"/><path d="M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg></span>IA do Home Assistant</h2><p class="sec-meta">O EconomIA usa a IA já configurada no seu Home Assistant (Anthropic Claude, OpenAI, Google Gemini ou outra). Para buscar ofertas ela precisa de busca na web; para ler fotos, precisa aceitar imagens. Dá para trocar quando quiser. O app não guarda nenhuma chave.</p></div>
+      <div class="set-row">
+        <div><h3 class="set-t"><label for="usarIA">Usar IA</label></h3><p class="sec-meta" id="usarIATxt"></p></div>
+        <input type="checkbox" class="switch" id="usarIA">
+      </div>
+      <div id="iaDet">
+      <div class="set-row">
+        <div><h3 class="set-t"><label for="iaBusca">Para buscar ofertas</label></h3><p class="ia-st" id="iaBuscaSt">Toque em Verificar de novo para testar.</p></div>
+        <select class="field" id="iaBusca"></select>
+      </div>
+      <div class="set-row">
+        <div><h3 class="set-t"><label for="iaFotos">Para ler fotos</label></h3><p class="ia-st" id="iaFotosSt">Usando a IA preferida do Home Assistant.</p></div>
+        <select class="field" id="iaFotos"></select>
+      </div>
+      <div class="row-form"><button type="button" class="ghost big" id="iaTestar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>Verificar de novo</button></div>
+      <p class="hint">Google Gemini: a Pesquisa Google funciona num <b>assistente de conversa</b> com "Enable Google Search tool" ligado e "Controlar o Home Assistant" em nenhum. Escolha esse assistente em "Para buscar ofertas" e deixe o Google AI Task para ler fotos.</p>
+      <div class="set-row">
+        <div><h3 class="set-t">Falar</h3><p class="ia-st" id="vozSt">Verificando o assistente de voz…</p></div>
+      </div>
+      </div>
+    </section>
+    <section class="panel settings so-ia" aria-labelledby="h-uso">
+      <div class="set-head"><h2 id="h-uso"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Uso da IA</h2><p class="sec-meta">Cada busca, foto ou teste é uma chamada para a IA do Home Assistant. O Home Assistant não informa tokens nem custo, então o EconomIA conta as chamadas e estima os tokens pelo tamanho do texto.</p></div>
+      <div class="uso-tiles" id="usoTiles"></div>
+      <div class="uso-chart" id="usoChart" role="group" aria-label="Chamadas de IA nos últimos 7 dias"></div>
+      <p class="uso-cap num" id="usoCap" aria-live="polite"></p>
+      <ul class="uso-tipos num" id="usoTipos"></ul>
+      <details class="uso-ult"><summary>Últimas chamadas</summary><ul class="num" id="usoUlt"></ul></details>
+      <p class="hint" id="usoProv"></p>
+      <p class="hint" id="usoSensor"></p>
+    </section>
+    <section class="panel settings" aria-labelledby="h-ha">
+      <div class="set-head"><h2 id="h-ha"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6h11M10 12h11M10 18h11"/><path d="M3 6l1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/></svg></span>Lista do Home Assistant</h2><p class="sec-meta">Fale com o Assist, por exemplo "adicione café na lista de compras", e o item aparece aqui. Marcou como comprado lá, conta como "Comprei hoje" aqui.</p></div>
+      <div class="set-row">
+        <div><h3 class="set-t">Sincronizar com</h3><p class="sec-meta" id="syncInfo">Escolha uma lista de tarefas do Home Assistant, como a Lista de compras.</p></div>
+        <select class="field" id="syncEnt" aria-label="Lista do Home Assistant"></select>
+      </div>
+      <div class="set-row">
+        <div><h3 class="set-t"><label for="syncNovos">Itens novos daqui vão para lá</label></h3><p class="sec-meta">O que você adicionar no EconomIA aparece também na lista do Home Assistant.</p></div>
+        <input type="checkbox" class="switch" id="syncNovos">
+      </div>
+      <div class="set-row">
+        <div><h3 class="set-t"><label for="syncAcabando">Itens acabando entram sozinhos</label></h3><p class="sec-meta">Quando o seu ritmo de compra indicar que algo acaba amanhã, ele vai para a lista do Home Assistant.</p></div>
+        <input type="checkbox" class="switch" id="syncAcabando">
+      </div>
+    </section>
+    <section class="panel settings" aria-labelledby="h-sens">
+      <div class="set-head"><h2 id="h-sens"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span>Sensores no Home Assistant</h2><p class="sec-meta">Para painéis e automações: as chamadas de IA de hoje, com erros, cota e tokens estimados.</p></div>
+      <div class="set-row">
+        <div><h3 class="set-t"><label for="sensores">Criar os sensores</label></h3><p class="sec-meta" id="sensoresTxt"></p></div>
+        <input type="checkbox" class="switch" id="sensores">
+      </div>
+    </section>
+    </div>
+    <div class="mais-painel" id="mp-dados" role="tabpanel" aria-labelledby="aba-dados" hidden>
+      
+      <section class="panel settings" aria-labelledby="h-exp">
+      <div class="set-head"><h2 id="h-exp"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></span>Exportar</h2><p class="sec-meta">Baixe para abrir no Excel, guardar ou levar para outro programa. Os arquivos são abertos e legíveis.</p></div>
+      <ul class="opts">
+        <li><div class="ot"><b>Planilha (Excel)</b><span>Um item por linha, com a loja mais barata, o preço em cada loja e as datas de compra.</span></div><a class="ghost big" id="expXlsx" href="api/exportar/lista.xlsx" download><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Baixar Excel</a></li>
+        <li><div class="ot"><b>Lista e perfil (JSON)</b><span>A lista com as datas de compra, para backup ou para levar a outro aparelho. É o arquivo que o Importar traz de volta.</span></div><a class="ghost big" id="expJson" href="api/exportar/lista.json" download><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Baixar JSON</a></li>
+        <li><div class="ot"><b>Ofertas da última busca (JSON)</b><span>Lojas, ofertas, cupons e os preços de cada item, do jeito que vieram da busca.</span></div><a class="ghost big" id="expOf" href="api/exportar/ofertas.json" download><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Baixar JSON</a></li>
+      </ul>
+    </section>
+    <section class="panel settings" aria-labelledby="h-imp">
+      <div class="set-head"><h2 id="h-imp"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"/></svg></span>Importar</h2><p class="sec-meta">Traz uma lista de um arquivo .json exportado por aqui. Itens repetidos não duplicam, e as datas de compra são juntadas.</p></div>
+      <div class="set-row">
+        <div><h3 class="set-t">Importar lista (JSON)</h3><p class="sec-meta">Funciona pelo celular: escolha o arquivo nos seus downloads.</p></div>
+        <label class="ghost big" for="impArq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"/></svg>Escolher arquivo</label>
+        <input type="file" id="impArq" accept=".json,application/json" hidden>
+      </div>
+      <p class="hint" id="impMsg" aria-live="polite"></p>
+    </section>
+    <section class="panel settings" aria-labelledby="h-ver">
+      <div class="set-head"><h2 id="h-ver"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Versões anteriores</h2><p class="sec-meta">O app guarda sozinho uma cópia da lista, do perfil e dos ajustes a cada 10 minutos de uso e antes de importar, restaurar ou limpar a lista, e fica com as 3 mais recentes. Se algo sair errado, volte para uma delas.</p></div>
+      <div class="row-form"><button type="button" class="ghost big" id="verBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Ver versões</button></div>
+      <ul class="ver-lista" id="verLista" hidden></ul>
+      <p class="hint" id="verMsg" aria-live="polite"></p>
+    </section>
+    <section class="panel settings" aria-labelledby="h-dados">
+      <div class="set-head"><h2 id="h-dados"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></span>Onde ficam os dados</h2><p class="sec-meta">Tudo fica em arquivos abertos (JSON) dentro do app: <code>config.json</code> (lista, perfil e ajustes), <code>ofertas.json</code> (a última busca), <code>uso_ia.json</code> (o uso da IA) e as versões anteriores em <code>versoes/</code>. Tudo entra nos backups do Home Assistant. A busca de ofertas, a leitura de fotos e o Falar usam a IA e a fala para texto do seu Home Assistant.</p></div>
+    </section>
+    </div>
+    <div class="mais-painel" id="mp-aparencia" role="tabpanel" aria-labelledby="aba-aparencia" hidden>
+      
+      <section class="panel settings" aria-labelledby="h-tema">
+      <div class="set-head"><h2 id="h-tema"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor"/></svg></span>Tema</h2><p class="sec-meta">Automático segue o modo claro ou escuro do aparelho. Cada aparelho guarda a sua escolha.</p></div>
+      <div class="seg temas" id="tema" role="radiogroup" aria-label="Tema"></div>
+    </section>
+    <section class="panel settings" aria-labelledby="h-cor">
+      <div class="set-head"><h2 id="h-cor"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0 0 18c1.1 0 1.8-.8 1.8-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14.5" cy="7" r="1"/></svg></span>Cor do app</h2><p class="sec-meta">Muda os botões principais, os destaques e o cupom da abertura. Os avisos continuam com a cor deles.</p></div>
+      <div class="tag-cores" id="cores" role="radiogroup" aria-label="Cor do app"></div>
+    </section>
+    </div>
+    <div class="mais-painel" id="mp-opcoes" role="tabpanel" aria-labelledby="aba-opcoes" hidden>
+      
+      <section class="panel settings" aria-labelledby="h-opbusca">
+      <div class="set-head"><h2 id="h-opbusca"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span>Busca de preços</h2><p class="sec-meta">Cada etapa extra é mais uma chamada para a IA. Desligue para gastar menos da cota. Vale para todos os aparelhos.</p></div>
+      <div class="set-row">
+        <div><h3 class="set-t"><label for="opItens">Procurar de novo os itens sem preço</label></h3><p class="sec-meta">No fim da busca, uma pergunta só sobre os itens que ficaram sem preço, procurando item por item. O botão Buscar este item continua no cartão.</p></div>
+        <input type="checkbox" class="switch" id="opItens">
+      </div>
+      <div class="set-row">
+        <div><h3 class="set-t"><label for="opEncartes">Ler o encarte das lojas sem preço</label></h3><p class="sec-meta">Quando a busca acha o site de uma loja do bairro sem nenhum preço, a IA de fotos lê o encarte (até 2 por busca). Os sites que você adicionou em Lojas são sempre lidos.</p></div>
+        <input type="checkbox" class="switch" id="opEncartes">
+      </div>
+    </section>
+    </div>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.11.0</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
   </section>
 
   <footer>Preço do site pode ser diferente do preço na loja. Confira validade e regras do cupom no carrinho.</footer>
@@ -1023,7 +1209,7 @@ h3{font-size:13px;font-weight:600}
   <div class="tabbar-in">
     <button type="button" class="tab" data-view="lista"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg>Minha lista</button>
     <button type="button" class="tab" data-view="roteiro"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H16a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h7.5"/></svg>Roteiro</button>
-    <button type="button" class="tab tab-main" id="buscar"><span class="pill"><svg class="ic-busca" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><svg class="ic-gira" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></span><span id="buscarTxt">Buscar</span></button>
+    <button type="button" class="tab tab-main so-ia" id="buscar"><span class="pill"><svg class="ic-busca" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><svg class="ic-gira" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></span><span id="buscarTxt">Buscar</span></button>
     <button type="button" class="tab" data-view="ofertas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/></svg>Ofertas</button>
     <button type="button" class="tab" data-view="mais"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Mais</button>
   </div>
@@ -1097,7 +1283,7 @@ h3{font-size:13px;font-weight:600}
   var VIEWS = ['lista', 'roteiro', 'ofertas', 'mais'];
   var TITULOS = {lista:'Minha lista', roteiro:'Roteiro', ofertas:'Ofertas', mais:'Mais'};
   var hash = (location.hash || '').slice(1);
-  if (hash === 'lojas' || ui.view === 'lojas'){ hash = ''; ui.view = 'mais'; }  // Lojas agora fica no fim de Mais
+  if (hash === 'lojas' || ui.view === 'lojas'){ hash = ''; ui.view = 'mais'; ui.maisAba = 'lojas'; }  // Lojas fica em Mais › Lojas
   if (VIEWS.indexOf(hash) >= 0) ui.view = hash;
   if (VIEWS.indexOf(ui.view) < 0) ui.view = 'lista';
   function salvarUI(){ gravarLocal(KEY_UI, ui); }
@@ -1145,7 +1331,10 @@ h3{font-size:13px;font-weight:600}
       clubes: arr(c.clubes),
       cupons_meus: arr(c.cupons_meus).filter(function(k){ return k && k.beneficio && k.rede; }),
       roteiro: {paradas:Math.min(4, Math.max(1, Math.round(Number(ro.paradas)) || 2)), escopo:ro.escopo === 'acabando' ? 'acabando' : 'tudo', online:ro.online !== false},
-      ocultas: arr(c.ocultas)
+      ocultas: arr(c.ocultas),
+      usar_ia: c.usar_ia !== false,
+      sensores: c.sensores === true,
+      opcoes: {itens_sem_preco:(c.opcoes || {}).itens_sem_preco !== false, encartes_auto:(c.opcoes || {}).encartes_auto !== false}
     };
   }
 
@@ -1216,16 +1405,45 @@ h3{font-size:13px;font-weight:600}
   // ---------- telas ----------
   function irPara(v){
     ui.view = v; salvarUI();
-    if (v === 'mais' && typeof carregaUso === 'function' && USO) carregaUso();
     $('screenTitle').textContent = TITULOS[v];
     VIEWS.forEach(function(x){ $('v-' + x).hidden = x !== v; });
     Array.prototype.forEach.call($('views').querySelectorAll('button[data-view]'), function(b){
       if (b.dataset.view === v) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
     });
+    if (v === 'mais') abaMais(ui.maisAba);
+    pintaLado();
   }
+  // Mais em abas, como nos outros apps: Casa, Lojas, Integrações, Dados, Aparência e Opções
+  var MAIS_ABAS = ['casa', 'lojas', 'integracoes', 'dados', 'aparencia', 'opcoes'];
+  function abaMais(k){
+    if (MAIS_ABAS.indexOf(k) < 0) k = 'casa';
+    ui.maisAba = k; salvarUI();
+    MAIS_ABAS.forEach(function(x){
+      var b = $('aba-' + x), on = x === k;
+      b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; $('mp-' + x).hidden = !on;
+    });
+    var t = $('maisAbas'), b = $('aba-' + k);
+    if (t.offsetParent){ var l = b.offsetLeft - 8, r = b.offsetLeft + b.offsetWidth + 8; if (l < t.scrollLeft) t.scrollLeft = l; else if (r > t.scrollLeft + t.clientWidth) t.scrollLeft = r - t.clientWidth; }
+    if (k === 'integracoes' && USO) carregaUso();
+  }
+  function irParaAba(k, alvo){
+    ui.maisAba = k; irPara('mais');
+    if (alvo && $(alvo)) $(alvo).scrollIntoView({block:'start'}); else window.scrollTo(0, 0);
+  }
+  $('maisAbas').addEventListener('click', function(e){
+    var b = e.target.closest('[data-aba]'); if (!b) return;
+    abaMais(b.dataset.aba);
+    var topo = $('v-mais').getBoundingClientRect().top + window.scrollY - 8;
+    if (window.scrollY > topo) window.scrollTo(0, topo);
+  });
+  $('maisAbas').addEventListener('keydown', function(e){
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    var i = MAIS_ABAS.indexOf(ui.maisAba) + (e.key === 'ArrowRight' ? 1 : -1);
+    abaMais(MAIS_ABAS[(i + MAIS_ABAS.length) % MAIS_ABAS.length]); $('aba-' + ui.maisAba).focus(); e.preventDefault();
+  });
   $('views').addEventListener('click', function(e){ var b = e.target.closest('button[data-view]'); if (b){ irPara(b.dataset.view); window.scrollTo(0, 0); } });
 
-  function tudo(){ pintaOfertasTela(); pintaLista(); pintaLojas(); pintaContas(); pintaPerfil(); }
+  function tudo(){ pintaOfertasTela(); pintaLista(); pintaLojas(); pintaContas(); pintaPerfil(); pintaLado(); }
 
   // ===== Ofertas =====
   function pintaOfertasTela(){
@@ -1334,7 +1552,7 @@ h3{font-size:13px;font-weight:600}
     var act = b.dataset.act;
     if (act === 'menu'){ menuAberto = menuAberto === b.dataset.id ? null : b.dataset.id; pintaDeals(); return; }
     if (act === 'fechar'){ menuAberto = null; pintaDeals(); return; }
-    if (act === 'perfil'){ irPara('mais'); window.scrollTo(0, 0); return; }
+    if (act === 'perfil'){ irParaAba('casa'); return; }
     if (act === 'esconder'){ estado.ocultas.push(b.dataset.id); menuAberto = null; salvar('Oferta escondida'); }
     if (act === 'nunca'){ if (estado.perfil.nunca.indexOf(b.dataset.tag) < 0) estado.perfil.nunca.push(b.dataset.tag); menuAberto = null; salvar('Você não vai mais ver ' + ROTULO_TAG[b.dataset.tag]); }
     if (act === 'mostrar'){ if (b.dataset.tag) tira(estado.perfil.nunca, b.dataset.tag); else tira(estado.ocultas, b.dataset.id); salvar('Volta a aparecer'); }
@@ -1583,7 +1801,7 @@ h3{font-size:13px;font-weight:600}
           + '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>'
           + '<div class="i-best"><span class="lbl">Sem preço ainda</span><span class="i-wait">'
           + (procurou ? 'A última busca não achou preço. Com marca e tamanho fica mais fácil, por exemplo “Detergente Ypê 500 ml”.' : 'Os preços aparecem depois da próxima busca.')
-          + '</span><button type="button" class="ghost i-busca" data-buscaitem="' + x.i + '"' + (buscando ? ' disabled' : '') + '>' + (buscando ? 'Buscando…' : 'Buscar este item') + '</button></div>'
+          + '</span><button type="button" class="ghost i-busca so-ia" data-buscaitem="' + x.i + '"' + (buscando ? ' disabled' : '') + '>' + (buscando ? 'Buscando…' : 'Buscar este item') + '</button></div>'
           + acoes + '</div></li>';
       }
       var best = p[0], max = p[p.length - 1].v, conta = {}, mt = melhorTamanho(x.it, x.r, p), dc = mt && mt.principal ? mt.dica : null;
@@ -1624,6 +1842,7 @@ h3{font-size:13px;font-weight:600}
   });
   $('limparNao').addEventListener('click', function(){ $('limparConf').hidden = true; });
   $('limparSim').addEventListener('click', function(){
+    guardarVersao('limpar');
     listaApagada = estado.lista; estado.lista = [];
     $('limparConf').hidden = true;
     $('addMsg').className = 'hint ok';
@@ -1644,11 +1863,14 @@ h3{font-size:13px;font-weight:600}
   var ICO_MAIS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
   function abreFoto(modo){
     clearTimeout(leituraT);
+    if (modo !== 'voz') pararFala();
     $('fotoItens').innerHTML = ''; $('fotoAddRow').hidden = true; $('fotoMsg').textContent = ''; $('fotoLer').disabled = false;
+    $('vozBox').hidden = modo !== 'voz'; $('vozOuvido').hidden = true;
     if (!modo){ fotosSel = []; $('fotoPrev').innerHTML = ''; $('fotoTxt').value = ''; $('fotoBox').hidden = true; return; }
     var texto = modo === 'texto';
-    if (texto) fotosSel = [];
-    $('fotoBox').hidden = false; $('fotoTxt').hidden = !texto; $('fotoLer').hidden = false;
+    if (texto || modo === 'voz') fotosSel = [];
+    $('fotoBox').hidden = false; $('fotoTxt').hidden = !texto; $('fotoLer').hidden = modo === 'voz';
+    if (modo === 'voz'){ $('fotoPrev').innerHTML = ''; $('fotoPrev').hidden = true; vozRec = 'off'; pintaGrav(); return; }
     pintaFotos();
     if (texto) $('fotoTxt').focus();
   }
@@ -1723,6 +1945,7 @@ h3{font-size:13px;font-weight:600}
       fetch('api/ler-lista?id=' + encodeURIComponent(id), {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
         if (j.status === 'lendo' && n < 120) return esperaLeitura(id, n + 1);
         $('fotoLer').disabled = false;
+        if (vozRec === 'lendo'){ vozRec = 'off'; $('vozBox').hidden = j.status === 'pronto'; pintaGrav(); }
         if (j.status === 'pronto') mostraLidos(j.itens);
         else { $('fotoMsg').className = 'hint err'; $('fotoMsg').textContent = j.erro || 'A leitura demorou demais. Tente de novo.'; }
       }).catch(function(){ if (n < 120) esperaLeitura(id, n + 1); else $('fotoLer').disabled = false; });
@@ -1742,6 +1965,162 @@ h3{font-size:13px;font-weight:600}
       .then(function(j){ esperaLeitura(j.id, 0); })
       .catch(function(e){ b.disabled = false; msg.className = 'hint err'; msg.textContent = e.message; });
   }
+  // ===== Falar: o microfone grava PCM cru, 16 kHz, 16 bits, mono (o que a fala para texto do Home Assistant recebe).
+  // O add-on manda para o assistente de voz preferido; o texto passa pela mesma leitura por IA de uma mensagem colada.
+  var VOZ_TAXA = 16000, VOZ_MAX_S = 120, VOZ_ST = null, GRAV = null, gravT = null, gravNivel = 0, vozRec = 'off';
+  function Gravador(aoNivel){ this.aoNivel = aoNivel; this.pedacos = []; this.total = 0; this.taxa = VOZ_TAXA; }
+  Gravador.prototype.start = function(){
+    var g = this, md = navigator.mediaDevices;
+    if (!md || !md.getUserMedia) return Promise.reject(Object.assign(new Error('sem api'), {name:'NoApi'}));
+    return md.getUserMedia({audio:{channelCount:1, echoCancellation:true, noiseSuppression:true, autoGainControl:true}}).then(function(stream){
+      g.stream = stream;
+      var AC = window.AudioContext || window.webkitAudioContext;
+      try { g.ctx = new AC({sampleRate:VOZ_TAXA}); } catch(e){ g.ctx = new AC(); }  // alguns navegadores só gravam na taxa deles: reamostra no fim
+      return (g.ctx.state === 'suspended' ? g.ctx.resume().catch(function(){}) : Promise.resolve()).then(function(){
+        g.taxa = g.ctx.sampleRate;
+        g.src = g.ctx.createMediaStreamSource(stream);
+        g.no = g.ctx.createScriptProcessor(4096, 1, 1);
+        g.no.onaudioprocess = function(e){
+          var d = e.inputBuffer.getChannelData(0), s2 = 0;
+          g.pedacos.push(new Float32Array(d)); g.total += d.length;
+          for (var i = 0; i < d.length; i += 4) s2 += d[i] * d[i];
+          if (g.aoNivel) g.aoNivel(Math.min(1, Math.sqrt(s2 / (d.length / 4)) * 5));
+        };
+        g.src.connect(g.no); g.no.connect(g.ctx.destination);  // a saída fica muda; só mantém o nó rodando
+      });
+    });
+  };
+  Gravador.prototype.segundos = function(){ return this.total / this.taxa; };
+  Gravador.prototype.stop = function(){
+    this._fechar();
+    var tudo = new Float32Array(this.total), o = 0;
+    this.pedacos.forEach(function(c){ tudo.set(c, o); o += c.length; });
+    this.pedacos = [];
+    var k = this.taxa / VOZ_TAXA, n = Math.floor(tudo.length / k), out = new Int16Array(n);
+    for (var i = 0; i < n; i++){
+      // a média de cada janela: um passa-baixa simples quando o navegador gravou a 44,1/48 kHz
+      var a = Math.floor(i * k), b = Math.max(a + 1, Math.min(tudo.length, Math.floor((i + 1) * k))), sm = 0;
+      for (var j = a; j < b; j++) sm += tudo[j];
+      var v = Math.max(-1, Math.min(1, sm / (b - a)));
+      out[i] = v < 0 ? v * 0x8000 : v * 0x7fff;
+    }
+    return out;
+  };
+  Gravador.prototype.cancel = function(){ this._fechar(); this.pedacos = []; this.total = 0; };
+  Gravador.prototype._fechar = function(){
+    try { if (this.no) this.no.onaudioprocess = null; if (this.src) this.src.disconnect(); if (this.no) this.no.disconnect(); } catch(e){ /* já fechado */ }
+    if (this.stream) this.stream.getTracks().forEach(function(t){ t.stop(); });
+    if (this.ctx && this.ctx.state !== 'closed') this.ctx.close().catch(function(){});
+    this.stream = null; this.no = null; this.src = null;
+  };
+  // no exemplo, sem microfone: finge que ouviu, para mostrar o caminho todo
+  function GravadorSimulado(aoNivel){ this.aoNivel = aoNivel; this.t0 = 0; }
+  GravadorSimulado.prototype.start = function(){ var g = this; g.t0 = Date.now(); g.iv = setInterval(function(){ if (g.aoNivel) g.aoNivel(0.2 + Math.random() * 0.6); }, 120); return Promise.resolve(); };
+  GravadorSimulado.prototype.segundos = function(){ return (Date.now() - this.t0) / 1000; };
+  GravadorSimulado.prototype.stop = function(){ clearInterval(this.iv); return new Int16Array(Math.round(VOZ_TAXA * Math.max(1, this.segundos()))); };
+  GravadorSimulado.prototype.cancel = function(){ clearInterval(this.iv); };
+  function erroMicrofone(err){
+    var n = (err && err.name) || '';
+    if (n === 'NotAllowedError' || n === 'SecurityError') return 'O microfone está bloqueado. Permita o microfone para o Home Assistant (no navegador, no cadeado ao lado do endereço; no app do celular, nas permissões do app Home Assistant) e tente de novo.';
+    if (n === 'NotFoundError' || n === 'OverconstrainedError') return 'Não achei um microfone neste aparelho.';
+    if (n === 'NotReadableError') return 'O microfone está sendo usado por outro app. Feche o outro e tente de novo.';
+    if (n === 'NoApi') return 'Este navegador não deixa usar o microfone aqui. Abra o Home Assistant pelo endereço com https (como o do Nabu Casa) ou pelo app.';
+    return 'Não consegui abrir o microfone (' + ((err && err.message) || n || 'erro') + ').';
+  }
+  function vozPronta(){ return iaOn() && !!(VOZ_ST && VOZ_ST.pronta); }
+  function pintaVoz(){
+    var ok = vozPronta();
+    [].forEach.call(document.querySelectorAll('.so-voz'), function(el){ el.hidden = !ok; });
+    var el = $('vozSt'), v = VOZ_ST;
+    el.className = 'ia-st' + (v && v.pronta ? ' ok' : '');
+    el.textContent = !v ? 'Verificando o assistente de voz…'
+      : v.pronta ? 'Pronto, com ' + (v.nome || 'a fala para texto do Home Assistant') + '. O microfone fica no alto da tela; fale os itens e a IA separa cada um para você conferir.'
+        : (v.motivo || 'Não está pronto.');
+  }
+  function carregaVoz(){
+    if (!iaOn()){ VOZ_ST = null; pintaVoz(); return; }
+    if (MODO !== 'addon'){ VOZ_ST = {pronta:true, nome:'a fala simulada do exemplo'}; pintaVoz(); return; }
+    fetch('api/voz/status', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){ VOZ_ST = j; pintaVoz(); })
+      .catch(function(){ VOZ_ST = {pronta:false, motivo:'Não consegui falar com o add-on.'}; pintaVoz(); });
+  }
+  function pintaGrav(){
+    var on = vozRec === 'on', box = $('vozBox'), ocupado = vozRec === 'starting' || vozRec === 'enviando' || vozRec === 'lendo';
+    box.classList.toggle('on', on);
+    box.querySelector('.vz-mic').hidden = on; box.querySelector('.vz-ok').hidden = !on;
+    $('vozMic').setAttribute('aria-label', on ? 'Pronto: enviar o que falei' : 'Começar a falar');
+    $('vozMic').disabled = ocupado;
+    $('vozEstado').innerHTML = on ? '<b>Ouvindo…</b> <span class="voz-tempo" id="vozTempo">0:00</span>'
+      : vozRec === 'starting' ? 'Abrindo o microfone…' : vozRec === 'enviando' ? 'Transcrevendo o que você disse…'
+        : vozRec === 'lendo' ? 'A IA está separando os itens…' : 'Toque no microfone e fale';
+    $('vozDica').textContent = on ? 'Toque de novo quando terminar.' : ocupado ? '' : 'Por exemplo: “leite integral, 2 pacotes de café 500 g e detergente”. Até 2 minutos de cada vez.';
+  }
+  function abreFala(){
+    if (!vozPronta()) return;
+    irPara('lista'); abreFoto('voz');
+    $('fotoBox').scrollIntoView({block:'center'});
+    comecaFala();
+  }
+  function comecaFala(){
+    if (GRAV) return;
+    vozRec = 'starting'; $('fotoMsg').textContent = ''; $('vozOuvido').hidden = true; pintaGrav();
+    var simular = MODO !== 'addon' && !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    var g = simular ? new GravadorSimulado(function(l){ gravNivel = l; }) : new Gravador(function(l){ gravNivel = l; });
+    GRAV = g;
+    g.start().catch(function(err){
+      g.cancel(); if (GRAV === g) GRAV = null;
+      if (MODO !== 'addon'){ var sim = new GravadorSimulado(function(l){ gravNivel = l; }); GRAV = sim; return sim.start(); }
+      throw err;
+    }).then(function(){
+      if (!GRAV || $('vozBox').hidden){ if (GRAV) GRAV.cancel(); GRAV = null; return; }
+      vozRec = 'on'; pintaGrav();
+      clearInterval(gravT);
+      gravT = setInterval(function(){
+        if (!GRAV) return clearInterval(gravT);
+        var secs = GRAV.segundos(), t = $('vozTempo');
+        $('vozMic').style.setProperty('--lvl', gravNivel.toFixed(2));
+        if (t) t.textContent = Math.floor(secs / 60) + ':' + String(Math.floor(secs % 60)).padStart(2, '0');
+        if (secs >= VOZ_MAX_S) terminaFala();
+      }, 120);
+    }, function(err){
+      vozRec = 'off'; pintaGrav();
+      $('fotoMsg').className = 'hint err'; $('fotoMsg').textContent = erroMicrofone(err);
+    });
+  }
+  function pararFala(){ clearInterval(gravT); if (GRAV) GRAV.cancel(); GRAV = null; if (vozRec === 'on' || vozRec === 'starting') vozRec = 'off'; }
+  function terminaFala(){
+    var g = GRAV; if (!g) return;
+    clearInterval(gravT); GRAV = null;
+    var pcm = g.stop(), msg = $('fotoMsg');
+    $('vozMic').style.setProperty('--lvl', '0');
+    if (pcm.length < VOZ_TAXA * 0.4){ vozRec = 'off'; pintaGrav(); msg.className = 'hint err'; msg.textContent = 'Não ouvi nada. Toque no microfone e fale.'; return; }
+    vozRec = 'enviando'; pintaGrav(); msg.textContent = '';
+    var transcreve = MODO !== 'addon'
+      ? new Promise(function(ok){ setTimeout(function(){ ok({texto:'Leite integral, 2 pacotes de café 500 g e detergente'}); }, 800); })
+      : fetch('api/voz', {method:'POST', headers:{'Content-Type':'application/octet-stream'}, body:pcm.buffer})
+        .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if (!r.ok) throw new Error(j.erro || 'Não consegui transcrever.'); return j; }); });
+    transcreve.then(function(r){
+      var o = $('vozOuvido'); o.querySelector('span').textContent = '“' + r.texto + '”'; o.hidden = false;
+      vozRec = 'lendo'; pintaGrav();
+      if (MODO !== 'addon'){
+        leituraT = setTimeout(function(){ vozRec = 'off'; $('vozBox').hidden = true; pintaGrav(); mostraLidos(exemploLeitura(r.texto)); if ($('fotoItens').children.length) msg.textContent += ' No Home Assistant, o seu assistente de voz transcreve e a IA separa os itens.'; }, 700);
+        return;
+      }
+      return fetch('api/ler-lista', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({texto:r.texto, origem:'fala'})})
+        .then(function(x){ return x.json().catch(function(){ return {}; }).then(function(j){ if (!x.ok) throw new Error(j.erro || 'Não deu para enviar.'); return j; }); })
+        .then(function(j){ esperaLeitura(j.id, 0); });
+    }).catch(function(err){ vozRec = 'off'; pintaGrav(); msg.className = 'hint err'; msg.textContent = err.message; });
+  }
+  $('vozMic').addEventListener('click', function(){ if (vozRec === 'on') terminaFala(); else if (vozRec === 'off') comecaFala(); });
+  $('falarBtn').addEventListener('click', function(){ abreFoto('voz'); comecaFala(); });
+  // ações do alto (Falar no celular e no computador; Ler com IA e Adicionar item no computador)
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('[data-acao]'); if (!b) return;
+    var a = b.dataset.acao;
+    if (a === 'falar') abreFala();
+    else if (a === 'ler'){ irPara('lista'); abreFoto('texto'); $('fotoBox').scrollIntoView({block:'center'}); $('fotoTxt').focus(); }
+    else if (a === 'adicionar'){ irPara('lista'); var i = $('novoItem'); i.scrollIntoView({block:'center'}); i.focus(); }
+  });
+
   $('fotoAdd').addEventListener('click', function(){
     var novos = 0;
     [].forEach.call($('fotoItens').querySelectorAll('li'), function(li){
@@ -1974,8 +2353,9 @@ h3{font-size:13px;font-weight:600}
     var b = e.target.closest('[data-ir]'); if (!b) return;
     var ir = b.dataset.ir;
     if (ir === 'itens'){ $('wish').scrollIntoView({behavior:'smooth', block:'start'}); return; }
-    if (ir === 'lojasSec'){ irPara('mais'); $('lojasSec').scrollIntoView({block:'start'}); return; }
-    if (ir === 'importar'){ irPara('mais'); $('h-imp').scrollIntoView({block:'start'}); return; }
+    if (ir === 'lojasSec'){ irParaAba('lojas'); return; }
+    if (ir === 'importar'){ irParaAba('dados', 'h-imp'); return; }
+    if (ir === 'mais') ui.maisAba = 'casa';
     if (b.dataset.cat){ ui.aba = b.dataset.cat; salvarUI(); filtro = 'todas'; pintaOfertasTela(); }
     irPara(ir); window.scrollTo(0, 0);
   });
@@ -2228,14 +2608,16 @@ h3{font-size:13px;font-weight:600}
     picks('dMercado', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.mercado);
     picks('dFarmacia', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.farmacia);
     $('avisar').value = r.avisar; $('estoque').value = r.estoque;
-    pintaAviso(); pintaTema(); pintaCores(); pintaSyncUI(); pintaIA();
+    pintaAviso(); pintaTema(); pintaCores(); pintaSyncUI(); pintaIA(); pintaAjustes();
   }
+  var TAG_SW = 'M8 0h20a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8L0 13V7z', FURO_SW = 'M9.7 10a2.7 2.7 0 1 0-5.4 0a2.7 2.7 0 1 0 5.4 0z';
   function pintaCores(){
     var atual = ui.cor || 'verde';
     $('cores').innerHTML = CORES.map(function(c){
       var sel = c.id === atual;
-      return '<button type="button" class="cor" style="--sw:' + c.sw + '" data-v="' + c.id + '" aria-pressed="' + sel + '" aria-label="' + c.nome + '" title="' + c.nome + '">'
-        + (sel ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : '') + '</button>';
+      return '<button type="button" class="tsw" role="radio" aria-checked="' + sel + '" style="--a:' + c.sw + '" data-v="' + c.id + '">'
+        + '<svg viewBox="-5 -5 40 30" aria-hidden="true"><path class="sw-ring" d="' + TAG_SW + '"/><path class="sw-gap" d="' + TAG_SW + '"/><path class="sw-fill" d="' + TAG_SW + FURO_SW + '"/><path class="sw-check" d="m14.6 10.3 3.2 3.2 6.5-6.9"/></svg>'
+        + '<span>' + c.nome + '</span></button>';
     }).join('');
   }
   $('cores').addEventListener('click', function(e){
@@ -2244,8 +2626,11 @@ h3{font-size:13px;font-weight:600}
   });
   function pintaTema(){
     var atual = ui.tema || 'escuro';
+    var ic = {auto:'<rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+      claro:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+      escuro:'<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>'};
     $('tema').innerHTML = [['auto', 'Automático'], ['claro', 'Claro'], ['escuro', 'Escuro']].map(function(t){
-      return '<button type="button" data-v="' + t[0] + '" aria-pressed="' + (atual === t[0]) + '">' + t[1] + '</button>';
+      return '<button type="button" role="radio" data-v="' + t[0] + '" aria-checked="' + (atual === t[0]) + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + ic[t[0]] + '</svg><span>' + t[1] + '</span></button>';
     }).join('');
   }
   $('tema').addEventListener('click', function(e){
@@ -2253,12 +2638,74 @@ h3{font-size:13px;font-weight:600}
     ui.tema = b.dataset.v; salvarUI(); aplicaTema(ui.tema); pintaTema();
   });
 
+  // ----- Usar IA, Sensores no Home Assistant e Opções: valem para todos os aparelhos -----
+  function iaOn(){ return !estado || estado.usar_ia !== false; }
+  function pintaAjustes(){
+    var on = iaOn();
+    document.documentElement.classList.toggle('sem-ia', !on);
+    $('usarIA').checked = on; $('iaDet').hidden = !on;
+    $('usarIATxt').textContent = on
+      ? 'Ligado: a busca de ofertas, a leitura de fotos e mensagens, os cupons por print e o Falar usam a IA do Home Assistant.'
+      : 'Desligado: somem o Buscar, a leitura de fotos e mensagens, os cupons por print e o Falar. A lista, o ritmo de compra e os preços que já vieram continuam. Vale para todos os aparelhos.';
+    $('sensores').checked = estado.sensores;
+    $('sensoresTxt').innerHTML = estado.sensores
+      ? 'Ligado: o app cria o <code>sensor.economia_ia_hoje</code> (as chamadas de IA de hoje, com os detalhes nos atributos) e atualiza a cada chamada.'
+      : 'Desligado: o app não cria sensores no Home Assistant, e apaga o que tinha criado.';
+    $('opItens').checked = estado.opcoes.itens_sem_preco; $('opEncartes').checked = estado.opcoes.encartes_auto;
+  }
+  $('usarIA').addEventListener('change', function(){
+    estado.usar_ia = this.checked;
+    salvar(this.checked ? 'IA ligada' : 'IA desligada');
+    pintaAjustes(); carregaVoz(); pintaLista(); pintaLado();
+    if (this.checked){ carregaIAs(); carregaUso(); }
+  });
+  $('sensores').addEventListener('change', function(){
+    estado.sensores = this.checked; salvar(this.checked ? 'Sensores ligados' : 'Sensores desligados'); pintaAjustes(); pintaUso();
+  });
+  $('opItens').addEventListener('change', function(){ estado.opcoes.itens_sem_preco = this.checked; salvar('Opção salva'); });
+  $('opEncartes').addEventListener('change', function(){ estado.opcoes.encartes_auto = this.checked; salvar('Opção salva'); });
+
+  // ----- Versões anteriores: as 3 cópias mais recentes do config.json -----
+  function guardarVersao(motivo){
+    if (MODO !== 'addon') return Promise.resolve();
+    return fetch('api/versoes/guardar', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({motivo:motivo})}).catch(function(){});
+  }
+  var VERSOES = null, verConf = null;
+  function pintaVersoes(){
+    var el = $('verLista'), l = arr(VERSOES);
+    el.hidden = !l.length;
+    $('verMsg').className = 'hint'; $('verMsg').textContent = VERSOES && !l.length ? 'Nenhuma cópia ainda. A primeira é guardada depois de 10 minutos de uso.' : '';
+    el.innerHTML = l.map(function(v){
+      return '<li><div><b>' + esc(quando(v.quando)) + '</b><span>' + esc(v.motivo) + ' · ' + v.itens + (v.itens === 1 ? ' item' : ' itens') + (v.cep ? ' · CEP ' + esc(v.cep) : '') + '</span></div>'
+        + (verConf === v.nome ? '<span class="conf">Voltar para esta versão?<button type="button" class="btn" data-ver-sim="' + esc(v.nome) + '">Restaurar</button><button type="button" class="ghost big" data-ver-nao="1">Cancelar</button></span>'
+          : '<button type="button" class="ghost big" data-ver="' + esc(v.nome) + '">Restaurar</button>') + '</li>';
+    }).join('');
+  }
+  function carregaVersoes(){
+    if (MODO !== 'addon'){ $('verMsg').className = 'hint'; $('verMsg').textContent = 'No Home Assistant, aqui aparecem as 3 cópias mais recentes, cada uma com o botão Restaurar.'; return; }
+    $('verMsg').className = 'hint'; $('verMsg').textContent = 'Carregando…';
+    fetch('api/versoes', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){ VERSOES = arr(j.versoes); verConf = null; pintaVersoes(); })
+      .catch(function(){ $('verMsg').className = 'hint err'; $('verMsg').textContent = 'Não consegui ler as versões.'; });
+  }
+  $('verBtn').addEventListener('click', carregaVersoes);
+  $('verLista').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.ver){ verConf = b.dataset.ver; pintaVersoes(); return; }
+    if (b.dataset.verNao){ verConf = null; pintaVersoes(); return; }
+    if (!b.dataset.verSim) return;
+    b.disabled = true;
+    fetch('api/versoes/restaurar', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({nome:b.dataset.verSim})})
+      .then(function(r){ return r.json().then(function(j){ if (!r.ok) throw new Error(j.erro || 'Não deu para restaurar.'); return j; }); })
+      .then(function(j){ estado = normaliza(j.config); tudo(); toast('Versão restaurada'); carregaVersoes(); })
+      .catch(function(err){ $('verMsg').className = 'hint err'; $('verMsg').textContent = err.message; b.disabled = false; });
+  });
+
   // IA do Home Assistant
   var IAS = null, IA_ST = {busca:null, fotos:null};
 
   // ----- uso da IA -----
   var USO = null, usoDia = null;
-  var USO_TIPO = {busca:'Busca de ofertas', itens:'Itens sem preço', encarte:'Encartes', fotos:'Fotos e mensagens', cupons:'Cupons por print', teste:'Testes'};
+  var USO_TIPO = {busca:'Busca de ofertas', itens:'Itens sem preço', encarte:'Encartes', fotos:'Fotos e mensagens', cupons:'Cupons por print', fala:'Falar', teste:'Testes'};
   var USO_RES = {ok:'', cota:'cota excedida', formato:'fora do formato', erro:'erro'};
   var DIA_SEM = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
   function usoExemplo(){
@@ -2327,6 +2774,9 @@ h3{font-size:13px;font-weight:600}
     else if (prov === 'anthropic') txt = 'Consumo exato e custo da Anthropic: <a href="https://platform.claude.com/usage" target="_blank" rel="noopener">Claude Console → Usage</a>.';
     else txt = 'O consumo exato e o custo ficam no painel do provedor da sua IA (Google, OpenAI, Anthropic...).';
     $('usoProv').innerHTML = txt + ' A estimativa de tokens daqui conta só o texto; a busca na web, as imagens e as instruções do assistente somam mais.';
+    $('usoSensor').innerHTML = estado.sensores
+      ? 'No Home Assistant, o sensor <code>sensor.economia_ia_hoje</code> traz as chamadas de hoje, com erros, cota e tokens estimados, para pôr num painel ou numa automação (por exemplo, avisar quando passar de 50 no dia).'
+      : 'Para ter o sensor <code>sensor.economia_ia_hoje</code> no Home Assistant, com as chamadas de hoje, ligue <b>Sensores no Home Assistant</b>, logo abaixo.';
   }
   $('usoChart').addEventListener('click', function(e){ var b = e.target.closest('button[data-dia]'); if (b){ usoDia = b.dataset.dia; pintaUso(); } });
   function carregaIAs(){
@@ -2425,7 +2875,7 @@ h3{font-size:13px;font-weight:600}
   document.addEventListener('visibilitychange', function(){ if (!document.hidden) sincronizaAgora(); });
 
   // exportar e importar a lista
-  ['expXlsx', 'expJson'].forEach(function(id){
+  ['expXlsx', 'expJson', 'expOf'].forEach(function(id){
     $(id).addEventListener('click', function(e){
       if (MODO !== 'addon'){ e.preventDefault(); toast('No Home Assistant, este botão baixa o arquivo da sua lista.'); }
     });
@@ -2438,6 +2888,13 @@ h3{font-size:13px;font-weight:600}
       inp.value = '';
       var dado;
       try { dado = JSON.parse(leitor.result); } catch(e){ msg.className = 'hint err'; msg.textContent = 'Esse arquivo não é um JSON válido.'; return; }
+      guardarVersao('importar').then(function(){ importa(dado); });
+    };
+    leitor.readAsText(f);
+  });
+  function importa(dado){
+    var msg = $('impMsg');
+    {
       var itens = Array.isArray(dado) ? dado : arr(dado && dado.lista), novos = 0, juntados = 0;
       itens.forEach(function(i){
         var nome = typeof i === 'string' ? i : (i && i.produto);
@@ -2452,9 +2909,8 @@ h3{font-size:13px;font-weight:600}
       msg.className = 'hint ok';
       msg.textContent = (novos === 1 ? '1 item novo entrou' : novos + ' itens novos entraram') + ' na lista' + (juntados ? ', e ' + juntados + (juntados === 1 ? ' data de compra foi juntada' : ' datas de compra foram juntadas') : '') + '.';
       salvar('Lista importada'); pintaLista(); pintaOfertasTela();
-    };
-    leitor.readAsText(f);
-  });
+    }
+  }
   var ALVO = {pMkt:function(){ return estado.online.marketplaces; }, pAss:function(){ return estado.online.assinaturas; }, pRestr:function(){ return estado.perfil.restricoes; }, pInt:function(){ return estado.perfil.interesses; },
     pNunca:function(){ return estado.perfil.nunca; }, dMercado:function(){ return estado.cotidiano.mercado; }, dFarmacia:function(){ return estado.cotidiano.farmacia; }};
   $('v-mais').addEventListener('click', function(e){
@@ -2512,11 +2968,44 @@ h3{font-size:13px;font-weight:600}
     return partes.length ? ' · ' + partes.join(' · ') : '';
   }
 
+  // ----- barra lateral do computador: telas, Buscar ofertas e as ofertas por tipo de loja -----
+  var BUSCANDO = false;
+  var IC_LADO = {lista:'<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>',
+    roteiro:'<circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H16a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h7.5"/>',
+    ofertas:'<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/>',
+    mais:'<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
+    busca:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>'};
+  function pintaLado(){
+    var el = $('lado'); if (!el || !estado || !D) return;
+    var v = ui.view, svgL = function(k){ return '<svg viewBox="0 0 24 24" aria-hidden="true">' + IC_LADO[k] + '</svg>'; };
+    var acab = estado.lista.filter(function(it){ var r = ritmo(it.compras); return r.dias != null && r.dias <= 3; }).length;
+    var link = function(k, extra){ return '<button type="button" class="side-link" data-lado="' + k + '"' + (v === k ? ' aria-current="page"' : '') + '>' + svgL(k) + '<span>' + TITULOS[k] + '</span>' + (extra || '') + '</button>'; };
+    var cats = D.categorias.filter(function(c){ return estado.categorias.indexOf(c.id) >= 0; });
+    var nOf = function(c){ return arr(c.ofertas).filter(function(o){ return acompanha(o.rede) && !escondida(o); }).length; };
+    var total = cats.reduce(function(t, c){ return t + nOf(c); }, 0);
+    var h = '<div class="side-brand">Econom<span>IA</span></div><nav class="side-nav" aria-label="Telas">'
+      + link('lista', acab ? '<span class="side-badge" title="' + acab + (acab > 1 ? ' itens acabando' : ' item acabando') + '">' + acab + '</span>' : estado.lista.length ? '<span class="sl-num">' + estado.lista.length + '</span>' : '')
+      + link('roteiro') + link('ofertas', total ? '<span class="sl-num">' + total + '</span>' : '') + link('mais') + '</nav>'
+      + '<button type="button" class="side-busca so-ia" data-lado="buscar"' + (BUSCANDO ? ' disabled' : '') + '>' + svgL('busca') + '<span>' + (BUSCANDO ? 'Buscando…' : 'Buscar ofertas') + '</span></button>'
+      + '<p class="side-sync so-ia">' + (exemplo ? 'Exemplo: toque em Buscar no Home Assistant' : 'Última busca ' + esc(quandoCurto(D.gerado_em))) + '</p>';
+    if (cats.length) h += '<div class="side-h"><span>Ofertas</span><small>' + total + '</small></div><div class="side-lista">' + cats.map(function(c){
+      var on = v === 'ofertas' && ui.aba === c.id;
+      return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
+    }).join('') + '</div>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.11.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+  }
+  $('lado').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.ladoCat){ ui.aba = b.dataset.ladoCat; salvarUI(); filtro = 'todas'; irPara('ofertas'); pintaOfertasTela(); window.scrollTo(0, 0); return; }
+    if (b.dataset.lado === 'buscar'){ $('buscar').click(); return; }
+    if (b.dataset.lado){ irPara(b.dataset.lado); window.scrollTo(0, 0); }
+  });
+
   // ----- busca na hora -----
   var buscaT = null, buscaItem = null;
   function buscarItem(nome){
     if (MODO !== 'addon'){ toast('No Home Assistant, este botão procura o preço só deste item.'); return; }
-    if (!estado.cep){ irPara('mais'); window.scrollTo(0, 0); toast('Salve o CEP antes de buscar.'); return; }
+    if (!estado.cep){ irParaAba('casa'); toast('Salve o CEP antes de buscar.'); return; }
     buscaItem = nome; pintaLista(); botaoBusca(true, 'Começando');
     fetch('api/buscar-itens', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({itens:[nome]})})
       .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
@@ -2532,6 +3021,7 @@ h3{font-size:13px;font-weight:600}
     b.disabled = rodando; b.classList.toggle('girando', rodando);
     b.querySelector('.ic-busca').hidden = rodando; b.querySelector('.ic-gira').hidden = !rodando;
     $('buscarTxt').textContent = txt;
+    if (BUSCANDO !== rodando){ BUSCANDO = rodando; pintaLado(); }
   }
   function mostraBusca(st, inicial){
     var m = $('buscaMsg');
@@ -2565,7 +3055,7 @@ h3{font-size:13px;font-weight:600}
   }
   $('buscar').addEventListener('click', function(){
     if (MODO !== 'addon'){ toast('No Home Assistant, este botão busca as ofertas do seu CEP na hora.'); return; }
-    if (!estado.cep){ irPara('mais'); window.scrollTo(0, 0); toast('Salve o CEP antes de buscar.'); return; }
+    if (!estado.cep){ irParaAba('casa'); toast('Salve o CEP antes de buscar.'); return; }
     botaoBusca(true, 'Começando');
     fetch('api/buscar', {method:'POST'})
       .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
@@ -2574,9 +3064,9 @@ h3{font-size:13px;font-weight:600}
   });
 
   function iniciar(){
-    $('hello').innerHTML = '<span class="brand">Econom<span>IA</span></span>' + (usuario ? ' · Olá, ' + esc(usuario) : '');
+    $('hello').innerHTML = '<span class="brand">Econom<span>IA</span></span>' + (usuario ? '<span class="eb-sep"> · </span>Olá, ' + esc(usuario) : '');
     pintaSync(); tudo(); irPara(ui.view);
-    carregaListas(); carregaIAs(); carregaUso();
+    carregaListas(); carregaIAs(); carregaUso(); carregaVoz();
     if (MODO === 'addon'){
       testaIA('fotos');
       acompanhaBusca(true);

@@ -36,13 +36,20 @@ O botão **Buscar** chama `ai_task.generate_data` pela API do Home Assistant (`h
 | GET | `/api/ler-lista?id=...` | `{status: "lendo|pronto|erro", itens: [{produto, quantidade, ja_na_lista}], erro}`. |
 | GET | `/api/ias` | `{tarefas: [{id, nome, anexos}], agentes: [{id, nome}]}`: entidades `ai_task.*` e `conversation.*`. |
 | POST | `/api/testar-ia` | `{uso: "busca"|"fotos"}` → `{ok, msg}`. A busca faz uma pergunta curta que exige busca na web. |
+| GET | `/api/voz/status` | `{pronta, motor, idioma, nome}` ou `{pronta: false, motivo}`: a fala para texto do assistente de voz preferido. |
+| POST | `/api/voz` | Corpo: áudio PCM cru, 16 kHz, 16 bits, mono (até 2 min). Manda para `POST /api/stt/<motor>` do HA com o cabeçalho `X-Speech-Content` e devolve `{texto}`. O painel lê o texto em `/api/ler-lista` com `origem: "fala"`. |
+| GET | `/api/versoes` | `{versoes: [{nome, quando, motivo, itens, cep}]}`: as 3 cópias mais recentes do `config.json`, em `/data/versoes`. |
+| POST | `/api/versoes/guardar` | `{motivo: "importar"|"limpar"}`: guarda uma cópia agora. |
+| POST | `/api/versoes/restaurar` | `{nome}`: guarda uma cópia do atual e volta para essa versão. Devolve `{config}`. |
+| GET | `/api/exportar/ofertas.json` | O `ofertas.json` da última busca. |
 | GET | `/api/uso-ia` | `{hoje, semana, mes: {chamadas, erros, cota, tokens, imagens, segundos, tipos, ias}, dias: [{dia, chamadas, erros, cota}], ultimas: [...]}`. Também vai em `/api/estado` como `uso_ia`. |
 | GET | `/api/saude` | Verificação simples. |
 
 ### Uso da IA
 
 As ações `ai_task.generate_data` e `conversation.process` não devolvem tokens nem custo. O add-on conta cada chamada em `uso_ia.json` (por dia, até 120 dias): tipo (`busca`, `itens`, `encarte`, `fotos`, `cupons`, `teste`), entidade, resultado (`ok`, `cota`, `formato`, `erro`), segundos, imagens e tokens estimados (caracteres do pedido e da resposta ÷ 4).
-A cada chamada, e na virada do dia, publica `sensor.economia_ia_hoje` pela API de estados do HA: o estado é o número de chamadas de hoje (`state_class: total_increasing`) e os atributos trazem `erros`, `cota_excedida`, `tokens_texto_estimados`, `imagens`, `por_tipo`, `ultimos_7_dias`, `este_mes` e `ultima_chamada`. O sensor some se o HA reiniciar e volta no minuto seguinte.
+Com `config.sensores` ligado (vem desligado), a cada chamada e na virada do dia publica `sensor.economia_ia_hoje` pela API de estados do HA: o estado é o número de chamadas de hoje (`state_class: total_increasing`) e os atributos trazem `erros`, `cota_excedida`, `tokens_texto_estimados`, `imagens`, `por_tipo`, `ultimos_7_dias`, `este_mes` e `ultima_chamada`. O sensor some se o HA reiniciar e volta no minuto seguinte. Desligado, o add-on apaga o sensor (`DELETE /api/states/...`) ao iniciar e quando a opção muda.
+Com `config.usar_ia` em `false`, nenhuma chamada de IA sai: `/api/buscar`, `/api/ler-lista` e `/api/voz` respondem 400.
 
 ### Leitura de fotos
 
@@ -71,6 +78,9 @@ O servidor só aceita conexões do ingress (`172.30.32.2`). Para testar fora do 
   "cotidiano": {"mercado": ["sab"], "farmacia": ["qua"], "avisar": "vespera", "estoque": "pouco|normal|bastante"},
   "roteiro": {"paradas": 2, "escopo": "tudo|acabando", "online": true},
   "ia": {"busca": "conversation.google_generative_ai", "fotos": "ai_task.google_ai_task"},
+  "usar_ia": true,
+  "sensores": false,
+  "opcoes": {"itens_sem_preco": true, "encartes_auto": true},
   "clubes": ["merc-condor"],
   "cupons_meus": [{"id": "meu-1", "rede": "farm-panvel", "beneficio": "20% em protetor solar", "codigo": null, "valido_ate": "2026-10-24"}],
   "ocultas": ["giassi-cerveja-12"]

@@ -1,5 +1,18 @@
 # Mudanças
 
+## 0.11.0
+
+- **Falar**, como no GerencIA, no ResolvIA, no CronologIA e no InventarIA: o microfone no alto da tela, à direita (e em Minha lista › Falar). Fale os itens; o Home Assistant transcreve com a fala para texto do assistente de voz (com o Home Assistant Cloud já vem pronta) e a IA separa os itens para você conferir e adicionar. Até 2 minutos por vez. O Uso da IA conta o Falar como um tipo próprio.
+- **No computador** (tela de 1000 pixels ou mais), como nos outros apps: barra lateral com as telas, o número de itens acabando, **Buscar ofertas** e as ofertas por tipo de loja; no alto à direita, **Falar**, **Ler com IA** e **Adicionar item**; seções direto na página, com título grande e ícone; o cupom de economia ao lado das oportunidades. No celular nada muda.
+- **Mais em abas**, presas no alto: Casa, Lojas, Integrações, Dados, Aparência e Opções. Cada seção ganhou um ícone no título.
+- **Usar IA**, em Mais › Integrações: desligado, somem o Buscar, a leitura de fotos e mensagens, os cupons por print e o Falar, para todos os aparelhos.
+- **Sensores no Home Assistant** agora é uma opção e vem **desligada**. Desligada, o app apaga o `sensor.economia_ia_hoje` que a 0.10.5 criou sem perguntar.
+- **Opções**: ligar ou desligar a busca extra dos itens sem preço e a leitura automática de encartes, para gastar menos da cota da IA.
+- **Versões anteriores**, em Mais › Dados: o app guarda uma cópia da lista, do perfil e dos ajustes a cada 10 minutos de uso e antes de importar, restaurar ou limpar a lista, e fica com as 3 mais recentes, cada uma com **Restaurar**.
+- **Exportar** em linhas, com o arquivo de cada uma e o botão Baixar, e as **ofertas da última busca** em JSON.
+- **Aparência** como nos outros apps: o tema em três botões com ícone e a cor do app em etiquetas com nome.
+- Corrige a leitura dos cupons por print, que caía na leitura de itens da lista.
+
 ## 0.10.5
 
 - **Uso da IA** em Mais: chamadas de hoje, dos últimos 7 dias e do mês, gráfico por dia, tipo de uso (busca, itens sem preço, encartes, fotos, cupons, testes), erros e cota excedida, e as últimas chamadas com tempo e tokens estimados.

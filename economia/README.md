@@ -11,6 +11,8 @@ Sua lista de compras comparada nas farmácias, mercados e pet shops perto de cas
 - iFood, Rappi, Mercado Livre e Amazon, com frete e assinaturas
 - Preço de clube e cupons do app por print
 - Itens da lista por foto, print ou mensagem do WhatsApp
+- Falar: diga os itens e a IA separa cada um
+- Versão para computador, com barra lateral
 - Lista por voz com a lista de compras do Home Assistant
 - Uso da IA: chamadas por dia e sensor no Home Assistant
 - Tema claro e escuro, com 10 cores

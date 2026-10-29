@@ -15,7 +15,11 @@ Rotas:
 - PUT  /api/ofertas  grava um ofertas.json pronto
 - POST /api/buscar   começa a busca agora
 - POST /api/buscar-itens   {"itens": [...]} busca só esses itens e junta ao resultado
-- GET  /api/uso-ia   chamadas de IA por dia, tipo e resultado (também em sensor.economia_ia_hoje)
+- GET  /api/uso-ia   chamadas de IA por dia, tipo e resultado (e sensor.economia_ia_hoje, se ligado)
+- GET  /api/voz/status   se o Falar está pronto e com qual fala para texto
+- POST /api/voz   áudio PCM 16 kHz, 16 bits, mono → {"texto"} pela fala para texto do Home Assistant
+- GET  /api/versoes   cópias anteriores do config.json (as 3 mais recentes)
+- POST /api/versoes/guardar {"motivo"} | /api/versoes/restaurar {"nome"}
 - GET  /api/busca    andamento da busca
 - GET  /api/exportar/lista.xlsx | lista.json   exporta a lista
 - GET  /api/todos    listas de tarefas do Home Assistant
@@ -42,7 +46,10 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from xml.sax.saxutils import escape as xml_esc
+import shutil
 import zipfile
+
+import voz
 
 DATA = os.environ.get("OFERTAS_DATA", "/data")
 WWW = os.path.join(os.path.dirname(os.path.abspath(__file__)), "www")
@@ -51,11 +58,16 @@ CONFIG = os.path.join(DATA, "config.json")
 OFERTAS = os.path.join(DATA, "ofertas.json")
 OPTIONS = os.path.join(DATA, "options.json")
 USO_FILE = os.path.join(DATA, "uso_ia.json")
+VERSOES = os.path.join(DATA, "versoes")
+MAX_VERSOES = 3
+INTERVALO_VERSAO = 600  # uma cópia a cada 10 minutos de uso, no máximo
 SYNC_FILE = os.path.join(DATA, "sync_ha.json")
 SYNC_INTERVALO = int(os.environ.get("OFERTAS_SYNC_SEG", "60"))
 ESPERA_COTA = int(os.environ.get("OFERTAS_ESPERA_COTA", "60"))
 AUTO_ENCARTES = int(os.environ.get("OFERTAS_AUTO_ENCARTES", "2"))  # sites lidos sozinhos por busca
 HA_API = os.environ.get("OFERTAS_HA_API", "http://supervisor/core/api")
+HA_WS = os.environ.get("OFERTAS_HA_WS", "ws://supervisor/core/websocket")
+VOZ_SIMULADA = os.environ.get("OFERTAS_VOZ_SIMULADA") == "1"  # só para testes fora do HA
 # O ingress do Supervisor chega sempre deste endereço.
 INGRESS_IPS = {"172.30.32.2", "127.0.0.1", "::1"}
 ALLOW_ALL = os.environ.get("OFERTAS_ALLOW_ALL") == "1"  # só para testes fora do HA
@@ -275,6 +287,71 @@ def gravar_config(cfg):
 
 def nome_item(i):
     return (i.get("produto") if isinstance(i, dict) else str(i or "")).strip()
+
+
+IA_DESLIGADA = "A IA está desligada. Para usar, ligue em Mais › Integrações › Usar IA."
+OPCOES_PADRAO = {"itens_sem_preco": True, "encartes_auto": True}
+
+
+def ia_ligada(cfg=None):
+    return (cfg if cfg is not None else ler_config()).get("usar_ia") is not False
+
+
+def opcao(nome, cfg=None):
+    v = ((cfg if cfg is not None else ler_config()).get("opcoes") or {}).get(nome)
+    return OPCOES_PADRAO.get(nome, True) if v is None else v is True
+
+
+def sensores_ligados(cfg=None):
+    return (cfg if cfg is not None else ler_config()).get("sensores") is True
+
+
+# ---------- versões anteriores do config.json ----------
+_versao = {"ultima": 0.0}
+MOTIVOS_VERSAO = {"auto": "automática", "importar": "antes de importar", "restaurar": "antes de restaurar", "limpar": "antes de limpar a lista"}
+
+
+def guardar_versao(motivo="auto", forcar=False):
+    if not os.path.exists(CONFIG) or (not forcar and time.time() - _versao["ultima"] < INTERVALO_VERSAO):
+        return None
+    motivo = motivo if motivo in MOTIVOS_VERSAO else "auto"
+    os.makedirs(VERSOES, exist_ok=True)
+    nome = f"config-{datetime.now().strftime('%Y%m%d-%H%M%S')}-{motivo}.json"
+    shutil.copy2(CONFIG, os.path.join(VERSOES, nome))
+    _versao["ultima"] = time.time()
+    for velho in sorted(f for f in os.listdir(VERSOES) if f.endswith(".json"))[:-MAX_VERSOES]:
+        try:
+            os.remove(os.path.join(VERSOES, velho))
+        except OSError:
+            pass
+    return nome
+
+
+def listar_versoes():
+    if not os.path.isdir(VERSOES):
+        return []
+    out = []
+    for nome in sorted((f for f in os.listdir(VERSOES) if re.match(r"^config-\d{8}-\d{6}-[a-z]+\.json$", f)), reverse=True):
+        d = ler_json(os.path.join(VERSOES, nome), {}) or {}
+        m = re.match(r"^config-(\d{8})-(\d{6})-([a-z]+)\.json$", nome)
+        quando = datetime.strptime(m.group(1) + m.group(2), "%Y%m%d%H%M%S").isoformat()
+        out.append({"nome": nome, "quando": quando, "motivo": MOTIVOS_VERSAO.get(m.group(3), m.group(3)),
+                    "itens": len([i for i in (d.get("lista") or []) if nome_item(i)]), "cep": d.get("cep")})
+    return out
+
+
+def restaurar_versao(nome):
+    if not re.match(r"^config-\d{8}-\d{6}-[a-z]+\.json$", str(nome or "")):
+        raise ErroBusca("Versão não encontrada.")
+    d = ler_json(os.path.join(VERSOES, nome))
+    if not isinstance(d, dict):
+        raise ErroBusca("Versão não encontrada.")
+    with _cfg_trava:
+        guardar_versao("restaurar", forcar=True)
+        d["rev"] = int(ler_config().get("rev") or 0)
+        novo = gravar_config(d)
+    log(f"versão restaurada: {nome}")
+    return novo
 
 
 def aplicar_diario(cfg, d):
@@ -522,6 +599,8 @@ def tipo_uso(nome):
         return "cupons"
     if n == "ler lista":
         return "fotos"
+    if n == "falar":
+        return "fala"
     return "busca"
 
 
@@ -574,11 +653,26 @@ def uso_resumo():
             "ultimas": (u.get("ultimas") or [])[:12], "desde": min(dias) if dias else None, "sensor": SENSOR_USO}
 
 
-_sensor_dia = {"dia": None}
+_sensor_dia = {"dia": None, "ligado": None}
+
+
+def remove_sensor_uso():
+    """Sensores no Home Assistant desligado: o sensor que o app criou some do Home Assistant."""
+    try:
+        ha_api("DELETE", "/states/" + SENSOR_USO)
+    except Exception:  # noqa: BLE001  (já não existia, ou o HA está fora: some no próximo reinício)
+        pass
 
 
 def publica_sensor_uso():
-    """Sensor no HA com as chamadas de hoje, para gráfico e automação."""
+    """Sensor no HA com as chamadas de hoje, para gráfico e automação (só com a opção ligada)."""
+    ligado, antes = sensores_ligados(), _sensor_dia["ligado"]
+    _sensor_dia["ligado"] = ligado
+    if not ligado:
+        if antes is not False:
+            remove_sensor_uso()
+        _sensor_dia["dia"] = hoje_br()
+        return
     try:
         r = uso_resumo()
         h = r["hoje"]
@@ -596,6 +690,8 @@ def publica_sensor_uso():
 
 
 def chamar_ai_task(nome, instrucoes, anexos=None, uso="busca"):
+    if not ia_ligada():
+        raise ErroBusca(IA_DESLIGADA)
     inicio, resultado, saida = time.time(), "erro", 0
     try:
         r = _chamar_ai_task(nome, instrucoes, anexos, uso)
@@ -1424,7 +1520,7 @@ def buscar():
                 if (url_ok(l.get("site")) and rid not in ofertou and rid not in com_preco and rid not in ignorar
                         and (d is None or d <= raio) and norm(nomes.get(rid, "")) not in manuais):
                     auto.append((c, l, nomes.get(rid, rid)))
-        for c, l, nome in auto[:AUTO_ENCARTES]:
+        for c, l, nome in auto[:AUTO_ENCARTES if opcao("encartes_auto", cfg) else 0]:
             BUSCA.update({"etapa": "encarte de " + nome})
             try:
                 cat_e, parcial_e = ler_encarte({"nome": nome, "site": l["site"], "categoria": c["id"]}, cfg)
@@ -1444,7 +1540,7 @@ def buscar():
             raise ErroBusca(falhas[0] if falhas else "A busca não trouxe resultados.")
         # itens que ninguém achou: uma pergunta só sobre eles
         faltam = [n for n in nomes_da_lista(cfg) if n not in lista]
-        if faltam:
+        if faltam and opcao("itens_sem_preco", cfg):
             BUSCA.update({"etapa": f"{len(faltam)} item(ns) sem preço"})
             try:
                 juntar_focada(novas, parciais, busca_focada(cfg, faltam, cats))
@@ -1515,14 +1611,17 @@ def buscar_itens(itens):
 
 
 # ---------- ler a lista de fotos ou texto ----------
-def instrucoes_leitura(texto_msg, n_fotos, cfg):
+def instrucoes_leitura(texto_msg, n_fotos, cfg, origem="mensagem"):
     atuais = [nome_item(i) for i in (cfg.get("lista") or []) if nome_item(i)]
     partes = []
     if n_fotos:
         partes.append(f"{n_fotos} imagem(ns) em anexo")
     if texto_msg:
         partes.append("o texto abaixo")
-    return f"""Alguém mandou, provavelmente pelo WhatsApp, coisas para comprar. Você recebe {' e '.join(partes)}.
+    abertura = ("A pessoa falou o que precisa comprar, e a fala para texto do Home Assistant transcreveu. Você recebe a transcrição abaixo; "
+                "números podem vir por extenso e pode haver erros de transcrição: corrija pelo sentido."
+                if origem == "fala" else f"Alguém mandou, provavelmente pelo WhatsApp, coisas para comprar. Você recebe {' e '.join(partes)}.")
+    return f"""{abertura}
 Pode ser print de conversa, lista escrita à mão, foto de produto ou de embalagem vazia, encarte ou receita.
 
 Extraia só os itens a comprar, em português do Brasil, um por item, do jeito que se escreve numa lista de compras: o nome do produto e, se aparecer, a marca, o tamanho ou a dosagem (por exemplo "Lysoform", "Leite integral 1 L", "Dipirona 500 mg"). A quantidade (por exemplo "2" ou "3 pacotes") vai em "quantidade", não no nome. Junte itens repetidos. Ignore conversa que não seja item de compra, preços, horários e nomes de pessoas.
@@ -1568,7 +1667,7 @@ def ler_cupons(bruto):
     return cupons[:30]
 
 
-def ler_lista(job, fotos, texto_msg, tipo="lista"):
+def ler_lista(job, fotos, texto_msg, tipo="lista", origem="mensagem"):
     pasta = os.path.join(MEDIA, "economia")
     arquivos, anexos = [], []
     try:
@@ -1577,13 +1676,13 @@ def ler_lista(job, fotos, texto_msg, tipo="lista"):
                 os.makedirs(pasta, exist_ok=True)
             except OSError as e:
                 raise ErroBusca("O add-on não consegue usar a pasta de mídia do Home Assistant. Reinstale a versão mais nova.") from e
-            for n, (dado, tipo) in enumerate(fotos):
-                ext = "png" if tipo == "image/png" else "webp" if tipo == "image/webp" else "jpg"
+            for n, (dado, mime) in enumerate(fotos):
+                ext = "png" if mime == "image/png" else "webp" if mime == "image/webp" else "jpg"
                 nome = f"lista-{job}-{n}.{ext}"
                 with open(os.path.join(pasta, nome), "wb") as f:
                     f.write(dado)
                 arquivos.append(os.path.join(pasta, nome))
-                anexos.append({"media_content_id": f"{MEDIA_URI}/economia/{nome}", "media_content_type": tipo})
+                anexos.append({"media_content_id": f"{MEDIA_URI}/economia/{nome}", "media_content_type": mime})
         cfg = ler_config()
         if tipo == "cupons":
             of = ler_json(OFERTAS, {}) or {}
@@ -1593,7 +1692,8 @@ def ler_lista(job, fotos, texto_msg, tipo="lista"):
             LEITURAS[job].update({"status": "pronto", "cupons": cupons})
             log(f"leitura {job}: {len(cupons)} cupom(ns)")
             return
-        bruto = chamar_ai_task("EconomIA: ler lista", instrucoes_leitura(texto_msg, len(anexos), cfg), anexos, uso="fotos")
+        bruto = chamar_ai_task("EconomIA: falar" if origem == "fala" else "EconomIA: ler lista",
+                               instrucoes_leitura(texto_msg, len(anexos), cfg, origem), anexos, uso="fotos")
         atuais = {norm(nome_item(i)): nome_item(i) for i in (cfg.get("lista") or []) if nome_item(i)}
         itens, vistos = [], set()
         for it in (bruto.get("itens") if isinstance(bruto, dict) else None) or []:
@@ -1644,8 +1744,36 @@ def comeca_leitura(dado):
     for antigo in sorted(LEITURAS)[:-20]:
         LEITURAS.pop(antigo, None)
     LEITURAS[job] = {"status": "lendo", "itens": [], "erro": None}
-    threading.Thread(target=ler_lista, args=(job, fotos, texto_msg, tipo), daemon=True).start()
+    origem = "fala" if dado.get("origem") == "fala" and not fotos else "mensagem"
+    threading.Thread(target=ler_lista, args=(job, fotos, texto_msg, tipo, origem), daemon=True).start()
     return job
+
+
+# ---------- Falar: o áudio vai para a fala para texto do Home Assistant ----------
+VOZ = voz.Voz(HA_API, HA_WS, None, lambda *a: log(" ".join(str(x) for x in a)), simulada=VOZ_SIMULADA)
+
+
+def voz_status():
+    if not ia_ligada():
+        return {"pronta": False, "motivo": "A IA está desligada em Mais › Integrações."}
+    VOZ.token = token_ha()
+    if not VOZ.token and not VOZ_SIMULADA:
+        return {"pronta": False, "motivo": "Fora do Home Assistant não dá para falar."}
+    return VOZ.status()
+
+
+def voz_texto(pcm):
+    if not ia_ligada():
+        raise ErroBusca(IA_DESLIGADA)
+    VOZ.token = token_ha()
+    inicio = time.time()
+    try:
+        r = VOZ.texto(pcm)
+    except voz.ErroVoz as e:
+        log(f"Falar: {e}")
+        raise ErroBusca(str(e)) from e
+    log(f"Falar: {len(pcm) / 32000:.1f} s de áudio, texto em {time.time() - inicio:.1f} s ({r.get('nome') or 'fala para texto'})")
+    return r
 
 
 # ---------- exportar a lista ----------
@@ -1766,7 +1894,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.10.5"
+    server_version = "EconomIA/0.11.0"
 
     def log_message(self, fmt, *args):
         pass
@@ -1844,6 +1972,19 @@ class Painel(BaseHTTPRequestHandler):
             self._json(200, BUSCA)
         elif rota == "/api/uso-ia":
             self._json(200, uso_resumo())
+        elif rota == "/api/voz/status":
+            self._json(200, voz_status())
+        elif rota == "/api/versoes":
+            self._json(200, {"versoes": listar_versoes()})
+        elif rota == "/api/exportar/ofertas.json":
+            corpo = json.dumps(ler_json(OFERTAS, {}) or {}, ensure_ascii=False, indent=2).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Disposition", f'attachment; filename="economia-ofertas-{hoje_br()}.json"')
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Length", str(len(corpo)))
+            self.end_headers()
+            self.wfile.write(corpo)
         elif rota == "/api/ias":
             try:
                 self._json(200, ias_disponiveis())
@@ -1887,7 +2028,14 @@ class Painel(BaseHTTPRequestHandler):
                             aplicar_diario(cfg, d)
                             mesclado = True
                 cfg["rev"] = cur
+                try:
+                    guardar_versao("auto")
+                except OSError as e:
+                    log(f"versão anterior: {e}")
+                ligados = sensores_ligados(atual), ia_ligada(atual)
                 novo = gravar_config(cfg)
+            if (sensores_ligados(novo), ia_ligada(novo)) != ligados:
+                threading.Thread(target=publica_sensor_uso, daemon=True).start()
             self._json(200, {"ok": True, "config": novo, "mesclado": mesclado})
         elif rota == "/api/ofertas":
             dado = self._corpo()
@@ -1909,6 +2057,26 @@ class Painel(BaseHTTPRequestHandler):
             except ErroBusca as e:
                 SYNC["erro"] = str(e)
             return self._json(200, {"sync": SYNC, "rev": int(ler_config().get("rev") or 0)})
+        if urllib.parse.urlsplit(self.path).path == "/api/voz":
+            tamanho = int(self.headers.get("Content-Length") or 0)
+            if tamanho <= 0 or tamanho > voz.MAX_BYTES + 4096:
+                return self._json(413, {"erro": "Fale até 2 minutos de cada vez."})
+            try:
+                return self._json(200, voz_texto(self.rfile.read(tamanho)))
+            except ErroBusca as e:
+                return self._json(400, {"erro": str(e)})
+        if urllib.parse.urlsplit(self.path).path == "/api/versoes/guardar":
+            dado = self._corpo() or {}
+            try:
+                return self._json(200, {"nome": guardar_versao(str(dado.get("motivo") or "auto"), forcar=True)})
+            except OSError as e:
+                return self._json(500, {"erro": f"Não consegui guardar a cópia ({e})."})
+        if urllib.parse.urlsplit(self.path).path == "/api/versoes/restaurar":
+            dado = self._corpo() or {}
+            try:
+                return self._json(200, {"ok": True, "config": restaurar_versao(dado.get("nome"))})
+            except ErroBusca as e:
+                return self._json(400, {"erro": str(e)})
         if urllib.parse.urlsplit(self.path).path == "/api/testar-ia":
             dado = self._corpo() or {}
             try:
@@ -1919,6 +2087,8 @@ class Painel(BaseHTTPRequestHandler):
             dado = self._corpo(MAX_FOTOS_BODY)
             if dado is None:
                 return
+            if not ia_ligada():
+                return self._json(400, {"erro": IA_DESLIGADA})
             job = comeca_leitura(dado)
             if not job:
                 return self._json(400, {"erro": "Escolha uma foto ou cole o texto da mensagem."})
@@ -1938,6 +2108,8 @@ class Painel(BaseHTTPRequestHandler):
             if BUSCA["rodando"]:
                 return self._json(202, {"ok": True, "ja_rodando": True})
             cfg = ler_json(CONFIG, {}) or {}
+            if not ia_ligada(cfg):
+                return self._json(400, {"erro": IA_DESLIGADA})
             if not cfg.get("cep"):
                 return self._json(400, {"erro": "Salve o CEP em Mais antes de buscar."})
             BUSCA["rodando"] = True
