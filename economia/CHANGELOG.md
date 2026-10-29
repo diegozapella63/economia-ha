@@ -1,5 +1,15 @@
 # Mudanças
 
+## 0.11.5
+
+- A arrumação em colunas vale para o app todo:
+  - **Ofertas**: Farmácias, Mercados, Pet shops e Online dividem a largura em partes iguais, e o filtro de lojas fica em colunas.
+  - Os quadros do alto das Ofertas ficam lado a lado no celular; quadro sem nada (sem cupom, sem destaque) some, e **Escondidas pelo perfil** virou uma faixa fina.
+  - **Outros preços** do cartão preenchem a linha toda, sem cortar o preço.
+  - **Roteiro**: Paradas e O que comprar ocupam a largura toda.
+  - **Onde**: CEP, distância e Salvar numa linha; o que acompanhar em duas colunas.
+  - **Uso da IA**: os tipos de chamada em colunas.
+
 ## 0.11.4
 
 - Saem os textos antigos de "depois do login" nos cupons: os cupons do app da loja entram pelo print (Mais › Lojas › Cupons do app) e o preço de clube pelo **Sou do clube**.

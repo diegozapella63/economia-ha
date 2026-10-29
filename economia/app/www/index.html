@@ -151,13 +151,14 @@ h2.big{font-family:var(--font-display);font-stretch:75%;font-weight:800;font-siz
 
 /* categorias */
 .catbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
-.cats{display:inline-flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:4px;max-width:100%}
-.cats button{border:0;background:transparent;color:var(--muted);border-radius:10px;padding:7px 16px;font-weight:600;font-size:14px}
+.cats{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:4px;width:100%;max-width:560px}
+.cats button{border:0;background:transparent;color:var(--muted);border-radius:10px;padding:8px 4px;font-weight:600;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cats button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
 .cat-note{font-size:13px;color:var(--muted)}
 
 /* resumo */
-.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.summary{display:flex;flex-wrap:wrap;gap:12px}
+.summary > .fact{flex:1 1 10.5em}
 .fact{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .fact .k{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .fact .v{font-family:var(--font-display);font-stretch:75%;font-weight:750;font-size:1.55rem;line-height:1.15;overflow-wrap:anywhere}
@@ -193,7 +194,7 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .hint{font-size:12.5px;color:var(--muted)}
 .hint.ok{color:var(--accent)}
 .hint.err{color:var(--deal)}
-.checks{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:14px}
+.checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,8.5em),1fr));gap:6px 16px;font-size:14px}
 .checks label{display:inline-flex;align-items:center;gap:7px;cursor:pointer}
 .checks input,.track input{accent-color:var(--accent);width:17px;height:17px;margin:0;flex:none;cursor:pointer}
 .group{display:flex;flex-direction:column;gap:8px}
@@ -231,8 +232,8 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .lock{font-size:13px;color:var(--muted);font-weight:600}
 
 /* ofertas */
-.filters{display:flex;flex-wrap:wrap;gap:6px}
-.filters button{background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600}
+.filters{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,8em),1fr));gap:6px}
+.filters button{display:flex;align-items:center;justify-content:center;min-height:38px;min-width:0;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:5px 8px;font-size:13px;font-weight:600;line-height:1.2;text-align:center}
 .filters button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 .deals{display:flex;flex-direction:column}
 .deal{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 14px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
@@ -282,8 +283,8 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .uso-dias{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;font-size:12px;color:var(--muted);text-align:center;padding-top:4px}
 .uso-cap{font-size:13px;color:var(--muted);padding:6px 0 10px;min-height:1.5em}
 .uso-cap b{color:var(--ink);font-weight:600}
-.uso-tipos{display:flex;flex-wrap:wrap;gap:5px;padding-bottom:10px}
-.uso-tipos li{font-size:12.5px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;color:var(--muted)}
+.uso-tipos{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,10em),1fr));gap:6px;padding-bottom:10px}
+.uso-tipos li{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;color:var(--muted)}
 .uso-tipos b{color:var(--ink);font-weight:600}
 .uso-ult{padding:4px 0 8px}
 .uso-ult summary{font-size:14px;font-weight:600;color:var(--accent);cursor:pointer;padding:6px 0}
@@ -376,13 +377,16 @@ a.i-link:active{filter:brightness(.96)}
 .i-abrir{margin-left:auto;align-self:center;display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:600;color:var(--accent);white-space:nowrap}
 .i-abrir svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .i-others li{padding:0}
-.i-others a.i-chip{display:block;padding:2px 8px;color:inherit;text-decoration:none}
+.i-others a.i-chip{display:flex;align-items:baseline;justify-content:center;gap:5px;padding:6px 9px;color:inherit;text-decoration:none;min-width:0}
+.i-chip .ic-n{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.i-chip b,.i-chip small{flex:none;white-space:nowrap}
+.i-chip small{font-size:11.5px}
 a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .tam-list li{padding:0}
 .tam-list a.tam-a{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;width:100%;padding:5px 8px;color:inherit;text-decoration:none}
 .i-best .i-busca{margin-left:auto;align-self:center;min-height:34px;padding:0 12px;font-size:14px}
-.i-others{display:flex;flex-wrap:wrap;gap:5px}
-.i-others li{font-size:12.5px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;color:var(--muted);white-space:nowrap}
+.i-others{display:flex;flex-wrap:wrap;gap:6px}
+.i-others li{flex:1 1 auto;font-size:12.5px;padding:0;border:1px solid var(--line);border-radius:8px;color:var(--muted);min-width:0;max-width:100%;overflow:hidden;white-space:nowrap;text-align:center}
 .i-others b{color:var(--ink);font-weight:600}
 .i-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
 .i-foot{font-size:12px;color:var(--muted);margin-left:auto}
@@ -418,6 +422,9 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .btn.perigo{background:var(--deal);color:var(--surface)}
 .link{background:none;border:0;padding:0;color:var(--accent);font:inherit;font-weight:600;text-decoration:underline;cursor:pointer}
 .rot-ctrl{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end}
+.rot-ctrl > .group{flex:1 1 240px}
+.rot-ctrl .seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);width:100%}
+.rot-ctrl .seg button{padding:9px 4px}
 .set-line{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer}
 #rotRes{display:flex;flex-direction:column;gap:12px}
 .rot-total{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;background:var(--accent-soft);border-radius:10px;padding:10px 12px}
@@ -498,7 +505,12 @@ h3{font-size:13px;font-weight:600}
 .por,.r-val,.opp-val strong{font-family:var(--font-display);font-size:19px;font-weight:600}
 .por .un{font-size:13px}
 .i-best .por{font-size:28px;font-weight:700}
-.rot-total .por,.fact .v{font-size:40px;font-weight:700;line-height:1}
+.rot-total .por{font-size:40px;font-weight:700;line-height:1}
+.fact .v{font-size:clamp(26px,8vw,40px);font-weight:700;line-height:1}
+/* Escondidas pelo perfil: uma faixa fina embaixo dos quadros, e não mais um quadro */
+#factHid{flex-basis:100%;flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px 12px;padding-block:8px}
+#factHid .k{flex:0 1 auto}
+#factHid .v{font-size:22px}
 .t-ben{font-family:var(--font-display);font-size:25px;font-weight:600;line-height:1.1}
 .ticket.login .t-ben,.ticket.testar .t-ben{font-size:21px}
 .off{font-family:var(--font-display);font-size:17px;font-weight:700}
@@ -517,9 +529,8 @@ h3{font-size:13px;font-weight:600}
   .cols,.cols.even{grid-template-columns:minmax(0,1fr)}
 }
 @media (max-width:640px){
-  .summary{grid-template-columns:minmax(0,1fr)}
-  .fact{flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:2px 10px}
-  .fact .k{flex:1 0 100%}
+  .summary{gap:8px}
+  .fact{padding:10px 12px}
   .panel{padding:15px}
 }
 
@@ -893,10 +904,10 @@ h3{font-size:13px;font-weight:600}
       <p class="cat-note" id="catNote"></p>
       <div class="sem-precos" id="semPrecos" hidden></div>
     </div>
-    <div class="summary" aria-label="Resumo">
-      <div class="fact"><span class="k">Melhor cupom agora</span><span class="v num" id="sumCupom">—</span><span class="s" id="sumCupomS"></span></div>
-      <div class="fact"><span class="k">Destaque para você</span><span class="v num" id="sumTop">—</span><span class="s" id="sumTopS"></span></div>
-      <div class="fact"><span class="k">Escondidas pelo perfil</span><span class="v num" id="sumHid">0</span><button type="button" class="linkbtn" id="toggleHid">Ver quais são</button></div>
+    <div class="summary" id="resumo" aria-label="Resumo">
+      <div class="fact" id="factCupom"><span class="k">Melhor cupom agora</span><span class="v num" id="sumCupom">—</span><span class="s" id="sumCupomS"></span></div>
+      <div class="fact" id="factTop"><span class="k">Destaque para você</span><span class="v num" id="sumTop">—</span><span class="s" id="sumTopS"></span></div>
+      <div class="fact" id="factHid"><span class="k">Escondidas pelo perfil</span><span class="v num" id="sumHid">0</span><button type="button" class="linkbtn" id="toggleHid">Ver quais são</button></div>
     </div>
     <div class="cols">
       <section class="panel" aria-labelledby="h-ofertas">
@@ -995,7 +1006,7 @@ h3{font-size:13px;font-weight:600}
           <div class="sec-head"><h2 id="h-onde"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span>Onde</h2></div>
           <form class="group" id="ondeForm" novalidate>
             <div class="row-form">
-              <input class="field mono" type="text" id="cep" name="cep" inputmode="numeric" autocomplete="postal-code" placeholder="CEP 00000-000" maxlength="9" aria-label="CEP de casa">
+              <input class="field mono" type="text" id="cep" name="cep" style="flex:1 1 7.5em;min-width:0" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" maxlength="9" aria-label="CEP de casa">
               <select class="field" id="raio" name="raio" aria-label="Distância" style="flex:0 0 auto">
                 <option value="1">até 1 km</option>
                 <option value="2">até 2 km</option>
@@ -1217,7 +1228,7 @@ h3{font-size:13px;font-weight:600}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.11.4</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.11.5</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
   </section>
 
   <footer>Preço do site pode ser diferente do preço na loja. Confira validade e regras do cupom no carrinho.</footer>
@@ -1504,6 +1515,9 @@ h3{font-size:13px;font-weight:600}
     $('sumHid').textContent = String(esc_);
     $('toggleHid').hidden = esc_ === 0;
     $('toggleHid').textContent = ui.verOcultas ? 'Esconder de novo' : 'Ver quais são';
+    // quadro vazio não ocupa espaço: sem cupom, sem destaque ou sem nada escondido, ele some
+    $('factCupom').hidden = !cup; $('factTop').hidden = !top; $('factHid').hidden = esc_ === 0;
+    $('resumo').hidden = !cup && !top && esc_ === 0;
   }
   $('toggleHid').addEventListener('click', function(){ ui.verOcultas = !ui.verOcultas; salvarUI(); pintaResumo(); pintaDeals(); });
 
@@ -1841,7 +1855,7 @@ h3{font-size:13px;font-weight:600}
             + '<p class="i-avulso num">Avulso, o mais barato: <b>' + brl.format(best.v) + '</b> (' + abreLink(linkCompra(best.id, best.obs || x.it.produto, best.link), 'i-txtlink', esc(G[best.id].nome)) + ')</p>'
           : abreLink(linkCompra(best.id, best.obs || x.it.produto, best.link), 'i-best i-link', '<span class="lbl">Mais barato</span><span class="por num">' + brl.format(best.v) + '</span><span class="i-store">' + esc(G[best.id].nome) + ' <span class="chip">' + esc(G[best.id].singular) + '</span>' + (best.clube ? ' <span class="chip selo">Clube</span>' : '') + '</span>' + setaLink(linkCompra(best.id, '', best.link)))
             + (best.obs && !best.online ? '<p class="i-avulso">Produto: ' + esc(best.obs) + '</p>' : ''))
-        + (p.length > 1 ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li>' + abreLink(linkCompra(y.id, y.obs || x.it.produto, y.link), 'i-chip', esc(G[y.id].curto) + ' <b>' + brl.format(y.v) + '</b>' + (y.online && y.frete ? ' com frete' : '') + (y.clube ? ' clube' : '')) + '</li>'; }).join('') + '</ul>' : '')
+        + (p.length > 1 ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li>' + abreLink(linkCompra(y.id, y.obs || x.it.produto, y.link), 'i-chip', '<span class="ic-n">' + esc(G[y.id].curto) + '</span><b>' + brl.format(y.v) + '</b>' + (y.online && y.frete ? '<small>c/ frete</small>' : '') + (y.clube ? '<small>clube</small>' : '')) + '</li>'; }).join('') + '</ul>' : '')
         + dicaClube(p, best)
         + detalhesCompra(x, p, dc, mt)
         + acoes + '<span class="i-foot">Em ' + onde + '</span></div></li>';
@@ -3032,7 +3046,7 @@ h3{font-size:13px;font-weight:600}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.11.4' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.11.5' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;
