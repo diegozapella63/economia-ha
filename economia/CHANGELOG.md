@@ -1,5 +1,9 @@
 # Mudanças
 
+## 0.11.3
+
+- **Opções em grade**: restrições, interesses, nunca mostrar, onde procurar online e assinaturas viram botões do mesmo tamanho em colunas que ocupam a largura toda (duas no celular, mais no computador), sem sobra no fim das linhas. Os dias de mercado e de farmácia ficam numa linha só.
+
 ## 0.11.2
 
 - No cartão de cada item, o que fica à mostra é a **Melhor compra** (ou o Mais barato) e os outros preços. Comprar online ou na loja, o melhor tamanho e a comparação de tamanhos ficam juntos em **Online e tamanhos**, recolhido como o Comparar tamanhos. Aberto, continua aberto quando a lista atualiza.
