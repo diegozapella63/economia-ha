@@ -36,7 +36,7 @@ Para buscar ofertas, o app usa a IA do seu Home Assistant (Anthropic, OpenAI, Go
 - **Melhor tamanho**: compara o preço por litro, quilo ou unidade (1 L, galão de 5 L, 5 × 1 L, kits online com frete) e diz quanto tempo dura no seu ritmo.
 - **Roteiro de compras**: diga em até quantas lojas topa parar e o app testa as combinações, mostra onde comprar cada item, a ordem e a rota no Maps.
 - **Lojas do raio pelo mapa**: a zona Casa do Home Assistant e o OpenStreetMap (e o Google Maps, com chave) dizem quais lojas existem perto, com a distância certa.
-- **Primeiro o que não gasta IA**: preço direto no site dos mercados que permitem (Giassi, Angeloni e outros testados sozinhos), páginas de produto de sites como o do Bistek, Shopee pela API de afiliados e folhetos do Kimbino, do Seus Folhetos e do Catálogos Ofertas lidos uma vez por semana. A IA entra por último.
+- **Primeiro o que não gasta IA**: preço direto no site dos mercados que permitem (Giassi, Angeloni e outros testados sozinhos), páginas de produto de sites como o do Bistek, Shopee pela API de afiliados e folhetos do Kimbino, Portafolhetos, Seus Folhetos e Catálogos Ofertas lidos uma vez por semana. A IA entra por último.
 - **Ofertas e cupons** das lojas perto do seu CEP, com o motivo de cada destaque e o botão "Não mostrar".
 - **Encartes dos sites**: abre a página de ofertas do mercado do bairro, lê o encarte (imagem ou PDF) com IA e traz os preços. Loja sem preço aparece marcada, com atalho para adicionar o site.
 - **Online**: iFood, Rappi, Mercado Livre, Amazon e outros, com frete ou taxa de entrega somados e as assinaturas (Prime, Meli+, Clube iFood), e os mercados da região que entregam no seu CEP, separados.

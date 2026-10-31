@@ -6,7 +6,7 @@ Sua lista de compras comparada nas farmácias, mercados e pet shops perto de cas
 - Uma lista só, com o ritmo de compra de cada item
 - Melhor tamanho: 1 L, 5 L ou 5 × 1 L, pelo preço por litro, quilo ou unidade
 - Roteiro de compras em até 4 paradas, com rota no Maps
-- Primeiro o que não gasta IA: site dos mercados, páginas de produto, Shopee Afiliados e folhetos do Kimbino, do Seus Folhetos e do Catálogos Ofertas
+- Primeiro o que não gasta IA: site dos mercados, páginas de produto, Shopee Afiliados e folhetos do Kimbino, Portafolhetos, Seus Folhetos e Catálogos Ofertas
 - Ofertas e cupons das lojas perto do seu CEP
 - Encartes dos sites dos mercados lidos com IA
 - iFood, Rappi, Mercado Livre e Amazon, com frete e assinaturas, e os mercados da região que entregam

@@ -1976,6 +1976,9 @@ AGREGADORES = [
      "variantes": ["{}", "{}-atacadista", "{}-supermercados", "supermercados-{}", "{}-supermercado"]},
     {"id": "seusfolhetos", "nome": "Seus Folhetos", "base": "https://seusfolhetos.com.br", "loja": "/{}-ofertas",
      "variantes": ["{}", "{}-atacadista", "supermercados-{}"]},
+    # Portafolhetos: da mesma empresa do Kimbino, com o mesmo formato (imagens no leafletscdn)
+    {"id": "portafolhetos", "tipo": "kimbino", "nome": "Portafolhetos", "base": "https://www.portafolhetos.com.br", "loja": "/{}/",
+     "variantes": ["{}", "{}-atacadista", "{}-supermercados", "supermercados-{}"]},
     # Catálogos Ofertas: o robots.txt libera /lojas/ e /vista/ofertas/ (sem parâmetros) e não define sinal de IA
     {"id": "catalogosofertas", "nome": "Catálogos Ofertas", "base": "https://www.catalogosofertas.com.br", "loja": "/lojas/{}/ofertas-catalogos",
      "variantes": ["{}", "{}-atacadista", "supermercados-{}"]},
@@ -2046,7 +2049,12 @@ def agreg_permite(url):
     g = _robots_agreg.get(base)
     if not g or g[0] < time.time() - 86400:
         try:
-            regras = robots_regras(pagina_txt(base + "/robots.txt"))
+            txt = pagina_txt(base + "/robots.txt")
+            regras = robots_regras(txt)
+            # sinal de conteúdo (Cloudflare): "ai-input=no" proíbe mandar o conteúdo para uma IA, que é o que o folheto faz
+            if re.search(r"(?im)^\s*content-signal\s*:.*\bai-input\s*=\s*no\b", txt):
+                regras = [("disallow", "/")]
+                log(f"{base}: o site não deixa mandar o conteúdo para IA (ai-input=no)")
         except urllib.error.HTTPError as e:
             regras = [] if e.code == 404 else [("disallow", "/")]
         except Exception:  # noqa: BLE001
@@ -2057,7 +2065,7 @@ MAX_FOLHETOS_LOJA = 2
 MAX_PAGINAS = 12
 DATA_BR = re.compile(r"(\d{1,2})/(\d{1,2})(?:/(\d{2,4}))?")
 PERIODO = re.compile(r"(\d{1,2}/\d{1,2}(?:/\d{2,4})?)\s*(?:-|–|a|até)\s*(\d{1,2}/\d{1,2}/\d{2,4})", re.I)
-KIMBI_IMG = re.compile(r"https?://[^\"'\s<>]*kimbicdn\.com/[^\"'\s<>]*?/data/(\d+/\d+)/(\d+)\.(?:jpe?g|png|webp)[^\"'\s<>,]*", re.I)
+KIMBI_IMG = re.compile(r"https?://[^\"'\s<>]*(?:kimbicdn|leafletscdn)\.com/[^\"'\s<>]*?/data/(\d+/\d+)/(\d+)\.(?:jpe?g|png|webp)[^\"'\s<>,]*", re.I)
 SF_IMG = re.compile(r"(?:https?://[^\"'\s<>/]+)?/public/gimg/(?:\d+/)+(\d+)-(\d+)-(\d+)\.(?:jpe?g|png|webp)", re.I)
 _folhetos_trava = threading.Lock()
 
@@ -2108,7 +2116,7 @@ def folhetos_da_pagina(a, url_loja, html_txt):
             de, ate = periodo_mes(sem_tags(html_txt[m.start():min(fim, m.end() + 3000)]))
             out.append({"url": urllib.parse.urljoin(url_loja, html_mod.unescape(m.group(1))), "id": a["id"] + ":" + m.group(3), "de": de, "ate": ate})
         return out
-    if a["id"] == "kimbino":
+    if a.get("tipo", a["id"]) == "kimbino":
         padrao = re.compile(r"href=[\"']((?:https?://[^/\"']+)?" + re.escape(caminho) + r"/[a-z0-9-]+-(\d{6,})/?)[\"']", re.I)
     else:
         padrao = re.compile(r"href=[\"']((?:https?://[^/\"']+)?" + re.escape(caminho)
@@ -2142,6 +2150,9 @@ def paginas_folheto(a, f):
     """Endereços das páginas do folheto, na ordem (e a validade, se a página do folheto disser)."""
     if f.get("paginas") is not None:
         return f["paginas"]
+    if not agreg_permite(f["url"]):
+        f["paginas"] = []
+        return []
     try:
         html_txt = pagina_txt(f["url"])
     except Exception as e:  # noqa: BLE001
@@ -2169,7 +2180,7 @@ def paginas_folheto(a, f):
         f["pequeno"] = bool(paginas) and not grandes
         f["paginas"] = grandes
         return grandes
-    if a["id"] == "kimbino":
+    if a.get("tipo", a["id"]) == "kimbino":
         achados = [(m.group(1), int(m.group(2)), m.group(0).replace("&amp;", "&").rstrip(",")) for m in KIMBI_IMG.finditer(html_txt)]
         # o folheto é a pasta que mais aparece (as outras são capas de folhetos sugeridos)
         conta = {}
@@ -2196,6 +2207,8 @@ def paginas_folheto(a, f):
                 if (w, h) == tam:
                     paginas.setdefault(i, u)
     f["paginas"] = [paginas[k] for k in sorted(paginas)][:MAX_PAGINAS]
+    if f["paginas"] and not agreg_permite(f["paginas"][0]):  # o servidor de imagens também precisa deixar
+        f["paginas"] = []
     return f["paginas"]
 
 
@@ -2345,7 +2358,7 @@ def achar_folhetos(loja, cache):
         urls = urls or list(dict.fromkeys(agreg_base(a) + a["loja"].format(v.format(b)) for b in bases for v in a["variantes"]))
         achou = None
         for u in urls:
-            if a["id"] == "catalogosofertas" and not agreg_permite(u):
+            if not agreg_permite(u):
                 continue
             try:
                 html_txt = pagina_txt(u)
@@ -2508,7 +2521,7 @@ def busca_folhetos(cfg, lojas, so_guardados=False, max_novas=MAX_FOLHETOS_NOVOS)
                 BUSCA["etapa"] = "folheto · " + loja["nome"]
                 a, _, cands = achar_folhetos(loja, cache)
                 if not cands:
-                    st["erro"] = "Não achei folheto desta semana no Kimbino, no Seus Folhetos nem no Catálogos Ofertas."
+                    st["erro"] = "Não achei folheto desta semana nos sites de encartes."
                 else:
                     st["fonte"], st["folhetos"] = a["nome"], len(cands)
                     escolhidos = escolhe_folhetos(loja, a, cands, cache, cfg)
@@ -2546,7 +2559,7 @@ def busca_folhetos(cfg, lojas, so_guardados=False, max_novas=MAX_FOLHETOS_NOVOS)
                 st["erro"] = None  # não está no Kimbino nem no Seus Folhetos: é o normal para muita loja
                 st["sem_folheto"] = True
             status[norm(loja["nome"])] = st
-            log(f"folheto de {loja['nome']}: " + ("não está no Kimbino, no Seus Folhetos nem no Catálogos Ofertas" if st.get("sem_folheto") else st["erro"] or f"{st['fonte']}, {st['lidos']} lido(s) agora, {st['guardados']} guardado(s), {st['ofertas']} oferta(s)"))
+            log(f"folheto de {loja['nome']}: " + ("não está nos sites de encartes" if st.get("sem_folheto") else st["erro"] or f"{st['fonte']}, {st['lidos']} lido(s) agora, {st['guardados']} guardado(s), {st['ofertas']} oferta(s)"))
         if status:
             cache["_status"] = dict(cache.get("_status") or {}, **status)
         gravar_json(FOLHETOS, cache)
@@ -3554,7 +3567,7 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
                 st["como"] = "folheto_novo"
                 st["passos"].append(f"✓ Tem folheto da semana no {a['nome']}" + ("; a IA lê na próxima busca." if ia_ligada(cfg) else "; ler o folheto precisa da IA."))
             else:
-                st["passos"].append("✗ Sem folheto no Kimbino, no Seus Folhetos e no Catálogos Ofertas.")
+                st["passos"].append("✗ Sem folheto no Kimbino, Portafolhetos, Seus Folhetos e Catálogos Ofertas.")
     if not st["como"]:
         st["como"] = "ia" if ia_ligada(cfg) else "nenhum"
         st["passos"].append("Preço só pela busca na web com IA." if ia_ligada(cfg) else "✗ Sem IA, não há de onde tirar o preço desta loja.")
@@ -4314,7 +4327,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.14.8"
+    server_version = "EconomIA/0.14.9"
 
     def log_message(self, fmt, *args):
         pass

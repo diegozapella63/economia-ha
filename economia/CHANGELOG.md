@@ -1,5 +1,10 @@
 # Mudanças
 
+## 0.14.9
+
+- **Portafolhetos** entra como fonte de folhetos (é da mesma empresa do Kimbino e tem Angeloni, Atacadão, Bistek, Fort, Komprão, Drogasil e Pague Menos). Serve quando a loja não aparece no Kimbino.
+- Todos os sites de encartes (e os servidores das imagens) têm o robots.txt conferido antes de abrir. Se o site disser **ai-input=no** (sinal de conteúdo que proíbe mandar o conteúdo para uma IA), o EconomIA não usa aquele site, porque o folheto é lido pela IA.
+
 ## 0.14.8
 
 - **Catálogos Ofertas** entra como terceira fonte de folhetos, depois do Kimbino e do Seus Folhetos. Ele tem o encarte da **Droga Raia** (e de outras redes que não estão nos outros dois). O app abre só a página da loja e a do encarte, que o robots.txt do site libera, e confere essas regras antes de abrir.
