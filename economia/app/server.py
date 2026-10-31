@@ -2916,7 +2916,7 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
         st["site"] = o.split("://", 1)[-1].replace("www.", "")
         k0 = chave_direta(o)
         m = {"vtex": True, "permite": True} if k0 and todas_diretas()[k0].get("fixa") else memo.get(o) or {}
-        if not m:
+        if not m or m.get("sem_resposta"):  # no Encontrar lojas, site que falhou é testado de novo na hora
             m = memo[o] = dict(testa_site(o, cfg.get("cep")), nome=nome, categoria=cat_id)
         if m.get("sem_resposta"):
             st["passos"].append(f"✗ O site {st['site']} {m.get('erro') or 'não respondeu'} (tento de novo amanhã).")
