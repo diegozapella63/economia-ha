@@ -1,5 +1,9 @@
 # Mudanças
 
+## 0.14.1
+
+- "Como foi testado" diz por que o site não respondeu: recusou o acesso de programas (erro 403), demorou demais, erro de conexão segura, endereço não encontrado ou outro erro. Antes aparecia só "não respondeu".
+
 ## 0.14.0
 
 - **Encontrar lojas testa o preço de cada loja.** Depois de achar as lojas no mapa, o app tenta, sem IA, um preço de exemplo em cada loja que você acompanha (leite nos mercados, dipirona nas farmácias, ração nos pet shops). A loja mostra de onde dá para tirar preço: **Preço pelo site**, **Preço pelas páginas do site**, **Folheto da semana**, **Tem folheto**, **Só com IA** ou **Sem fonte de preço**, com um exemplo ("ex.: Leite Integral Tirol 1L por R$ 4,89").

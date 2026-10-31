@@ -1544,8 +1544,16 @@ def testa_site(origem, cep):
         txt = pagina_txt(origem + "/robots.txt")
     except urllib.error.HTTPError as e:
         txt = "" if e.code == 404 else None
-    except Exception:  # noqa: BLE001
+        if txt is None:
+            res["erro"] = (f"recusou o acesso de programas (erro {e.code})" if e.code in (401, 403, 429)
+                           else f"respondeu com erro {e.code}")
+    except Exception as e:  # noqa: BLE001
         txt = None
+        t = str(getattr(e, "reason", e)).lower()
+        res["erro"] = ("demorou demais para responder" if "timed out" in t or "timeout" in t
+                       else "teve erro de conexão segura" if "ssl" in t or "certificate" in t
+                       else "não foi encontrado" if "name or service" in t or "getaddrinfo" in t or "nodename" in t
+                       else "não respondeu")
     if txt is None:
         res["em"] = (datetime.now(timezone.utc) - timedelta(days=6)).isoformat(timespec="seconds")  # sem resposta: tenta amanhã
         res["sem_resposta"] = True
@@ -2911,7 +2919,7 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
         if not m:
             m = memo[o] = dict(testa_site(o, cfg.get("cep")), nome=nome, categoria=cat_id)
         if m.get("sem_resposta"):
-            st["passos"].append(f"✗ O site {st['site']} não respondeu (tento de novo amanhã).")
+            st["passos"].append(f"✗ O site {st['site']} {m.get('erro') or 'não respondeu'} (tento de novo amanhã).")
         elif m.get("vtex") and m.get("permite"):
             k = chave_direta(o)
             if not k:
@@ -3741,7 +3749,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.14.0"
+    server_version = "EconomIA/0.14.1"
 
     def log_message(self, fmt, *args):
         pass
