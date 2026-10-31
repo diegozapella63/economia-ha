@@ -1,5 +1,14 @@
 # Mudanças
 
+## 0.13.0
+
+- **Primeiro o que não gasta IA.** A busca começa pelo site das lojas, pela Shopee e pelos folhetos já lidos, e a IA entra por último, só para o que faltar. Ela é avisada das lojas que já têm preço e não traz esses preços de novo. O **Buscar este item** só chama a IA quando os sites trazem menos de 2 preços. Com a IA desligada, o **Buscar** continua, só com os sites, a Shopee e os folhetos guardados.
+- **Busca direta para qualquer mercado**, não só Giassi e Angeloni. O app testa uma vez por semana o site de cada loja cadastrada ou achada na busca. Se for uma loja VTEX e o robots.txt permitir, ela passa a ter preço direto. Sites que não deixam programas usarem a busca, mas liberam as páginas de produto (como o do Bistek), são lidos pela lista de produtos que a loja publica no sitemap, uma vez por dia. O preço vem da página de cada produto e é o preço padrão do site.
+- **Folhetos de encarte** (Mais › Lojas): para mercados sem site de ofertas, como Komprão e Atacadão, o EconomIA procura o folheto da semana no Kimbino e no Seus Folhetos. A IA lê cada folheto uma vez e os preços ficam guardados até ele vencer. Itens novos da lista são casados com as ofertas do folheto pelo nome, sem IA. Quando a loja tem muitos folhetos regionais, a IA olha só as capas e escolhe os que valem para a sua cidade. O aviso **Sem preços de** ganhou **Ler folheto**.
+- **Shopee Afiliados** (Mais › Integrações): com o App ID e a senha da Open API, os preços da Shopee vêm direto da Shopee, sem IA. As chaves ficam em `segredos.json` e a senha não volta para o painel.
+- **Mercados da região que entregam**: mercados fora do raio que entregam no seu CEP, como o Bistek, entram em Online, separados dos marketplaces (no filtro e em Mais › Lojas). Quando o site só mostra a taxa no carrinho, o preço aparece com "+ frete", e o app avisa para conferir o frete antes de decidir.
+- **De quando é cada preço**: o cartão mostra "preços de hoje 07:22". Preço que veio da busca na web aparece como "visto pela busca na web, confira no link". Na Amazon e nos marketplaces, a IA passa a usar o preço da página do produto, não o do Google Shopping.
+
 ## 0.12.1
 
 - **Encarte ou print de preços**, nas Ofertas: mande fotos ou prints do encarte (do WhatsApp, do Tiendeo, do app da loja ou da gôndola), diga de qual loja é e toque em **Ler com IA**. As ofertas entram com o rótulo "Encarte" e os preços que batem com a sua lista entram na comparação e no roteiro, sem apagar o resto da busca. Serve para mercados sem site de ofertas, como Koch, Komprão e Atacadão.

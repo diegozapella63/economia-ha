@@ -42,14 +42,42 @@ O botão **Buscar** chama `ai_task.generate_data` pela API do Home Assistant (`h
 | POST | `/api/versoes/guardar` | `{motivo: "importar"|"limpar"}`: guarda uma cópia agora. |
 | POST | `/api/versoes/restaurar` | `{nome}`: guarda uma cópia do atual e volta para essa versão. Devolve `{config}`. |
 | POST | `/api/ler-encarte` | `{imagens: ["data:image/jpeg;base64,..."], loja, categoria}` (até 8 imagens). A IA de fotos lê o encarte ou o print com o mesmo pedido do encarte do site; o resultado é juntado ao `ofertas.json` (loja com `fontes: ["Encarte"]`). Devolve `{id}`; o andamento sai em `GET /api/ler-lista?id=` com `{status, ofertas, precos, loja, itens}`. |
-| GET | `/api/lojas-diretas` | `{lojas: [{id, nome, atende, loja}]}`: as lojas com busca direta e se atendem o CEP. |
+| GET | `/api/lojas-diretas` | `{lojas: [{id, nome, atende, loja, fixa}]}`: as lojas com busca direta e se atendem o CEP; as lidas pelas páginas de produto vêm com `paginas: true`. |
+| GET | `/api/integracoes` | `{shopee: {app_id, tem_senha}}`. A senha nunca sai do add-on. |
+| PUT | `/api/integracoes` | `{shopee: {app_id, secret}}` grava em `segredos.json` (modo 600); `secret` vazio mantém a senha guardada; `{shopee: null}` apaga. |
+| POST | `/api/integracoes/testar` | `{servico: "shopee"}` → `{ok, msg}`: uma consulta de teste na Open API. |
+| GET | `/api/folhetos` | `{lojas: [{nome, categoria, status: {fonte, folhetos, lidos, guardados, ofertas, ate, erro, em}}]}`. |
 | GET | `/api/exportar/ofertas.json` | O `ofertas.json` da última busca. |
 | GET | `/api/uso-ia` | `{hoje, semana, mes: {chamadas, erros, cota, tokens, imagens, segundos, tipos, ias}, dias: [{dia, chamadas, erros, cota}], ultimas: [...]}`. Também vai em `/api/estado` como `uso_ia`. |
 | GET | `/api/saude` | Verificação simples. |
 
 ### Busca direta nas lojas
 
-Giassi e Angeloni usam a plataforma VTEX. Para cada item da lista, o add-on pergunta `GET {site}/api/checkout/pub/regions?country=BRA&postalCode={CEP}` (a loja que atende o CEP, guardada por 6 horas) e `GET {site}/api/io/_v/api/intelligent-search/product_search/?query={item}&regionId={região}`. Entram os produtos com estoque cujo nome ou categoria têm as palavras do item; o tamanho sai do nome ("250ml", "1L Caixa com 12"). O resultado vira a categoria `mercados`, com `fonte` no link do produto, e é juntado depois da IA, então vale mais. Não usa login nem IA. Para testar fora do HA, `OFERTAS_VTEX_TESTE` aponta para um servidor falso.
+Giassi e Angeloni (fixos) e as lojas achadas por `testa_site` usam a plataforma VTEX. Para cada item da lista, o add-on pergunta `GET {site}/api/checkout/pub/regions?country=BRA&postalCode={CEP}` (a loja que atende o CEP, guardada por 6 horas) e `GET {site}/api/io/_v/api/intelligent-search/product_search/?query={item}&regionId={região}`. Entram os produtos com estoque cujo nome ou categoria têm as palavras do item; o tamanho sai do nome ("250ml", "1L Caixa com 12"). O resultado vira a categoria `mercados`, com `fonte` no link do produto, e é juntado depois da IA, então vale mais. Não usa login nem IA. Para testar fora do HA, `OFERTAS_VTEX_TESTE` aponta para um servidor falso.
+
+### Ordem da busca: primeiro o que não gasta IA
+
+`busca_scripts` roda antes da IA: busca direta (VTEX), páginas de produto, Shopee e folhetos. As lojas com preço da lista vindo do site vão no pedido da IA ("já vieram direto do site delas: …") para ela não repetir. Os resultados dos scripts são juntados depois da IA e valem mais. `buscar_itens` só chama a IA para os itens com menos de 2 preços. Com `usar_ia: false`, `/api/buscar` roda só os scripts e junta ao `ofertas.json` atual (`mesclar_resultado`).
+
+### Lojas testadas sozinhas (`lojas_site.json`)
+
+Candidatas: as lojas de `lojas.adicionar` com site, as lojas das categorias físicas do `ofertas.json` com `site` e os mercados regionais de Online (o site sai dos links dos preços). Cada origem é testada uma vez por semana (`testa_site`): lê o `robots.txt` (regras de `User-agent: *`, com `*` e `$`, a regra mais longa vale) e só chama `/api/checkout/pub/regions` se `/api/checkout/pub/regions` e `/api/io/_v/api/intelligent-search/product_search/` forem permitidos. Resposta em lista = VTEX → entra em `VTEX_ACHADAS` e na busca direta, na categoria da loja.
+
+### Páginas de produto (`catalogos/`)
+
+Para origens com `paginas: true` que não são VTEX liberada: `baixa_catalogo` lê os `Sitemap:` do robots.txt (ou `/sitemap.xml`), segue o índice priorizando os sitemaps de produto (aceita .gz) e guarda as URLs de produto (VTEX: terminam em `/p`) por 1 dia, respeitando o robots.txt. Para cada item, as até 3 URLs cujo texto tem as palavras do item (`combina`) são abertas, uma a cada 0,3 s, e o preço sai do JSON-LD `Product` → `offers` (`price`/`lowPrice`, sem `OutOfStock`) ou da meta `product:price:amount`, guardado por 1 dia. Loja fora do raio (não está em `lojas_perto` nem em `lojas.adicionar`) entra em `online` com `frete: null, carrinho: true`.
+
+### Folhetos (`folhetos.json`)
+
+`lojas.folhetos: [{nome, categoria}]` (até 4). Para cada loja, `achar_folhetos` tenta `https://www.kimbino.com.br/{slug}/` (e `-atacadista`, `-supermercados`…) e `https://seusfolhetos.com.br/{slug}-ofertas`; o endereço achado fica guardado por 14 dias (loja inexistente: 2 dias). Na página da loja, os links de folheto (Kimbino: `/{loja}/…-{id}/`; Seus Folhetos: `/{loja}-ofertas/folheto-{id}-0`) e o período ("29/10/2026 - 01/11/2026") entre um link e o próximo. Só entram os válidos hoje. Páginas do folheto: Kimbino, as imagens `kimbicdn.com/…/data/{pasta}/{página}.jpg` da pasta que mais aparece (prefere `/0x0/`); Seus Folhetos, as `/public/gimg/…/{id}-{w}-{h}.jpg` do tamanho comprido mais comum. Mais de 2 folhetos: a IA vê só as capas (até 8 por chamada) com a cidade do CEP (ViaCEP) e responde `sim|nao|nao_sei` (guardado em `_vale`). Até 2 folhetos por loja, até 12 páginas, 8 por chamada, com o pedido de `instrucoes_encarte`. A resposta fica em `itens[id].r` até `ate`, com os itens da lista guardados pelo nome. `precos_por_oferta` casa itens da lista com as ofertas do folheto sem IA.
+
+### Shopee Afiliados
+
+`POST https://open-api.affiliate.shopee.com.br/graphql`, corpo `{"query": "{productOfferV2(keyword: \"…\", sortType: 1, page: 1, limit: 20) {nodes {…}}}"}`, cabeçalho `Authorization: SHA256 Credential={AppId}, Timestamp={ts}, Signature={sha256_hex(AppId + ts + corpo + Secret)}`. Entram produtos com nota ≥ 4,5 cujo nome tem as palavras do item; preço `priceMin`, link `productLink` (não o de afiliado). Erros 10020/10030/10035 param as consultas seguintes. `OFERTAS_SHOPEE_API` troca o endereço nos testes.
+
+### Preços online e de quando são
+
+Preço online: `{preco, frete, prazo_dias, obs}`; `frete: null` com `carrinho: true` quando a loja só mostra no carrinho (a IA responde `"frete": "carrinho"`). Lojas de `online` que não são marketplace ganham `regional: true`. Cada item da lista tem `vistos: {rede: {em, via}}` com `via` = `site`, `api`, `encarte` ou `web`.
 
 ### Uso da IA
 

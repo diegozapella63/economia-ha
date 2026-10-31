@@ -236,6 +236,9 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .filters{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,8em),1fr));gap:6px}
 .filters button{display:flex;align-items:center;justify-content:center;min-height:38px;min-width:0;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:5px 8px;font-size:13px;font-weight:600;line-height:1.2;text-align:center}
 .filters button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.filters .f-sep{grid-column:1/-1;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:6px 0 0}
+.sh-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,12em),1fr));gap:8px}
+.sh-row label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
 .deals{display:flex;flex-direction:column}
 .deal{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 14px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
 .deal:first-child{border-top:0}
@@ -549,7 +552,6 @@ h3{font-size:13px;font-weight:600}
 .ler-tile:hover{border-color:var(--accent)}
 .ler-tile:active{transform:scale(.98)}
 .ler-tile svg{width:22px;height:22px;flex:none;fill:none;stroke:var(--accent);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-.sem-ia .tabbar-in{grid-template-columns:repeat(4,minmax(0,1fr))}
 /* Mais em abas, presas no alto ao rolar */
 .mais-abas{position:sticky;top:0;z-index:12;display:flex;gap:2px;padding:4px;border-radius:14px;background:color-mix(in srgb,var(--surface) 45%,var(--bg));border:1px solid var(--line);box-shadow:0 0 0 8px var(--bg);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .mais-abas::-webkit-scrollbar{display:none}
@@ -1122,10 +1124,22 @@ h3{font-size:13px;font-weight:600}
           <ul class="rows" id="cupLista"></ul>
         </div>
       </section>
+        <section class="panel" aria-labelledby="h-folhetos">
+          <div class="sec-head"><h2 id="h-folhetos"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h11v14H6a2 2 0 0 1-2-2z"/><path d="M15 8h4v9a2 2 0 0 1-2 2h-2"/><path d="M7 9h5M7 12h5M7 15h3"/></svg></span>Folhetos de encarte</h2></div>
+          <p class="sec-meta">Para mercados sem site de ofertas, como Komprão e Atacadão: o EconomIA procura o folheto da semana no Kimbino e no Seus Folhetos. A IA lê cada folheto uma vez, e os preços ficam guardados até ele vencer, sem gastar IA de novo.</p>
+          <ul class="rows" id="folLista"></ul>
+          <form class="row-form" id="folAdd" novalidate>
+            <input class="field" id="folNome" list="encLojas" placeholder="Loja, ex.: Komprão" aria-label="Loja do folheto">
+            <button class="btn" type="submit">Adicionar</button>
+          </form>
+          <p class="hint" id="folMsg" aria-live="polite"></p>
+        </section>
         <section class="panel" aria-labelledby="h-online">
           <div class="sec-head"><h2 id="h-online"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 6h11v10H2zM13 9h4l4 4v3h-8z"/><circle cx="6.5" cy="17.5" r="2"/><circle cx="17.5" cy="17.5" r="2"/></svg></span>Compras online</h2></div>
           <div class="group"><h3>Onde procurar</h3><div class="picks" id="pMkt"></div></div>
           <div class="group"><h3>Assinaturas com frete grátis</h3><div class="picks" id="pAss"></div></div>
+          <label class="set-line"><input type="checkbox" class="switch" id="onEntrega"><span>Mercados da região que entregam no seu CEP</span></label>
+          <p class="hint">Mercados fora do raio que vendem pelo site ou app e entregam aqui, como o Bistek, aparecem em Online, separados dos marketplaces. Quando o site só mostra a taxa de entrega no carrinho, o preço aparece com "+ frete".</p>
           <p class="hint">iFood e Rappi trazem os preços dos mercados e farmácias do bairro no app, com a taxa de entrega somada. O Clube iFood zera a taxa nas lojas participantes. Prime e Meli+ não zeram o frete de tudo: valem para os produtos elegíveis (na Amazon, os com selo Prime). O EconomIA usa o frete que aparece para o seu CEP em cada item, já contando a assinatura. Remédios de receita ficam só nas farmácias.</p>
         </section>
       </div></div>
@@ -1153,6 +1167,15 @@ h3{font-size:13px;font-weight:600}
         <div><h3 class="set-t">Falar</h3><p class="ia-st" id="vozSt">Verificando o assistente de voz…</p></div>
       </div>
       </div>
+    </section>
+    <section class="panel settings" aria-labelledby="h-shopee">
+      <div class="set-head"><h2 id="h-shopee"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6z"/><path d="M9 8a3 3 0 0 1 6 0"/><path d="M10 13.5c0 1 .9 1.5 2 1.5s2 .5 2 1.5-1 1.5-2 1.5-1.7-.4-2-1M14 13c-.3-.6-1-1-2-1"/></svg></span>Shopee Afiliados</h2><p class="sec-meta">Com o App ID e a senha da Open API do Shopee Afiliados, os preços da Shopee vêm direto da Shopee, sem IA. Pegue os dois em affiliate.shopee.com.br › Open API. Ficam guardados só neste Home Assistant e a senha não aparece de novo aqui.</p></div>
+      <div class="sh-row">
+        <label for="shApp">App ID<input class="field" id="shApp" inputmode="numeric" autocomplete="off" spellcheck="false"></label>
+        <label for="shSenha">Senha (Secret)<input class="field" id="shSenha" type="password" autocomplete="new-password" spellcheck="false"></label>
+      </div>
+      <div class="row-form"><button type="button" class="btn" id="shSalvar">Salvar e testar</button><button type="button" class="ghost big" id="shTestar">Testar</button><button type="button" class="ghost big" id="shApagar" hidden>Apagar</button></div>
+      <p class="ia-st" id="shSt"></p>
     </section>
     <section class="panel settings so-ia" aria-labelledby="h-uso">
       <div class="set-head"><h2 id="h-uso"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Uso da IA</h2><p class="sec-meta">Cada busca, foto ou teste é uma chamada para a IA do Home Assistant. O Home Assistant não informa tokens nem custo, então o EconomIA conta as chamadas e estima os tokens pelo tamanho do texto.</p></div>
@@ -1213,7 +1236,7 @@ h3{font-size:13px;font-weight:600}
       <p class="hint" id="verMsg" aria-live="polite"></p>
     </section>
     <section class="panel settings" aria-labelledby="h-dados">
-      <div class="set-head"><h2 id="h-dados"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></span>Onde ficam os dados</h2><p class="sec-meta">Tudo fica em arquivos abertos (JSON) dentro do app: <code>config.json</code> (lista, perfil e ajustes), <code>ofertas.json</code> (a última busca), <code>uso_ia.json</code> (o uso da IA) e as versões anteriores em <code>versoes/</code>. Tudo entra nos backups do Home Assistant. A busca de ofertas, a leitura de fotos e o Falar usam a IA e a fala para texto do seu Home Assistant.</p></div>
+      <div class="set-head"><h2 id="h-dados"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></span>Onde ficam os dados</h2><p class="sec-meta">Tudo fica em arquivos abertos (JSON) dentro do app: <code>config.json</code> (lista, perfil e ajustes), <code>ofertas.json</code> (a última busca), <code>uso_ia.json</code> (o uso da IA), <code>folhetos.json</code> (os folhetos já lidos), <code>catalogos/</code> (a lista de produtos dos sites), <code>segredos.json</code> (as chaves da Shopee, que não aparecem no painel) e as versões anteriores em <code>versoes/</code>. Tudo entra nos backups do Home Assistant. A busca de ofertas, a leitura de fotos e o Falar usam a IA e a fala para texto do seu Home Assistant.</p></div>
     </section>
     </div>
     <div class="mais-painel" id="mp-aparencia" role="tabpanel" aria-labelledby="aba-aparencia" hidden>
@@ -1230,10 +1253,14 @@ h3{font-size:13px;font-weight:600}
     <div class="mais-painel" id="mp-opcoes" role="tabpanel" aria-labelledby="aba-opcoes" hidden>
       
       <section class="panel settings" aria-labelledby="h-opbusca">
-      <div class="set-head"><h2 id="h-opbusca"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span>Busca de preços</h2><p class="sec-meta">Como o EconomIA procura os preços. A busca direta não gasta IA; as outras duas etapas são chamadas extras para a IA, e dá para desligar para gastar menos da cota. Vale para todos os aparelhos.</p></div>
+      <div class="set-head"><h2 id="h-opbusca"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span>Busca de preços</h2><p class="sec-meta">O EconomIA procura primeiro o que não gasta IA: o site das lojas, a Shopee e os folhetos já lidos. A IA entra por último, só para o que faltar. Vale para todos os aparelhos.</p></div>
       <div class="set-row">
-        <div><h3 class="set-t"><label for="opDiretas">Busca direta nas lojas</label></h3><p class="sec-meta">O Giassi e o Angeloni respondem direto pelo site, com o preço da loja que atende o seu CEP e o link do produto. É mais certeiro que a busca na web e não gasta a IA.</p><p class="ia-st" id="opDiretasSt"></p></div>
+        <div><h3 class="set-t"><label for="opDiretas">Busca direta nas lojas</label></h3><p class="sec-meta">O site de cada mercado cadastrado ou achado na busca responde direto, com preço e link, sem IA, quando a loja permite (Giassi, Angeloni). Sites que só liberam as páginas de produto, como o do Bistek, são lidos uma vez por dia, pelo preço padrão do site.</p><p class="ia-st" id="opDiretasSt"></p></div>
         <input type="checkbox" class="switch" id="opDiretas">
+      </div>
+      <div class="set-row">
+        <div><h3 class="set-t"><label for="opFolhetos">Folhetos dos sites de encartes</label></h3><p class="sec-meta">Lê o folheto da semana das lojas escolhidas em Mais › Lojas (Kimbino e Seus Folhetos). A IA lê cada folheto uma vez; depois, os preços vêm do que ficou guardado.</p></div>
+        <input type="checkbox" class="switch" id="opFolhetos">
       </div>
       <div class="set-row">
         <div><h3 class="set-t"><label for="opItens">Procurar de novo os itens sem preço</label></h3><p class="sec-meta">No fim da busca, uma pergunta só sobre os itens que ficaram sem preço, procurando item por item. O botão Buscar este item continua no cartão.</p></div>
@@ -1245,7 +1272,7 @@ h3{font-size:13px;font-weight:600}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.12.1</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.13.0</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
   </section>
 
   <footer>Preço do site pode ser diferente do preço na loja. Confira validade e regras do cupom no carrinho.</footer>
@@ -1256,7 +1283,7 @@ h3{font-size:13px;font-weight:600}
   <div class="tabbar-in">
     <button type="button" class="tab" data-view="lista"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg>Minha lista</button>
     <button type="button" class="tab" data-view="roteiro"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H16a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h7.5"/></svg>Roteiro</button>
-    <button type="button" class="tab tab-main so-ia" id="buscar"><span class="pill"><svg class="ic-busca" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><svg class="ic-gira" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></span><span id="buscarTxt">Buscar</span></button>
+    <button type="button" class="tab tab-main" id="buscar"><span class="pill"><svg class="ic-busca" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><svg class="ic-gira" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></span><span id="buscarTxt">Buscar</span></button>
     <button type="button" class="tab" data-view="ofertas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/></svg>Ofertas</button>
     <button type="button" class="tab" data-view="mais"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Mais</button>
   </div>
@@ -1369,8 +1396,8 @@ h3{font-size:13px;font-weight:600}
       cep: c.cep || null,
       raio_km: Number(c.raio_km) || 2,
       categorias: cats.length ? cats : D.categorias.map(function(x){ return x.id; }),
-      online: {marketplaces: arr(on.marketplaces).length ? arr(on.marketplaces) : ['mercadolivre', 'amazon'], assinaturas: arr(on.assinaturas)},
-      lojas: {ignorar: arr(l.ignorar), manter: arr(l.manter), adicionar: arr(l.adicionar)},
+      online: {marketplaces: arr(on.marketplaces).length ? arr(on.marketplaces) : ['mercadolivre', 'amazon'], assinaturas: arr(on.assinaturas), mercados_entrega: on.mercados_entrega !== false},
+      lojas: {ignorar: arr(l.ignorar), manter: arr(l.manter), adicionar: arr(l.adicionar), folhetos: arr(l.folhetos).filter(function(f){ return f && f.nome; }).map(function(f){ return {nome:String(f.nome), categoria:f.categoria || 'mercados'}; })},
       lista: arr(c.lista).map(function(i){ return typeof i === 'string' ? {produto:i, compras:[]} : {produto:String(i.produto || ''), compras:arr(i.compras), origem:i.origem === 'ha' ? 'ha' : undefined}; }).filter(function(i){ return i.produto; }),
       perfil: {adultos:n0(p.adultos, 1), criancas:n0(p.criancas, 0), bebes:n0(p.bebes, 0), pets:petsDe(p.pets), restricoes:arr(p.restricoes), interesses:arr(p.interesses), nunca:arr(p.nunca)},
       cotidiano: {mercado:arr(r.mercado), farmacia:arr(r.farmacia), avisar:r.avisar || 'vespera', estoque:['pouco', 'normal', 'bastante'].indexOf(r.estoque) >= 0 ? r.estoque : 'normal'},
@@ -1381,7 +1408,7 @@ h3{font-size:13px;font-weight:600}
       ocultas: arr(c.ocultas),
       usar_ia: c.usar_ia !== false,
       sensores: c.sensores === true,
-      opcoes: {itens_sem_preco:(c.opcoes || {}).itens_sem_preco !== false, encartes_auto:(c.opcoes || {}).encartes_auto !== false, lojas_diretas:(c.opcoes || {}).lojas_diretas !== false}
+      opcoes: {itens_sem_preco:(c.opcoes || {}).itens_sem_preco !== false, encartes_auto:(c.opcoes || {}).encartes_auto !== false, lojas_diretas:(c.opcoes || {}).lojas_diretas !== false, folhetos:(c.opcoes || {}).folhetos !== false}
     };
   }
 
@@ -1473,6 +1500,8 @@ h3{font-size:13px;font-weight:600}
     if (t.offsetParent){ var l = b.offsetLeft - 8, r = b.offsetLeft + b.offsetWidth + 8; if (l < t.scrollLeft) t.scrollLeft = l; else if (r > t.scrollLeft + t.clientWidth) t.scrollLeft = r - t.clientWidth; }
     if (k === 'integracoes' && USO) carregaUso();
     if (k === 'opcoes' && typeof carregaDiretas === 'function') carregaDiretas();
+    if (k === 'lojas' && typeof carregaFolhetos === 'function') carregaFolhetos();
+    if (k === 'integracoes' && typeof carregaShopee === 'function') carregaShopee();
   }
   function irParaAba(k, alvo){
     ui.maisAba = k; irPara('mais');
@@ -1531,12 +1560,12 @@ h3{font-size:13px;font-weight:600}
     $('cats').innerHTML = ativas.map(function(c){ return '<button type="button" data-cat="' + c.id + '" aria-pressed="' + (c.id === CAT.id) + '">' + esc(c.nome) + '</button>'; }).join('');
     var sp = semPrecos(CAT);
     $('semPrecos').hidden = !sp.length;
-    $('semPrecos').innerHTML = sp.length ? '<span><b>Sem preços de:</b> ' + esc(sp.map(function(l){ return G[l.rede].nome; }).join(', ')) + '. Se tiver site de ofertas, adicione que o EconomIA lê o encarte, ou mande a foto do encarte.</span><button type="button" class="linkbtn" data-ir="lojasSec">Adicionar site</button><button type="button" class="linkbtn so-ia" data-enc="' + esc(sp.length === 1 ? G[sp[0].rede].nome : '') + '">Mandar encarte</button>' : '';
+    $('semPrecos').innerHTML = sp.length ? '<span><b>Sem preços de:</b> ' + esc(sp.map(function(l){ return G[l.rede].nome; }).join(', ')) + '. Leia o folheto da semana, mande a foto do encarte ou adicione o site de ofertas.</span><button type="button" class="linkbtn so-ia" data-folheto="' + esc(sp.length === 1 ? G[sp[0].rede].nome : '') + '">Ler folheto</button><button type="button" class="linkbtn so-ia" data-enc="' + esc(sp.length === 1 ? G[sp[0].rede].nome : '') + '">Mandar encarte</button><button type="button" class="linkbtn" data-ir="lojasSec">Adicionar site</button>' : '';
     $('catNote').textContent = CAT.id === 'petshops' && !petsTotal() ? 'Sem pets no seu perfil, as ofertas daqui ficam escondidas. Ajuste em Mais.' : (exemplo && CAT.aviso ? CAT.aviso : '');
     $('ofertasMeta').textContent = CAT.id === 'farmacias'
       ? 'O que combina com você aparece primeiro. Preço do site; na loja pode ser outro.'
       : CAT.id === 'online'
-      ? 'Preço com frete para o seu CEP, de lojas oficiais ou vendedores bem avaliados. Importados ficam marcados.'
+      ? 'Preço com frete para o seu CEP, de lojas oficiais, vendedores bem avaliados e mercados da região que entregam. Importados ficam marcados.'
       : CAT.id === 'petshops'
       ? 'Ração, areia, remédios e acessórios, só para os pets do seu perfil.'
       : 'Encarte da semana, preço de clube e preço de atacado, do que combina com você para o resto.';
@@ -1569,9 +1598,14 @@ h3{font-size:13px;font-weight:600}
   }
   $('toggleHid').addEventListener('click', function(){ ui.verOcultas = !ui.verOcultas; salvarUI(); pintaResumo(); pintaDeals(); });
 
+  function regional(id){ return !!(LOJA[id] && LOJA[id].regional); }
   function pintaFiltros(){
-    var opcoes = [{id:'todas', nome:'Todas'}].concat(arr(CAT.redes).filter(function(r){ return acompanha(r.id); }));
-    $('filters').innerHTML = opcoes.map(function(r){ return '<button type="button" data-rede="' + r.id + '" aria-pressed="' + (r.id === filtro) + '">' + esc(r.nome) + '</button>'; }).join('');
+    var redes = arr(CAT.redes).filter(function(r){ return acompanha(r.id); });
+    var bt = function(r){ return '<button type="button" data-rede="' + r.id + '" aria-pressed="' + (r.id === filtro) + '">' + esc(r.nome) + '</button>'; };
+    var reg = CAT.id === 'online' ? redes.filter(function(r){ return regional(r.id); }) : [];
+    var mkt = redes.filter(function(r){ return reg.indexOf(r) < 0; });
+    $('filters').innerHTML = [{id:'todas', nome:'Todas'}].concat(mkt).map(bt).join('')
+      + (reg.length ? '<span class="f-sep">Mercados da região que entregam</span>' + reg.map(bt).join('') : '');
   }
   $('filters').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;
@@ -1598,6 +1632,8 @@ h3{font-size:13px;font-weight:600}
     var rec = o.receita === 'tarja' ? '<span class="tarja">Tarja vermelha · com receita</span>' : o.receita === 'mip' ? '<span class="tarja mip">Sem receita</span>' : '';
     var cond = o.condicao ? '<span>' + esc(o.condicao) + '</span>' : '';
     if (typeof o.frete === 'number') cond += '<span>' + (o.frete ? 'Frete ' + brl.format(o.frete) : 'Frete grátis') + '</span>';
+    else if (o.frete_carrinho) cond += '<span>Frete no carrinho</span>';
+    if (regional(o.rede)) cond += '<span>Mercado da região</span>';
     if (o.prazo_dias != null) cond += '<span>' + (o.prazo_dias === 0 ? 'Chega hoje' : 'Chega em ' + o.prazo_dias + (o.prazo_dias > 1 ? ' dias' : ' dia')) + '</span>';
     if (o.valido_ate) cond += '<span>Até ' + dataBR(o.valido_ate) + '</span>';
     if (o.vendedor) cond += '<span>' + (o.oficial ? 'Loja oficial' : 'Vendido por ' + esc(o.vendedor)) + '</span>';
@@ -1698,18 +1734,19 @@ h3{font-size:13px;font-weight:600}
   function precosDe(produto){
     var item = itemDe(produto);
     if (!item || !item.precos) return [];
-    var links = item.links || {};
+    var links = item.links || {}, vistos = item.vistos || {};
     return Object.keys(item.precos).filter(function(id){ return catAtiva(id) && acompanha(id); })
       .map(function(id){
         var x = precoDe(id, item.precos[id]);
         x.link = links[id] || '';
+        if (vistos[id]){ x.via = vistos[id].via; x.em = vistos[id].em; }
         return x;
       }).filter(function(x){ return x.v > 0; }).sort(function(a, b){ return a.v - b.v; });
   }
   function precoDe(id, v){
-    if (v && typeof v === 'object' && v.frete != null){
+    if (v && typeof v === 'object' && 'frete' in v){
       var pr = Number(v.preco) || 0, fr = Number(v.frete) || 0;
-      return {id:id, v:Math.round((pr + fr) * 100) / 100, preco:pr, frete:fr, prazo:v.prazo_dias == null ? null : Number(v.prazo_dias), obs:v.obs || '', online:true};
+      return {id:id, v:Math.round((pr + fr) * 100) / 100, preco:pr, frete:fr, carrinho:v.frete == null, prazo:v.prazo_dias == null ? null : Number(v.prazo_dias), obs:v.obs || '', online:true};
     }
     if (v && typeof v === 'object'){  // loja com preço de clube: vale só para quem é do clube
       var pn = Number(v.preco) || 0, cl = Number(v.clube) || 0, socio = estado.clubes.indexOf(id) >= 0, temClube = cl > 0 && (!pn || cl < pn);
@@ -1717,18 +1754,27 @@ h3{font-size:13px;font-weight:600}
     }
     return {id:id, v:Number(v)};
   }
+  // frete de um preço online: "(frete R$ 9,90)", "(frete grátis)" ou "(frete no carrinho)"
+  function freteTxt(o, curto){
+    if (o.carrinho) return curto ? ' + frete' : ' (frete no carrinho)';
+    return o.frete ? (curto ? ' com frete' : ' (frete ' + brl.format(o.frete) + ')') : (curto ? ' frete grátis' : ' (frete grátis)');
+  }
+  function vistoTxt(o){
+    if (!o.em) return '';
+    return o.via === 'web' ? ' · preço visto ' + quandoCurto(o.em) + ' pela busca na web, confira no link' : ' · preço do site ' + quandoCurto(o.em);
+  }
   // compensa pedir online ou comprar na loja?
   function decisaoOnline(r, p, dc){
     var avulso = !!dc;
     var loja = p.filter(function(y){ return !y.online; })[0], net = p.filter(function(y){ return y.online; })[0];
     if (!net) return '';
     if (dc && !dc.online && dc.porBase < net.v - 0.004){
-      return '<div class="i-online"><span class="dchip">Compra na loja</span><p>' + esc('Avulso online: ' + brl.format(net.v) + ' na ' + G[net.id].nome + (net.frete ? ' (frete ' + brl.format(net.frete) + ')' : ' (frete grátis)')) + '</p>'
+      return '<div class="i-online"><span class="dchip">Compra na loja</span><p>' + esc('Avulso online: ' + brl.format(net.v) + ' na ' + G[net.id].nome + freteTxt(net)) + '</p>'
         + '<p class="i-nota">' + esc(dc.como + ' na ' + G[dc.id].nome + ' sai ' + brl.format(dc.porBase) + ' por ' + dc.base + ', ' + brl.format(net.v - dc.porBase) + ' a menos que pedir online.') + '</p></div>';
     }
     var dia = function(n){ return n + (n > 1 ? ' dias' : ' dia'); };
-    var linha = (avulso ? 'Avulso online: ' : 'Online: ') + brl.format(net.v) + ' na ' + G[net.id].nome + (net.frete ? ' (frete ' + brl.format(net.frete) + ')' : ' (frete grátis)')
-      + (net.prazo != null ? (net.prazo === 0 ? ', chega hoje' : ', chega em ' + dia(net.prazo)) : '') + (net.obs ? ' · ' + net.obs : '');
+    var linha = (avulso ? 'Avulso online: ' : 'Online: ') + brl.format(net.v) + ' na ' + G[net.id].nome + freteTxt(net)
+      + (net.prazo != null ? (net.prazo === 0 ? ', chega hoje' : ', chega em ' + dia(net.prazo)) : '') + (net.obs ? ' · ' + net.obs : '') + vistoTxt(net);
     var chip, nota = '';
     // data limite para o pedido chegar antes de acabar (um dia de folga)
     var pedirAte = r.dias != null && net.prazo != null ? soma(hojeSP(), r.dias - net.prazo - 1) : null;
@@ -1739,13 +1785,17 @@ h3{font-size:13px;font-weight:600}
         chip = '<span class="dchip warn">Compra na loja agora</span>';
         var prox = r.media ? soma(hojeSP(), r.media - net.prazo - 1) : null;
         nota = 'Online sai ' + dif + ' mais barato, mas chega depois de acabar.' + (prox ? ' Na próxima, peça até ' + diaLongo(prox) + '.' : '');
+      } else if (net.carrinho){
+        chip = '<span class="dchip">Confira o frete</span>';
+        nota = 'Online sai ' + dif + ' mais barato antes do frete, que só aparece no carrinho' + (regional(net.id) ? ' (no mercado, costuma ser grátis acima de um valor de compra)' : '') + '.';
       } else {
         chip = '<span class="dchip on">Compensa pedir</span>';
         nota = 'Economiza ' + dif + ' pedindo online.' + (pedirAte && diasAte(pedirAte) >= 0 ? ' Peça até ' + diaLongo(pedirAte) + ' para chegar antes de acabar.' : '');
       }
     } else {
       chip = '<span class="dchip">Compra na loja</span>';
-      nota = net.frete ? 'Com o frete de ' + brl.format(net.frete) + ', o online sai ' + brl.format(net.v - loja.v) + ' mais caro.'
+      nota = net.carrinho ? 'Mesmo antes do frete, o online sai ' + brl.format(net.v - loja.v) + ' mais caro que na loja.'
+        : net.frete ? 'Com o frete de ' + brl.format(net.frete) + ', o online sai ' + brl.format(net.v - loja.v) + ' mais caro.'
         : 'Mesmo com frete grátis, o online sai ' + brl.format(net.v - loja.v) + ' mais caro que na loja.';
     }
     return '<div class="i-online">' + chip + '<p>' + esc(linha) + '</p>' + (nota ? '<p class="i-nota">' + esc(nota) + '</p>' : '') + '</div>';
@@ -1764,11 +1814,11 @@ h3{font-size:13px;font-weight:600}
   function igualQ(a, b){ return Math.abs(a - b) <= b * 0.01; }
   function opcoesTamanho(info, p){
     var q0 = Number(info.base.quantidade), ops = [];
-    p.forEach(function(y){ ops.push({id:y.id, q:q0, total:y.v, preco:y.online ? y.preco : y.v, frete:y.online ? y.frete : 0, online:!!y.online, prazo:y.prazo, emb:'', link:y.link || '', obs:y.obs || ''}); });
+    p.forEach(function(y){ ops.push({id:y.id, q:q0, total:y.v, preco:y.online ? y.preco : y.v, frete:y.online ? y.frete : 0, carrinho:!!y.carrinho, online:!!y.online, prazo:y.prazo, emb:'', link:y.link || '', obs:y.obs || ''}); });
     arr(info.tamanhos).forEach(function(t){
       var q = Number(t.quantidade), pr = Number(t.preco), fr = Number(t.frete) || 0;
       if (!(q > 0 && pr > 0) || !G[t.rede] || !catAtiva(t.rede) || !acompanha(t.rede)) return;
-      ops.push({id:t.rede, q:q, total:Math.round((pr + fr) * 100) / 100, preco:pr, frete:fr, online:t.frete != null, prazo:t.prazo_dias == null ? null : Number(t.prazo_dias), emb:t.embalagem || '', link:t.fonte || ''});
+      ops.push({id:t.rede, q:q, total:Math.round((pr + fr) * 100) / 100, preco:pr, frete:fr, carrinho:t.frete === null || !!t.carrinho, online:'frete' in t, prazo:t.prazo_dias == null ? null : Number(t.prazo_dias), emb:t.embalagem || '', link:t.fonte || ''});
     });
     return ops;
   }
@@ -1784,7 +1834,7 @@ h3{font-size:13px;font-weight:600}
     return m;
   }
   function comoTxt(j, b){ return j.n === 1 ? (j.o.emb || medidaTxt(j.o.q, b)) : j.n + ' × ' + medidaTxt(j.o.q, b); }
-  function ondeTxt(o){ return G[o.id].nome + (o.online ? (o.frete ? ', com frete' : ', frete grátis') : ''); }
+  function ondeTxt(o){ return G[o.id].nome + (o.online ? ',' + freteTxt(o, true) : ''); }
   function melhorTamanho(it, r, p){
     var info = itemDe(it.produto);
     if (!info || !info.base || !arr(info.tamanhos).length) return null;
@@ -1811,7 +1861,7 @@ h3{font-size:13px;font-weight:600}
     var economia = function(j){ return Math.round((noRef(j.Q).total - j.total) * 100) / 100; };
     var vale = function(j){ return j !== ref && economia(j) >= Math.max(2, noRef(j.Q).total * 0.05); };
     var det = ops.slice().sort(function(x, y){ return x.total / x.q - y.total / y.q; }).slice(0, 8).map(function(o, i){
-      return '<li' + (i === 0 ? ' class="top"' : '') + '>' + abreLink(linkCompra(o.id, o.obs || (it.produto + (o.emb ? ' ' + o.emb : '')), o.link), 'tam-a', '<b>' + esc(o.emb || medidaTxt(o.q, b)) + '</b><span>' + esc(G[o.id].curto) + '</span><span>' + brl.format(o.total) + (o.online ? (o.frete ? ' com frete' : ' frete grátis') : '') + '</span><span class="pu">' + esc(porUn(o.total, o.q, b)) + '</span>') + '</li>';
+      return '<li' + (i === 0 ? ' class="top"' : '') + '>' + abreLink(linkCompra(o.id, o.obs || (it.produto + (o.emb ? ' ' + o.emb : '')), o.link), 'tam-a', '<b>' + esc(o.emb || medidaTxt(o.q, b)) + '</b><span>' + esc(G[o.id].curto) + '</span><span>' + brl.format(o.total) + (o.online ? freteTxt(o, true) : '') + '</span><span class="pu">' + esc(porUn(o.total, o.q, b)) + '</span>') + '</li>';
     }).join('');
     var chip, linha, nota = [], eco = 0, dica = null, principal = false;
     if (best !== ref && vale(best)){
@@ -1890,7 +1940,7 @@ h3{font-size:13px;font-weight:600}
           + (x.r.txt ? '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>' : '')
           + '<div class="i-best"><span class="lbl">Sem preço ainda</span>'
           + (procurou ? '<span class="i-wait">A última busca não achou.</span>' : '')
-          + '<button type="button" class="ghost ic-btn i-busca so-ia" data-buscaitem="' + x.i + '"' + (buscando ? ' disabled' : '') + '><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>' + (buscando ? 'Buscando…' : 'Buscar este item') + '</button></div>'
+          + '<button type="button" class="ghost ic-btn i-busca" data-buscaitem="' + x.i + '"' + (buscando ? ' disabled' : '') + '><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>' + (buscando ? 'Buscando…' : 'Buscar este item') + '</button></div>'
           + acoes + '</div></li>';
       }
       var best = p[0], max = p[p.length - 1].v, conta = {}, mt = melhorTamanho(x.it, x.r, p), dc = mt && mt.principal ? mt.dica : null;
@@ -1903,11 +1953,15 @@ h3{font-size:13px;font-weight:600}
             + '<p class="i-avulso num">Avulso, o mais barato: <b>' + brl.format(best.v) + '</b> (' + abreLink(linkCompra(best.id, best.obs || x.it.produto, best.link), 'i-txtlink', esc(G[best.id].nome)) + ')</p>'
           : abreLink(linkCompra(best.id, best.obs || x.it.produto, best.link), 'i-best i-link', '<span class="lbl">Mais barato</span><span class="por num">' + brl.format(best.v) + '</span><span class="i-store">' + esc(G[best.id].nome) + ' <span class="chip">' + esc(G[best.id].singular) + '</span>' + (best.clube ? ' <span class="chip selo">Clube</span>' : '') + '</span>' + setaLink(linkCompra(best.id, '', best.link)))
             + (best.obs && !best.online ? '<p class="i-avulso">Produto: ' + esc(best.obs) + '</p>' : ''))
-        + (p.length > 1 ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li>' + abreLink(linkCompra(y.id, y.obs || x.it.produto, y.link), 'i-chip', '<span class="ic-n">' + esc(G[y.id].curto) + '</span><b>' + brl.format(y.v) + '</b>' + (y.online && y.frete ? '<small>c/ frete</small>' : '') + (y.clube ? '<small>clube</small>' : '')) + '</li>'; }).join('') + '</ul>' : '')
+        + (p.length > 1 ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li>' + abreLink(linkCompra(y.id, y.obs || x.it.produto, y.link), 'i-chip', '<span class="ic-n">' + esc(G[y.id].curto) + '</span><b>' + brl.format(y.v) + '</b>' + (y.online && y.carrinho ? '<small>+ frete</small>' : y.online && y.frete ? '<small>c/ frete</small>' : '') + (y.clube ? '<small>clube</small>' : '')) + '</li>'; }).join('') + '</ul>' : '')
         + dicaClube(p, best)
         + detalhesCompra(x, p, dc, mt)
-        + acoes + '<span class="i-foot">Em ' + onde + '</span></div></li>';
+        + acoes + '<span class="i-foot">Em ' + onde + quandoPrecos(p) + '</span></div></li>';
     }).join('');
+  }
+  function quandoPrecos(p){
+    var em = p.map(function(y){ return y.em || ''; }).filter(Boolean).sort();
+    return em.length ? ' · preços de ' + quandoCurto(em[em.length - 1]) : '';
   }
   // online ou na loja e os tamanhos: recolhidos, como o Comparar tamanhos; o dia a dia é a Melhor compra, acima
   var DET_ABERTO = {};
@@ -2419,7 +2473,7 @@ h3{font-size:13px;font-weight:600}
     Object.keys(porNet).forEach(function(id){
       var its = porNet[id], sub = its.reduce(function(s, z){ return s + z.y.v; }, 0), prazo = Math.max.apply(null, its.map(function(z){ return z.y.prazo || 0; }));
       lis.push('<li class="parada"><div class="parada-h"><span class="chip">Online</span><b>' + esc(G[id].nome) + '</b><span class="sub num">' + (prazo ? 'chega em ' + prazo + (prazo > 1 ? ' dias' : ' dia') + ' · ' : '') + brl.format(sub) + '</span></div>'
-        + '<ul>' + its.map(function(z){ return '<li><span>' + esc(z.x.it.produto) + '</span><span class="num">' + brl.format(z.y.v) + (z.y.frete ? ' c/ frete' : '') + '</span></li>'; }).join('') + '</ul></li>');
+        + '<ul>' + its.map(function(z){ return '<li><span>' + esc(z.x.it.produto) + '</span><span class="num">' + brl.format(z.y.v) + (z.y.carrinho ? ' + frete' : z.y.frete ? ' c/ frete' : '') + '</span></li>'; }).join('') + '</ul></li>');
     });
     h += '<ol class="paradas">' + lis.join('') + '</ol>';
     if (n) h += '<p class="hint">Ordem sugerida: da loja mais perto para a mais longe.</p><div class="row-form"><a class="ghost big" href="' + esc(linkRota(pl.ids)) + '" target="_blank" rel="noopener">Abrir rota no Maps</a></div>';
@@ -2538,7 +2592,7 @@ h3{font-size:13px;font-weight:600}
           + '<label class="track"><input type="checkbox" data-rede="' + l.rede + '"' + (on ? ' checked' : '') + '><span class="r-name">' + esc(G[l.rede].nome) + '</span></label>'
           + '<span class="r-val num">' + km(l.distancia_km) + '</span>'
           + '<span class="r-sub"><span>' + esc(txt) + '</span>' + (l.endereco ? '<span>' + esc(l.endereco) + '</span>' : '') + arr(l.fontes).map(function(f){ return '<span class="src">' + esc(f) + '</span>'; }).join('')
-          + (l.encarte_auto ? '<span>Encarte lido do site ' + esc(host(l.site)) + '</span>' : '') + avisoSemPreco(c, l) + '</span>'
+          + (l.encarte_auto ? '<span>Encarte lido do site ' + esc(host(l.site)) + '</span>' : '') + (l.folheto ? '<span>Folheto da semana</span>' : '') + avisoSemPreco(c, l) + '</span>'
           + (siteAberto === l.rede ? '<form class="site-form" novalidate data-site-form="' + esc(l.rede) + '" data-cat="' + c.id + '"><input class="field" type="url" inputmode="url" value="' + esc(l.site || '') + '" placeholder="Endereço da página de ofertas" aria-label="Site de ofertas de ' + esc(G[l.rede].nome) + '"><button class="btn" type="submit">Salvar</button><button type="button" class="ghost big" data-site-fecha="1">Cancelar</button></form>' : '')
           + '</li>';
       });
@@ -2546,6 +2600,12 @@ h3{font-size:13px;font-weight:600}
         if (a.categoria !== c.id) return;
         rows.push('<li class="row"><span class="r-name">' + esc(a.nome) + '</span><button type="button" class="rm" data-loja="' + i + '">remover</button><span class="r-sub"><span>Adicionada por você · ' + (a.site ? 'o encarte de ' + esc(host(a.site)) + ' é lido a cada busca' : 'entra na próxima busca') + '</span></span></li>');
       });
+      if (c.id === 'online'){
+        var lr = arr(c.lojas).slice().sort(function(a, b){ return dist(a) - dist(b); }).map(function(l){ return regional(l.rede); });
+        var mk = rows.filter(function(_, i){ return !lr[i]; }), rg = rows.filter(function(_, i){ return lr[i]; });
+        return '<div class="group"><h3>' + esc(c.nome) + '</h3><ul class="rows">' + mk.join('') + '</ul></div>'
+          + (rg.length ? '<div class="group"><h3>Mercados da região que entregam</h3><ul class="rows">' + rg.join('') + '</ul></div>' : '');
+      }
       return '<div class="group"><h3>' + esc(c.nome) + '</h3><ul class="rows">' + rows.join('') + '</ul></div>';
     }).join('');
     $('novaLojaCat').innerHTML = ativas.map(function(c){ return '<option value="' + c.id + '">' + esc(c.singular) + '</option>'; }).join('');
@@ -2555,6 +2615,7 @@ h3{font-size:13px;font-weight:600}
     var man = siteManual(G[l.rede].nome);
     if (man) return '<span class="chip warn">Sem preços</span><span>O site ' + esc(host(man.site)) + ' entra na próxima busca</span>';
     return '<span class="chip warn">Sem preços</span>' + (l.site_sem_encarte ? '<span>Não achei encarte em ' + esc(host(l.site)) + '</span>' : '')
+      + (temFolheto(G[l.rede].nome) ? '<span>O folheto entra na próxima busca</span>' : '<button type="button" class="linkbtn so-ia" data-folheto="' + esc(G[l.rede].nome) + '">Ler folheto</button>')
       + '<button type="button" class="linkbtn" data-site="' + esc(l.rede) + '">Adicionar site de ofertas</button>';
   }
   function salvaSite(rid, cat, url){
@@ -2802,26 +2863,27 @@ h3{font-size:13px;font-weight:600}
     $('usarIA').checked = on; $('iaDet').hidden = !on;
     $('usarIATxt').textContent = on
       ? 'Ligado: a busca de ofertas, a leitura de fotos e mensagens, os cupons por print e o Falar usam a IA do Home Assistant.'
-      : 'Desligado: somem o Buscar, a leitura de fotos e mensagens, os cupons por print e o Falar. A lista, o ritmo de compra e os preços que já vieram continuam. Vale para todos os aparelhos.';
+      : 'Desligado: o Buscar usa só os sites das lojas, a Shopee e os folhetos já lidos, sem IA. Somem a leitura de fotos e mensagens, os cupons por print e o Falar. Vale para todos os aparelhos.';
     $('sensores').checked = estado.sensores;
     $('sensoresTxt').innerHTML = estado.sensores
       ? 'Ligado: o app cria o <code>sensor.economia_ia_hoje</code> (as chamadas de IA de hoje, com os detalhes nos atributos) e atualiza a cada chamada.'
       : 'Desligado: o app não cria sensores no Home Assistant, e apaga o que tinha criado.';
     $('opItens').checked = estado.opcoes.itens_sem_preco; $('opEncartes').checked = estado.opcoes.encartes_auto;
-    $('opDiretas').checked = estado.opcoes.lojas_diretas;
+    $('opDiretas').checked = estado.opcoes.lojas_diretas; $('opFolhetos').checked = estado.opcoes.folhetos;
+    $('onEntrega').checked = estado.online.mercados_entrega;
   }
   // lojas com busca direta: se atendem o CEP e qual loja
   var DIRETAS = null;
   function carregaDiretas(){
     var el = $('opDiretasSt');
-    if (MODO !== 'addon'){ el.className = 'ia-st ok'; el.textContent = 'No Home Assistant, aqui aparece qual loja do Giassi e do Angeloni atende o seu CEP.'; return; }
+    if (MODO !== 'addon'){ el.className = 'ia-st ok'; el.textContent = 'No Home Assistant, aqui aparece qual loja de cada mercado atende o seu CEP.'; return; }
     if (!estado.cep){ el.className = 'ia-st'; el.textContent = 'Salve o CEP em Mais › Casa para ver as lojas.'; return; }
     el.className = 'ia-st'; el.textContent = 'Verificando as lojas do seu CEP…';
     fetch('api/lojas-diretas', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
       DIRETAS = arr(j.lojas);
       var ok = DIRETAS.filter(function(l){ return l.atende; });
       el.className = 'ia-st' + (ok.length ? ' ok' : '');
-      el.textContent = DIRETAS.map(function(l){ return l.nome + ': ' + (l.atende ? (l.loja ? 'loja ' + l.loja : 'atende o seu CEP') : l.atende === false ? 'não atende o seu CEP' : 'sem resposta agora'); }).join(' · ') + '.';
+      el.textContent = DIRETAS.map(function(l){ return l.nome + ': ' + (l.paginas ? 'pelas páginas de produto' : l.atende ? (l.loja ? 'loja ' + l.loja : 'atende o seu CEP') : l.atende === false ? 'não atende o seu CEP' : 'sem resposta agora'); }).join(' · ') + '.';
     }).catch(function(){ el.className = 'ia-st'; el.textContent = 'Não consegui verificar as lojas agora.'; });
   }
   $('usarIA').addEventListener('change', function(){
@@ -2836,6 +2898,86 @@ h3{font-size:13px;font-weight:600}
   $('opItens').addEventListener('change', function(){ estado.opcoes.itens_sem_preco = this.checked; salvar('Opção salva'); });
   $('opEncartes').addEventListener('change', function(){ estado.opcoes.encartes_auto = this.checked; salvar('Opção salva'); });
   $('opDiretas').addEventListener('change', function(){ estado.opcoes.lojas_diretas = this.checked; salvar(this.checked ? 'Busca direta ligada' : 'Busca direta desligada'); });
+  $('opFolhetos').addEventListener('change', function(){ estado.opcoes.folhetos = this.checked; salvar(this.checked ? 'Folhetos ligados' : 'Folhetos desligados'); });
+  $('onEntrega').addEventListener('change', function(){ estado.online.mercados_entrega = this.checked; salvar(this.checked ? 'Mercados que entregam: ligado' : 'Mercados que entregam: desligado'); });
+
+  // ----- folhetos de encarte: lojas escolhidas e como foi a última leitura -----
+  var FOLHETOS = null;
+  function temFolheto(nome){ return estado.lojas.folhetos.some(function(f){ return norm(f.nome) === norm(nome); }); }
+  function carregaFolhetos(){
+    if (MODO !== 'addon'){ pintaFolhetos(); return; }
+    fetch('api/folhetos', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){ FOLHETOS = arr(j.lojas); pintaFolhetos(); }).catch(function(){ pintaFolhetos(); });
+  }
+  function statusFolheto(nome){
+    var x = arr(FOLHETOS).filter(function(f){ return norm(f.nome) === norm(nome); })[0], st = x && x.status;
+    if (!st) return 'Entra na próxima busca.';
+    if (st.erro) return st.erro;
+    var n = st.lidos + st.guardados;
+    return st.fonte + ' · ' + n + (n === 1 ? ' folheto' : ' folhetos') + ', ' + st.ofertas + (st.ofertas === 1 ? ' oferta' : ' ofertas') + (st.ate ? ', até ' + dataBR(st.ate) : '') + ' · ' + quandoCurto(st.em);
+  }
+  function pintaFolhetos(){
+    var l = estado.lojas.folhetos;
+    $('folLista').innerHTML = l.length ? l.map(function(f, i){
+      return '<li class="row cup-row"><span class="r-name">' + esc(f.nome) + '<small>' + esc(statusFolheto(f.nome)) + '</small></span><span class="r-sub"><button type="button" class="rm" data-folrm="' + i + '">remover</button></span></li>';
+    }).join('') : '<li class="empty">Nenhuma loja ainda. Adicione o Komprão, o Atacadão ou outra loja sem site de ofertas.</li>';
+  }
+  function addFolheto(nome){
+    nome = String(nome || '').trim();
+    if (!nome){ $('folMsg').textContent = 'Escreva o nome da loja.'; return false; }
+    if (temFolheto(nome)){ $('folMsg').textContent = nome + ' já está na lista.'; return false; }
+    if (estado.lojas.folhetos.length >= 4){ $('folMsg').textContent = 'Até 4 lojas. Remova uma para adicionar outra.'; return false; }
+    estado.lojas.folhetos.push({nome:nome, categoria:'mercados'});
+    salvar('Folheto de ' + nome + ': entra na próxima busca'); pintaFolhetos(); pintaLojas(); $('folMsg').textContent = '';
+    return true;
+  }
+  $('folAdd').addEventListener('submit', function(e){ e.preventDefault(); if (addFolheto($('folNome').value)) $('folNome').value = ''; });
+  $('folLista').addEventListener('click', function(e){
+    var b = e.target.closest('[data-folrm]'); if (!b) return;
+    var f = estado.lojas.folhetos.splice(Number(b.dataset.folrm), 1)[0];
+    salvar('Folheto de ' + f.nome + ' removido'); pintaFolhetos(); pintaLojas();
+  });
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('[data-folheto]'); if (!b) return;
+    if (b.dataset.folheto) addFolheto(b.dataset.folheto);
+    irParaAba('lojas', 'h-folhetos');
+    if (!b.dataset.folheto) $('folNome').focus();
+  });
+
+  // ----- Shopee Afiliados: o App ID aparece; a senha fica só no Home Assistant -----
+  function shSt(msg, ok){ var el = $('shSt'); el.className = 'ia-st' + (ok === true ? ' ok' : ok === false ? ' erro' : ''); el.textContent = msg; }
+  function carregaShopee(){
+    if (MODO !== 'addon'){ shSt('No Home Assistant, aqui você liga a Shopee com o App ID e a senha.'); return; }
+    fetch('api/integracoes', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
+      var sh = j.shopee || {};
+      $('shApp').value = sh.app_id || '';
+      $('shSenha').value = ''; $('shSenha').placeholder = sh.tem_senha ? 'Guardada. Deixe em branco para manter' : '';
+      $('shApagar').hidden = !sh.app_id;
+      shSt(sh.app_id && sh.tem_senha ? 'Ligada. Os preços da Shopee vêm direto da Shopee.' : 'Desligada: a Shopee entra pela busca com IA.', sh.app_id && sh.tem_senha ? true : null);
+    }).catch(function(){ shSt('Não consegui ler agora.'); });
+  }
+  function testaShopee(){
+    shSt('Testando com a Shopee…');
+    fetch('api/integracoes/testar', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({servico:'shopee'})})
+      .then(function(r){ return r.json(); }).then(function(j){ shSt(j.msg || 'Sem resposta.', !!j.ok); }).catch(function(){ shSt('Sem conexão com o Home Assistant.', false); });
+  }
+  $('shSalvar').addEventListener('click', function(){
+    if (MODO !== 'addon'){ toast('Só no Home Assistant'); return; }
+    var app = $('shApp').value.replace(/\s/g, ''), senha = $('shSenha').value.trim();
+    if (!app){ shSt('Escreva o App ID.', false); return; }
+    fetch('api/integracoes', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({shopee:{app_id:app, secret:senha}})})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+      .then(function(x){
+        if (!x.ok){ shSt(x.j.erro || 'Não deu para salvar.', false); return; }
+        $('shSenha').value = ''; $('shSenha').placeholder = x.j.shopee.tem_senha ? 'Guardada. Deixe em branco para manter' : '';
+        $('shApagar').hidden = false;
+        if (x.j.shopee.tem_senha) testaShopee(); else shSt('Falta a senha.', false);
+      }).catch(function(){ shSt('Sem conexão com o Home Assistant.', false); });
+  });
+  $('shTestar').addEventListener('click', function(){ if (MODO === 'addon') testaShopee(); else toast('Só no Home Assistant'); });
+  $('shApagar').addEventListener('click', function(){
+    fetch('api/integracoes', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({shopee:null})})
+      .then(function(){ toast('Chaves da Shopee apagadas'); carregaShopee(); }).catch(function(){ toast('Sem conexão com o Home Assistant.'); });
+  });
 
   // ----- Versões anteriores: as 3 cópias mais recentes do config.json -----
   function guardarVersao(motivo){
@@ -3161,8 +3303,8 @@ h3{font-size:13px;font-weight:600}
     var h = '<div class="side-brand">' + ICONE_APP + 'Econom<span>IA</span></div><nav class="side-nav" aria-label="Telas">'
       + link('lista', acab ? '<span class="side-badge" title="' + acab + (acab > 1 ? ' itens acabando' : ' item acabando') + '">' + acab + '</span>' : estado.lista.length ? '<span class="sl-num">' + estado.lista.length + '</span>' : '')
       + link('roteiro') + link('ofertas', total ? '<span class="sl-num">' + total + '</span>' : '') + link('mais') + '</nav>'
-      + '<button type="button" class="side-busca so-ia" data-lado="buscar"' + (BUSCANDO ? ' disabled' : '') + '>' + svgL('busca') + '<span>' + (BUSCANDO ? 'Buscando…' : 'Buscar ofertas') + '</span></button>'
-      + '<p class="side-sync so-ia">' + (exemplo ? 'Exemplo: toque em Buscar no Home Assistant' : 'Última busca ' + esc(quandoCurto(D.gerado_em))) + '</p>';
+      + '<button type="button" class="side-busca" data-lado="buscar"' + (BUSCANDO ? ' disabled' : '') + '>' + svgL('busca') + '<span>' + (BUSCANDO ? 'Buscando…' : 'Buscar ofertas') + '</span></button>'
+      + '<p class="side-sync">' + (exemplo ? 'Exemplo: toque em Buscar no Home Assistant' : 'Última busca ' + esc(quandoCurto(D.gerado_em))) + '</p>';
     if (cats.length) h += '<div class="side-h"><span>Ofertas</span><small>' + total + '</small></div><div class="side-lista">' + cats.map(function(c){
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';

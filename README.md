@@ -35,10 +35,10 @@ Para buscar ofertas, o app usa a IA do seu Home Assistant (Anthropic, OpenAI, Go
 - **Minha lista** única para farmácias, mercados, pet shops e online, com o ritmo de compra de cada item ("deve acabar em 6 dias").
 - **Melhor tamanho**: compara o preço por litro, quilo ou unidade (1 L, galão de 5 L, 5 × 1 L, kits online com frete) e diz quanto tempo dura no seu ritmo.
 - **Roteiro de compras**: diga em até quantas lojas topa parar e o app testa as combinações, mostra onde comprar cada item, a ordem e a rota no Maps.
-- **Busca direta** no site do Giassi e do Angeloni, com o preço da loja do seu CEP, sem login e sem gastar IA.
+- **Primeiro o que não gasta IA**: preço direto no site dos mercados que permitem (Giassi, Angeloni e outros testados sozinhos), páginas de produto de sites como o do Bistek, Shopee pela API de afiliados e folhetos do Kimbino e do Seus Folhetos lidos uma vez por semana. A IA entra por último.
 - **Ofertas e cupons** das lojas perto do seu CEP, com o motivo de cada destaque e o botão "Não mostrar".
 - **Encartes dos sites**: abre a página de ofertas do mercado do bairro, lê o encarte (imagem ou PDF) com IA e traz os preços. Loja sem preço aparece marcada, com atalho para adicionar o site.
-- **Online**: iFood, Rappi, Mercado Livre, Amazon e outros, com frete ou taxa de entrega somados e as assinaturas (Prime, Meli+, Clube iFood).
+- **Online**: iFood, Rappi, Mercado Livre, Amazon e outros, com frete ou taxa de entrega somados e as assinaturas (Prime, Meli+, Clube iFood), e os mercados da região que entregam no seu CEP, separados.
 - **Clubes**: marque "Sou do clube" e o preço de clube entra nas contas. Cupons da carteira do app entram por print.
 - **Leitura por IA**: prints, lista escrita à mão ou mensagem do WhatsApp viram itens da lista. Você confere antes de adicionar.
 - **Falar**: o microfone no alto da tela; o Home Assistant transcreve e a IA separa os itens para você conferir.

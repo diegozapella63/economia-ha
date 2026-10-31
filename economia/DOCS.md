@@ -82,6 +82,25 @@ A busca na web lê texto; muitos mercados do bairro publicam as ofertas como **i
 
 As ofertas de encarte aparecem com o rótulo "Encarte" e a validade, e os preços entram na comparação da lista e no roteiro.
 
+## Primeiro o que não gasta IA
+
+A busca começa pelo que não gasta IA e só chama a IA para o que faltar:
+
+1. **Site das lojas.** O site de cada mercado cadastrado ou achado na busca é testado uma vez por semana. Se a loja usa VTEX e o robots.txt permite, o preço vem direto da loja que atende o seu CEP (Giassi, Angeloni e outros). Se o site não deixa programas usarem a busca, mas libera as páginas de produto (como o Bistek), o EconomIA baixa uma vez por dia a lista de produtos que a loja publica, acha os itens da sua lista pelo nome e lê o preço na página de cada produto. Esse é o preço padrão do site, que pode variar de loja para loja. O EconomIA não dribla bloqueio de site.
+2. **Shopee**, pela Open API do Shopee Afiliados, se você ligou em Mais › Integrações.
+3. **Folhetos já lidos** (veja abaixo).
+4. **IA**: busca na web para as outras lojas, ofertas e cupons, avisada das lojas que já têm preço.
+
+Com a IA desligada, o Buscar faz só os passos 1 a 3.
+
+## Folhetos de encarte
+
+Para mercados sem site de ofertas, como Komprão e Atacadão: em **Mais › Lojas › Folhetos de encarte**, adicione a loja (até 4). A cada busca, o EconomIA procura o folheto da semana no Kimbino e no Seus Folhetos. A IA de fotos lê cada folheto uma vez, e as ofertas ficam guardadas até ele vencer. Os itens da sua lista que aparecem no folheto ganham preço, inclusive os que você adicionar depois, sem IA. Quando a loja tem vários folhetos regionais (o Atacadão tem um por região), a IA olha só a capa de cada um e escolhe os que valem para a sua cidade.
+
+## Shopee Afiliados
+
+Em **Mais › Integrações › Shopee Afiliados**, informe o App ID e a senha (Secret) da Open API, que você pega em affiliate.shopee.com.br › Open API. Toque em **Salvar e testar**. A partir daí, os preços da Shopee vêm direto da Shopee, sem IA, com o link do produto. A Shopee não informa o frete antes do carrinho, então o preço aparece com "+ frete". As chaves ficam só no Home Assistant, em `segredos.json`, e a senha não aparece de novo no painel.
+
 ## Compras online
 
 A aba **Online** compara iFood, Rappi, Mercado Livre, Amazon e outros que você marcar em **Mais › Lojas › Compras online**. Marque também as assinaturas que dão frete grátis (Amazon Prime, Meli+, Clube iFood).
@@ -92,6 +111,8 @@ A aba **Online** compara iFood, Rappi, Mercado Livre, Amazon e outros que você 
 - Prime e Meli+ dão frete grátis só nos produtos elegíveis (na Amazon, os com selo Prime). O frete de cada item já vem com a assinatura considerada.
 - Na Minha lista, cada item mostra se **compensa pedir** ou se é melhor **comprar na loja**. Se o pedido chegaria depois de o item acabar, o EconomIA sugere comprar na loja agora e diz até quando pedir da próxima vez.
 - Só entram lojas oficiais ou vendedores bem avaliados. Importados ficam marcados, e remédios de receita ficam só nas farmácias.
+- **Mercados da região que entregam** (ligado em Mais › Lojas › Compras online): mercados fora do raio que vendem pelo site ou app e entregam no seu CEP, como o Bistek, aparecem em Online, separados dos marketplaces. Quando a taxa só aparece no carrinho, o preço vem com "+ frete".
+- **De quando é o preço**: o cartão mostra a hora dos preços. Preço da busca na web aparece marcado para você conferir no link: a Amazon, por exemplo, muda o preço várias vezes por dia, e o Google Shopping costuma estar atrasado.
 
 ## Lista por voz
 

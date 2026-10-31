@@ -20,6 +20,10 @@ Rotas:
 - POST /api/voz   áudio PCM 16 kHz, 16 bits, mono → {"texto"} pela fala para texto do Home Assistant
 - GET  /api/versoes   cópias anteriores do config.json (as 3 mais recentes)
 - GET  /api/lojas-diretas   lojas com busca direta no site (Giassi, Angeloni) e se atendem o CEP
+- GET  /api/integracoes   Shopee Afiliados: App ID e se a senha está guardada (a senha nunca sai daqui)
+- PUT  /api/integracoes   {"shopee": {"app_id", "secret"}} guarda em segredos.json; {"shopee": null} apaga
+- POST /api/integracoes/testar   {"servico": "shopee"} faz uma consulta de teste
+- GET  /api/folhetos   lojas com folheto lido no Kimbino ou no Seus Folhetos e como foi a última leitura
 - POST /api/ler-encarte   {"imagens": [...], "loja", "categoria"}: a IA lê o encarte ou o print de preços e junta ao resultado
 - POST /api/versoes/guardar {"motivo"} | /api/versoes/restaurar {"nome"}
 - GET  /api/busca    andamento da busca
@@ -34,6 +38,8 @@ Rotas:
 Só usa a biblioteca padrão do Python.
 """
 import base64
+import gzip
+import hashlib
 import html as html_mod
 import io
 import json
@@ -64,6 +70,10 @@ VERSOES = os.path.join(DATA, "versoes")
 MAX_VERSOES = 3
 INTERVALO_VERSAO = 600  # uma cópia a cada 10 minutos de uso, no máximo
 SYNC_FILE = os.path.join(DATA, "sync_ha.json")
+SEGREDOS = os.path.join(DATA, "segredos.json")  # chaves das integrações: não vão para o painel, para o HA nem para as versões
+FOLHETOS = os.path.join(DATA, "folhetos.json")  # folhetos já lidos, guardados até vencer
+SHOPEE_API = os.environ.get("OFERTAS_SHOPEE_API", "https://open-api.affiliate.shopee.com.br/graphql")
+FOLHETOS_TESTE = os.environ.get("OFERTAS_FOLHETOS_TESTE")  # só para testes: um servidor falso no lugar dos sites de encartes
 SYNC_INTERVALO = int(os.environ.get("OFERTAS_SYNC_SEG", "60"))
 ESPERA_COTA = int(os.environ.get("OFERTAS_ESPERA_COTA", "60"))
 AUTO_ENCARTES = int(os.environ.get("OFERTAS_AUTO_ENCARTES", "2"))  # sites lidos sozinhos por busca
@@ -182,6 +192,13 @@ def frete_ok(v):
     return n if n >= 0 else None
 
 
+def frete_item(v):
+    """Frete de um preço online: número, ou "carrinho" quando a loja só mostra a taxa no carrinho. None: sem frete."""
+    if isinstance(v, str) and norm(v) in ("carrinho", "no carrinho", "a ver", "a confirmar", "frete no carrinho"):
+        return "carrinho"
+    return frete_ok(v)
+
+
 def inteiro(v):
     try:
         n = int(round(float(v)))
@@ -292,7 +309,7 @@ def nome_item(i):
 
 
 IA_DESLIGADA = "A IA está desligada. Para usar, ligue em Mais › Integrações › Usar IA."
-OPCOES_PADRAO = {"itens_sem_preco": True, "encartes_auto": True, "lojas_diretas": True}
+OPCOES_PADRAO = {"itens_sem_preco": True, "encartes_auto": True, "lojas_diretas": True, "folhetos": True}
 
 
 def ia_ligada(cfg=None):
@@ -862,25 +879,81 @@ APPS_TXT = ("No iFood e no Rappi, procure mercados, farmácias e pet shops que e
             "o pedido mínimo do benefício em \"obs\". O preço no app pode ser diferente do preço no balcão: use o do app.")
 
 
+def entrega_ligada(cfg):
+    return (cfg.get("online") or {}).get("mercados_entrega") is not False
+
+
+def mkts_online(cfg):
+    """Marketplaces que a IA procura (a Shopee sai quando vem pela API)."""
+    ids = (cfg.get("online") or {}).get("marketplaces") or ["mercadolivre", "amazon"]
+    if shopee_pronta():
+        ids = [m for m in ids if m != "shopee"]
+    return [MARKETPLACES.get(m, m) for m in ids]
+
+
+def lojas_perto(cfg):
+    """Lojas físicas do raio que a última busca achou, para a parte online não repetir."""
+    of = ler_json(OFERTAS, {}) or {}
+    try:
+        raio = float(cfg.get("raio_km") or 2)
+    except (TypeError, ValueError):
+        raio = 2.0
+    out = []
+    for c in of.get("categorias") or []:
+        if not isinstance(c, dict) or c.get("id") == "online":
+            continue
+        nomes = {r.get("id"): r.get("nome") for r in c.get("redes") or [] if isinstance(r, dict)}
+        for l in c.get("lojas") or []:
+            d = l.get("distancia_km") if isinstance(l, dict) else None
+            if isinstance(d, (int, float)) and d <= raio and nomes.get(l.get("rede")):
+                out.append(nomes[l["rede"]])
+    return sorted(set(out))[:20]
+
+
+def entrega_txt(cfg):
+    if not entrega_ligada(cfg):
+        return ""
+    tipos = [CATEGORIAS[c]["o_que"].split(",")[0] for c in (cfg.get("categorias") or list(CATEGORIAS)) if c in CATEGORIAS and c != "online"]
+    perto = lojas_perto(cfg)
+    return (f"Mercados que entregam: procure também {', '.join(tipos) or 'supermercados'} da cidade e da região, inclusive fora do raio de "
+            f"{cfg.get('raio_km') or 2} km, que vendem pelo site ou app próprio com entrega neste CEP (redes regionais com loja online). "
+            "Em \"rede\", só o nome da loja, sem \"online\" ou \"delivery\". \"frete\" é a taxa de entrega para este CEP; se o site só mostra "
+            "a taxa no carrinho, use \"frete\": \"carrinho\" e escreva em \"obs\" a regra que achar (por exemplo \"frete grátis acima de R$ 550\"). "
+            "\"prazo_dias\" é 0 para entrega no mesmo dia."
+            + (f" Não precisa trazer estas lojas, que ficam perto e já são buscadas: {', '.join(perto)}." if perto else ""))
+
+
+def ja_tenho_txt(cfg, cat_id):
+    ja = (cfg.get("_ja_tenho") or {}).get(cat_id) or []
+    return (f"Os preços da lista destas lojas já vieram direto do site delas: {', '.join(ja)}. "
+            "Não traga preços da lista dessas lojas; procure as outras.") if ja else ""
+
+
+PAGINA_PRODUTO = ("Na Amazon, no Mercado Livre e nos outros marketplaces, use o preço da página do produto (o do botão de comprar), "
+                  "não o do Google Shopping, que costuma estar desatualizado.")
+
+
 def instrucoes_online(cfg):
     casa, excluir, restr, interesses = descreve_casa(cfg)
     on = cfg.get("online") or {}
-    mkts = [MARKETPLACES.get(m, m) for m in (on.get("marketplaces") or ["mercadolivre", "amazon"])]
+    mkts = mkts_online(cfg)
     assin = [ASSINATURAS.get(a, a) for a in (on.get("assinaturas") or [])]
     lista = itens_prompt(cfg)
-    return f"""Encontre preços válidos hoje ({hoje_br()}) em {', '.join(mkts)} para entrega no CEP {cfg.get('cep')}, no Brasil.
+    return f"""Encontre preços válidos hoje ({hoje_br()}) {('em ' + ', '.join(mkts)) if mkts else 'em lojas online'} para entrega no CEP {cfg.get('cep')}, no Brasil.
 
 Use a busca na web agora. Use só o que encontrar nas páginas: não invente produtos, preços, fretes nem prazos. Se não conseguir usar a busca na web, responda apenas {{"erro": "sem_busca"}}.
 
 Assinaturas do morador: {', '.join(assin) or 'nenhuma'}. Quando a assinatura der frete grátis no item, use frete 0.
 {APPS_TXT if any(m in (on.get("marketplaces") or []) for m in ("ifood", "rappi")) else ""}
+{entrega_txt(cfg)}
+{ja_tenho_txt(cfg, "online")}
 Casa: {casa}.
 Não traga: {', '.join(excluir) or 'nada a excluir'}.
 Restrições: {', '.join(restr) or 'nenhuma'}. Interesses, que devem vir primeiro: {', '.join(interesses) or 'nenhum'}.
 Lista de compras: {'; '.join(lista) or 'vazia'}.
 {TAMANHOS_TXT} Em "tamanhos", informe também o frete e o prazo de cada opção.
 
-Regras: em "fonte", use o link da página do produto. Só lojas oficiais ou vendedores bem avaliados. Marque "importado": true quando o envio for internacional. Não inclua remédios que exigem receita. Informe frete e prazo de entrega para este CEP. Em kits, informe "unidades". Até 15 ofertas, priorizando os itens da lista e os interesses.
+Regras: em "fonte", use o link da página do produto. {PAGINA_PRODUTO} Só lojas oficiais ou vendedores bem avaliados. Marque "importado": true quando o envio for internacional. Não inclua remédios que exigem receita. Informe frete e prazo de entrega para este CEP. Em kits, informe "unidades". Até 15 ofertas, priorizando os itens da lista e os interesses.
 
 Responda somente com um objeto JSON, sem texto antes ou depois, neste formato:
 {{
@@ -916,6 +989,7 @@ Restrições: {', '.join(restr) or 'nenhuma'}. Interesses, que devem vir primeir
 Lista de compras (procure o preço atual de cada item nestas lojas): {'; '.join(lista) or 'vazia'}.
 {TAMANHOS_TXT}
 Lojas para ignorar: {', '.join(lojas.get('ignorar') or []) or 'nenhuma'}. Lojas para incluir mesmo mais longe: {', '.join(lojas.get('manter') or []) or 'nenhuma'}. Lojas indicadas pelo morador: {', '.join(adicionadas) or 'nenhuma'}.
+{ja_tenho_txt(cfg, cat_id)}
 
 Responda somente com um objeto JSON, sem texto antes ou depois, neste formato:
 {{
@@ -928,6 +1002,11 @@ Responda somente com um objeto JSON, sem texto antes ou depois, neste formato:
 Regras: em "lojas", inclua também mercadinhos e lojas independentes do raio, mesmo sem preços encontrados, com o site ou a página de ofertas quando houver. Até 15 ofertas, priorizando os interesses e os maiores descontos. Nos preços da lista, "preco" é o preço para todo mundo; se a loja tiver preço de clube (cadastro por CPF ou app), informe também "preco_clube", senão null. "tipo" é "promo", "clube" (preço para membros) ou "atacado" (preço por quantidade). "oficial" é true só se o cupom estiver no site ou app da própria loja. Etiquetas permitidas em "tags": {', '.join(sorted(TAGS))}.{extra}"""
 
 
+def e_marketplace(nome):
+    n = norm(nome)
+    return any(norm(m) in n for m in list(MARKETPLACES.values()) + ["magazine luiza", "aliexpress", "temu", "shein", "submarino"])
+
+
 def normalizar(cat_id, bruto, cfg):
     if not isinstance(bruto, dict):
         raise ErroBusca("A IA respondeu fora do formato esperado.")
@@ -935,6 +1014,7 @@ def normalizar(cat_id, bruto, cfg):
         raise ErroBusca(SEM_BUSCA)
     pre = cat_id[:4] + "-"
     redes = {}
+    visto = {"em": agora(), "via": bruto.get("_via") if bruto.get("_via") in ("site", "api", "encarte") else "web"}
 
     def rede_id(nome):
         nome = texto(nome, 60)
@@ -1017,11 +1097,13 @@ def normalizar(cat_id, bruto, cfg):
         if m and not item.get("unidade"):
             item["tamanho"] = {"quantidade": m[0], "unidade": m[1]}
         if cat_id == "online":
-            frete = frete_ok(o.get("frete"))
+            frete = frete_item(o.get("frete"))
             if frete is None or item.get("receita") == "tarja":
                 ids.discard(oid)
                 continue
-            item["frete"] = frete
+            item["frete"] = None if frete == "carrinho" else frete
+            if frete == "carrinho":
+                item["frete_carrinho"] = True
             for campo in ("prazo_dias", "unidades"):
                 n = inteiro(o.get(campo))
                 if n is not None and (campo == "prazo_dias" or n > 1):
@@ -1051,11 +1133,11 @@ def normalizar(cat_id, bruto, cfg):
             if obs:
                 valor["obs"] = obs
             return rid, valor
-        frete = frete_ok(p.get("frete"))
+        frete = frete_item(p.get("frete"))
         if frete is None:
             descarta("preço online sem frete")
             return None, None
-        valor = {"preco": preco, "frete": frete}
+        valor = {"preco": preco, "frete": None, "carrinho": True} if frete == "carrinho" else {"preco": preco, "frete": frete}
         if inteiro(p.get("prazo_dias")) is not None:
             valor["prazo_dias"] = inteiro(p.get("prazo_dias"))
         if texto(p.get("obs"), 60):
@@ -1071,13 +1153,14 @@ def normalizar(cat_id, bruto, cfg):
         if not original:
             descarta("item que não está na lista")
             continue
-        ent = lista.setdefault(original, {"precos": {}, "base": None, "tamanhos": [], "links": {}})
+        ent = lista.setdefault(original, {"precos": {}, "base": None, "tamanhos": [], "links": {}, "vistos": {}})
         for p in it.get("precos") or []:
             if isinstance(p, dict) and not p.get("rede") and it.get("rede"):
                 p = dict(p, rede=it["rede"])
             rid, valor = valor_lista(p)
             if rid:
                 ent["precos"][rid] = valor
+                ent["vistos"][rid] = visto
                 if fonte_ok(p.get("fonte")):
                     ent["links"][rid] = fonte_ok(p.get("fonte"))
         b = it.get("base") if isinstance(it.get("base"), dict) else {}
@@ -1101,6 +1184,7 @@ def normalizar(cat_id, bruto, cfg):
                 continue
             if mesmo_tamanho(m[0], bq):  # é o tamanho da base: vale como preço da loja
                 ent["precos"].setdefault(rid, valor)
+                ent["vistos"].setdefault(rid, visto)
                 if fonte_ok(t.get("fonte")):
                     ent["links"].setdefault(rid, fonte_ok(t.get("fonte")))
                 continue
@@ -1111,7 +1195,7 @@ def normalizar(cat_id, bruto, cfg):
             if texto(t.get("embalagem"), 40):
                 tam["embalagem"] = texto(t.get("embalagem"), 40)
             if isinstance(valor, dict):
-                tam.update({k: valor[k] for k in ("preco", "frete", "prazo_dias") if k in valor})
+                tam.update({k: valor[k] for k in ("preco", "frete", "prazo_dias", "carrinho") if k in valor})
             else:
                 tam["preco"] = valor
             if fonte_ok(t.get("fonte")):
@@ -1127,6 +1211,8 @@ def normalizar(cat_id, bruto, cfg):
     for rid in redes:
         lojas.setdefault(rid, {"rede": rid, "distancia_km": None, "horario": "Entrega no seu CEP" if online else "",
                                "endereco": None, "fontes": ["Site", "App"] if online else ["Site"]})
+        if online and not e_marketplace(redes[rid]):
+            lojas[rid]["regional"] = True  # mercado da região que entrega, separado dos marketplaces
 
     n_precos = sum(len(v["precos"]) + len(v["tamanhos"]) for v in lista.values())
     log(f"{cat_id}: {len(lojas)} loja(s), {len(ofertas)} oferta(s), {len(cupons)} cupom(ns), {n_precos} preço(s) da lista"
@@ -1264,6 +1350,7 @@ def bruto_encarte(loja, r):
     nome, url, val = loja["nome"], loja.get("site"), data_ok(r.get("validade"))
     marca_rede = lambda x: dict(x, rede=nome, fonte=url)  # noqa: E731
     bruto = {
+        "_via": "encarte",
         "lojas": [{"rede": nome, "endereco": None, "distancia_km": None, "fontes": ["Site", "Encarte"] if url else ["Encarte"]}],
         "cupons": [],
         "ofertas": [dict(o, rede=nome, preco_oferta=o.get("preco"), fonte=url, encarte=True, valido_ate=val)
@@ -1293,23 +1380,26 @@ def juntar_item(dest, ent):
     """Junta o que uma categoria achou para um item da lista ao que as outras já acharam."""
     b, nb = dest.get("base"), ent.get("base")
     links, dlinks = ent.get("links") or {}, dest.setdefault("links", {})
+    vistos, dvistos = ent.get("vistos") or {}, dest.setdefault("vistos", {})
     if not b and nb:
         dest["base"] = b = nb
     if not (b and nb) or (nb["unidade"] == b["unidade"] and mesmo_tamanho(nb["quantidade"], b["quantidade"])):
         dest["precos"].update(ent["precos"])
         dlinks.update(links)
+        dvistos.update(vistos)
         if b and nb:
             dest["tamanhos"] += ent["tamanhos"]
         return
     if nb["unidade"] != b["unidade"]:  # medidas diferentes não dá para comparar
         dest["precos"].update(ent["precos"])
         dlinks.update(links)
+        dvistos.update(vistos)
         return
     # esta categoria usou outro tamanho como base: os preços dela viram tamanhos
     for rid, v in ent["precos"].items():
         t = {"rede": rid, "quantidade": nb["quantidade"]}
         if isinstance(v, dict):
-            t.update({k: v[k] for k in ("preco", "frete", "prazo_dias") if k in v})
+            t.update({k: v[k] for k in ("preco", "frete", "prazo_dias", "carrinho") if k in v})
         else:
             t["preco"] = v
         if links.get(rid):
@@ -1317,7 +1407,7 @@ def juntar_item(dest, ent):
         dest["tamanhos"].append(t)
     for t in ent["tamanhos"]:
         if mesmo_tamanho(t["quantidade"], b["quantidade"]):
-            v = {k: t[k] for k in ("preco", "frete", "prazo_dias") if k in t}
+            v = {k: t[k] for k in ("preco", "frete", "prazo_dias", "carrinho") if k in t}
             dest["precos"].setdefault(t["rede"], v if "frete" in v else v["preco"])
             if t.get("fonte"):
                 dlinks.setdefault(t["rede"], t["fonte"])
@@ -1335,7 +1425,7 @@ def juntar_categorias(parciais):
             if e.get("base"):
                 k = (e["base"]["unidade"], e["base"]["quantidade"])
                 votos[k] = votos.get(k, 0) + len(e["precos"]) + 0.5
-        dest = {"precos": {}, "base": None, "tamanhos": [], "links": {}}
+        dest = {"precos": {}, "base": None, "tamanhos": [], "links": {}, "vistos": {}}
         if votos:
             un, q = max(votos, key=votos.get)
             dest["base"] = next(e["base"] for e in ents if e.get("base") and (e["base"]["unidade"], e["base"]["quantidade"]) == (un, q))
@@ -1350,6 +1440,9 @@ def item_ofertas(prod, ent):
     links = {r: u for r, u in (ent.get("links") or {}).items() if r in ent["precos"]}
     if links:
         out["links"] = links
+    vistos = {r: v for r, v in (ent.get("vistos") or {}).items() if r in ent["precos"]}
+    if vistos:
+        out["vistos"] = vistos
     if ent.get("base"):
         out["base"] = ent["base"]
         if ent["tamanhos"]:
@@ -1371,17 +1464,154 @@ VAZIAS_BUSCA = {"de", "da", "do", "das", "dos", "para", "com", "em", "e", "a", "
 UNIDADE_NOME = re.compile(r"(\d+(?:[.,]\d+)?)\s*(ml|l|lt|litros?|kg|g|gr|un|und|unid|unidades?|m|metros?)\b", re.I)
 
 
+VTEX_ACHADAS = {}  # lojas cadastradas ou achadas pela busca com site VTEX que permite consulta automática
+LOJAS_SITE = os.path.join(DATA, "lojas_site.json")
+CAMINHOS_VTEX = ("/api/checkout/pub/regions", "/api/io/_v/api/intelligent-search/product_search/")
+
+
+def todas_diretas():
+    out = {k: dict(v, fixa=True) for k, v in LOJAS_DIRETAS.items()}
+    for k, v in VTEX_ACHADAS.items():
+        out.setdefault(k, v)
+    return out
+
+
 def nome_direta(nome):
     """Nome de uma loja com busca direta escrito do jeito dela (Giassi Supermercados → Giassi)."""
     n = norm(nome).replace(" ", "")
-    for k, loja in LOJAS_DIRETAS.items():
-        if n.startswith(k):
+    for k, loja in todas_diretas().items():
+        if n.startswith(k.replace("-", "")):
             return loja["nome"]
     return nome
 
 
 def site_direta(chave):
-    return VTEX_TESTE.rstrip("/") + "/" + chave if VTEX_TESTE else LOJAS_DIRETAS[chave]["site"]
+    return VTEX_TESTE.rstrip("/") + "/" + chave if VTEX_TESTE else (todas_diretas().get(chave) or {}).get("site")
+
+
+def origem_de(u):
+    if VTEX_TESTE and u.startswith(VTEX_TESTE):  # nos testes cada loja é uma pasta do servidor falso
+        return VTEX_TESTE.rstrip("/") + "/" + u[len(VTEX_TESTE):].strip("/").split("/")[0]
+    sp = urllib.parse.urlsplit(u)
+    return f"{sp.scheme}://{sp.netloc}".lower()
+
+
+def robots_regras(txt):
+    """As regras do robots.txt que valem para qualquer programa (User-agent: *)."""
+    grupos, atual, ua_antes = [], None, False
+    for linha in str(txt or "").splitlines():
+        lin = linha.split("#", 1)[0].strip()
+        if ":" not in lin:
+            continue
+        k, v = (x.strip() for x in lin.split(":", 1))
+        k = k.lower()
+        if k == "user-agent":
+            if not ua_antes:
+                atual = {"ua": [], "regras": []}
+                grupos.append(atual)
+            atual["ua"].append(v.lower())
+            ua_antes = True
+            continue
+        ua_antes = False
+        if k in ("allow", "disallow") and atual is not None:
+            atual["regras"].append((k, v))
+    return [r for g in grupos if "*" in g["ua"] for r in g["regras"]]
+
+
+def robots_permite(regras, caminho):
+    melhor = None
+    for k, v in regras:
+        if not v:
+            continue
+        padrao = "^" + re.escape(v).replace(r"\*", ".*").replace(r"\$", "$")
+        if re.match(padrao, caminho) and (melhor is None or len(v) > melhor[0] or (len(v) == melhor[0] and k == "allow")):
+            melhor = (len(v), k)
+    return melhor is None or melhor[1] == "allow"
+
+
+def testa_site(origem, cep):
+    """O site é uma loja VTEX que permite consulta automática? Primeiro lê o robots.txt; só consulta se ele deixar."""
+    res = {"vtex": False, "permite": False, "em": agora()}
+    try:
+        txt = pagina_txt(origem + "/robots.txt")
+    except urllib.error.HTTPError as e:
+        txt = "" if e.code == 404 else None
+    except Exception:  # noqa: BLE001
+        txt = None
+    if txt is None:
+        res["em"] = (datetime.now(timezone.utc) - timedelta(days=6)).isoformat(timespec="seconds")  # sem resposta: tenta amanhã
+        res["sem_resposta"] = True
+        return res
+    regras = robots_regras(txt)
+    res["regras"] = regras[:80]
+    res["sitemaps"] = [u for u in re.findall(r"(?im)^\s*sitemap:\s*(\S+)", txt) if url_ok(u)][:6]
+    res["paginas"] = robots_permite(regras, "/")
+    res["permite"] = all(robots_permite(regras, c) for c in CAMINHOS_VTEX)
+    if res["permite"]:
+        try:
+            res["vtex"] = isinstance(http_json(origem + "/api/checkout/pub/regions?country=BRA&postalCode=" + re.sub(r"\D", "", str(cep or "")), timeout=10), list)
+        except Exception:  # noqa: BLE001
+            pass
+    return res
+
+
+def candidatos_site(cfg):
+    """Sites das lojas cadastradas e das achadas pela última busca: {origem: (nome, categoria)}."""
+    out = {}
+    for a in ((cfg.get("lojas") or {}).get("adicionar") or []):
+        if isinstance(a, dict) and url_ok(a.get("site")) and a.get("categoria") in ("mercados", "farmacias", "petshops") and texto(a.get("nome"), 60):
+            out[origem_de(a["site"])] = (texto(a["nome"], 60).split(",")[0].strip(), a["categoria"])
+    for c in (ler_json(OFERTAS, {}) or {}).get("categorias") or []:
+        if not isinstance(c, dict) or c.get("id") not in ("mercados", "farmacias", "petshops"):
+            continue
+        nomes = {r.get("id"): r.get("nome") for r in c.get("redes") or [] if isinstance(r, dict)}
+        for l in c.get("lojas") or []:
+            if isinstance(l, dict) and url_ok(l.get("site")) and nomes.get(l.get("rede")) and "folheto" not in l:
+                out.setdefault(origem_de(l["site"]), (nomes[l["rede"]], c["id"]))
+    of = ler_json(OFERTAS, {}) or {}
+    links = {}
+    for i in of.get("lista") or []:
+        for rid, u in ((i.get("links") or {}).items() if isinstance(i, dict) else []):
+            links.setdefault(rid, u)
+    for c in of.get("categorias") or []:
+        if not isinstance(c, dict) or c.get("id") != "online":
+            continue
+        for o in c.get("ofertas") or []:
+            if isinstance(o, dict) and o.get("fonte"):
+                links.setdefault(o.get("rede"), o["fonte"])
+        nomes = {r.get("id"): r.get("nome") for r in c.get("redes") or [] if isinstance(r, dict)}
+        for l in c.get("lojas") or []:
+            rid = l.get("rede") if isinstance(l, dict) else None
+            if l.get("regional") and nomes.get(rid) and url_ok(links.get(rid)):
+                out.setdefault(origem_de(links[rid]), (nomes[rid], "online"))
+    fixas = {origem_de(v["site"]) for v in LOJAS_DIRETAS.values()} | {"https://www.kimbino.com.br", "https://seusfolhetos.com.br"}
+    return {o: v for o, v in out.items() if o not in fixas}
+
+
+def atualiza_diretas(cfg, max_novas=6):
+    """Testa o site das lojas (uma vez por semana cada) e liga a busca direta nas que são VTEX e permitem consulta."""
+    memo = ler_json(LOJAS_SITE, {}) or {}
+    semana = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat(timespec="seconds")
+    novas = 0
+    for o, (nome, cat) in candidatos_site(cfg).items():
+        m = memo.get(o)
+        if m and m.get("em", "") >= semana:
+            m.update({"nome": nome, "categoria": cat})
+            continue
+        if novas >= max_novas:
+            continue
+        novas += 1
+        memo[o] = dict(testa_site(o, cfg.get("cep")), nome=nome, categoria=cat)
+        log(f"site de {nome}: " + ("sem resposta, tento de novo amanhã" if memo[o].get("sem_resposta") else "busca direta ligada" if memo[o]["vtex"] else
+                                   "não deixa programas usarem a busca do site" + (", mas deixa abrir as páginas de produto" if memo[o].get("paginas") else "")
+                                   if not memo[o]["permite"] else "sem busca direta"))
+    if novas:
+        gravar_json(LOJAS_SITE, memo)
+    VTEX_ACHADAS.clear()
+    for o, m in memo.items():
+        if m.get("vtex") and m.get("permite") and m.get("nome"):
+            VTEX_ACHADAS[slug(m["nome"], 30)] = {"nome": m["nome"], "site": o, "categoria": m.get("categoria") or "mercados"}
+    return memo
 
 
 def http_json(url, timeout=15):
@@ -1463,29 +1693,31 @@ def busca_vtex(chave, termo, regiao):
             marca = texto(prod.get("brand"), 30) or ""
             curto = (marca + " " + fmt_base({"quantidade": tam[0], "unidade": tam[1]})) if marca and tam else nome[:60]
             out.append({"nome": nome, "curto": curto, "busca_em": busca_em, "preco": preco, "de": de if de and de > preco + 0.004 else None, "tam": tam,
-                        "link": LOJAS_DIRETAS[chave]["site"] + str(prod.get("link") or "")})
+                        "link": str((todas_diretas().get(chave) or {}).get("site") or "") + str(prod.get("link") or "")})
     return out
 
 
 def lojas_diretas_status(cfg):
     out = []
-    for k, loja in LOJAS_DIRETAS.items():
+    memo = atualiza_diretas(cfg, 0)
+    for k, loja in todas_diretas().items():
         try:
             reg, nome = regiao_direta(k, cfg.get("cep"))
-            out.append({"id": k, "nome": loja["nome"], "atende": bool(reg), "loja": nome})
+            out.append({"id": k, "nome": loja["nome"], "atende": bool(reg), "loja": nome, "fixa": bool(loja.get("fixa"))})
         except Exception as e:  # noqa: BLE001
             out.append({"id": k, "nome": loja["nome"], "atende": None, "erro": str(e)[:120]})
-    return out
+    pag = sorted(m["nome"] for m in memo.values() if m.get("nome") and m.get("paginas") and not (m.get("vtex") and m.get("permite")))
+    return out + [{"id": slug(n, 30), "nome": n, "atende": None, "paginas": True} for n in pag[:8]]
 
 
-def busca_direta(cfg, itens=None):
+def busca_direta(cfg, itens=None, cats=("mercados",)):
     """Pergunta a cada loja com busca direta o preço de cada item da lista. Devolve [(categoria, parcial)]."""
     nomes = itens or nomes_da_lista(cfg)
     if not nomes or not cfg.get("cep"):
         return []
-    achados = {}  # item -> loja -> [candidatos]
-    lojas = []
-    for k, loja in LOJAS_DIRETAS.items():
+    todas = {k: v for k, v in todas_diretas().items() if (v.get("categoria") or "mercados") in cats}
+    achados, lojas = {}, {}  # categoria -> item -> loja -> [candidatos]; categoria -> lojas
+    for k, loja in todas.items():
         try:
             reg, unidade = regiao_direta(k, cfg.get("cep"))
         except Exception as e:  # noqa: BLE001
@@ -1494,6 +1726,7 @@ def busca_direta(cfg, itens=None):
         if not reg:
             log(f"busca direta {loja['nome']}: não atende o CEP {cfg.get('cep')}")
             continue
+        cat_id = loja.get("categoria") or "mercados"
         BUSCA["etapa"] = "preços no site do " + loja["nome"]
         n = 0
         for nome in nomes:
@@ -1503,45 +1736,797 @@ def busca_direta(cfg, itens=None):
                 log(f"busca direta {loja['nome']} '{nome}': {e}")
                 continue
             if cand:
-                achados.setdefault(nome, {})[k] = cand
+                achados.setdefault(cat_id, {}).setdefault(nome, {})[k] = cand
                 n += 1
-        lojas.append({"rede": loja["nome"], "endereco": unidade or None, "distancia_km": None, "site": LOJAS_DIRETAS[k]["site"], "fontes": ["Site"]})
+        lojas.setdefault(cat_id, []).append({"rede": loja["nome"], "endereco": unidade or None, "distancia_km": None, "site": loja["site"], "fontes": ["Site"]})
         log(f"busca direta {loja['nome']}{' (' + unidade + ')' if unidade else ''}: {n} de {len(nomes)} item(ns) com preço")
-    if not lojas:
-        return []
-    lista_bruta, ofertas = [], []
-    for nome, por_loja in achados.items():
-        # tamanho de sempre: o do nome do item ou o mais comum entre os produtos achados
-        base = tamanho_nome(nome)
-        if not base:
-            conta = {}
-            for cands in por_loja.values():
-                for c in cands:
-                    if c["tam"]:
-                        conta[c["tam"]] = conta.get(c["tam"], 0) + 1
-            base = max(conta, key=lambda t: (conta[t], -t[0])) if conta else None
-        precos, tamanhos = [], []
-        for k, cands in por_loja.items():
-            rede = LOJAS_DIRETAS[k]["nome"]
-            iguais = [c for c in cands if base and c["tam"] and c["tam"][1] == base[1] and mesmo_tamanho(c["tam"][0], base[0])] if base else cands
-            if iguais:
-                c = min(iguais, key=lambda x: x["preco"])
-                precos.append({"rede": rede, "preco": c["preco"], "obs": c["curto"], "fonte": c["link"]})
-            if base:
-                outros = sorted((c for c in cands if c["tam"] and c["tam"][1] == base[1] and c not in iguais), key=lambda x: x["preco"] / x["tam"][0])
-                for c in outros[:4]:
-                    tamanhos.append({"rede": rede, "embalagem": c["curto"][:40], "quantidade": c["tam"][0], "unidade": c["tam"][1], "preco": c["preco"], "fonte": c["link"]})
-            for c in cands[:3]:
-                if c["de"]:
-                    ofertas.append({"rede": rede, "produto": c["nome"], "preco_normal": c["de"], "preco_oferta": c["preco"], "tipo": "promo", "fonte": c["link"],
-                                    "tamanho": {"quantidade": c["tam"][0], "unidade": c["tam"][1]} if c["tam"] else None})
-        ent = {"produto": nome, "precos": precos, "tamanhos": tamanhos}
-        if base:
-            ent["base"] = {"quantidade": base[0], "unidade": base[1]}
-        lista_bruta.append(ent)
+    out = []
     cfg_itens = dict(cfg, lista=[{"produto": n} for n in nomes])
-    cat, parcial = normalizar("mercados", {"lojas": lojas, "cupons": [], "ofertas": ofertas, "lista": lista_bruta}, cfg_itens)
+    for cat_id, ls in lojas.items():
+        lista_bruta, ofertas = [], []
+        for nome, por_loja in (achados.get(cat_id) or {}).items():
+            ent, ofs = montar_item(nome, {todas[k]["nome"]: cands for k, cands in por_loja.items()})
+            lista_bruta.append(ent)
+            ofertas += ofs
+        out.append(normalizar(cat_id, {"lojas": ls, "cupons": [], "ofertas": ofertas, "lista": lista_bruta, "_via": "site"}, cfg_itens))
+    return out
+
+
+def montar_item(nome, por_rede, frete=None):
+    """Os produtos achados para um item da lista, de uma ou mais lojas, no formato da busca: o preço no tamanho de
+    sempre, os outros tamanhos e as promoções. frete="carrinho" para loja online que só mostra o frete no carrinho."""
+    # tamanho de sempre: o do nome do item ou o mais comum entre os produtos achados
+    base = tamanho_nome(nome)
+    if not base:
+        conta = {}
+        for cands in por_rede.values():
+            for c in cands:
+                if c["tam"]:
+                    conta[c["tam"]] = conta.get(c["tam"], 0) + 1
+        base = max(conta, key=lambda t: (conta[t], -t[0])) if conta else None
+    extra = {"frete": frete} if frete is not None else {}
+    precos, tamanhos, ofertas = [], [], []
+    for rede, cands in por_rede.items():
+        iguais = [c for c in cands if c["tam"] and c["tam"][1] == base[1] and mesmo_tamanho(c["tam"][0], base[0])] if base else cands
+        if iguais:
+            c = min(iguais, key=lambda x: x["preco"])
+            precos.append(dict({"rede": rede, "preco": c["preco"], "obs": c.get("curto") or c["nome"], "fonte": c["link"]}, **extra))
+        if base:
+            outros = sorted((c for c in cands if c["tam"] and c["tam"][1] == base[1] and c not in iguais), key=lambda x: x["preco"] / x["tam"][0])
+            for c in outros[:4]:
+                tamanhos.append(dict({"rede": rede, "embalagem": (c.get("curto") or c["nome"])[:40], "quantidade": c["tam"][0], "unidade": c["tam"][1],
+                                      "preco": c["preco"], "fonte": c["link"]}, **extra))
+        for c in cands[:3]:
+            if c.get("de"):
+                ofertas.append(dict({"rede": rede, "produto": c["nome"], "preco_normal": c["de"], "preco_oferta": c["preco"], "tipo": "promo",
+                                     "fonte": c["link"], "tamanho": {"quantidade": c["tam"][0], "unidade": c["tam"][1]} if c["tam"] else None}, **extra))
+    ent = {"produto": nome, "precos": precos, "tamanhos": tamanhos}
+    if base:
+        ent["base"] = {"quantidade": base[0], "unidade": base[1]}
+    return ent, ofertas
+
+
+# ---------- Shopee Afiliados: a Open API devolve produto, preço e link, sem IA ----------
+# App ID e senha ficam em /data/segredos.json, que não vai para o painel, para o HA nem para as versões.
+SHOPEE_ERROS = {
+    10020: "A Shopee recusou o App ID ou a senha. Confira em affiliate.shopee.com.br › Open API.",
+    10030: "A Shopee pediu para esperar: consultas demais em pouco tempo.",
+    10031: "A Shopee negou o acesso a essa consulta.",
+    10032: "A Shopee não reconheceu a conta de afiliado.",
+    10033: "A conta de afiliado está congelada na Shopee.",
+    10035: "A conta de afiliado ainda não tem acesso à Open API. Peça o acesso em affiliate.shopee.com.br › Open API.",
+}
+
+
+class ErroShopee(Exception):
+    pass
+
+
+def segredos():
+    d = ler_json(SEGREDOS, {}) or {}
+    return d if isinstance(d, dict) else {}
+
+
+def grava_segredos(d):
+    gravar_json(SEGREDOS, d)
+    try:
+        os.chmod(SEGREDOS, 0o600)
+    except OSError:
+        pass
+
+
+def shopee_chaves():
+    sh = segredos().get("shopee") or {}
+    app, senha = str(sh.get("app_id") or "").strip(), str(sh.get("secret") or "").strip()
+    return (app, senha) if app and senha else None
+
+
+def shopee_pronta():
+    return shopee_chaves() is not None
+
+
+def shopee_consulta(query):
+    chaves = shopee_chaves()
+    if not chaves:
+        raise ErroShopee("Falta o App ID e a senha da Shopee em Mais › Integrações.")
+    app, senha = chaves
+    corpo = json.dumps({"query": query}, separators=(",", ":"), ensure_ascii=False)
+    ts = str(int(time.time()))
+    assinatura = hashlib.sha256((app + ts + corpo + senha).encode("utf-8")).hexdigest()
+    req = urllib.request.Request(SHOPEE_API, data=corpo.encode("utf-8"), method="POST", headers={
+        "Content-Type": "application/json", "User-Agent": "EconomIA",
+        "Authorization": f"SHA256 Credential={app}, Timestamp={ts}, Signature={assinatura}"})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            d = json.loads(r.read(4_000_000).decode("utf-8") or "{}")
+    except urllib.error.HTTPError as e:
+        try:
+            d = json.loads(e.read(200_000).decode("utf-8") or "{}")
+        except (ValueError, OSError):
+            raise ErroShopee(f"A Shopee respondeu com erro {e.code}.") from e
+    except (urllib.error.URLError, OSError, ValueError) as e:
+        raise ErroShopee(f"Não consegui falar com a Shopee ({e}).") from e
+    erros = d.get("errors") if isinstance(d, dict) else None
+    if erros:
+        e0 = erros[0] if isinstance(erros[0], dict) else {}
+        cod = (e0.get("extensions") or {}).get("code")
+        try:
+            cod = int(cod)
+        except (TypeError, ValueError):
+            pass
+        raise ErroShopee(SHOPEE_ERROS.get(cod) or f"A Shopee recusou a consulta: {str(e0.get('message') or cod)[:160]}")
+    return (d.get("data") if isinstance(d, dict) else None) or {}
+
+
+def shopee_produtos(termo, limite=20):
+    q = ("{productOfferV2(keyword: %s, sortType: 1, page: 1, limit: %d) {nodes {itemId productName priceMin priceMax "
+         "productLink offerLink shopName shopType ratingStar sales priceDiscountRate} pageInfo {page limit hasNextPage}}}") % (
+        json.dumps(str(termo)[:80], ensure_ascii=False), int(limite))
+    return ((shopee_consulta(q).get("productOfferV2") or {}).get("nodes")) or []
+
+
+def testar_shopee():
+    try:
+        nodes = shopee_produtos("café 500 g", 5)
+    except ErroShopee as e:
+        return {"ok": False, "msg": str(e)}
+    if not nodes:
+        return {"ok": True, "msg": "A Shopee aceitou o App ID e a senha, mas não devolveu produtos no teste."}
+    x = nodes[0]
+    return {"ok": True, "msg": f"Pronta. Exemplo: {str(x.get('productName') or '')[:60]} por {br_preco(numero(x.get('priceMin')) or 0)}."}
+
+
+def busca_shopee(cfg, itens=None):
+    """Preço de cada item da lista na Shopee, pela Open API do Shopee Afiliados. Devolve [(categoria, parcial)]."""
+    nomes = itens or nomes_da_lista(cfg)
+    if not nomes or not shopee_pronta():
+        return []
+    BUSCA["etapa"] = "preços na Shopee"
+    lista_bruta, n = [], 0
+    for nome in nomes:
+        try:
+            nodes = shopee_produtos(nome)
+        except ErroShopee as e:
+            log(f"shopee '{nome}': {e}")
+            if not str(e).startswith("A Shopee recusou a consulta"):
+                break  # chave errada, sem acesso ou limite: as outras consultas também vão falhar
+            continue
+        cands = []
+        for x in nodes:
+            pn = str(x.get("productName") or "").strip()
+            preco, nota = numero(x.get("priceMin")), numero(x.get("ratingStar")) or 0
+            if not pn or not preco or (nota and nota < 4.5) or not combina(nome, pn):
+                continue
+            cands.append({"nome": pn[:80], "preco": preco, "de": None, "tam": tamanho_nome(pn),
+                          "link": fonte_ok(x.get("productLink")) or fonte_ok(x.get("offerLink"))})
+        if cands:
+            n += 1
+            ent, _ = montar_item(nome, {"Shopee": cands}, frete="carrinho")
+            lista_bruta.append(ent)
+    log(f"shopee: {n} de {len(nomes)} item(ns) com preço")
+    if not lista_bruta:
+        return []
+    cat, parcial = normalizar("online", {"lojas": [], "cupons": [], "ofertas": [], "lista": lista_bruta, "_via": "api"},
+                              dict(cfg, lista=[{"produto": x} for x in nomes]))
     return [(cat, parcial)]
+
+
+# ---------- folhetos dos sites de encartes (Kimbino, Seus Folhetos) ----------
+# O folheto da semana de cada loja escolhida em Mais › Lojas é lido uma vez pela IA de fotos e guardado até vencer.
+# Nas buscas seguintes os preços vêm do que foi guardado, e os itens novos da lista são casados com as ofertas
+# do folheto pelo nome, sem IA.
+AGREGADORES = [
+    {"id": "kimbino", "nome": "Kimbino", "base": "https://www.kimbino.com.br", "loja": "/{}/",
+     "variantes": ["{}", "{}-atacadista", "{}-supermercados", "{}-supermercado", "{}-hipermercado"]},
+    {"id": "seusfolhetos", "nome": "Seus Folhetos", "base": "https://seusfolhetos.com.br", "loja": "/{}-ofertas",
+     "variantes": ["{}", "{}-atacadista", "{}-supermercados"]},
+]
+MAX_FOLHETOS_LOJA = 2
+MAX_PAGINAS = 12
+DATA_BR = re.compile(r"(\d{1,2})/(\d{1,2})(?:/(\d{2,4}))?")
+PERIODO = re.compile(r"(\d{1,2}/\d{1,2}(?:/\d{2,4})?)\s*(?:-|–|a|até)\s*(\d{1,2}/\d{1,2}/\d{2,4})", re.I)
+KIMBI_IMG = re.compile(r"https?://[^\"'\s<>]*kimbicdn\.com/[^\"'\s<>]*?/data/(\d+/\d+)/(\d+)\.(?:jpe?g|png|webp)[^\"'\s<>,]*", re.I)
+SF_IMG = re.compile(r"(?:https?://[^\"'\s<>/]+)?/public/gimg/(?:\d+/)+(\d+)-(\d+)-(\d+)\.(?:jpe?g|png|webp)", re.I)
+_folhetos_trava = threading.Lock()
+
+
+def agreg_base(a):
+    return FOLHETOS_TESTE.rstrip("/") + "/" + a["id"] if FOLHETOS_TESTE else a["base"]
+
+
+def pagina_txt(url):
+    dado, _ = baixar(url, 4 * 1024 * 1024, timeout=20)
+    return dado.decode("utf-8", "ignore")
+
+
+def sem_tags(t):
+    return " ".join(html_mod.unescape(re.sub(r"(?s)<[^>]+>", " ", t)).split())
+
+
+def data_iso(txt):
+    """"29/10/2026", "29/10/26" ou "29/10" (ano de hoje) → "2026-10-29"."""
+    m = DATA_BR.search(str(txt or ""))
+    if not m:
+        return None
+    ano = m.group(3)
+    a = (int(ano) + (2000 if len(ano) == 2 else 0)) if ano else int(hoje_br()[:4])
+    try:
+        return datetime(a, int(m.group(2)), int(m.group(1))).date().isoformat()
+    except ValueError:
+        return None
+
+
+def periodo_de(m):
+    a, b = m.group(1), m.group(2)
+    return data_iso(a if a.count("/") == 2 else a + "/" + b.split("/")[-1]), data_iso(b)
+
+
+def folhetos_da_pagina(a, url_loja, html_txt):
+    """Os folhetos listados na página da loja: [{url, id, de, ate}]."""
+    caminho = urllib.parse.urlsplit(url_loja).path.rstrip("/")
+    if a["id"] == "kimbino":
+        padrao = re.compile(r"href=[\"']((?:https?://[^/\"']+)?" + re.escape(caminho) + r"/[a-z0-9-]+-(\d{6,})/?)[\"']", re.I)
+    else:
+        padrao = re.compile(r"href=[\"']((?:https?://[^/\"']+)?" + re.escape(caminho)
+                            + r"/(?:folheto-(\d+)(?:-\d+)?|[a-z0-9-]*folheto[a-z0-9-]*))[\"']", re.I)
+    achados = [(urllib.parse.urljoin(url_loja, html_mod.unescape(m.group(1))), m) for m in padrao.finditer(html_txt)]
+    vistos, out = set(), []
+    for i, (u, m) in enumerate(achados):
+        if u in vistos:
+            continue
+        vistos.add(u)
+        # o texto do folheto fica entre o link dele e o link do próximo folheto (ou, antes, desde o anterior)
+        ultimo = max(k for k, (x, _) in enumerate(achados) if x == u)
+        prox = next((mm.start() for x, mm in achados[ultimo + 1:] if x != u), len(html_txt))
+        ant = max([mm.end() for x, mm in achados[:i] if x != u] or [0])
+        ini = max(0, html_txt.rfind("<", 0, m.start()))
+        de, ate = None, None
+        for trecho in (html_txt[ini:min(prox, ini + 2500)], html_txt[max(ant, ini - 1500):ini]):
+            mp = PERIODO.search(sem_tags(trecho))
+            if mp:
+                de, ate = periodo_de(mp)
+                break
+        if not de:
+            d = re.search(r"-(\d{2})-(\d{2})-(\d{4})-\d{6,}/?$", u)
+            if d:
+                de = f"{d.group(3)}-{d.group(2)}-{d.group(1)}"
+        out.append({"url": u, "id": a["id"] + ":" + (m.group(2) or slug(urllib.parse.urlsplit(u).path, 60)), "de": de, "ate": ate})
+    return out
+
+
+def paginas_folheto(a, f):
+    """Endereços das páginas do folheto, na ordem (e a validade, se a página do folheto disser)."""
+    if f.get("paginas") is not None:
+        return f["paginas"]
+    try:
+        html_txt = pagina_txt(f["url"])
+    except Exception as e:  # noqa: BLE001
+        log(f"folheto {f['url']}: {e}")
+        f["paginas"] = []
+        return []
+    if not f.get("ate"):
+        desc = re.search(r"(?:name|property)=[\"'](?:og:)?description[\"'][^>]*content=[\"']([^\"']+)", html_txt, re.I)
+        m = (PERIODO.search(html_mod.unescape(desc.group(1))) if desc else None) or PERIODO.search(sem_tags(html_txt)[:20000])
+        if m:
+            f["de"], f["ate"] = periodo_de(m)
+    paginas = {}
+    if a["id"] == "kimbino":
+        achados = [(m.group(1), int(m.group(2)), m.group(0).replace("&amp;", "&").rstrip(",")) for m in KIMBI_IMG.finditer(html_txt)]
+        # o folheto é a pasta que mais aparece (as outras são capas de folhetos sugeridos)
+        conta = {}
+        for pasta, _, _ in achados:
+            conta[pasta] = conta.get(pasta, 0) + 1
+        if conta:
+            pasta = max(conta, key=conta.get)
+            for p_, n, u in achados:
+                if p_ != pasta:
+                    continue
+                atual = paginas.get(n)
+                if atual is None or ("/0x0/" in u and "/0x0/" not in atual):
+                    paginas[n] = u
+    else:
+        achados = [(int(m.group(1)), int(m.group(2)), int(m.group(3)), urllib.parse.urljoin(f["url"], m.group(0))) for m in SF_IMG.finditer(html_txt)]
+        # as páginas usam o mesmo tamanho, comprido; capas de outros folhetos e a imagem de compartilhar usam outros
+        conta = {}
+        for _, w, h, _ in achados:
+            if h >= 2000:
+                conta[(w, h)] = conta.get((w, h), 0) + 1
+        if conta:
+            tam = max(conta, key=lambda k: (conta[k], k[0]))
+            for i, w, h, u in achados:
+                if (w, h) == tam:
+                    paginas.setdefault(i, u)
+    f["paginas"] = [paginas[k] for k in sorted(paginas)][:MAX_PAGINAS]
+    return f["paginas"]
+
+
+def cidade_do_cep(cep, cache):
+    cep = re.sub(r"\D", "", str(cep or ""))
+    c = cache.get("_cep") or {}
+    if c.get("cep") == cep and c.get("cidade"):
+        return c["cidade"], c.get("uf")
+    try:
+        d = {"localidade": "Joinville", "uf": "SC"} if FOLHETOS_TESTE else http_json(f"https://viacep.com.br/ws/{cep}/json/", timeout=10)
+    except Exception:  # noqa: BLE001
+        return None, None
+    cidade, uf = (d or {}).get("localidade"), (d or {}).get("uf")
+    if cidade:
+        cache["_cep"] = {"cep": cep, "cidade": cidade, "uf": uf}
+    return cidade, uf
+
+
+def ia_com_arquivos(nome, instrucoes, dados, uso="fotos"):
+    """Grava as imagens um instante na pasta de mídia, pede para a IA ler e apaga."""
+    pasta = os.path.join(MEDIA, "economia")
+    arquivos, anexos = [], []
+    try:
+        os.makedirs(pasta, exist_ok=True)
+        marca = datetime.now().strftime("%H%M%S") + os.urandom(2).hex()
+        for n, (dado, t) in enumerate(dados):
+            t = t if t in ("image/jpeg", "image/png", "image/webp", "application/pdf") else "image/jpeg"
+            ext = {"application/pdf": "pdf", "image/png": "png", "image/webp": "webp"}.get(t, "jpg")
+            arq = f"folheto-{marca}-{n}.{ext}"
+            with open(os.path.join(pasta, arq), "wb") as fh:
+                fh.write(dado)
+            arquivos.append(os.path.join(pasta, arq))
+            anexos.append({"media_content_id": f"{MEDIA_URI}/economia/{arq}", "media_content_type": t})
+        return chamar_ai_task(nome, instrucoes, anexos, uso=uso)
+    finally:
+        for a in arquivos:
+            try:
+                os.remove(a)
+            except OSError:
+                pass
+
+
+def instrucoes_capas(loja, n, cidade, uf, cfg):
+    onde = f"{cidade} ({uf})" if cidade else f"o CEP {cfg.get('cep')}"
+    return f"""Você recebe a primeira página de {n} encartes de "{loja['nome']}", na ordem. O morador mora em {onde}. Hoje é {hoje_br()}.
+Para cada encarte, diga se ele vale para as lojas de onde o morador mora: "sim" quando a página citar essa cidade, o estado ou a região dela, ou disser que vale para todas as lojas; "nao" quando citar só outras cidades, estados ou regiões; "nao_sei" quando a página não disser.
+Responda somente com um objeto JSON, sem texto antes ou depois: {{"encartes": [{{"n": 1, "vale": "sim", "onde": "a região escrita no encarte, ou null"}}]}}"""
+
+
+def escolhe_folhetos(loja, a, cands, cache, cfg):
+    """Até 2 folhetos por loja. Com mais, a IA olha só a capa de cada um e diz quais valem para a cidade (fica guardado)."""
+    cands = sorted(cands, key=lambda f: f.get("de") or "", reverse=True)
+    if len(cands) <= MAX_FOLHETOS_LOJA:
+        return cands
+    vale = cache.setdefault("_vale", {})
+    falta = [f for f in cands if f["id"] not in vale and f["id"] not in cache["itens"]]
+    if falta and ia_ligada(cfg):
+        cidade, uf = cidade_do_cep(cfg.get("cep"), cache)
+        capas = []
+        for f in falta[:16]:
+            imgs = paginas_folheto(a, f)
+            if not imgs:
+                continue
+            try:
+                dado, t = baixar(imgs[0], 6_000_000)
+            except Exception:  # noqa: BLE001
+                continue
+            capas.append((f, dado, t))
+        for i in range(0, len(capas), 8):
+            grupo = capas[i:i + 8]
+            BUSCA["etapa"] = f"capas dos folhetos de {loja['nome']}"
+            try:
+                r = ia_com_arquivos(f"EconomIA: capas de {loja['nome']}", instrucoes_capas(loja, len(grupo), cidade, uf, cfg),
+                                    [(d, t) for _, d, t in grupo])
+            except ErroBusca as e:
+                log(f"capas de {loja['nome']}: {e}")
+                break
+            resp = {}
+            for x in (r.get("encartes") if isinstance(r, dict) else None) or []:
+                if isinstance(x, dict) and str(x.get("n", "")).isdigit():
+                    resp[int(x["n"])] = x.get("vale")
+            for k, (f, _, _) in enumerate(grupo, 1):
+                vale[f["id"]] = {"v": resp.get(k) if resp.get(k) in ("sim", "nao", "nao_sei") else "nao_sei", "ate": f.get("ate")}
+    ordem = {"sim": 0, "nao_sei": 1}
+    ok = [f for f in cands if f["id"] in cache["itens"] or (vale.get(f["id"]) or {}).get("v") in ordem]
+    nota = lambda f: 0 if f["id"] in cache["itens"] else ordem[vale[f["id"]]["v"]]  # noqa: E731
+    sims = [f for f in ok if nota(f) == 0]
+    return (sims or sorted(ok, key=nota)[:1])[:MAX_FOLHETOS_LOJA]
+
+
+def achar_folhetos(loja, cache):
+    """Acha a página da loja no Kimbino ou no Seus Folhetos e os folhetos válidos hoje: (agregador, url, folhetos)."""
+    alvo = slug(loja["nome"], 40)
+    memo = cache.setdefault("_lojas", {})
+    hoje = hoje_br()
+    dias = lambda n: (datetime.now(timezone.utc) - timedelta(days=n)).isoformat(timespec="seconds")  # noqa: E731
+    for a in AGREGADORES:
+        chave = a["id"] + ":" + alvo
+        m = memo.get(chave) or {}
+        if m.get("url"):
+            urls = [m["url"]] if m.get("em", "") >= dias(14) else []
+        elif m and m.get("em", "") >= dias(2):
+            continue  # não tem esta loja: só procura de novo daqui a 2 dias
+        else:
+            urls = []
+        urls = urls or [agreg_base(a) + a["loja"].format(v.format(alvo)) for v in a["variantes"]]
+        achou = None
+        for u in urls:
+            try:
+                html_txt = pagina_txt(u)
+            except Exception:  # noqa: BLE001
+                continue
+            fs = folhetos_da_pagina(a, u, html_txt)
+            if fs:
+                achou = (u, fs)
+                break
+        memo[chave] = {"url": achou[0] if achou else None, "em": agora()}
+        if achou:
+            validos = [f for f in achou[1] if (not f["ate"] or f["ate"] >= hoje) and (not f["de"] or f["de"] <= hoje)]
+            if validos:
+                return a, achou[0], validos
+    return None, None, []
+
+
+def precos_por_oferta(ofertas, nomes, ja):
+    """Item da lista que bate com uma oferta do folheto vira preço da loja, sem perguntar à IA."""
+    out = []
+    for nome in nomes:
+        if nome in ja:
+            continue
+        cands = []
+        for o in ofertas:
+            if not isinstance(o, dict) or not numero(o.get("preco")) or not combina(nome, str(o.get("produto") or "")):
+                continue
+            t = o.get("tamanho") if isinstance(o.get("tamanho"), dict) else {}
+            tam = medida(t.get("quantidade"), t.get("unidade")) or tamanho_nome(o.get("produto") or "")
+            if str(o.get("unidade") or "").lower() == "kg":
+                tam = (1.0, "kg")
+            cands.append({"nome": str(o.get("produto"))[:80], "preco": numero(o["preco"]), "de": None, "tam": tam, "link": None})
+        if cands:
+            ent, _ = montar_item(nome, {"_": cands})
+            out.append({"produto": nome, "base": ent.get("base"), "precos": [{k: v for k, v in x.items() if k != "rede"} for x in ent["precos"]],
+                        "tamanhos": [{k: v for k, v in x.items() if k != "rede"} for x in ent["tamanhos"]]})
+    return out
+
+
+def ler_folheto(loja, f, imgs, cfg):
+    """Baixa as páginas do folheto e manda para a IA de fotos, até 8 por chamada. Devolve a resposta juntada."""
+    dados = []
+    for u in imgs[:MAX_PAGINAS]:
+        try:
+            dados.append(baixar(u, 6_000_000))
+        except Exception:  # noqa: BLE001
+            continue
+    if not dados:
+        raise ErroBusca("não consegui baixar as páginas do folheto")
+    junto = {"validade": f.get("ate"), "ofertas": [], "lista": []}
+    nomes = nomes_da_lista(cfg)
+    for i in range(0, len(dados), 8):
+        parte = dados[i:i + 8]
+        BUSCA["etapa"] = f"folheto de {loja['nome']}" + (f" ({i // 8 + 1}ª parte)" if len(dados) > 8 else "")
+        r = ia_com_arquivos(f"EconomIA: folheto {loja['nome']}", instrucoes_encarte(dict(loja, site=f["url"]), "", len(parte), cfg), parte)
+        r = r if isinstance(r, dict) else {}
+        junto["validade"] = junto["validade"] or data_ok(r.get("validade"))
+        junto["ofertas"] += [o for o in r.get("ofertas") or [] if isinstance(o, dict)]
+        for it in r.get("lista") or []:
+            if isinstance(it, dict):
+                original = casar_item(it, nomes)  # guarda pelo nome: a ordem da lista pode mudar
+                if original:
+                    junto["lista"].append(dict({k: v for k, v in it.items() if k != "item"}, produto=original))
+    log(f"folheto de {loja['nome']}: {len(dados)} página(s), {len(junto['ofertas'])} oferta(s)")
+    return junto
+
+
+def resultado_folheto(loja, f, r, cfg):
+    nomes = nomes_da_lista(cfg)
+    r = dict(r)
+    ja = {casar_item(it, nomes) for it in r.get("lista") or [] if isinstance(it, dict)}
+    r["lista"] = list(r.get("lista") or []) + precos_por_oferta(r.get("ofertas") or [], nomes, ja)
+    cat, parcial = normalizar(loja["categoria"], bruto_encarte({"nome": loja["nome"], "site": f["url"], "categoria": loja["categoria"]}, r), cfg)
+    for l in cat["lojas"]:
+        l["fontes"] = ["Encarte"]
+        l["folheto"] = f["url"]
+    return cat, parcial
+
+
+def lojas_folheto(cfg, cats=None):
+    out = []
+    for l in ((cfg.get("lojas") or {}).get("folhetos") or []):
+        if isinstance(l, dict) and texto(l.get("nome"), 60):
+            cat = l.get("categoria") if l.get("categoria") in CATEGORIAS and l.get("categoria") != "online" else "mercados"
+            if cats is None or cat in cats:
+                out.append({"nome": texto(l["nome"], 60), "categoria": cat})
+    return out[:4]
+
+
+def busca_folhetos(cfg, cats=None, so_guardados=False):
+    """O folheto da semana das lojas escolhidas. Devolve ([(categoria, parcial)], status por loja)."""
+    lojas = lojas_folheto(cfg, cats)
+    if not lojas or not opcao("folhetos", cfg):
+        return [], {}
+    resultado, status = [], {}
+    with _folhetos_trava:
+        cache = ler_json(FOLHETOS, {}) or {}
+        itens = cache.setdefault("itens", {})
+        hoje = hoje_br()
+        velho = (datetime.now(timezone.utc) - timedelta(days=8)).isoformat(timespec="seconds")
+        for k in [k for k, v in itens.items() if (v.get("ate") or "9999") < hoje or (not v.get("ate") and v.get("lido_em", "") < velho)]:
+            itens.pop(k, None)
+        vale = cache.setdefault("_vale", {})
+        for k in [k for k, v in vale.items() if (v.get("ate") or "9999") < hoje]:
+            vale.pop(k, None)
+        for loja in lojas:
+            if so_guardados:  # Buscar este item: só o que já foi lido, sem abrir os sites
+                for f in [dict(v, id=k) for k, v in itens.items() if norm(v.get("loja", "")) == norm(loja["nome"]) and v.get("r")]:
+                    resultado.append(resultado_folheto(loja, f, f["r"], cfg))
+                continue
+            st = {"loja": loja["nome"], "fonte": None, "folhetos": 0, "lidos": 0, "guardados": 0, "ofertas": 0, "ate": None, "erro": None, "em": agora()}
+            try:
+                BUSCA["etapa"] = "folheto de " + loja["nome"]
+                a, _, cands = achar_folhetos(loja, cache)
+                if not cands:
+                    st["erro"] = "Não achei folheto desta semana no Kimbino nem no Seus Folhetos."
+                else:
+                    st["fonte"], st["folhetos"] = a["nome"], len(cands)
+                    escolhidos = escolhe_folhetos(loja, a, cands, cache, cfg)
+                    if not escolhidos:
+                        st["erro"] = "Os folhetos desta semana não valem para a sua cidade."
+                    for f in escolhidos:
+                        guardado = itens.get(f["id"])
+                        if guardado and guardado.get("r"):
+                            r = guardado["r"]
+                            st["guardados"] += 1
+                        elif not ia_ligada(cfg):
+                            continue
+                        else:
+                            imgs = paginas_folheto(a, f)
+                            if not imgs:
+                                st["erro"] = "Achei o folheto, mas não as páginas dele."
+                                continue
+                            r = ler_folheto(loja, f, imgs, cfg)
+                            itens[f["id"]] = {"loja": loja["nome"], "url": f["url"], "de": f.get("de"), "ate": f.get("ate") or r.get("validade"),
+                                              "paginas": len(imgs), "lido_em": agora(), "r": r}
+                            gravar_json(FOLHETOS, cache)
+                            st["lidos"] += 1
+                        cat, parcial = resultado_folheto(loja, f, r, cfg)
+                        resultado.append((cat, parcial))
+                        st["ofertas"] += len(cat["ofertas"])
+                        st["ate"] = max(st["ate"] or "", f.get("ate") or (itens.get(f["id"]) or {}).get("ate") or "") or None
+            except ErroBusca as e:
+                st["erro"] = str(e)
+            except Exception as e:  # noqa: BLE001
+                st["erro"] = f"Erro inesperado: {e}"
+                log(f"folheto de {loja['nome']}: {e}")
+            status[norm(loja["nome"])] = st
+            log(f"folheto de {loja['nome']}: " + (st["erro"] or f"{st['fonte']}, {st['lidos']} lido(s) agora, {st['guardados']} guardado(s), {st['ofertas']} oferta(s)"))
+        if status:
+            cache["_status"] = dict(cache.get("_status") or {}, **status)
+        gravar_json(FOLHETOS, cache)
+    return resultado, status
+
+
+def folhetos_painel(cfg):
+    st = (ler_json(FOLHETOS, {}) or {}).get("_status") or {}
+    return [dict(l, status=st.get(norm(l["nome"]))) for l in lojas_folheto(cfg)]
+
+
+# ---------- primeiro o que não gasta IA ----------
+def busca_scripts(cfg, cats, itens=None, ler_folhetos=True):
+    """Busca direta nas lojas, Shopee pela API e folhetos (lidos uma vez por semana). Devolve (resultado, relatório)."""
+    resultado, rel, ja = [], {}, {}
+    locais = [c for c in cats if c in ("mercados", "farmacias", "petshops")]
+    if locais and opcao("lojas_diretas", cfg):
+        try:
+            atualiza_diretas(cfg)
+            d = busca_direta(cfg, itens, locais)
+        except Exception as e:  # noqa: BLE001
+            d = []
+            log(f"busca direta: {e}")
+        if d:
+            resultado += d
+            rel["diretas"] = sorted({r["nome"] for c, _ in d for r in c["redes"]})
+            for c, _ in d:
+                ja[c["id"]] = sorted(r["nome"] for r in c["redes"])
+    if opcao("lojas_diretas", cfg):
+        try:
+            ca = busca_catalogos(cfg, itens, cats)
+        except Exception as e:  # noqa: BLE001
+            ca = []
+            log(f"páginas de produto: {e}")
+        if ca:
+            resultado += ca
+            rel["diretas"] = sorted(set(rel.get("diretas") or []) | {r["nome"] for c, _ in ca for r in c["redes"]})
+            for c, _ in ca:
+                ja[c["id"]] = sorted(set(ja.get(c["id"]) or []) | {r["nome"] for r in c["redes"]})
+    if "online" in cats and shopee_pronta():
+        try:
+            sh = busca_shopee(cfg, itens)
+        except Exception as e:  # noqa: BLE001
+            sh = []
+            log(f"shopee: {e}")
+        if sh:
+            resultado += sh
+            rel["shopee"] = sum(len(p) for _, p in sh)
+            ja["online"] = sorted(set(ja.get("online") or []) | {"Shopee"})
+    try:
+        fo, st = busca_folhetos(cfg, cats, so_guardados=not ler_folhetos)
+    except Exception as e:  # noqa: BLE001
+        fo, st = [], {}
+        log(f"folhetos: {e}")
+    resultado += fo
+    if st:
+        rel["folhetos"] = list(st.values())
+    return resultado, rel, ja
+
+
+# ---------- lista de produtos do site (sitemap) e preço na página do produto ----------
+# Para lojas cujo site não deixa programas usarem a busca (/api/), mas deixa abrir as páginas de produto: a lista de
+# produtos que a própria loja publica no sitemap é baixada uma vez por dia, os itens da lista são achados pelo nome
+# e o preço é lido na página de cada produto (dados schema.org). Sem IA. É o preço padrão do site.
+CATALOGOS = os.path.join(DATA, "catalogos")
+MAX_CATALOGOS = 3
+PAGINAS_ITEM = 3
+LD_JSON = re.compile(r"<script[^>]+application/ld\+json[^>]*>(.*?)</script>", re.S | re.I)
+
+
+def arquivo_catalogo(origem):
+    return os.path.join(CATALOGOS, slug(origem.split("://", 1)[-1], 60) + ".json")
+
+
+def baixa_catalogo(origem, info):
+    """Endereços das páginas de produto que a loja publica no sitemap. Baixa de novo uma vez por dia."""
+    arq = arquivo_catalogo(origem)
+    c = ler_json(arq, {}) or {}
+    ontem = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(timespec="seconds")
+    if c.get("em", "") >= ontem and "urls" in c:
+        return c
+    regras = info.get("regras") or []
+    fila = list(info.get("sitemaps") or []) or [origem + "/sitemap.xml"]
+    urls, vistos, total = [], set(), 0
+    while fila and len(vistos) < 40 and total < 80 * 1024 * 1024:
+        sm = fila.pop(0)
+        if sm in vistos or not robots_permite(regras, urllib.parse.urlsplit(sm).path or "/"):
+            continue
+        vistos.add(sm)
+        try:
+            dado, _ = baixar(sm, 30 * 1024 * 1024, timeout=45)
+        except Exception:  # noqa: BLE001
+            continue
+        if dado[:2] == b"\x1f\x8b":
+            try:
+                dado = gzip.decompress(dado)
+            except OSError:
+                continue
+        total += len(dado)
+        txt = dado.decode("utf-8", "ignore")
+        locs = [html_mod.unescape(u) for u in re.findall(r"<loc>\s*([^<\s]+)\s*</loc>", txt)]
+        if "<sitemapindex" in txt[:3000]:
+            prod = [u for u in locs if re.search(r"product|produto", u, re.I)]
+            fila += prod or [u for u in locs if not re.search(r"categor|brand|marca|institucional|blog|image", u, re.I)]
+        else:
+            de_produto = bool(re.search(r"product|produto", sm, re.I))
+            urls += [u for u in locs if de_produto or re.search(r"/p/?$", u)]
+    c = {"em": agora(), "urls": list(dict.fromkeys(urls))[:200_000], "precos": c.get("precos") or {}}
+    os.makedirs(CATALOGOS, exist_ok=True)
+    gravar_json(arq, c)
+    log(f"lista de produtos de {origem}: {len(c['urls'])} produto(s)")
+    return c
+
+
+def texto_url(u):
+    caminho = urllib.parse.unquote(urllib.parse.urlsplit(u).path).rstrip("/")
+    if caminho.endswith("/p"):
+        caminho = caminho[:-2]
+    return re.sub(r"[-_]+", " ", caminho.rsplit("/", 1)[-1])
+
+
+def procura_catalogo(urls, nome, n=PAGINAS_ITEM):
+    """As páginas de produto cujo endereço tem as palavras do item, das mais justas para as mais longas."""
+    achadas = []
+    for u in urls:
+        t = texto_url(u)
+        if combina(nome, t):
+            achadas.append((len(t), u))
+    return [u for _, u in sorted(achadas)[:n]]
+
+
+def preco_da_pagina(html_txt):
+    """Nome, preço e se tem estoque, pelos dados schema.org da página do produto (ou pelas meta tags)."""
+    for bloco in LD_JSON.findall(html_txt):
+        try:
+            d = json.loads(html_mod.unescape(bloco.strip()))
+        except ValueError:
+            continue
+        itens = d if isinstance(d, list) else (d.get("@graph") or [d]) if isinstance(d, dict) else []
+        for x in itens:
+            if not isinstance(x, dict) or "Product" not in str(x.get("@type")):
+                continue
+            of = x.get("offers") or {}
+            ofs = of if isinstance(of, list) else [of]
+            if isinstance(of, dict) and isinstance(of.get("offers"), list):
+                ofs = of["offers"] or [of]
+            precos, disp = [], False
+            for o in ofs:
+                if not isinstance(o, dict):
+                    continue
+                v = numero(o.get("price")) or numero(o.get("lowPrice"))
+                estoque = "outofstock" not in str(o.get("availability") or "").lower().replace(" ", "")
+                if v and estoque:
+                    precos.append(v)
+                    disp = True
+            if not precos and isinstance(of, dict) and not isinstance(of.get("offers"), list) and numero(of.get("lowPrice")) \
+                    and "outofstock" not in str(of.get("availability") or "").lower():
+                precos, disp = [numero(of["lowPrice"])], True
+            if precos:
+                marca = x.get("brand")
+                marca = marca.get("name") if isinstance(marca, dict) else marca
+                return {"nome": texto(x.get("name"), 100), "marca": texto(marca, 30), "preco": min(precos), "disponivel": disp}
+    m = re.search(r"product:price:amount[\"'][^>]*content=[\"']([\d.,]+)", html_txt)
+    if m and numero(m.group(1)):
+        t = re.search(r"<title>(.*?)</title>", html_txt, re.S | re.I)
+        return {"nome": texto(sem_tags(t.group(1)) if t else None, 100), "marca": None, "preco": numero(m.group(1)), "disponivel": True}
+    return None
+
+
+def preco_produto(origem, cat, u):
+    """Preço da página do produto, guardado por um dia."""
+    ontem = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(timespec="seconds")
+    g = (cat.get("precos") or {}).get(u)
+    if g and g.get("em", "") >= ontem:
+        return g.get("r")
+    try:
+        r = preco_da_pagina(pagina_txt(u))
+    except Exception as e:  # noqa: BLE001
+        log(f"página de produto {u}: {e}")
+        r = None
+    cat.setdefault("precos", {})[u] = {"em": agora(), "r": r}
+    time.sleep(0.3)  # devagar, para não pesar no site da loja
+    return r
+
+
+def busca_catalogos(cfg, itens=None, cats=None):
+    """Preço dos itens da lista nas lojas que só deixam abrir as páginas de produto. Devolve [(categoria, parcial)]."""
+    nomes = (itens or nomes_da_lista(cfg))[:40]
+    memo = ler_json(LOJAS_SITE, {}) or {}
+    perto = {norm(n) for n in lojas_perto(cfg)}
+    perto |= {norm(texto(a["nome"], 60).split(",")[0]) for a in ((cfg.get("lojas") or {}).get("adicionar") or [])
+              if isinstance(a, dict) and texto(a.get("nome"), 60)}  # loja que o morador cadastrou: é do bairro
+    lojas = [(o, m) for o, m in memo.items() if m.get("nome") and m.get("paginas") and not (m.get("vtex") and m.get("permite"))]
+    out = []
+    for origem, m in lojas[:MAX_CATALOGOS]:
+        cat_id = m.get("categoria") or "mercados"
+        if cat_id != "online" and norm(m["nome"]) not in perto:
+            cat_id = "online"  # fora do raio: mercado que entrega
+        if cats and cat_id not in cats:
+            continue
+        BUSCA["etapa"] = "lista de produtos do " + m["nome"]
+        try:
+            cat = baixa_catalogo(origem, m)
+        except Exception as e:  # noqa: BLE001
+            log(f"lista de produtos de {m['nome']}: {e}")
+            continue
+        if not cat.get("urls"):
+            continue
+        BUSCA["etapa"] = "preços no site do " + m["nome"]
+        lista_bruta, n = [], 0
+        for nome in nomes:
+            cands = []
+            for u in procura_catalogo(cat["urls"], nome):
+                r = preco_produto(origem, cat, u)
+                if not r or not r.get("disponivel") or not r.get("preco"):
+                    continue
+                pn = r.get("nome") or texto_url(u)
+                tam = tamanho_nome(pn) or tamanho_nome(texto_url(u))
+                curto = (r["marca"] + " " + fmt_base({"quantidade": tam[0], "unidade": tam[1]})) if r.get("marca") and tam else pn[:60]
+                cands.append({"nome": pn, "curto": curto, "preco": r["preco"], "de": None, "tam": tam, "link": u})
+            if cands:
+                n += 1
+                ent, _ = montar_item(nome, {m["nome"]: cands}, frete="carrinho" if cat_id == "online" else None)
+                lista_bruta.append(ent)
+        try:
+            gravar_json(arquivo_catalogo(origem), cat)
+        except OSError:
+            pass
+        log(f"site de {m['nome']}: {n} de {len(nomes)} item(ns) com preço pelas páginas de produto")
+        if lista_bruta:
+            lojas_b = [] if cat_id == "online" else [{"rede": m["nome"], "site": origem, "fontes": ["Site"]}]
+            out.append(normalizar(cat_id, {"lojas": lojas_b, "cupons": [], "ofertas": [], "lista": lista_bruta, "_via": "site"},
+                                  dict(cfg, lista=[{"produto": x} for x in nomes])))
+    return out
 
 
 MAX_FOCADA = 8
@@ -1550,17 +2535,18 @@ MAX_FOCADA = 8
 def instrucoes_focada(cfg, itens, cats):
     on = cfg.get("online") or {}
     locais = [CATEGORIAS[c]["o_que"] for c in cats if c != "online"]
-    mkts = [MARKETPLACES.get(m, m) for m in (on.get("marketplaces") or ["mercadolivre", "amazon"])] if "online" in cats else []
+    mkts = mkts_online(cfg) if "online" in cats else []
+    entrega = "online" in cats and entrega_ligada(cfg)
     assin = [ASSINATURAS.get(a, a) for a in (on.get("assinaturas") or [])]
     numerados = [f"{k}) {n}" for k, n in enumerate(itens, 1)]
     return f"""Preciso do preço atual ({hoje_br()}) destes itens de uma lista de compras, para o CEP {cfg.get('cep')}, no Brasil: {'; '.join(numerados)}.
 
 Use a busca na web agora e procure item por item: no site e no app das lojas, em encartes, no Google Shopping e em comparadores de preço. Use só o que encontrar: não invente preços. Se não conseguir usar a busca na web, responda apenas {{"erro": "sem_busca"}}.
 
-Onde procurar: {', '.join(locais) or 'nenhuma loja física'}{f' num raio de {cfg.get("raio_km") or 2} km do CEP' if locais else ''}{('; e online em ' + ', '.join(mkts) + ' com entrega no CEP') if mkts else ''}.
+Onde procurar: {', '.join(locais) or 'nenhuma loja física'}{f' num raio de {cfg.get("raio_km") or 2} km do CEP' if locais else ''}{('; e online em ' + ', '.join(mkts) + ' com entrega no CEP') if mkts else ''}{'; e em mercados que entregam no CEP, mesmo fora do raio (categoria "online")' if entrega else ''}.
 Assinaturas do morador: {', '.join(assin) or 'nenhuma'}.
 Se o item for genérico (por exemplo "pó lava louça"), procure as marcas mais vendidas e diga em "obs" qual produto e tamanho é cada preço. Traga até 4 preços por item, de lojas diferentes.
-"categoria" é {', '.join(f'"{c}"' for c in cats)}. Online, informe "frete" (0 se grátis) e "prazo_dias".
+"categoria" é {', '.join(f'"{c}"' for c in cats)}. Online, informe "frete" (0 se grátis; "carrinho" se a loja só mostra no carrinho) e "prazo_dias". {PAGINA_PRODUTO}
 
 Em "fonte", ponha o link da página do produto (o anúncio no Mercado Livre, a página na Amazon, o produto no site da loja), não a página inicial.
 
@@ -1574,7 +2560,7 @@ def categoria_do_preco(p, cats):
     if c in cats:
         return c
     nome = norm(p.get("rede") or "")
-    if "online" in cats and (frete_ok(p.get("frete")) is not None
+    if "online" in cats and (frete_item(p.get("frete")) is not None
                              or any(norm(m) in nome for m in list(MARKETPLACES.values()) + ["shopee", "magazine"])):
         return "online"
     pistas = {"farmacias": ("drog", "farm", "raia", "pacheco", "panvel", "pague menos"),
@@ -1652,18 +2638,33 @@ def buscar():
         novas, parciais, falhas = [], [], []
         relatorio = {"categorias": {}, "sem_preco": [], "falhas": []}
         _uso_local.chamadas = 0
+        ia = ia_ligada(cfg)
+        # primeiro o que não gasta IA: site das lojas, Shopee e folhetos guardados
+        BUSCA["etapa"] = "sites das lojas"
+        scripts, rel_s, ja = busca_scripts(cfg, cats, ler_folhetos=ia)
+        relatorio.update(rel_s)
+        if not ia:
+            if not scripts:
+                raise ErroBusca("Com a IA desligada, a busca usa só os sites das lojas, a Shopee e os folhetos já lidos, e nenhum trouxe preço agora.")
+            mesclar_resultado(scripts, cfg, relatorio)
+            BUSCA["chamadas_ia"] = 0
+            log("busca sem IA: " + ", ".join(f"{k}" for k in rel_s) )
+            return
+        cfg_ia = dict(cfg, _ja_tenho=ja)
         for i, cat_id in enumerate(cats, 1):
             BUSCA.update({"atual": i, "etapa": CATEGORIAS[cat_id]["nome"].lower()})
+            if cat_id == "online" and not mkts_online(cfg) and not entrega_ligada(cfg):
+                continue  # só a Shopee, que já veio pela API
             log(f"buscando {cat_id}")
             try:
                 try:
-                    cat, parcial = normalizar(cat_id, chamar_ai_task(f"EconomIA: {cat_id}", instrucoes_para(cat_id, cfg)), cfg)
+                    cat, parcial = normalizar(cat_id, chamar_ai_task(f"EconomIA: {cat_id}", instrucoes_para(cat_id, cfg_ia)), cfg)
                 except ErroCota:
                     BUSCA["etapa"] = CATEGORIAS[cat_id]["nome"].lower() + " (a IA pediu uma pausa, tentando de novo em 1 minuto)"
                     log("cota da IA: esperando 60 s")
                     time.sleep(ESPERA_COTA)
                     BUSCA["etapa"] = CATEGORIAS[cat_id]["nome"].lower()
-                    cat, parcial = normalizar(cat_id, chamar_ai_task(f"EconomIA: {cat_id}", instrucoes_para(cat_id, cfg)), cfg)
+                    cat, parcial = normalizar(cat_id, chamar_ai_task(f"EconomIA: {cat_id}", instrucoes_para(cat_id, cfg_ia)), cfg)
             except ErroBusca as e:
                 if isinstance(e, ErroCota):
                     raise
@@ -1679,18 +2680,13 @@ def buscar():
             relatorio["categorias"][cat_id] = {"ok": True, "ofertas": len(cat["ofertas"]), "lojas": len(cat["lojas"]),
                                                "precos": sum(len(v["precos"]) for v in parcial.values())}
         falhou_tudo = not novas or len(falhas) == len(cats)
-        if "mercados" in cats and opcao("lojas_diretas", cfg):
-            try:
-                diretas = busca_direta(cfg)
-            except Exception as e:  # noqa: BLE001
-                diretas = []
-                log(f"busca direta: {e}")
-            if diretas:
-                juntar_focada(novas, parciais, diretas)
-                relatorio["diretas"] = sorted({r["nome"] for c, _ in diretas for r in c["redes"]})
-                falhou_tudo = False
+        if scripts:  # por último: o preço do site da loja vale mais que o que a busca na web achou
+            juntar_focada(novas, parciais, scripts)
+            falhou_tudo = False
+        folheto = {norm(l["nome"]) for l in lojas_folheto(cfg)} | {norm(n) for v in ja.values() for n in v}  # já vieram por outro caminho
         sites = [a for a in ((cfg.get("lojas") or {}).get("adicionar") or [])
-                 if isinstance(a, dict) and url_ok(a.get("site")) and a.get("categoria") in cats and texto(a.get("nome"), 60)]
+                 if isinstance(a, dict) and url_ok(a.get("site")) and a.get("categoria") in cats and texto(a.get("nome"), 60)
+                 and norm(texto(a["nome"], 60).split(",")[0]) not in folheto]
         BUSCA["total"] = len(cats) + len(sites)
         for j, loja in enumerate(sites, 1):
             loja = {"nome": texto(loja["nome"], 60).split(",")[0].strip(), "site": loja["site"], "categoria": loja["categoria"]}
@@ -1709,7 +2705,7 @@ def buscar():
             falhou_tudo = False
         # lojas do raio que a busca achou com site, mas sem nenhum preço: tenta ler o encarte do site
         com_preco = {r for parcial in parciais for ent in parcial.values() for r in list(ent["precos"]) + [t["rede"] for t in ent["tamanhos"]]}
-        manuais = {norm(l["nome"]) for l in sites}
+        manuais = {norm(l["nome"]) for l in sites} | folheto
         ignorar = set((cfg.get("lojas") or {}).get("ignorar") or [])
         try:
             raio = float(cfg.get("raio_km") or 2)
@@ -1780,7 +2776,7 @@ def buscar():
 _mescla_trava = threading.Lock()
 
 
-def mesclar_resultado(resultado, cfg):
+def mesclar_resultado(resultado, cfg, extra=None):
     """Junta [(categoria, parcial)] ao ofertas.json atual, sem apagar o resto. Devolve a lista de preços juntada."""
     with _mescla_trava:
         anterior = ler_json(OFERTAS, {}) or {}
@@ -1788,13 +2784,16 @@ def mesclar_resultado(resultado, cfg):
         base = {}
         for i in anterior.get("lista") or []:
             if isinstance(i, dict) and i.get("produto"):
-                base[i["produto"]] = {"precos": dict(i.get("precos") or {}), "base": i.get("base"),
+                base[i["produto"]] = {"precos": dict(i.get("precos") or {}), "base": i.get("base"), "vistos": dict(i.get("vistos") or {}),
                                       "tamanhos": list(i.get("tamanhos") or []), "links": dict(i.get("links") or {})}
         parciais = [base]
         juntar_focada(novas, parciais, resultado)
         lista = juntar_categorias(parciais)
         relatorio = anterior.get("relatorio") if isinstance(anterior.get("relatorio"), dict) else {}
         relatorio["sem_preco"] = [n for n in nomes_da_lista(cfg) if n not in lista]
+        for k, v in (extra or {}).items():
+            if k in ("diretas", "shopee", "folhetos"):
+                relatorio[k] = v
         gravar_json(OFERTAS, dict(anterior, versao=2, origem="ia_home_assistant", gerado_em=anterior.get("gerado_em") or agora(),
                                   atualizado_em=agora(), lista=[item_ofertas(p, v) for p, v in lista.items()],
                                   categorias=novas, relatorio=relatorio))
@@ -1810,18 +2809,16 @@ def buscar_itens(itens):
     try:
         if not cfg.get("cep"):
             raise ErroBusca("Salve o CEP em Mais antes de buscar.")
-        resultado = []
-        if "mercados" in cats and opcao("lojas_diretas", cfg):
+        resultado, rel, _ = busca_scripts(cfg, cats, itens, ler_folhetos=False)
+        conta = {n: sum(len(p[n]["precos"]) for _, p in resultado if n in p) for n in itens}
+        faltam = [n for n in itens if conta[n] < 2]
+        if faltam and ia_ligada(cfg):
             try:
-                resultado += busca_direta(cfg, itens)
-            except Exception as e:  # noqa: BLE001
-                log(f"busca direta: {e}")
-        try:
-            resultado = busca_focada(cfg, itens, cats) + resultado  # o site da loja por último: vale mais
-        except ErroBusca:
-            if not resultado:
-                raise
-        lista = mesclar_resultado(resultado, cfg)
+                resultado = busca_focada(cfg, faltam, cats) + resultado  # o site da loja por último: vale mais
+            except ErroBusca:
+                if not resultado:
+                    raise
+        lista = mesclar_resultado(resultado, cfg, rel)
         achados = [n for n in itens if n in lista and any(n in p for _, p in resultado)]
         if not achados:
             BUSCA["avisos"] = ["Não achei preço para " + ", ".join(itens) + ". Tente com marca e tamanho, por exemplo \"Detergente Ypê 500 ml\"."]
@@ -2179,7 +3176,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.12.1"
+    server_version = "EconomIA/0.13.0"
 
     def log_message(self, fmt, *args):
         pass
@@ -2259,6 +3256,11 @@ class Painel(BaseHTTPRequestHandler):
             self._json(200, uso_resumo())
         elif rota == "/api/voz/status":
             self._json(200, voz_status())
+        elif rota == "/api/integracoes":
+            ch = segredos().get("shopee") or {}
+            self._json(200, {"shopee": {"app_id": str(ch.get("app_id") or ""), "tem_senha": bool(ch.get("secret"))}})
+        elif rota == "/api/folhetos":
+            self._json(200, {"lojas": folhetos_painel(ler_config())})
         elif rota == "/api/lojas-diretas":
             self._json(200, {"lojas": lojas_diretas_status(ler_config())})
         elif rota == "/api/versoes":
@@ -2324,6 +3326,25 @@ class Painel(BaseHTTPRequestHandler):
             if (sensores_ligados(novo), ia_ligada(novo)) != ligados:
                 threading.Thread(target=publica_sensor_uso, daemon=True).start()
             self._json(200, {"ok": True, "config": novo, "mesclado": mesclado})
+        elif rota == "/api/integracoes":
+            dado = self._corpo()
+            if dado is None:
+                return
+            seg = segredos()
+            if "shopee" in dado:
+                novo = dado.get("shopee")
+                if not novo:
+                    seg.pop("shopee", None)
+                else:
+                    atual = seg.get("shopee") or {}
+                    app = re.sub(r"\s", "", str(novo.get("app_id") or ""))[:40]
+                    senha = str(novo.get("secret") or "").strip()[:200]
+                    if not app:
+                        return self._json(400, {"erro": "Falta o App ID da Shopee."})
+                    seg["shopee"] = {"app_id": app, "secret": senha or (atual.get("secret") if atual.get("app_id") == app else "")}
+            grava_segredos(seg)
+            ch = seg.get("shopee") or {}
+            self._json(200, {"ok": True, "shopee": {"app_id": str(ch.get("app_id") or ""), "tem_senha": bool(ch.get("secret"))}})
         elif rota == "/api/ofertas":
             dado = self._corpo()
             if dado is None:
@@ -2352,6 +3373,8 @@ class Painel(BaseHTTPRequestHandler):
                 return self._json(200, voz_texto(self.rfile.read(tamanho)))
             except ErroBusca as e:
                 return self._json(400, {"erro": str(e)})
+        if urllib.parse.urlsplit(self.path).path == "/api/integracoes/testar":
+            return self._json(200, testar_shopee())
         if urllib.parse.urlsplit(self.path).path == "/api/ler-encarte":
             dado = self._corpo(MAX_FOTOS_BODY)
             if dado is None:
@@ -2405,8 +3428,6 @@ class Painel(BaseHTTPRequestHandler):
             if BUSCA["rodando"]:
                 return self._json(202, {"ok": True, "ja_rodando": True})
             cfg = ler_json(CONFIG, {}) or {}
-            if not ia_ligada(cfg):
-                return self._json(400, {"erro": IA_DESLIGADA})
             if not cfg.get("cep"):
                 return self._json(400, {"erro": "Salve o CEP em Mais antes de buscar."})
             BUSCA["rodando"] = True
