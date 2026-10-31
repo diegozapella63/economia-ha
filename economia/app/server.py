@@ -24,6 +24,7 @@ Rotas:
 - PUT  /api/integracoes   {"shopee": {"app_id", "secret"}} guarda em segredos.json; {"shopee": null} apaga
 - POST /api/integracoes/testar   {"servico": "shopee"} faz uma consulta de teste
 - GET  /api/folhetos   lojas com folheto lido no Kimbino ou no Seus Folhetos e como foi a última leitura
+- GET  /api/lojas-mapa   lojas do raio pelo mapa (OpenStreetMap e, com chave, Google Places)
 - POST /api/ler-encarte   {"imagens": [...], "loja", "categoria"}: a IA lê o encarte ou o print de preços e junta ao resultado
 - POST /api/versoes/guardar {"motivo"} | /api/versoes/restaurar {"nome"}
 - GET  /api/busca    andamento da busca
@@ -101,7 +102,7 @@ MARKETPLACES = {"ifood": "iFood", "rappi": "Rappi", "mercadolivre": "Mercado Liv
 ASSINATURAS = {"prime": "Amazon Prime", "melimais": "Meli+", "clubeifood": "Clube iFood"}
 TAGS = {"bebe", "pet", "gato", "cachorro", "alcool", "medicamento", "maquiagem", "geriatrico", "skincare", "suplementos",
         "cafe", "bucal", "limpeza", "carnes", "alimentos", "higiene", "lactose", "gluten", "acucar"}
-FONTES = {"Site", "App", "Encarte", "Clube", "Instagram", "WhatsApp", "Tiendeo"}
+FONTES = {"Site", "App", "Encarte", "Clube", "Instagram", "WhatsApp", "Tiendeo", "Mapa"}
 
 BUSCA = {"rodando": False, "etapa": None, "atual": 0, "total": 0, "erro": None, "avisos": [], "terminou_em": None}
 _trava = threading.Lock()
@@ -990,6 +991,7 @@ Lista de compras (procure o preço atual de cada item nestas lojas): {'; '.join(
 {TAMANHOS_TXT}
 Lojas para ignorar: {', '.join(lojas.get('ignorar') or []) or 'nenhuma'}. Lojas para incluir mesmo mais longe: {', '.join(lojas.get('manter') or []) or 'nenhuma'}. Lojas indicadas pelo morador: {', '.join(adicionadas) or 'nenhuma'}.
 {ja_tenho_txt(cfg, cat_id)}
+{mapa_txt(cfg, cat_id)}
 
 Responda somente com um objeto JSON, sem texto antes ou depois, neste formato:
 {{
@@ -1369,7 +1371,11 @@ def juntar_categoria(dest, cat):
     lojas = {l["rede"]: l for l in dest.get("lojas") or []}
     for l in cat["lojas"]:
         if l["rede"] in lojas:
-            lojas[l["rede"]]["fontes"] = sorted(set(lojas[l["rede"]].get("fontes") or []) | set(l["fontes"]))
+            alvo = lojas[l["rede"]]
+            alvo["fontes"] = sorted(set(alvo.get("fontes") or []) | set(l["fontes"]))
+            for k in ("folheto", "folheto_ate"):
+                if l.get(k):
+                    alvo[k] = l[k]
         else:
             dest.setdefault("lojas", []).append(l)
     ids = {o["id"] for o in dest.get("ofertas") or []}
@@ -1917,9 +1923,9 @@ def busca_shopee(cfg, itens=None):
 # do folheto pelo nome, sem IA.
 AGREGADORES = [
     {"id": "kimbino", "nome": "Kimbino", "base": "https://www.kimbino.com.br", "loja": "/{}/",
-     "variantes": ["{}", "{}-atacadista", "{}-supermercados", "{}-supermercado", "{}-hipermercado"]},
+     "variantes": ["{}", "{}-atacadista", "{}-supermercados", "supermercados-{}", "{}-supermercado"]},
     {"id": "seusfolhetos", "nome": "Seus Folhetos", "base": "https://seusfolhetos.com.br", "loja": "/{}-ofertas",
-     "variantes": ["{}", "{}-atacadista", "{}-supermercados"]},
+     "variantes": ["{}", "{}-atacadista", "supermercados-{}"]},
 ]
 MAX_FOLHETOS_LOJA = 2
 MAX_PAGINAS = 12
@@ -2124,12 +2130,22 @@ def escolhe_folhetos(loja, a, cands, cache, cfg):
     ok = [f for f in cands if f["id"] in cache["itens"] or (vale.get(f["id"]) or {}).get("v") in ordem]
     nota = lambda f: 0 if f["id"] in cache["itens"] else ordem[vale[f["id"]]["v"]]  # noqa: E731
     sims = [f for f in ok if nota(f) == 0]
-    return (sims or sorted(ok, key=nota)[:1])[:MAX_FOLHETOS_LOJA]
+    return (sims or sorted(ok, key=nota))[:MAX_FOLHETOS_LOJA]
+
+
+def bases_loja(nome, cache):
+    """Começos de endereço para procurar a loja: "Komprão Koch Atacadista" → komprao, komprao-koch."""
+    cidade = norm((cache.get("_cep") or {}).get("cidade") or "")
+    palavras = [w for w in norm(nome).split() if w not in GENERICAS and w not in cidade.split()]
+    if not palavras:
+        palavras = norm(nome).split()[:1]
+    return list(dict.fromkeys(["-".join(palavras[:1]), "-".join(palavras[:2])]))
 
 
 def achar_folhetos(loja, cache):
     """Acha a página da loja no Kimbino ou no Seus Folhetos e os folhetos válidos hoje: (agregador, url, folhetos)."""
     alvo = slug(loja["nome"], 40)
+    bases = bases_loja(loja["nome"], cache)
     memo = cache.setdefault("_lojas", {})
     hoje = hoje_br()
     dias = lambda n: (datetime.now(timezone.utc) - timedelta(days=n)).isoformat(timespec="seconds")  # noqa: E731
@@ -2138,11 +2154,11 @@ def achar_folhetos(loja, cache):
         m = memo.get(chave) or {}
         if m.get("url"):
             urls = [m["url"]] if m.get("em", "") >= dias(14) else []
-        elif m and m.get("em", "") >= dias(2):
-            continue  # não tem esta loja: só procura de novo daqui a 2 dias
+        elif m and m.get("em", "") >= dias(7):
+            continue  # não tem esta loja: só procura de novo daqui a uma semana
         else:
             urls = []
-        urls = urls or [agreg_base(a) + a["loja"].format(v.format(alvo)) for v in a["variantes"]]
+        urls = urls or list(dict.fromkeys(agreg_base(a) + a["loja"].format(v.format(b)) for b in bases for v in a["variantes"]))
         achou = None
         for u in urls:
             try:
@@ -2220,24 +2236,62 @@ def resultado_folheto(loja, f, r, cfg):
     for l in cat["lojas"]:
         l["fontes"] = ["Encarte"]
         l["folheto"] = f["url"]
+        if f.get("ate") or r.get("validade"):
+            l["folheto_ate"] = f.get("ate") or r.get("validade")
     return cat, parcial
 
 
-def lojas_folheto(cfg, cats=None):
-    out = []
-    for l in ((cfg.get("lojas") or {}).get("folhetos") or []):
-        if isinstance(l, dict) and texto(l.get("nome"), 60):
-            cat = l.get("categoria") if l.get("categoria") in CATEGORIAS and l.get("categoria") != "online" else "mercados"
-            if cats is None or cat in cats:
-                out.append({"nome": texto(l["nome"], 60), "categoria": cat})
-    return out[:4]
+GENERICAS = {"supermercado", "supermercados", "mercado", "mercados", "hipermercado", "atacadista", "atacado", "atacarejo", "loja", "lojas",
+             "unidade", "filial", "super", "comercial", "ltda", "de", "do", "da", "dos", "das", "e", "o", "a"}
+MAX_FOLHETOS_NOVOS = 3  # lojas com folheto novo lido pela IA em cada busca (as outras ficam para a próxima)
 
 
-def busca_folhetos(cfg, cats=None, so_guardados=False):
-    """O folheto da semana das lojas escolhidas. Devolve ([(categoria, parcial)], status por loja)."""
-    lojas = lojas_folheto(cfg, cats)
+def lojas_folheto(cfg, cats=None, categorias=None, ja=None):
+    """As lojas físicas que o morador acompanha (e as que cadastrou) e que não têm preço pelo site: o folheto delas
+    é procurado sozinho. Lojas com site de encarte próprio já têm o encarte lido por outro caminho."""
+    lojas_cfg = cfg.get("lojas") or {}
+    ignorar, manter = set(lojas_cfg.get("ignorar") or []), set(lojas_cfg.get("manter") or [])
+    try:
+        raio = float(cfg.get("raio_km") or 2)
+    except (TypeError, ValueError):
+        raio = 2.0
+    adicionar = [a for a in lojas_cfg.get("adicionar") or [] if isinstance(a, dict) and texto(a.get("nome"), 60)]
+    pular = {norm(n) for v in (ja or {}).values() for n in v}
+    pular |= {norm(texto(a["nome"], 60).split(",")[0]) for a in adicionar if url_ok(a.get("site"))}
+    out, vistos = [], set()
+
+    def add(nome, cat):
+        nome = (texto(nome, 60) or "").split(",")[0].strip()
+        k = norm(nome)
+        if k and k not in vistos and k not in pular and cat in ("mercados", "farmacias", "petshops") and (cats is None or cat in cats):
+            vistos.add(k)
+            out.append({"nome": nome, "categoria": cat})
+    for l in lojas_cfg.get("folhetos") or []:  # versões antigas guardavam a lista à mão
+        if isinstance(l, dict):
+            add(l.get("nome"), l.get("categoria") or "mercados")
+    for a in adicionar:
+        add(a["nome"], a.get("categoria") or "mercados")
+    if categorias is None:
+        categorias = (ler_json(OFERTAS, {}) or {}).get("categorias") or []
+    for c in categorias:
+        if not isinstance(c, dict):
+            continue
+        nomes = {r.get("id"): r.get("nome") for r in c.get("redes") or [] if isinstance(r, dict)}
+        for l in c.get("lojas") or []:
+            if not isinstance(l, dict):
+                continue
+            rid, d = l.get("rede"), l.get("distancia_km")
+            if rid in ignorar or (isinstance(d, (int, float)) and d > raio and rid not in manter):
+                continue
+            add(nomes.get(rid), c.get("id"))
+    return out
+
+
+def busca_folhetos(cfg, lojas, so_guardados=False, max_novas=MAX_FOLHETOS_NOVOS):
+    """O folheto da semana das lojas. Devolve ([(categoria, parcial)], status por loja)."""
     if not lojas or not opcao("folhetos", cfg):
         return [], {}
+    novas = 0
     resultado, status = [], {}
     with _folhetos_trava:
         cache = ler_json(FOLHETOS, {}) or {}
@@ -2249,9 +2303,18 @@ def busca_folhetos(cfg, cats=None, so_guardados=False):
         vale = cache.setdefault("_vale", {})
         for k in [k for k, v in vale.items() if (v.get("ate") or "9999") < hoje]:
             vale.pop(k, None)
+        descobertas = 0
         for loja in lojas:
-            if so_guardados:  # Buscar este item: só o que já foi lido, sem abrir os sites
-                for f in [dict(v, id=k) for k, v in itens.items() if norm(v.get("loja", "")) == norm(loja["nome"]) and v.get("r")]:
+            guardados = [dict(v, id=k) for k, v in itens.items() if norm(v.get("loja", "")) == norm(loja["nome"]) and v.get("r")]
+            conhecida = any(k.endswith(":" + slug(loja["nome"], 40)) for k in cache.get("_lojas") or {})
+            if not so_guardados and not conhecida:
+                descobertas += 1
+                if descobertas > 8:  # loja nova nos sites de encartes: até 8 por busca, as outras na próxima
+                    continue
+            if not so_guardados and novas >= max_novas and not guardados:
+                continue  # folheto novo só para algumas lojas por busca: as outras ficam para a próxima
+            if so_guardados or novas >= max_novas:  # só o que já foi lido, sem abrir os sites
+                for f in guardados:
                     resultado.append(resultado_folheto(loja, f, f["r"], cfg))
                 continue
             st = {"loja": loja["nome"], "fonte": None, "folhetos": 0, "lidos": 0, "guardados": 0, "ofertas": 0, "ate": None, "erro": None, "em": agora()}
@@ -2278,6 +2341,7 @@ def busca_folhetos(cfg, cats=None, so_guardados=False):
                                 st["erro"] = "Achei o folheto, mas não as páginas dele."
                                 continue
                             r = ler_folheto(loja, f, imgs, cfg)
+                            novas += st["lidos"] == 0
                             itens[f["id"]] = {"loja": loja["nome"], "url": f["url"], "de": f.get("de"), "ate": f.get("ate") or r.get("validade"),
                                               "paginas": len(imgs), "lido_em": agora(), "r": r}
                             gravar_json(FOLHETOS, cache)
@@ -2291,8 +2355,11 @@ def busca_folhetos(cfg, cats=None, so_guardados=False):
             except Exception as e:  # noqa: BLE001
                 st["erro"] = f"Erro inesperado: {e}"
                 log(f"folheto de {loja['nome']}: {e}")
+            if st["erro"] and not st["fonte"] and not st["ofertas"]:
+                st["erro"] = None  # não está no Kimbino nem no Seus Folhetos: é o normal para muita loja
+                st["sem_folheto"] = True
             status[norm(loja["nome"])] = st
-            log(f"folheto de {loja['nome']}: " + (st["erro"] or f"{st['fonte']}, {st['lidos']} lido(s) agora, {st['guardados']} guardado(s), {st['ofertas']} oferta(s)"))
+            log(f"folheto de {loja['nome']}: " + ("não está no Kimbino nem no Seus Folhetos" if st.get("sem_folheto") else st["erro"] or f"{st['fonte']}, {st['lidos']} lido(s) agora, {st['guardados']} guardado(s), {st['ofertas']} oferta(s)"))
         if status:
             cache["_status"] = dict(cache.get("_status") or {}, **status)
         gravar_json(FOLHETOS, cache)
@@ -2302,6 +2369,13 @@ def busca_folhetos(cfg, cats=None, so_guardados=False):
 def folhetos_painel(cfg):
     st = (ler_json(FOLHETOS, {}) or {}).get("_status") or {}
     return [dict(l, status=st.get(norm(l["nome"]))) for l in lojas_folheto(cfg)]
+
+
+def juntar_folheto_status(rel, st):
+    if st:
+        atuais = {norm(x["loja"]): x for x in rel.get("folhetos") or []}
+        atuais.update(st)
+        rel["folhetos"] = list(atuais.values())
 
 
 # ---------- primeiro o que não gasta IA ----------
@@ -2342,14 +2416,13 @@ def busca_scripts(cfg, cats, itens=None, ler_folhetos=True):
             resultado += sh
             rel["shopee"] = sum(len(p) for _, p in sh)
             ja["online"] = sorted(set(ja.get("online") or []) | {"Shopee"})
-    try:
-        fo, st = busca_folhetos(cfg, cats, so_guardados=not ler_folhetos)
+    try:  # logo depois do site: o folheto das lojas que não têm preço por lá
+        fo, st = busca_folhetos(cfg, lojas_folheto(cfg, cats, ja=ja), so_guardados=not ler_folhetos)
     except Exception as e:  # noqa: BLE001
         fo, st = [], {}
         log(f"folhetos: {e}")
     resultado += fo
-    if st:
-        rel["folhetos"] = list(st.values())
+    juntar_folheto_status(rel, st)
     return resultado, rel, ja
 
 
@@ -2529,6 +2602,212 @@ def busca_catalogos(cfg, itens=None, cats=None):
     return out
 
 
+# ---------- lojas do raio pelo mapa: a casa do Home Assistant + OpenStreetMap (e Google Places, com chave) ----------
+# A IA não tem mapa: ela acha as lojas que aparecem na busca e estima a distância. O mapa diz quais lojas existem
+# no raio, com endereço e distância de verdade (para rede, a filial mais perto), e a IA só procura os preços.
+LOJAS_MAPA = os.path.join(DATA, "lojas_mapa.json")
+OVERPASS = os.environ.get("OFERTAS_OVERPASS", "https://overpass-api.de/api/interpreter")
+GOOGLE_PLACES = os.environ.get("OFERTAS_GOOGLE_PLACES", "https://places.googleapis.com/v1/places:searchNearby")
+CASA_TESTE = os.environ.get("OFERTAS_CASA")  # só para testes: "lat,lon" no lugar da zona Casa do HA
+OSM_TIPOS = {
+    "farmacias": ['nwr["amenity"="pharmacy"]', 'nwr["shop"="chemist"]'],
+    "mercados": ['nwr["shop"~"^(supermarket|convenience|wholesale|greengrocer|butcher)$"]'],
+    "petshops": ['nwr["shop"="pet"]'],
+}
+GOOGLE_TIPOS = {"farmacias": ["pharmacy", "drugstore"], "mercados": ["supermarket", "grocery_store"], "petshops": ["pet_store"]}
+PALAVRAS_LOJA = {"farmacia", "farmacias", "drogaria", "drogarias", "droga", "supermercado", "supermercados", "mercado", "mercados",
+                 "mercearia", "minimercado", "hipermercado", "atacadista", "atacado", "pet", "shop", "petshop", "loja", "lojas",
+                 "super", "hiper", "de", "do", "da", "dos", "das", "e", "ltda", "me", "filial", "unidade"}
+
+
+def casa(cfg=None):
+    """(lat, lon) da zona Casa do Home Assistant."""
+    if CASA_TESTE:
+        a, b = CASA_TESTE.split(",")
+        return float(a), float(b)
+    z = ha_api("GET", "/states/zone.home") or {}
+    at = z.get("attributes") or {}
+    return float(at["latitude"]), float(at["longitude"])
+
+
+def km_entre(a, b, c, d):
+    import math
+    r = 6371.0
+    p1, p2 = math.radians(a), math.radians(c)
+    dp, dl = math.radians(c - a), math.radians(d - b)
+    h = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return round(2 * r * math.asin(math.sqrt(h)), 1)
+
+
+def chave_loja(nome):
+    """"Droga Raia" e "Raia" viram "raia"; "Farmácia Preço Popular" vira "preco popular"."""
+    w = [x for x in norm(nome).split() if x not in PALAVRAS_LOJA]
+    return " ".join(w) or norm(nome)
+
+
+def mesma_loja(a, b):
+    ka, kb = chave_loja(a), chave_loja(b)
+    return ka == kb or ka.startswith(kb + " ") or kb.startswith(ka + " ")
+
+
+def google_chave():
+    return str((segredos().get("google") or {}).get("key") or "").strip() or None
+
+
+def osm_lojas(lat, lon, raio_m, cats):
+    partes = "".join(f"{t}(around:{raio_m},{lat},{lon});" for c in cats for t in OSM_TIPOS.get(c, []))
+    q = f"[out:json][timeout:25];({partes});out center tags;"
+    req = urllib.request.Request(OVERPASS, data=urllib.parse.urlencode({"data": q}).encode(), method="POST",
+                                 headers={"User-Agent": "EconomIA (add-on do Home Assistant)", "Accept": "application/json"})
+    with urllib.request.urlopen(req, timeout=40) as r:
+        d = json.loads(r.read(8_000_000).decode("utf-8") or "{}")
+    out = []
+    for e in d.get("elements") or []:
+        t = e.get("tags") or {}
+        nome = texto(t.get("name") or t.get("brand"), 60)
+        la, lo = e.get("lat") or (e.get("center") or {}).get("lat"), e.get("lon") or (e.get("center") or {}).get("lon")
+        if not nome or la is None or lo is None:
+            continue
+        cat = "farmacias" if t.get("amenity") == "pharmacy" or t.get("shop") == "chemist" else "petshops" if t.get("shop") == "pet" else "mercados"
+        rua = ", ".join(x for x in [t.get("addr:street"), t.get("addr:housenumber")] if x)
+        bairro = t.get("addr:suburb") or t.get("addr:neighbourhood")
+        out.append({"nome": nome, "categoria": cat, "endereco": ", ".join(x for x in [rua, bairro] if x) or None,
+                    "distancia_km": km_entre(lat, lon, float(la), float(lo)), "fonte": "OpenStreetMap"})
+    return out
+
+
+def google_lojas(lat, lon, raio_m, cats, chave):
+    out = []
+    for cat in cats:
+        corpo = {"includedTypes": GOOGLE_TIPOS.get(cat, []), "maxResultCount": 20, "rankPreference": "DISTANCE", "languageCode": "pt-BR",
+                 "locationRestriction": {"circle": {"center": {"latitude": lat, "longitude": lon}, "radius": float(raio_m)}}}
+        if not corpo["includedTypes"]:
+            continue
+        req = urllib.request.Request(GOOGLE_PLACES, data=json.dumps(corpo).encode(), method="POST", headers={
+            "Content-Type": "application/json", "X-Goog-Api-Key": chave,
+            "X-Goog-FieldMask": "places.displayName,places.shortFormattedAddress,places.formattedAddress,places.location,places.businessStatus"})
+        try:
+            with urllib.request.urlopen(req, timeout=25) as r:
+                d = json.loads(r.read(4_000_000).decode("utf-8") or "{}")
+        except urllib.error.HTTPError as e:
+            try:
+                msg = (json.loads(e.read(100_000).decode("utf-8") or "{}").get("error") or {}).get("message")
+            except (ValueError, OSError):
+                msg = None
+            raise ErroBusca(f"O Google recusou a chave ({e.code}{': ' + str(msg)[:120] if msg else ''}).") from e
+        for pl in d.get("places") or []:
+            if pl.get("businessStatus") == "CLOSED_PERMANENTLY":
+                continue
+            nome = texto((pl.get("displayName") or {}).get("text"), 60)
+            loc = pl.get("location") or {}
+            if not nome or loc.get("latitude") is None:
+                continue
+            out.append({"nome": nome, "categoria": cat, "endereco": texto(pl.get("shortFormattedAddress") or pl.get("formattedAddress"), 90),
+                        "distancia_km": km_entre(lat, lon, loc["latitude"], loc["longitude"]), "fonte": "Google"})
+    return out
+
+
+def lojas_do_mapa(cfg, cats, forcar=False):
+    """{categoria: [lojas]} do raio, da mais perto para a mais longe, uma por rede (a filial mais perto). Guardado por 7 dias."""
+    cats = [c for c in cats if c in OSM_TIPOS]
+    if not cats:
+        return {}
+    try:
+        lat, lon = casa(cfg)
+    except Exception as e:  # noqa: BLE001
+        log(f"mapa: sem a localização da Casa no Home Assistant ({e})")
+        return {}
+    try:
+        raio_m = int(float(cfg.get("raio_km") or 2) * 1000)
+    except (TypeError, ValueError):
+        raio_m = 2000
+    g = google_chave()
+    chave = f"{lat:.4f},{lon:.4f},{raio_m},{','.join(sorted(cats))},{'g' if g else 'o'}"
+    memo = ler_json(LOJAS_MAPA, {}) or {}
+    semana = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat(timespec="seconds")
+    if not forcar and memo.get("chave") == chave and memo.get("em", "") >= semana:
+        return memo.get("lojas") or {}
+    todas, fontes = [], []
+    try:
+        todas += osm_lojas(lat, lon, raio_m, cats)
+        fontes.append("OpenStreetMap")
+    except Exception as e:  # noqa: BLE001
+        log(f"mapa: OpenStreetMap sem resposta ({e})")
+    if g:
+        try:
+            todas += google_lojas(lat, lon, raio_m, cats, g)
+            fontes.append("Google")
+        except Exception as e:  # noqa: BLE001
+            log(f"mapa: {e}")
+    if not fontes:
+        return memo.get("lojas") or {}
+    lojas = {}
+    for l in sorted(todas, key=lambda x: (x["fonte"] != "Google", x["distancia_km"])):
+        lista = lojas.setdefault(l["categoria"], [])
+        igual = next((x for x in lista if mesma_loja(x["nome"], l["nome"])), None)
+        if igual is None:
+            lista.append(l)
+        elif l["distancia_km"] < igual["distancia_km"] - 0.05:  # a filial mais perto da mesma rede
+            igual.update({k: l[k] for k in ("endereco", "distancia_km")})
+    for c in lojas:
+        lojas[c] = sorted(lojas[c], key=lambda x: x["distancia_km"])[:30]
+    gravar_json(LOJAS_MAPA, {"chave": chave, "em": agora(), "fontes": fontes, "lojas": lojas})
+    log("mapa: " + ", ".join(f"{len(v)} {CATEGORIAS[c]['nome'].lower()}" for c, v in lojas.items()) + f" no raio ({' e '.join(fontes)})")
+    return lojas
+
+
+def mapa_txt(cfg, cat_id):
+    lojas = (cfg.get("_mapa") or {}).get(cat_id) or []
+    if not lojas:
+        return ""
+    itens = [f"{l['nome']}" + (f" ({l['endereco']})" if l.get("endereco") else "") + f", {str(l['distancia_km']).replace('.', ',')} km" for l in lojas[:25]]
+    return ("Lojas do raio, pelo mapa (são estas que existem perto da casa, com a distância certa): " + "; ".join(itens) + ". "
+            "Procure o preço dos itens da lista nessas lojas e use esses nomes. Em \"lojas\", não repita as do mapa: traga só outras do raio que achar.")
+
+
+def aplica_mapa(categorias, mapa, cfg):
+    """Endereço e distância de verdade nas lojas (filial mais perto) e as lojas do mapa que a busca não trouxe."""
+    for cat in categorias:
+        lojas_m = mapa.get(cat.get("id")) or []
+        if not lojas_m:
+            continue
+        nomes = {r["id"]: r["nome"] for r in cat.get("redes") or []}
+        usadas = set()
+        for l in cat.get("lojas") or []:
+            m = next((x for x in lojas_m if mesma_loja(x["nome"], nomes.get(l["rede"], ""))), None)
+            if m:
+                usadas.add(m["nome"])
+                l["distancia_km"], l["endereco"] = m["distancia_km"], m.get("endereco") or l.get("endereco")
+                l["fontes"] = sorted(set(l.get("fontes") or []) | {"Mapa"})
+        for m in lojas_m:
+            if m["nome"] in usadas or any(mesma_loja(m["nome"], n) for n in nomes.values()):
+                continue
+            rid = cat["id"][:4] + "-" + slug(nome_direta(m["nome"]), 30)
+            if rid in nomes:
+                continue
+            nomes[rid] = m["nome"]
+            cat.setdefault("redes", []).append({"id": rid, "nome": m["nome"], "curto": m["nome"][:16]})
+            cat.setdefault("lojas", []).append({"rede": rid, "distancia_km": m["distancia_km"], "horario": "", "endereco": m.get("endereco"), "fontes": ["Mapa"]})
+        cat["lojas"] = sorted(cat.get("lojas") or [], key=lambda l: l["distancia_km"] if l.get("distancia_km") is not None else 99)
+
+
+def testar_google():
+    g = google_chave()
+    if not g:
+        return {"ok": False, "msg": "Falta a chave do Google."}
+    try:
+        lat, lon = casa()
+        r = google_lojas(lat, lon, 1000, ["farmacias"], g)
+    except ErroBusca as e:
+        return {"ok": False, "msg": str(e)}
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "msg": f"Não consegui testar ({e})."}
+    if not r:
+        return {"ok": True, "msg": "O Google aceitou a chave, mas não achou farmácias a 1 km da sua casa."}
+    r.sort(key=lambda x: x["distancia_km"])
+    return {"ok": True, "msg": f"Pronta: {len(r)} farmácias a até 1 km, a mais perto é {r[0]['nome']} ({str(r[0]['distancia_km']).replace('.', ',')} km)."}
+
+
 MAX_FOCADA = 8
 
 
@@ -2650,7 +2929,13 @@ def buscar():
             BUSCA["chamadas_ia"] = 0
             log("busca sem IA: " + ", ".join(f"{k}" for k in rel_s) )
             return
-        cfg_ia = dict(cfg, _ja_tenho=ja)
+        BUSCA["etapa"] = "lojas do raio no mapa"
+        try:
+            mapa = lojas_do_mapa(cfg, cats)
+        except Exception as e:  # noqa: BLE001
+            mapa = {}
+            log(f"mapa: {e}")
+        cfg_ia = dict(cfg, _ja_tenho=ja, _mapa=mapa)
         for i, cat_id in enumerate(cats, 1):
             BUSCA.update({"atual": i, "etapa": CATEGORIAS[cat_id]["nome"].lower()})
             if cat_id == "online" and not mkts_online(cfg) and not entrega_ligada(cfg):
@@ -2683,7 +2968,22 @@ def buscar():
         if scripts:  # por último: o preço do site da loja vale mais que o que a busca na web achou
             juntar_focada(novas, parciais, scripts)
             falhou_tudo = False
-        folheto = {norm(l["nome"]) for l in lojas_folheto(cfg)} | {norm(n) for v in ja.values() for n in v}  # já vieram por outro caminho
+        if mapa:
+            aplica_mapa(novas, mapa, cfg)
+        # lojas que a busca acabou de achar (ainda não estavam no resultado anterior): o folheto delas também
+        ja_vistas = {norm(x["loja"]) for x in relatorio.get("folhetos") or []}
+        novas_lojas = [l for l in lojas_folheto(cfg, cats, novas, ja) if norm(l["nome"]) not in ja_vistas]
+        if novas_lojas:
+            try:
+                fo2, st2 = busca_folhetos(cfg, novas_lojas)
+            except Exception as e:  # noqa: BLE001
+                fo2, st2 = [], {}
+                log(f"folhetos: {e}")
+            if fo2:
+                juntar_focada(novas, parciais, fo2)
+                falhou_tudo = False
+            juntar_folheto_status(relatorio, st2)
+        folheto = {norm(x["loja"]) for x in relatorio.get("folhetos") or [] if x.get("ofertas")} | {norm(n) for v in ja.values() for n in v}
         sites = [a for a in ((cfg.get("lojas") or {}).get("adicionar") or [])
                  if isinstance(a, dict) and url_ok(a.get("site")) and a.get("categoria") in cats and texto(a.get("nome"), 60)
                  and norm(texto(a["nome"], 60).split(",")[0]) not in folheto]
@@ -3176,7 +3476,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.13.0"
+    server_version = "EconomIA/0.13.1"
 
     def log_message(self, fmt, *args):
         pass
@@ -3258,7 +3558,10 @@ class Painel(BaseHTTPRequestHandler):
             self._json(200, voz_status())
         elif rota == "/api/integracoes":
             ch = segredos().get("shopee") or {}
-            self._json(200, {"shopee": {"app_id": str(ch.get("app_id") or ""), "tem_senha": bool(ch.get("secret"))}})
+            self._json(200, {"shopee": {"app_id": str(ch.get("app_id") or ""), "tem_senha": bool(ch.get("secret"))}, "google": {"tem_chave": bool(google_chave())}})
+        elif rota == "/api/lojas-mapa":
+            m = ler_json(LOJAS_MAPA, {}) or {}
+            self._json(200, {"fontes": m.get("fontes") or [], "em": m.get("em"), "lojas": m.get("lojas") or {}})
         elif rota == "/api/folhetos":
             self._json(200, {"lojas": folhetos_painel(ler_config())})
         elif rota == "/api/lojas-diretas":
@@ -3342,9 +3645,21 @@ class Painel(BaseHTTPRequestHandler):
                     if not app:
                         return self._json(400, {"erro": "Falta o App ID da Shopee."})
                     seg["shopee"] = {"app_id": app, "secret": senha or (atual.get("secret") if atual.get("app_id") == app else "")}
+            if "google" in dado:
+                novo = dado.get("google")
+                chave = re.sub(r"\s", "", str((novo or {}).get("key") or ""))[:120]
+                if chave:
+                    seg["google"] = {"key": chave}
+                elif not novo:
+                    seg.pop("google", None)
+                try:
+                    os.remove(LOJAS_MAPA)  # a próxima busca já usa (ou deixa de usar) o Google
+                except OSError:
+                    pass
             grava_segredos(seg)
             ch = seg.get("shopee") or {}
-            self._json(200, {"ok": True, "shopee": {"app_id": str(ch.get("app_id") or ""), "tem_senha": bool(ch.get("secret"))}})
+            self._json(200, {"ok": True, "shopee": {"app_id": str(ch.get("app_id") or ""), "tem_senha": bool(ch.get("secret"))},
+                             "google": {"tem_chave": bool((seg.get("google") or {}).get("key"))}})
         elif rota == "/api/ofertas":
             dado = self._corpo()
             if dado is None:
@@ -3374,7 +3689,12 @@ class Painel(BaseHTTPRequestHandler):
             except ErroBusca as e:
                 return self._json(400, {"erro": str(e)})
         if urllib.parse.urlsplit(self.path).path == "/api/integracoes/testar":
-            return self._json(200, testar_shopee())
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+                dado = json.loads(self.rfile.read(n) or b"{}") if 0 < n < 10000 else {}
+            except (ValueError, OSError):
+                dado = {}
+            return self._json(200, testar_google() if isinstance(dado, dict) and dado.get("servico") == "google" else testar_shopee())
         if urllib.parse.urlsplit(self.path).path == "/api/ler-encarte":
             dado = self._corpo(MAX_FOTOS_BODY)
             if dado is None:

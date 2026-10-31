@@ -1,5 +1,14 @@
 # Mudanças
 
+## 0.13.1
+
+- **Lojas do raio pelo mapa.** As lojas perto de casa vêm da localização da zona Casa do Home Assistant e do OpenStreetMap, com endereço e distância certos, e de rede entra a filial mais perto. Antes, era a IA que estimava, e por isso aparecia a Droga Raia da Getúlio Vargas em vez da que fica do lado de casa, e a Farmácia Preço Popular ficava de fora. A IA recebe a lista pronta e só procura os preços. O mapa é atualizado uma vez por semana.
+- **Google Places (opcional)**, em Mais › Integrações: com uma chave, o app usa também o Google Maps para achar as lojas pequenas que o OpenStreetMap não tem.
+- **Folheto automático**: sai o quadro "Folhetos de encarte". Toda loja que você acompanha e que não tem preço pelo site tem o folheto da semana procurado sozinho no Kimbino e no Seus Folhetos, logo depois do site. Nomes como "Komprão Koch Atacadista" e "Atacadão Joinville" são achados como "komprao" e "atacadao". A loja mostra "Folheto da semana até 04/11".
+- **Inativas**: lojas desmarcadas vão para o fim de cada grupo, num bloco "Inativas" fechado.
+- **Como o EconomIA busca os preços**: o passo a passo fica no fim de Mais › Lojas.
+- Loja cadastrada por você que a busca também achou aparece uma vez só, com o "remover".
+
 ## 0.13.0
 
 - **Primeiro o que não gasta IA.** A busca começa pelo site das lojas, pela Shopee e pelos folhetos já lidos, e a IA entra por último, só para o que faltar. Ela é avisada das lojas que já têm preço e não traz esses preços de novo. O **Buscar este item** só chama a IA quando os sites trazem menos de 2 preços. Com a IA desligada, o **Buscar** continua, só com os sites, a Shopee e os folhetos guardados.
