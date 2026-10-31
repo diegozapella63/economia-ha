@@ -1229,7 +1229,7 @@ h3{font-size:13px;font-weight:600}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.11.6</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.11.7</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
   </section>
 
   <footer>Preço do site pode ser diferente do preço na loja. Confira validade e regras do cupom no carrinho.</footer>
@@ -1473,6 +1473,36 @@ h3{font-size:13px;font-weight:600}
     abaMais(MAIS_ABAS[(i + MAIS_ABAS.length) % MAIS_ABAS.length]); $('aba-' + ui.maisAba).focus(); e.preventDefault();
   });
   $('views').addEventListener('click', function(e){ var b = e.target.closest('button[data-view]'); if (b){ irPara(b.dataset.view); window.scrollTo(0, 0); } });
+
+  // Arrastar para o lado troca de aba no celular, como no InventarIA, no GerencIA, no ResolvIA e no CronologIA:
+  // Minha lista ⇄ Roteiro ⇄ Ofertas ⇄ Mais, com a tela nova entrando pelo lado. Não vale começando na borda da tela
+  // (é o Voltar do celular), num campo, numa fileira que rola para o lado ou no computador (lá há a barra lateral).
+  var arraste = null;
+  document.addEventListener('touchstart', function(ev){
+    arraste = null;
+    if (!estado || !ev.touches || ev.touches.length !== 1 || window.matchMedia('(min-width: 1000px)').matches) return;
+    var t = ev.touches[0];
+    if (t.clientX < 24 || t.clientX > window.innerWidth - 24) return;
+    for (var el = ev.target instanceof Element ? ev.target : ev.target.parentElement; el && el !== document.body; el = el.parentElement){
+      if (el.matches('input, textarea, select, [contenteditable], [data-noswipe], #views')) return;
+      var st = getComputedStyle(el);
+      if ((st.overflowX === 'auto' || st.overflowX === 'scroll') && el.scrollWidth > el.clientWidth + 2) return;
+    }
+    arraste = {x:t.clientX, y:t.clientY, at:Date.now()};
+  }, {passive:true});
+  document.addEventListener('touchend', function(ev){
+    var s0 = arraste; arraste = null;
+    if (!s0 || !ev.changedTouches || !ev.changedTouches.length) return;
+    var t = ev.changedTouches[0], dx = t.clientX - s0.x, dy = t.clientY - s0.y;
+    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 2 || Date.now() - s0.at > 800) return;
+    var d = dx < 0 ? 1 : -1, i = VIEWS.indexOf(ui.view), j = i + d;  // dedo para a esquerda: a próxima aba
+    if (i < 0 || j < 0 || j >= VIEWS.length) return;
+    irPara(VIEWS[j]); window.scrollTo(0, 0);
+    var v = $('v-' + VIEWS[j]);
+    if (v.animate && !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+      v.animate([{opacity:0, transform:'translateX(' + (d > 0 ? 40 : -40) + 'px)'}, {opacity:1, transform:'none'}], {duration:280, easing:'cubic-bezier(0.2, 0.8, 0.2, 1)'});
+  }, {passive:true});
+  document.addEventListener('touchcancel', function(){ arraste = null; }, {passive:true});
 
   function tudo(){ pintaOfertasTela(); pintaLista(); pintaLojas(); pintaContas(); pintaPerfil(); pintaLado(); }
 
@@ -3050,7 +3080,7 @@ h3{font-size:13px;font-weight:600}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.11.6' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.11.7' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

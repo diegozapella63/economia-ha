@@ -1,5 +1,9 @@
 # Mudanças
 
+## 0.11.7
+
+- **Arrastar para o lado** troca de aba no celular, como nos outros apps: Minha lista ⇄ Roteiro ⇄ Ofertas ⇄ Mais, com a tela nova entrando pelo lado. Não vale começando na borda da tela (é o Voltar do celular), num campo, numa fileira que rola para o lado (como as abas de Mais) nem no computador.
+
 ## 0.11.6
 
 - O **ícone do app** ao lado do nome, no alto da tela e na barra lateral do computador, como no InventarIA, no GerencIA, no ResolvIA e no CronologIA: o cupom fiscal com %, na cor escolhida em Aparência.

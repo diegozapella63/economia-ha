@@ -30,6 +30,10 @@ O microfone fica no alto da tela, à direita (e em **Minha lista › Falar**). F
 
 Em **Mais › Integrações › IA do Home Assistant**, a linha **Falar** mostra se está pronto e com qual fala para texto. O microfone some com **Usar IA** desligado. No app do celular, permita o microfone para o app Home Assistant; no navegador, o Home Assistant precisa estar num endereço com https.
 
+## No celular
+
+Arraste para o lado para trocar de aba: Minha lista ⇄ Roteiro ⇄ Ofertas ⇄ Mais. Começando na borda da tela vale o Voltar do celular.
+
 ## No computador
 
 Com a tela de 1000 pixels ou mais, as abas de baixo viram uma **barra lateral** com Minha lista (com o número de itens acabando), Roteiro, Ofertas, Mais, o botão **Buscar ofertas** e as ofertas por tipo de loja. No alto à direita ficam **Falar**, **Ler com IA** e **Adicionar item**. As seções ficam direto na página, com título grande e ícone, e o cupom de economia fica ao lado das oportunidades. No celular e no tablet nada muda.
