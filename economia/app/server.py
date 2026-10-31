@@ -19,6 +19,7 @@ Rotas:
 - GET  /api/voz/status   se o Falar está pronto e com qual fala para texto
 - POST /api/voz   áudio PCM 16 kHz, 16 bits, mono → {"texto"} pela fala para texto do Home Assistant
 - GET  /api/versoes   cópias anteriores do config.json (as 3 mais recentes)
+- GET  /api/lojas-diretas   lojas com busca direta no site (Giassi, Angeloni) e se atendem o CEP
 - POST /api/versoes/guardar {"motivo"} | /api/versoes/restaurar {"nome"}
 - GET  /api/busca    andamento da busca
 - GET  /api/exportar/lista.xlsx | lista.json   exporta a lista
@@ -290,7 +291,7 @@ def nome_item(i):
 
 
 IA_DESLIGADA = "A IA está desligada. Para usar, ligue em Mais › Integrações › Usar IA."
-OPCOES_PADRAO = {"itens_sem_preco": True, "encartes_auto": True}
+OPCOES_PADRAO = {"itens_sem_preco": True, "encartes_auto": True, "lojas_diretas": True}
 
 
 def ia_ligada(cfg=None):
@@ -938,6 +939,7 @@ def normalizar(cat_id, bruto, cfg):
         nome = texto(nome, 60)
         if not nome:
             return None
+        nome = nome_direta(nome)
         rid = pre + slug(nome, 30)
         redes.setdefault(rid, nome)
         return rid
@@ -1347,6 +1349,192 @@ def item_ofertas(prod, ent):
     return out
 
 
+# ---------- busca direta nas lojas: o próprio site responde com o preço da loja do CEP ----------
+# Giassi e Angeloni usam a VTEX: /api/checkout/pub/regions diz qual loja atende o CEP e a busca do site
+# (intelligent-search) devolve produto, preço e estoque dessa loja. Não precisa de login nem de IA.
+LOJAS_DIRETAS = {
+    "giassi": {"nome": "Giassi", "site": "https://www.giassi.com.br", "categoria": "mercados"},
+    "angeloni": {"nome": "Angeloni", "site": "https://super.angeloni.com.br", "categoria": "mercados"},
+}
+VTEX_TESTE = os.environ.get("OFERTAS_VTEX_TESTE")  # só para testes: um servidor falso no lugar dos sites
+_regioes = {}
+VAZIAS_BUSCA = {"de", "da", "do", "das", "dos", "para", "com", "em", "e", "a", "o", "p", "c", "sem", "tipo"}
+UNIDADE_NOME = re.compile(r"(\d+(?:[.,]\d+)?)\s*(ml|l|lt|litros?|kg|g|gr|un|und|unid|unidades?|m|metros?)\b", re.I)
+
+
+def nome_direta(nome):
+    """Nome de uma loja com busca direta escrito do jeito dela (Giassi Supermercados → Giassi)."""
+    n = norm(nome).replace(" ", "")
+    for k, loja in LOJAS_DIRETAS.items():
+        if n.startswith(k):
+            return loja["nome"]
+    return nome
+
+
+def site_direta(chave):
+    return VTEX_TESTE.rstrip("/") + "/" + chave if VTEX_TESTE else LOJAS_DIRETAS[chave]["site"]
+
+
+def http_json(url, timeout=15):
+    req = urllib.request.Request(url, headers={"User-Agent": NAVEGADOR, "Accept": "application/json", "Accept-Language": "pt-BR,pt;q=0.9"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return json.loads(r.read(4_000_000).decode("utf-8") or "null")
+
+
+def regiao_direta(chave, cep):
+    """(id da região, nome da loja) que atende o CEP; (None, None) se a loja não entrega nele."""
+    cep = re.sub(r"\D", "", str(cep or ""))
+    k = (chave, cep)
+    if k in _regioes and time.time() - _regioes[k][2] < 6 * 3600:
+        return _regioes[k][:2]
+    d = http_json(site_direta(chave) + "/api/checkout/pub/regions?country=BRA&postalCode=" + cep)
+    r = d[0] if isinstance(d, list) and d else {}
+    vend = (r.get("sellers") or [{}])[0] if r.get("sellers") else {}
+    nome = str(vend.get("name") or "").strip()
+    if re.fullmatch(r"[a-z]+\d*", nome):  # "giassi08": código, não nome de loja
+        nome = ""
+    val = (r.get("id") if vend else None, nome)
+    _regioes[k] = (*val, time.time())
+    return val
+
+
+def palavras_busca(t):
+    return [w for w in norm(re.sub(UNIDADE_NOME, " ", str(t))).split() if w not in VAZIAS_BUSCA and not w.isdigit()]
+
+
+def combina(item, produto):
+    """O produto do site é o item da lista? Todas as palavras do item (até 3) ou 3 de cada 4 precisam estar no nome
+    ou nas categorias do produto ("JIMO Secante..." está em Limpeza › Lava-Louças)."""
+    pi, pp = palavras_busca(item), norm(produto).split()
+    if not pi:
+        return False
+    ok = sum(1 for w in pi if any(x == w or (len(w) >= 4 and (x.startswith(w) or (len(x) >= 4 and w.startswith(x)))) for x in pp))
+    return ok == len(pi) if len(pi) <= 3 else ok >= 0.75 * len(pi)
+
+
+PACOTE_NOME = re.compile(r"(?:\bc/\s*|\bcom\s+|\bcx\.?\s*(?:com\s*)?|\bpack\s*|\bx\s*)(\d{1,2})\b(?!\s*(?:ml|l|lt|g|gr|kg|m|un|und|unid|unidades?)\b)", re.I)
+
+
+def tamanho_nome(nome):
+    """Quantidade total do produto pelo nome: "Leite 1L" → 1 L; "Leite 1L Caixa com 12" → 12 L."""
+    m = UNIDADE_NOME.findall(str(nome))
+    if not m:
+        return None
+    q, u = m[-1]
+    u = u.lower()
+    u = "L" if u in ("l", "lt", "litro", "litros") else "un" if u.startswith("un") else "m" if u.startswith("metro") else u
+    t = medida(q.replace(",", "."), u)
+    pac = PACOTE_NOME.search(str(nome))
+    if t and t[1] != "un" and pac and int(pac.group(1)) > 1:
+        t = (round(t[0] * int(pac.group(1)), 4), t[1])
+    return t
+
+
+def busca_vtex(chave, termo, regiao):
+    params = {"query": termo, "count": 12, "locale": "pt-BR"}
+    if regiao:
+        params["regionId"] = regiao
+    d = http_json(site_direta(chave) + "/api/io/_v/api/intelligent-search/product_search/?" + urllib.parse.urlencode(params)) or {}
+    out = []
+    for prod in d.get("products") or []:
+        nome = str(prod.get("productName") or "").strip()
+        if not nome or "+" in nome or norm(nome).startswith("kit "):
+            continue
+        busca_em = " ".join([nome, str(prod.get("brand") or "")] + [str(c) for c in (prod.get("categories") or [])][:4])
+        for it in (prod.get("items") or [])[:1]:
+            ofs = [x.get("commertialOffer") or {} for x in it.get("sellers") or []]
+            ofs = [o for o in ofs if numero(o.get("Price")) and (o.get("AvailableQuantity") or 0) > 0]
+            if not ofs:
+                continue
+            o = min(ofs, key=lambda x: numero(x.get("Price")))
+            preco, de = numero(o.get("Price")), numero(o.get("ListPrice"))
+            tam = tamanho_nome(nome)
+            if not tam and str(it.get("measurementUnit") or "").lower() == "kg":
+                tam = medida(it.get("unitMultiplier") or 1, "kg")
+            marca = texto(prod.get("brand"), 30) or ""
+            curto = (marca + " " + fmt_base({"quantidade": tam[0], "unidade": tam[1]})) if marca and tam else nome[:60]
+            out.append({"nome": nome, "curto": curto, "busca_em": busca_em, "preco": preco, "de": de if de and de > preco + 0.004 else None, "tam": tam,
+                        "link": LOJAS_DIRETAS[chave]["site"] + str(prod.get("link") or "")})
+    return out
+
+
+def lojas_diretas_status(cfg):
+    out = []
+    for k, loja in LOJAS_DIRETAS.items():
+        try:
+            reg, nome = regiao_direta(k, cfg.get("cep"))
+            out.append({"id": k, "nome": loja["nome"], "atende": bool(reg), "loja": nome})
+        except Exception as e:  # noqa: BLE001
+            out.append({"id": k, "nome": loja["nome"], "atende": None, "erro": str(e)[:120]})
+    return out
+
+
+def busca_direta(cfg, itens=None):
+    """Pergunta a cada loja com busca direta o preço de cada item da lista. Devolve [(categoria, parcial)]."""
+    nomes = itens or nomes_da_lista(cfg)
+    if not nomes or not cfg.get("cep"):
+        return []
+    achados = {}  # item -> loja -> [candidatos]
+    lojas = []
+    for k, loja in LOJAS_DIRETAS.items():
+        try:
+            reg, unidade = regiao_direta(k, cfg.get("cep"))
+        except Exception as e:  # noqa: BLE001
+            log(f"busca direta {loja['nome']}: não consegui saber a loja do CEP ({e})")
+            continue
+        if not reg:
+            log(f"busca direta {loja['nome']}: não atende o CEP {cfg.get('cep')}")
+            continue
+        BUSCA["etapa"] = "preços no site do " + loja["nome"]
+        n = 0
+        for nome in nomes:
+            try:
+                cand = [c for c in busca_vtex(k, nome, reg) if combina(nome, c["busca_em"])]
+            except Exception as e:  # noqa: BLE001
+                log(f"busca direta {loja['nome']} '{nome}': {e}")
+                continue
+            if cand:
+                achados.setdefault(nome, {})[k] = cand
+                n += 1
+        lojas.append({"rede": loja["nome"], "endereco": unidade or None, "distancia_km": None, "site": LOJAS_DIRETAS[k]["site"], "fontes": ["Site"]})
+        log(f"busca direta {loja['nome']}{' (' + unidade + ')' if unidade else ''}: {n} de {len(nomes)} item(ns) com preço")
+    if not lojas:
+        return []
+    lista_bruta, ofertas = [], []
+    for nome, por_loja in achados.items():
+        # tamanho de sempre: o do nome do item ou o mais comum entre os produtos achados
+        base = tamanho_nome(nome)
+        if not base:
+            conta = {}
+            for cands in por_loja.values():
+                for c in cands:
+                    if c["tam"]:
+                        conta[c["tam"]] = conta.get(c["tam"], 0) + 1
+            base = max(conta, key=lambda t: (conta[t], -t[0])) if conta else None
+        precos, tamanhos = [], []
+        for k, cands in por_loja.items():
+            rede = LOJAS_DIRETAS[k]["nome"]
+            iguais = [c for c in cands if base and c["tam"] and c["tam"][1] == base[1] and mesmo_tamanho(c["tam"][0], base[0])] if base else cands
+            if iguais:
+                c = min(iguais, key=lambda x: x["preco"])
+                precos.append({"rede": rede, "preco": c["preco"], "obs": c["curto"], "fonte": c["link"]})
+            if base:
+                outros = sorted((c for c in cands if c["tam"] and c["tam"][1] == base[1] and c not in iguais), key=lambda x: x["preco"] / x["tam"][0])
+                for c in outros[:4]:
+                    tamanhos.append({"rede": rede, "embalagem": c["curto"][:40], "quantidade": c["tam"][0], "unidade": c["tam"][1], "preco": c["preco"], "fonte": c["link"]})
+            for c in cands[:3]:
+                if c["de"]:
+                    ofertas.append({"rede": rede, "produto": c["nome"], "preco_normal": c["de"], "preco_oferta": c["preco"], "tipo": "promo", "fonte": c["link"],
+                                    "tamanho": {"quantidade": c["tam"][0], "unidade": c["tam"][1]} if c["tam"] else None})
+        ent = {"produto": nome, "precos": precos, "tamanhos": tamanhos}
+        if base:
+            ent["base"] = {"quantidade": base[0], "unidade": base[1]}
+        lista_bruta.append(ent)
+    cfg_itens = dict(cfg, lista=[{"produto": n} for n in nomes])
+    cat, parcial = normalizar("mercados", {"lojas": lojas, "cupons": [], "ofertas": ofertas, "lista": lista_bruta}, cfg_itens)
+    return [(cat, parcial)]
+
+
 MAX_FOCADA = 8
 
 
@@ -1482,6 +1670,16 @@ def buscar():
             relatorio["categorias"][cat_id] = {"ok": True, "ofertas": len(cat["ofertas"]), "lojas": len(cat["lojas"]),
                                                "precos": sum(len(v["precos"]) for v in parcial.values())}
         falhou_tudo = not novas or len(falhas) == len(cats)
+        if "mercados" in cats and opcao("lojas_diretas", cfg):
+            try:
+                diretas = busca_direta(cfg)
+            except Exception as e:  # noqa: BLE001
+                diretas = []
+                log(f"busca direta: {e}")
+            if diretas:
+                juntar_focada(novas, parciais, diretas)
+                relatorio["diretas"] = sorted({r["nome"] for c, _ in diretas for r in c["redes"]})
+                falhou_tudo = False
         sites = [a for a in ((cfg.get("lojas") or {}).get("adicionar") or [])
                  if isinstance(a, dict) and url_ok(a.get("site")) and a.get("categoria") in cats and texto(a.get("nome"), 60)]
         BUSCA["total"] = len(cats) + len(sites)
@@ -1579,7 +1777,17 @@ def buscar_itens(itens):
     try:
         if not cfg.get("cep"):
             raise ErroBusca("Salve o CEP em Mais antes de buscar.")
-        resultado = busca_focada(cfg, itens, cats)
+        resultado = []
+        if "mercados" in cats and opcao("lojas_diretas", cfg):
+            try:
+                resultado += busca_direta(cfg, itens)
+            except Exception as e:  # noqa: BLE001
+                log(f"busca direta: {e}")
+        try:
+            resultado = busca_focada(cfg, itens, cats) + resultado  # o site da loja por último: vale mais
+        except ErroBusca:
+            if not resultado:
+                raise
         anterior = ler_json(OFERTAS, {}) or {}
         novas = [c for c in (anterior.get("categorias") or []) if isinstance(c, dict)]
         base = {}
@@ -1894,7 +2102,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.11.7"
+    server_version = "EconomIA/0.12.0"
 
     def log_message(self, fmt, *args):
         pass
@@ -1974,6 +2182,8 @@ class Painel(BaseHTTPRequestHandler):
             self._json(200, uso_resumo())
         elif rota == "/api/voz/status":
             self._json(200, voz_status())
+        elif rota == "/api/lojas-diretas":
+            self._json(200, {"lojas": lojas_diretas_status(ler_config())})
         elif rota == "/api/versoes":
             self._json(200, {"versoes": listar_versoes()})
         elif rota == "/api/exportar/ofertas.json":

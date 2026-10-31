@@ -1,5 +1,12 @@
 # Mudanças
 
+## 0.12.0
+
+- **Busca direta nas lojas**: o **Giassi** e o **Angeloni** respondem direto pelo próprio site, com o preço da loja que atende o seu CEP, o link do produto e as promoções (preço "de" e "por"). Não precisa de login nem gasta IA, e o preço do site vale mais que o que a busca na web achou. Entra na busca e no **Buscar este item**.
+- Em **Mais › Opções › Busca de preços**, a chave **Busca direta nas lojas** (ligada) mostra qual loja de cada rede atende o seu CEP (por exemplo, "Angeloni João Colin").
+- Os produtos achados entram com marca e tamanho ("JIMO 100 ml"), e pacotes ("Leite 1L Caixa com 12") contam a quantidade total na comparação por litro ou quilo.
+- O mesmo mercado com nomes diferentes ("Giassi" e "Giassi Supermercados") vira uma loja só.
+
 ## 0.11.7
 
 - **Arrastar para o lado** troca de aba no celular, como nos outros apps: Minha lista ⇄ Roteiro ⇄ Ofertas ⇄ Mais, com a tela nova entrando pelo lado. Não vale começando na borda da tela (é o Voltar do celular), num campo, numa fileira que rola para o lado (como as abas de Mais) nem no computador.

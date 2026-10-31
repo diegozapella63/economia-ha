@@ -41,9 +41,14 @@ O botão **Buscar** chama `ai_task.generate_data` pela API do Home Assistant (`h
 | GET | `/api/versoes` | `{versoes: [{nome, quando, motivo, itens, cep}]}`: as 3 cópias mais recentes do `config.json`, em `/data/versoes`. |
 | POST | `/api/versoes/guardar` | `{motivo: "importar"|"limpar"}`: guarda uma cópia agora. |
 | POST | `/api/versoes/restaurar` | `{nome}`: guarda uma cópia do atual e volta para essa versão. Devolve `{config}`. |
+| GET | `/api/lojas-diretas` | `{lojas: [{id, nome, atende, loja}]}`: as lojas com busca direta e se atendem o CEP. |
 | GET | `/api/exportar/ofertas.json` | O `ofertas.json` da última busca. |
 | GET | `/api/uso-ia` | `{hoje, semana, mes: {chamadas, erros, cota, tokens, imagens, segundos, tipos, ias}, dias: [{dia, chamadas, erros, cota}], ultimas: [...]}`. Também vai em `/api/estado` como `uso_ia`. |
 | GET | `/api/saude` | Verificação simples. |
+
+### Busca direta nas lojas
+
+Giassi e Angeloni usam a plataforma VTEX. Para cada item da lista, o add-on pergunta `GET {site}/api/checkout/pub/regions?country=BRA&postalCode={CEP}` (a loja que atende o CEP, guardada por 6 horas) e `GET {site}/api/io/_v/api/intelligent-search/product_search/?query={item}&regionId={região}`. Entram os produtos com estoque cujo nome ou categoria têm as palavras do item; o tamanho sai do nome ("250ml", "1L Caixa com 12"). O resultado vira a categoria `mercados`, com `fonte` no link do produto, e é juntado depois da IA, então vale mais. Não usa login nem IA. Para testar fora do HA, `OFERTAS_VTEX_TESTE` aponta para um servidor falso.
 
 ### Uso da IA
 
@@ -80,7 +85,7 @@ O servidor só aceita conexões do ingress (`172.30.32.2`). Para testar fora do 
   "ia": {"busca": "conversation.google_generative_ai", "fotos": "ai_task.google_ai_task"},
   "usar_ia": true,
   "sensores": false,
-  "opcoes": {"itens_sem_preco": true, "encartes_auto": true},
+  "opcoes": {"itens_sem_preco": true, "encartes_auto": true, "lojas_diretas": true},
   "clubes": ["merc-condor"],
   "cupons_meus": [{"id": "meu-1", "rede": "farm-panvel", "beneficio": "20% em protetor solar", "codigo": null, "valido_ate": "2026-10-24"}],
   "ocultas": ["giassi-cerveja-12"]

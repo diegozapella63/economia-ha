@@ -6,6 +6,7 @@ Sua lista de compras comparada nas farmácias, mercados e pet shops perto de cas
 - Uma lista só, com o ritmo de compra de cada item
 - Melhor tamanho: 1 L, 5 L ou 5 × 1 L, pelo preço por litro, quilo ou unidade
 - Roteiro de compras em até 4 paradas, com rota no Maps
+- Busca direta no site do Giassi e do Angeloni, com o preço da loja do seu CEP
 - Ofertas e cupons das lojas perto do seu CEP
 - Encartes dos sites dos mercados lidos com IA
 - iFood, Rappi, Mercado Livre e Amazon, com frete e assinaturas

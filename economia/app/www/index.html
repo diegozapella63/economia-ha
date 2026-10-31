@@ -1218,7 +1218,11 @@ h3{font-size:13px;font-weight:600}
     <div class="mais-painel" id="mp-opcoes" role="tabpanel" aria-labelledby="aba-opcoes" hidden>
       
       <section class="panel settings" aria-labelledby="h-opbusca">
-      <div class="set-head"><h2 id="h-opbusca"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span>Busca de preços</h2><p class="sec-meta">Cada etapa extra é mais uma chamada para a IA. Desligue para gastar menos da cota. Vale para todos os aparelhos.</p></div>
+      <div class="set-head"><h2 id="h-opbusca"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span>Busca de preços</h2><p class="sec-meta">Como o EconomIA procura os preços. A busca direta não gasta IA; as outras duas etapas são chamadas extras para a IA, e dá para desligar para gastar menos da cota. Vale para todos os aparelhos.</p></div>
+      <div class="set-row">
+        <div><h3 class="set-t"><label for="opDiretas">Busca direta nas lojas</label></h3><p class="sec-meta">O Giassi e o Angeloni respondem direto pelo site, com o preço da loja que atende o seu CEP e o link do produto. É mais certeiro que a busca na web e não gasta a IA.</p><p class="ia-st" id="opDiretasSt"></p></div>
+        <input type="checkbox" class="switch" id="opDiretas">
+      </div>
       <div class="set-row">
         <div><h3 class="set-t"><label for="opItens">Procurar de novo os itens sem preço</label></h3><p class="sec-meta">No fim da busca, uma pergunta só sobre os itens que ficaram sem preço, procurando item por item. O botão Buscar este item continua no cartão.</p></div>
         <input type="checkbox" class="switch" id="opItens">
@@ -1229,7 +1233,7 @@ h3{font-size:13px;font-weight:600}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.11.7</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.12.0</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
   </section>
 
   <footer>Preço do site pode ser diferente do preço na loja. Confira validade e regras do cupom no carrinho.</footer>
@@ -1365,7 +1369,7 @@ h3{font-size:13px;font-weight:600}
       ocultas: arr(c.ocultas),
       usar_ia: c.usar_ia !== false,
       sensores: c.sensores === true,
-      opcoes: {itens_sem_preco:(c.opcoes || {}).itens_sem_preco !== false, encartes_auto:(c.opcoes || {}).encartes_auto !== false}
+      opcoes: {itens_sem_preco:(c.opcoes || {}).itens_sem_preco !== false, encartes_auto:(c.opcoes || {}).encartes_auto !== false, lojas_diretas:(c.opcoes || {}).lojas_diretas !== false}
     };
   }
 
@@ -1456,6 +1460,7 @@ h3{font-size:13px;font-weight:600}
     var t = $('maisAbas'), b = $('aba-' + k);
     if (t.offsetParent){ var l = b.offsetLeft - 8, r = b.offsetLeft + b.offsetWidth + 8; if (l < t.scrollLeft) t.scrollLeft = l; else if (r > t.scrollLeft + t.clientWidth) t.scrollLeft = r - t.clientWidth; }
     if (k === 'integracoes' && USO) carregaUso();
+    if (k === 'opcoes' && typeof carregaDiretas === 'function') carregaDiretas();
   }
   function irParaAba(k, alvo){
     ui.maisAba = k; irPara('mais');
@@ -2737,6 +2742,21 @@ h3{font-size:13px;font-weight:600}
       ? 'Ligado: o app cria o <code>sensor.economia_ia_hoje</code> (as chamadas de IA de hoje, com os detalhes nos atributos) e atualiza a cada chamada.'
       : 'Desligado: o app não cria sensores no Home Assistant, e apaga o que tinha criado.';
     $('opItens').checked = estado.opcoes.itens_sem_preco; $('opEncartes').checked = estado.opcoes.encartes_auto;
+    $('opDiretas').checked = estado.opcoes.lojas_diretas;
+  }
+  // lojas com busca direta: se atendem o CEP e qual loja
+  var DIRETAS = null;
+  function carregaDiretas(){
+    var el = $('opDiretasSt');
+    if (MODO !== 'addon'){ el.className = 'ia-st ok'; el.textContent = 'No Home Assistant, aqui aparece qual loja do Giassi e do Angeloni atende o seu CEP.'; return; }
+    if (!estado.cep){ el.className = 'ia-st'; el.textContent = 'Salve o CEP em Mais › Casa para ver as lojas.'; return; }
+    el.className = 'ia-st'; el.textContent = 'Verificando as lojas do seu CEP…';
+    fetch('api/lojas-diretas', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
+      DIRETAS = arr(j.lojas);
+      var ok = DIRETAS.filter(function(l){ return l.atende; });
+      el.className = 'ia-st' + (ok.length ? ' ok' : '');
+      el.textContent = DIRETAS.map(function(l){ return l.nome + ': ' + (l.atende ? (l.loja ? 'loja ' + l.loja : 'atende o seu CEP') : l.atende === false ? 'não atende o seu CEP' : 'sem resposta agora'); }).join(' · ') + '.';
+    }).catch(function(){ el.className = 'ia-st'; el.textContent = 'Não consegui verificar as lojas agora.'; });
   }
   $('usarIA').addEventListener('change', function(){
     estado.usar_ia = this.checked;
@@ -2749,6 +2769,7 @@ h3{font-size:13px;font-weight:600}
   });
   $('opItens').addEventListener('change', function(){ estado.opcoes.itens_sem_preco = this.checked; salvar('Opção salva'); });
   $('opEncartes').addEventListener('change', function(){ estado.opcoes.encartes_auto = this.checked; salvar('Opção salva'); });
+  $('opDiretas').addEventListener('change', function(){ estado.opcoes.lojas_diretas = this.checked; salvar(this.checked ? 'Busca direta ligada' : 'Busca direta desligada'); });
 
   // ----- Versões anteriores: as 3 cópias mais recentes do config.json -----
   function guardarVersao(motivo){
@@ -3080,7 +3101,7 @@ h3{font-size:13px;font-weight:600}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.11.7' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.12.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;
