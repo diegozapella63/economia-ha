@@ -106,6 +106,7 @@ button{font:inherit;cursor:pointer}
 .eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .brand{font-family:var(--font-display);font-stretch:80%;font-weight:800;font-size:16px;letter-spacing:.01em;text-transform:none;color:var(--ink)}
 .brand span{color:var(--accent)}
+.app-ic{display:inline-block;width:1.15em;height:1.15em;margin-right:.28em;vertical-align:-.2em;overflow:visible;color:var(--ink)}
 h1{font-family:var(--font-display);font-stretch:72%;font-weight:800;font-size:clamp(2.2rem,6vw,3rem);line-height:1;letter-spacing:.005em;margin-top:4px;text-wrap:balance}
 .sync{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:12px;color:var(--muted);font-size:13.5px}
 .sync .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);flex:none}
@@ -883,7 +884,7 @@ h3{font-size:13px;font-weight:600}
 <aside id="lado" aria-label="Menu"></aside>
 <div class="wrap">
   <header class="cab">
-    <div class="cab-topo"><p class="eyebrow" id="hello"><span class="brand">Econom<span>IA</span></span></p><button type="button" class="mic-top so-voz" data-acao="falar" aria-label="Falar: adicionar itens falando" title="Falar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button></div>
+    <div class="cab-topo"><p class="eyebrow" id="hello"><span class="brand"><svg class="app-ic" viewBox="0 0 32 32" aria-hidden="true"><path d="M6 5h20v22.5l-2.5-2.2-2.5 2.2-2.5-2.2-2.5 2.2-2.5-2.2-2.5 2.2-2.5-2.2-2.5 2.2z" fill="var(--accent)"/><rect x="3" y="2.5" width="26" height="4" rx="2" fill="currentColor"/><path d="M9 10.5h7M9 13.5h5" stroke="var(--on-accent)" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round"/><path d="M20.5 10.5h2.5M19.5 13.5h3.5" stroke="var(--on-accent)" stroke-width="1.6" stroke-linecap="round"/><path d="M9 16.6h14" stroke="var(--on-accent)" stroke-opacity=".55" stroke-width="1" stroke-dasharray="1 1.3"/><text x="16" y="24.6" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="700" font-size="10.5" fill="var(--on-accent)">%</text></svg>Econom<span>IA</span></span></p><button type="button" class="mic-top so-voz" data-acao="falar" aria-label="Falar: adicionar itens falando" title="Falar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button></div>
     <div class="top-acts">
       <button type="button" class="mic-top so-voz" data-acao="falar" aria-label="Falar: adicionar itens falando" title="Falar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
       <button type="button" class="ghost big so-ia" data-acao="ler"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7-4.7-1.8 4.7-1.8z"/><path d="M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>Ler com IA</button>
@@ -1228,7 +1229,7 @@ h3{font-size:13px;font-weight:600}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.11.5</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.11.6</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
   </section>
 
   <footer>Preço do site pode ser diferente do preço na loja. Confira validade e regras do cupom no carrinho.</footer>
@@ -3022,6 +3023,9 @@ h3{font-size:13px;font-weight:600}
     return partes.length ? ' · ' + partes.join(' · ') : '';
   }
 
+  // o ícone do app ao lado do nome (no alto e na barra lateral), como nos outros apps: o cupom fiscal do ícone
+  // do Home Assistant, na cor escolhida em Aparência
+  var ICONE_APP = '<svg class="app-ic" viewBox="0 0 32 32" aria-hidden="true"><path d="M6 5h20v22.5l-2.5-2.2-2.5 2.2-2.5-2.2-2.5 2.2-2.5-2.2-2.5 2.2-2.5-2.2-2.5 2.2z" fill="var(--accent)"/><rect x="3" y="2.5" width="26" height="4" rx="2" fill="currentColor"/><path d="M9 10.5h7M9 13.5h5" stroke="var(--on-accent)" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round"/><path d="M20.5 10.5h2.5M19.5 13.5h3.5" stroke="var(--on-accent)" stroke-width="1.6" stroke-linecap="round"/><path d="M9 16.6h14" stroke="var(--on-accent)" stroke-opacity=".55" stroke-width="1" stroke-dasharray="1 1.3"/><text x="16" y="24.6" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="700" font-size="10.5" fill="var(--on-accent)">%</text></svg>';
   // ----- barra lateral do computador: telas, Buscar ofertas e as ofertas por tipo de loja -----
   var BUSCANDO = false;
   var IC_LADO = {lista:'<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>',
@@ -3037,7 +3041,7 @@ h3{font-size:13px;font-weight:600}
     var cats = D.categorias.filter(function(c){ return estado.categorias.indexOf(c.id) >= 0; });
     var nOf = function(c){ return arr(c.ofertas).filter(function(o){ return acompanha(o.rede) && !escondida(o); }).length; };
     var total = cats.reduce(function(t, c){ return t + nOf(c); }, 0);
-    var h = '<div class="side-brand">Econom<span>IA</span></div><nav class="side-nav" aria-label="Telas">'
+    var h = '<div class="side-brand">' + ICONE_APP + 'Econom<span>IA</span></div><nav class="side-nav" aria-label="Telas">'
       + link('lista', acab ? '<span class="side-badge" title="' + acab + (acab > 1 ? ' itens acabando' : ' item acabando') + '">' + acab + '</span>' : estado.lista.length ? '<span class="sl-num">' + estado.lista.length + '</span>' : '')
       + link('roteiro') + link('ofertas', total ? '<span class="sl-num">' + total + '</span>' : '') + link('mais') + '</nav>'
       + '<button type="button" class="side-busca so-ia" data-lado="buscar"' + (BUSCANDO ? ' disabled' : '') + '>' + svgL('busca') + '<span>' + (BUSCANDO ? 'Buscando…' : 'Buscar ofertas') + '</span></button>'
@@ -3046,7 +3050,7 @@ h3{font-size:13px;font-weight:600}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.11.5' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.11.6' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;
@@ -3118,7 +3122,7 @@ h3{font-size:13px;font-weight:600}
   });
 
   function iniciar(){
-    $('hello').innerHTML = '<span class="brand">Econom<span>IA</span></span>' + (usuario ? '<span class="eb-sep"> · </span>Olá, ' + esc(usuario) : '');
+    $('hello').innerHTML = '<span class="brand">' + ICONE_APP + 'Econom<span>IA</span></span>' + (usuario ? '<span class="eb-sep"> · </span>Olá, ' + esc(usuario) : '');
     pintaSync(); tudo(); irPara(ui.view);
     carregaListas(); carregaIAs(); carregaUso(); carregaVoz();
     if (MODO === 'addon'){

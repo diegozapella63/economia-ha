@@ -1,5 +1,9 @@
 # Mudanças
 
+## 0.11.6
+
+- O **ícone do app** ao lado do nome, no alto da tela e na barra lateral do computador, como no InventarIA, no GerencIA, no ResolvIA e no CronologIA: o cupom fiscal com %, na cor escolhida em Aparência.
+
 ## 0.11.5
 
 - A arrumação em colunas vale para o app todo:
