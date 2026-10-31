@@ -1,5 +1,9 @@
 # Mudanças
 
+## 0.14.2
+
+- No **Encontrar lojas**, o site que tinha falhado é testado de novo na hora, em vez de esperar o dia seguinte.
+
 ## 0.14.1
 
 - "Como foi testado" diz por que o site não respondeu: recusou o acesso de programas (erro 403), demorou demais, erro de conexão segura, endereço não encontrado ou outro erro. Antes aparecia só "não respondeu".
