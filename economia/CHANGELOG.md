@@ -1,5 +1,12 @@
 # Mudanças
 
+## 0.13.3
+
+- Com a IA desligada, o **Buscar** também atualiza as **lojas do raio pelo mapa** (OpenStreetMap e Google Places). Antes o mapa só entrava na busca com IA, e por isso a Farmácia Medfarma Popular não aparecia em Lojas.
+- Sem IA e sem nenhum preço dos sites, a busca não dá mais erro: ela atualiza as lojas e avisa.
+- O resultado da busca (concluída ou com erro) aparece como aviso em qualquer tela, não só em Ofertas, e avisos longos ficam mais tempo na tela.
+- A barra lateral do computador mostra a versão certa.
+
 ## 0.13.2
 
 - Com **Usar IA** desligado, somem também o que só funciona com IA: em Opções, a leitura de folhetos novos, a busca dos itens sem preço e o encarte do site; em Lojas, Compras online (marketplaces, assinaturas e mercados que entregam, que a busca com IA procura); em Integrações, os sensores de uso da IA; e, no passo a passo da busca, as etapas com IA. Ficam a busca direta nas lojas, a Shopee, o Google Places e os folhetos já lidos.

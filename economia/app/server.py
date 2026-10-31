@@ -2922,19 +2922,19 @@ def buscar():
         BUSCA["etapa"] = "sites das lojas"
         scripts, rel_s, ja = busca_scripts(cfg, cats, ler_folhetos=ia)
         relatorio.update(rel_s)
-        if not ia:
-            if not scripts:
-                raise ErroBusca("Com a IA desligada, a busca usa só os sites das lojas, a Shopee e os folhetos já lidos, e nenhum trouxe preço agora.")
-            mesclar_resultado(scripts, cfg, relatorio)
-            BUSCA["chamadas_ia"] = 0
-            log("busca sem IA: " + ", ".join(f"{k}" for k in rel_s) )
-            return
         BUSCA["etapa"] = "lojas do raio no mapa"
         try:
             mapa = lojas_do_mapa(cfg, cats)
         except Exception as e:  # noqa: BLE001
             mapa = {}
             log(f"mapa: {e}")
+        if not ia:  # sem IA: junta o que veio dos sites e o mapa ao resultado anterior
+            mesclar_resultado(scripts, cfg, relatorio, mapa, completa=True)
+            BUSCA["chamadas_ia"] = 0
+            if not scripts:
+                BUSCA["avisos"] = ["Com a IA desligada, nenhum site trouxe preço agora" + ("; as lojas do raio foram atualizadas pelo mapa." if mapa else ".")]
+            log("busca sem IA: " + (", ".join(rel_s) or "nenhum site trouxe preço") + (", mapa atualizado" if mapa else ""))
+            return
         cfg_ia = dict(cfg, _ja_tenho=ja, _mapa=mapa)
         for i, cat_id in enumerate(cats, 1):
             BUSCA.update({"atual": i, "etapa": CATEGORIAS[cat_id]["nome"].lower()})
@@ -3076,7 +3076,7 @@ def buscar():
 _mescla_trava = threading.Lock()
 
 
-def mesclar_resultado(resultado, cfg, extra=None):
+def mesclar_resultado(resultado, cfg, extra=None, mapa=None, completa=False):
     """Junta [(categoria, parcial)] ao ofertas.json atual, sem apagar o resto. Devolve a lista de preços juntada."""
     with _mescla_trava:
         anterior = ler_json(OFERTAS, {}) or {}
@@ -3088,13 +3088,15 @@ def mesclar_resultado(resultado, cfg, extra=None):
                                       "tamanhos": list(i.get("tamanhos") or []), "links": dict(i.get("links") or {})}
         parciais = [base]
         juntar_focada(novas, parciais, resultado)
+        if mapa:
+            aplica_mapa(novas, mapa, cfg)
         lista = juntar_categorias(parciais)
         relatorio = anterior.get("relatorio") if isinstance(anterior.get("relatorio"), dict) else {}
         relatorio["sem_preco"] = [n for n in nomes_da_lista(cfg) if n not in lista]
         for k, v in (extra or {}).items():
             if k in ("diretas", "shopee", "folhetos"):
                 relatorio[k] = v
-        gravar_json(OFERTAS, dict(anterior, versao=2, origem="ia_home_assistant", gerado_em=anterior.get("gerado_em") or agora(),
+        gravar_json(OFERTAS, dict(anterior, versao=2, origem="ia_home_assistant", gerado_em=agora() if completa else anterior.get("gerado_em") or agora(),
                                   atualizado_em=agora(), lista=[item_ofertas(p, v) for p, v in lista.items()],
                                   categorias=novas, relatorio=relatorio))
         return lista
@@ -3476,7 +3478,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.13.2"
+    server_version = "EconomIA/0.13.3"
 
     def log_message(self, fmt, *args):
         pass

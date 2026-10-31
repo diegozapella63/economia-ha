@@ -1294,7 +1294,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.13.2</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.13.3</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
   </section>
 
   <footer>Preço do site pode ser diferente do preço na loja. Confira validade e regras do cupom no carrinho.</footer>
@@ -1438,7 +1438,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   var toastT;
   function toast(msg){
     var t = $('toast'); t.textContent = msg; t.hidden = false;
-    clearTimeout(toastT); toastT = setTimeout(function(){ t.hidden = true; }, 2200);
+    clearTimeout(toastT); toastT = setTimeout(function(){ t.hidden = true; }, Math.min(9000, Math.max(2200, String(msg).length * 55)));
   }
   function salvar(msg){
     if (MODO === 'addon'){
@@ -3325,7 +3325,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.12.1' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.13.3' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;
@@ -3365,6 +3365,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       return;
     }
     botaoBusca(false, 'Buscar');
+    if (!inicial && (st.erro || st.terminou_em) && ui.view !== 'ofertas') toast(st.erro ? st.erro : arr(st.avisos).length ? st.avisos[0] : 'Busca concluída');
     if (st.erro){ m.hidden = false; m.className = 'busca-msg err'; m.textContent = st.erro; }
     else if (!inicial && st.terminou_em){ m.hidden = false; m.className = 'busca-msg ok'; m.textContent = 'Busca concluída' + (st.chamadas_ia ? ', com ' + st.chamadas_ia + (st.chamadas_ia > 1 ? ' chamadas' : ' chamada') + ' de IA.' : '.') + (arr(st.avisos).length ? ' ' + st.avisos.join(' ') : ''); }
     else m.hidden = true;
@@ -3392,7 +3393,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     botaoBusca(true, 'Começando');
     fetch('api/buscar', {method:'POST'})
       .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
-      .then(function(x){ if (!x.ok){ mostraBusca({erro:x.j.erro || 'Não deu para começar a busca.'}); return; } acompanhaBusca(false); })
+      .then(function(x){ if (!x.ok){ mostraBusca({erro:x.j.erro || 'Não deu para começar a busca.'}); return; } toast('Buscando os preços…'); acompanhaBusca(false); })
       .catch(function(){ mostraBusca({erro:'Sem conexão com o Home Assistant. Tente de novo.'}); });
   });
 
