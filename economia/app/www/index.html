@@ -415,6 +415,12 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .i-det[open] > summary::before{content:"▾ "}
 .i-det > summary + div{border-top:0;padding-top:6px}
 .inativas{margin-top:6px;border-top:1px dashed var(--line);padding-top:6px}
+.fonte-det{flex-basis:100%;font-size:13px}
+.fonte-det > summary{cursor:pointer;color:var(--accent);font-weight:600;list-style:none;padding:2px 0}
+.fonte-det > summary::-webkit-details-marker{display:none}
+.fonte-det > summary::before{content:"▸ "}
+.fonte-det[open] > summary::before{content:"▾ "}
+.fonte-det ul{margin:4px 0 2px;display:flex;flex-direction:column;gap:3px;color:var(--muted)}
 .inativas > summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--muted);list-style:none;padding:8px 0;-webkit-tap-highlight-color:transparent}
 .inativas > summary::-webkit-details-marker{display:none}
 .inativas > summary::before{content:"▸ "}
@@ -1300,7 +1306,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.13.9</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.14.0</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -2602,7 +2608,8 @@ html:not(.sem-ia) .so-semia{display:none!important}
     var com = {};
     arr(c.ofertas).forEach(function(o){ com[o.rede] = 1; });
     arr(D.lista).forEach(function(i){ Object.keys(i.precos || {}).forEach(function(r){ com[r] = 1; }); arr(i.tamanhos).forEach(function(t){ com[t.rede] = 1; }); });
-    return arr(c.lojas).filter(function(l){ return G[l.rede] && !com[l.rede] && !l.nova && acompanha(l.rede) && c.id !== 'online'; });
+    return arr(c.lojas).filter(function(l){ return G[l.rede] && !com[l.rede] && !l.nova && acompanha(l.rede) && c.id !== 'online'
+      && !(l.preco_fonte && /^(site|paginas|folheto)/.test(l.preco_fonte.como)); });
   }
   function siteManual(nome){ return estado.lojas.adicionar.filter(function(a){ return a.site && norm(a.nome).indexOf(norm(nome)) === 0; })[0]; }
   function host(u){ return String(u || '').replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]; }
@@ -2642,7 +2649,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
           + '<label class="track"><input type="checkbox" data-rede="' + l.rede + '"' + (on ? ' checked' : '') + '><span class="r-name">' + esc(G[l.rede].nome) + '</span></label>'
           + '<span class="r-val num">' + km(l.distancia_km) + '</span>'
           + '<span class="r-sub">' + (txt ? '<span>' + esc(txt) + '</span>' : '') + (l.endereco ? '<span>' + esc(l.endereco) + '</span>' : '') + mapaChip(l, G[l.rede].nome) + arr(l.fontes).filter(function(f){ return f !== 'Mapa'; }).map(function(f){ return '<span class="src">' + esc(f) + '</span>'; }).join('')
-          + (l.encarte_auto ? '<span>Encarte lido do site ' + esc(host(l.site)) + '</span>' : '') + (l.folheto ? '<span>Folheto da semana' + (l.folheto_ate ? ' até ' + dataBR(l.folheto_ate) : '') + '</span>' : '') + avisoSemPreco(c, l)
+          + (l.encarte_auto ? '<span>Encarte lido do site ' + esc(host(l.site)) + '</span>' : '') + (l.folheto ? '<span>Folheto da semana' + (l.folheto_ate ? ' até ' + dataBR(l.folheto_ate) : '') + '</span>' : '') + (l.preco_fonte && acompanha(l.rede) ? fonteHtml(l) : avisoSemPreco(c, l))
           + (mi >= 0 ? '<span>Adicionada por você</span><button type="button" class="rm" data-loja="' + mi + '">remover</button>' : '') + '</span>'
           + (siteAberto === l.rede ? '<form class="site-form" novalidate data-site-form="' + esc(l.rede) + '" data-cat="' + c.id + '"><input class="field" type="url" inputmode="url" value="' + esc(l.site || '') + '" placeholder="Endereço da página de ofertas" aria-label="Site de ofertas de ' + esc(G[l.rede].nome) + '"><button class="btn" type="submit">Salvar</button><button type="button" class="ghost big" data-site-fecha="1">Cancelar</button></form>' : '')
           + '</li>';
@@ -2660,6 +2667,17 @@ html:not(.sem-ia) .so-semia{display:none!important}
         + (rg.length ? '<div class="group"><h3>Mercados da região que entregam</h3><ul class="rows">' + rg.join('') + '</ul>' + inativas + '</div>' : '');
     }).join('');
     $('novaLojaCat').innerHTML = ativas.map(function(c){ return '<option value="' + c.id + '">' + esc(c.singular) + '</option>'; }).join('');
+  }
+  // resultado do teste de preço (Encontrar lojas): de onde dá para tirar preço e, passo a passo, o que funcionou
+  var FONTE_ROT = {site:['selo', 'Preço pelo site'], paginas:['selo', 'Preço pelas páginas do site'], folheto:['', 'Folheto da semana'],
+    folheto_novo:['', 'Tem folheto'], ia:['', 'Só com IA'], nenhum:['warn', 'Sem fonte de preço']};
+  function fonteHtml(l){
+    var f = l.preco_fonte, r = FONTE_ROT[f.como] || FONTE_ROT.nenhum;
+    var rot = f.como === 'ia' && !iaOn() ? FONTE_ROT.nenhum : r;
+    return '<span class="chip ' + rot[0] + '">' + rot[1] + '</span>' + (f.exemplo ? '<span>ex.: ' + esc(f.exemplo) + '</span>' : '')
+      + (arr(f.passos).length ? '<details class="fonte-det"><summary>Como foi testado' + (f.em ? ' · ' + esc(quandoCurto(f.em)) : '') + '</summary><ul>'
+        + arr(f.passos).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></details>' : '')
+      + (f.como === 'ia' || f.como === 'nenhum' ? '<button type="button" class="linkbtn" data-site="' + esc(l.rede) + '">Adicionar site de ofertas</button>' : '');
   }
   function avisoSemPreco(c, l){
     if (l.nova && acompanha(l.rede)) return '<span>Preços na próxima busca</span>';
@@ -3316,9 +3334,22 @@ html:not(.sem-ia) .so-semia{display:none!important}
     fetch('api/lojas-mapa/atualizar', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({raio_km:Number($('raio').value), categorias:cats})})
       .then(function(r){ return r.json(); })
       .then(function(j){
-        b.disabled = false; msg.className = 'hint ' + (j.ok ? 'ok' : 'err');
-        msg.innerHTML = esc(j.msg || 'Sem resposta.') + (j.ok ? ' Os preços vêm na busca. <button type="button" class="linkbtn" data-buscar-ja="1">Buscar preços agora</button> <button type="button" class="linkbtn" data-ir="lojasSec">Ver lojas</button>' : '');
-        if (j.ok) recarrega();
+        msg.className = 'hint ' + (j.ok ? 'ok' : 'err');
+        if (!j.ok){ b.disabled = false; msg.textContent = j.msg || 'Sem resposta.'; return; }
+        recarrega();
+        var achou = j.msg;
+        var acompanha_ = function(){
+          fetch('api/lojas-mapa/teste', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(t){
+            if (t.rodando){
+              msg.className = 'hint'; msg.textContent = achou + ' Testando o preço de cada loja' + (t.total ? ': ' + (t.loja || '') + ' (' + t.atual + ' de ' + t.total + ')' : '') + '…';
+              setTimeout(acompanha_, 2000); return;
+            }
+            b.disabled = false; msg.className = 'hint ok';
+            msg.innerHTML = esc(achou + ' ' + (t.resumo || '')) + ' <button type="button" class="linkbtn" data-ir="lojasSec">Ver lojas</button> <button type="button" class="linkbtn" data-buscar-ja="1">Buscar preços agora</button>';
+            recarrega();
+          }).catch(function(){ setTimeout(acompanha_, 4000); });
+        };
+        acompanha_();
       })
       .catch(function(){ b.disabled = false; msg.className = 'hint err'; msg.textContent = 'Sem conexão com o Home Assistant. Tente de novo.'; });
   });
@@ -3372,7 +3403,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.13.9' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.14.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

@@ -47,6 +47,7 @@ O botão **Buscar** chama `ai_task.generate_data` pela API do Home Assistant (`h
 | PUT | `/api/integracoes` | `{shopee: {app_id, secret}}` grava em `segredos.json` (modo 600); `secret` vazio mantém a senha guardada; `{shopee: null}` apaga. |
 | POST | `/api/integracoes/testar` | `{servico: "shopee"}` → `{ok, msg}`: uma consulta de teste na Open API. |
 | POST | `/api/lojas-mapa/atualizar` | `{raio_km, categorias}`: lê o mapa agora (`forcar`) e junta as lojas ao `ofertas.json` (`mesclar_resultado` com `mapa`), sem buscar preços. Devolve `{ok, msg, lojas: {categoria: n}}`. |
+| GET | `/api/lojas-mapa/teste` | `{rodando, atual, total, loja, terminou_em, resumo}`: andamento do teste de preço. |
 | GET | `/api/lojas-mapa` | `{fontes, em, lojas: {categoria: [{nome, endereco, distancia_km, fonte}]}}`: as lojas do raio pelo mapa. |
 | GET | `/api/folhetos` | `{lojas: [{nome, categoria, status: {fonte, folhetos, lidos, guardados, ofertas, ate, erro, em}}]}`. |
 | GET | `/api/exportar/ofertas.json` | O `ofertas.json` da última busca. |
@@ -66,6 +67,10 @@ Giassi e Angeloni (fixos) e as lojas achadas por `testa_site` usam a plataforma 
 Candidatas: as lojas de `lojas.adicionar` com site, as lojas das categorias físicas do `ofertas.json` com `site` e os mercados regionais de Online (o site sai dos links dos preços). Cada origem é testada uma vez por semana (`testa_site`): lê o `robots.txt` (regras de `User-agent: *`, com `*` e `$`, a regra mais longa vale) e só chama `/api/checkout/pub/regions` se `/api/checkout/pub/regions` e `/api/io/_v/api/intelligent-search/product_search/` forem permitidos. Resposta em lista = VTEX → entra em `VTEX_ACHADAS` e na busca direta, na categoria da loja.
 
 Sites das lojas do mapa: `osm_lojas` guarda `website`/`contact:website`/`brand:website`; `google_lojas` pede `places.websiteUri`. Sem site, `site_da_rede` reconhece redes conhecidas pelo nome sem palavras genéricas nem a cidade (`SITES_REDES`); o `testa_site` confirma. `POST /api/lojas-mapa/atualizar` também chama `atualiza_diretas(max_novas=15)` em segundo plano.
+
+### Teste de preço das lojas (`fontes_preco.json`)
+
+Depois do `POST /api/lojas-mapa/atualizar`, `sonda_lojas` roda em segundo plano: `atualiza_diretas(max_novas=30)` e, para cada loja acompanhada das categorias físicas, `testa_preco_loja` tenta um termo de exemplo (`TERMO_TESTE`): VTEX liberada → `regiao_direta` + `busca_vtex`; páginas liberadas → `baixa_catalogo` + `procura_catalogo` + `preco_produto`; senão folheto guardado ou `achar_folhetos` (até 8 lojas novas). Resultado `{como: site|paginas|folheto|folheto_novo|ia|nenhum, exemplo, site, passos: ["✓ …", "✗ …"], em}` por categoria e nome; `marca_fontes` põe em cada loja (`preco_fonte`) ao gravar o `ofertas.json`.
 
 ### Páginas de produto (`catalogos/`)
 

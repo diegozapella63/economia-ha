@@ -25,7 +25,8 @@ Rotas:
 - POST /api/integracoes/testar   {"servico": "shopee"} faz uma consulta de teste
 - GET  /api/folhetos   lojas com folheto lido no Kimbino ou no Seus Folhetos e como foi a última leitura
 - GET  /api/lojas-mapa   lojas do raio pelo mapa (OpenStreetMap e, com chave, Google Places)
-- POST /api/lojas-mapa/atualizar   {"raio_km", "categorias"}: lê o mapa agora e registra as lojas, sem buscar preços
+- POST /api/lojas-mapa/atualizar   {"raio_km", "categorias"}: lê o mapa agora, registra as lojas e começa o teste de preço de cada uma
+- GET  /api/lojas-mapa/teste   andamento do teste de preço das lojas
 - POST /api/ler-encarte   {"imagens": [...], "loja", "categoria"}: a IA lê o encarte ou o print de preços e junta ao resultado
 - POST /api/versoes/guardar {"motivo"} | /api/versoes/restaurar {"nome"}
 - GET  /api/busca    andamento da busca
@@ -1567,6 +1568,7 @@ SITES_REDES = {
     "nissei": "https://www.farmaciasnissei.com.br", "panvel": "https://www.panvel.com", "catarinense": "https://www.drogariacatarinense.com.br",
     "sao joao": "https://www.saojoaofarmacias.com.br", "cobasi": "https://www.cobasi.com.br", "petz": "https://www.petz.com.br",
     "bistek": "https://www.bistek.com.br", "fort": "https://www.fortatacadista.com.br", "atacadao": "https://www.atacadao.com.br",
+    "giassi": "https://www.giassi.com.br", "angeloni": "https://super.angeloni.com.br",
 }
 
 
@@ -2853,13 +2855,196 @@ def atualizar_lojas_mapa(dado):
     if not any(mapa.values()):
         return {"ok": False, "msg": "O mapa não respondeu agora ou não achou lojas nessa distância. Tente de novo em alguns minutos ou aumente a distância."}
     mesclar_resultado([], cfg, mapa=mapa, novas_lojas=True)
-    threading.Thread(target=lambda: atualiza_diretas(cfg, max_novas=15), daemon=True).start()
+    if not SONDA["rodando"]:
+        threading.Thread(target=sonda_lojas, args=(cfg,), daemon=True).start()
     partes = [f"{len(v)} {CATEGORIAS[c]['nome'].lower()}" for c, v in mapa.items() if v]
     txt = partes[0] if len(partes) == 1 else ", ".join(partes[:-1]) + " e " + partes[-1]
     fontes = (ler_json(LOJAS_MAPA, {}) or {}).get("fontes") or []
     raio = str(cfg.get("raio_km") or 2).replace(".0", "")
     return {"ok": True, "msg": f"Achei {txt} até {raio} km ({' e '.join(fontes)}).",
-            "lojas": {c: len(v) for c, v in mapa.items()}}
+            "lojas": {c: len(v) for c, v in mapa.items()}, "teste": True}
+
+
+# ---------- teste de preço de cada loja (no Encontrar lojas): o que funciona sem IA e o que não ----------
+SONDA_FILE = os.path.join(DATA, "fontes_preco.json")
+SONDA = {"rodando": False, "atual": 0, "total": 0, "loja": None, "terminou_em": None, "resumo": None}
+TERMO_TESTE = {"farmacias": "dipirona", "mercados": "leite", "petshops": "ração"}
+
+
+def chave_direta(origem):
+    for k, v in todas_diretas().items():
+        if origem_de(v.get("site") or "") == origem:
+            return k
+    return None
+
+
+def lojas_acompanhadas(cfg, categorias):
+    lojas_cfg = cfg.get("lojas") or {}
+    ignorar, manter = set(lojas_cfg.get("ignorar") or []), set(lojas_cfg.get("manter") or [])
+    try:
+        raio = float(cfg.get("raio_km") or 2)
+    except (TypeError, ValueError):
+        raio = 2.0
+    out = []
+    for c in categorias:
+        if not isinstance(c, dict) or c.get("id") not in TERMO_TESTE:
+            continue
+        nomes = {r.get("id"): r.get("nome") for r in c.get("redes") or [] if isinstance(r, dict)}
+        for l in c.get("lojas") or []:
+            rid, d = l.get("rede"), l.get("distancia_km")
+            if not nomes.get(rid) or rid in ignorar or (isinstance(d, (int, float)) and d > raio and rid not in manter):
+                continue
+            out.append((c["id"], rid, nomes[rid], l))
+    return out
+
+
+def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto):
+    """Tenta um preço de exemplo sem IA e diz, passo a passo, o que funcionou e o que não."""
+    termo = TERMO_TESTE.get(cat_id, "leite")
+    st = {"como": None, "exemplo": None, "site": None, "passos": [], "em": agora()}
+    site = l.get("site") if url_ok(l.get("site")) else site_da_rede(nome, cidade)
+    if site:
+        o = origem_de(site)
+        st["site"] = o.split("://", 1)[-1].replace("www.", "")
+        k0 = chave_direta(o)
+        m = {"vtex": True, "permite": True} if k0 and todas_diretas()[k0].get("fixa") else memo.get(o) or {}
+        if not m:
+            m = memo[o] = dict(testa_site(o, cfg.get("cep")), nome=nome, categoria=cat_id)
+        if m.get("sem_resposta"):
+            st["passos"].append(f"✗ O site {st['site']} não respondeu (tento de novo amanhã).")
+        elif m.get("vtex") and m.get("permite"):
+            k = chave_direta(o)
+            if not k:
+                VTEX_ACHADAS[slug(nome, 30)] = {"nome": nome, "site": o, "categoria": cat_id}
+                k = slug(nome, 30)
+            try:
+                reg, unidade = regiao_direta(k, cfg.get("cep"))
+            except Exception as e:  # noqa: BLE001
+                reg, unidade = None, None
+                st["passos"].append(f"✗ O site {st['site']} não disse qual loja atende o seu CEP ({str(e)[:60]}).")
+            if reg:
+                st["passos"].append(f"✓ Site com busca direta, loja {unidade or 'do seu CEP'}.")
+                try:
+                    cands = [c for c in busca_vtex(k, termo, reg) if combina(termo, c["busca_em"])]
+                except Exception:  # noqa: BLE001
+                    cands = []
+                if cands:
+                    c = min(cands, key=lambda x: x["preco"])
+                    st.update(como="site", exemplo=f"{c['nome'][:45]} por {br_preco(c['preco'])}")
+                    st["passos"].append(f"✓ Achei \"{termo}\" no site: {st['exemplo']}.")
+                else:
+                    st["passos"].append(f"✗ A busca do site não trouxe \"{termo}\" com estoque.")
+            elif reg is None and not st["passos"]:
+                st["passos"].append(f"✗ O site {st['site']} não entrega no seu CEP.")
+        elif not m.get("paginas"):
+            st["passos"].append(f"✗ O site {st['site']} pede para programas não consultarem os preços.")
+        else:
+            if not m.get("permite"):
+                st["passos"].append("✗ O site não deixa programas usarem a busca dele, mas deixa abrir as páginas de produto.")
+            try:
+                cat = baixa_catalogo(o, m)
+            except Exception:  # noqa: BLE001
+                cat = {"urls": []}
+            if not cat.get("urls"):
+                st["passos"].append("✗ O site não publica a lista de produtos (sitemap).")
+            else:
+                st["passos"].append(f"✓ Lista de produtos do site: {len(cat['urls'])} páginas.")
+                achou = None
+                for u in procura_catalogo(cat["urls"], termo, 3):
+                    r = preco_produto(o, cat, u)
+                    if r and r.get("preco") and r.get("disponivel"):
+                        achou = r
+                        break
+                try:
+                    gravar_json(arquivo_catalogo(o), cat)
+                except OSError:
+                    pass
+                if achou:
+                    st.update(como="paginas", exemplo=f"{(achou.get('nome') or termo)[:40]} por {br_preco(achou['preco'])}")
+                    st["passos"].append(f"✓ Preço lido na página do produto: {st['exemplo']}.")
+                else:
+                    st["passos"].append(f"✗ Não consegui ler o preço de \"{termo}\" nas páginas do site.")
+    else:
+        st["passos"].append("✗ Não sei o site desta loja (o mapa não traz). Dá para informar em Adicionar site de ofertas.")
+    if not st["como"]:
+        guardados = [v for v in (cache_f.get("itens") or {}).values() if norm(v.get("loja", "")) == norm(nome) and v.get("r")]
+        if guardados:
+            st["como"] = "folheto"
+            st["passos"].append("✓ Folheto da semana já lido, guardado até vencer.")
+        elif buscas_folheto[0] < 8:
+            buscas_folheto[0] += 1
+            try:
+                a, _, cands = achar_folhetos({"nome": nome, "categoria": cat_id}, cache_f)
+            except Exception:  # noqa: BLE001
+                a, cands = None, []
+            if cands:
+                st["como"] = "folheto_novo"
+                st["passos"].append(f"✓ Tem folheto da semana no {a['nome']}" + ("; a IA lê na próxima busca." if ia_ligada(cfg) else "; ler o folheto precisa da IA."))
+            else:
+                st["passos"].append("✗ Sem folheto no Kimbino e no Seus Folhetos.")
+    if not st["como"]:
+        st["como"] = "ia" if ia_ligada(cfg) else "nenhum"
+        st["passos"].append("Preço só pela busca na web com IA." if ia_ligada(cfg) else "✗ Sem IA, não há de onde tirar o preço desta loja.")
+    return st
+
+
+def marca_fontes(categorias):
+    """Põe em cada loja o resultado do último teste de preço (guardado à parte, sobrevive às buscas)."""
+    fontes = ler_json(SONDA_FILE, {}) or {}
+    for c in categorias:
+        if not isinstance(c, dict):
+            continue
+        nomes = {r.get("id"): r.get("nome") for r in c.get("redes") or [] if isinstance(r, dict)}
+        por_cat = fontes.get(c.get("id")) or {}
+        for l in c.get("lojas") or []:
+            st = por_cat.get(norm(nomes.get(l.get("rede")) or ""))
+            if st:
+                l["preco_fonte"] = st
+
+
+def sonda_lojas(cfg):
+    SONDA.update({"rodando": True, "atual": 0, "total": 0, "loja": None, "resumo": None})
+    try:
+        atualiza_diretas(cfg, max_novas=30)
+        of = ler_json(OFERTAS, {}) or {}
+        alvos = lojas_acompanhadas(cfg, of.get("categorias") or [])
+        SONDA["total"] = len(alvos)
+        memo = ler_json(LOJAS_SITE, {}) or {}
+        cache_f = ler_json(FOLHETOS, {}) or {}
+        cidade, _ = cidade_do_cep(cfg.get("cep"), cache_f)
+        fontes = ler_json(SONDA_FILE, {}) or {}
+        buscas_folheto = [0]
+        conta = {}
+        for i, (cat_id, rid, nome, l) in enumerate(alvos, 1):
+            SONDA.update({"atual": i, "loja": nome})
+            try:
+                st = testa_preco_loja(cat_id, nome, l, memo, cidade or "", cache_f, cfg, buscas_folheto)
+            except Exception as e:  # noqa: BLE001
+                st = {"como": "nenhum", "exemplo": None, "passos": [f"✗ Erro no teste: {str(e)[:80]}"], "em": agora()}
+            fontes.setdefault(cat_id, {})[norm(nome)] = st
+            conta[st["como"]] = conta.get(st["como"], 0) + 1
+            log(f"teste de preço {nome}: {st['como']}" + (f" ({st['exemplo']})" if st.get("exemplo") else ""))
+        gravar_json(LOJAS_SITE, memo)
+        gravar_json(FOLHETOS, cache_f)
+        gravar_json(SONDA_FILE, fontes)
+        with _mescla_trava:
+            of = ler_json(OFERTAS, {}) or {}
+            marca_fontes(of.get("categorias") or [])
+            gravar_json(OFERTAS, of)
+        sem_ia = conta.get("site", 0) + conta.get("paginas", 0)
+        partes = [f"{sem_ia} com preço direto do site"] if sem_ia else []
+        if conta.get("folheto", 0) + conta.get("folheto_novo", 0):
+            partes.append(f"{conta.get('folheto', 0) + conta.get('folheto_novo', 0)} com folheto")
+        if conta.get("ia"):
+            partes.append(f"{conta['ia']} só pela busca com IA")
+        if conta.get("nenhum"):
+            partes.append(f"{conta['nenhum']} sem fonte de preço sem IA")
+        SONDA["resumo"] = ("Testei " + str(len(alvos)) + (" loja: " if len(alvos) == 1 else " lojas: ") + ", ".join(partes) + ".") if alvos else "Nenhuma loja para testar."
+    except Exception as e:  # noqa: BLE001
+        SONDA["resumo"] = f"O teste parou: {e}"
+        log(SONDA["resumo"])
+    finally:
+        SONDA.update({"rodando": False, "loja": None, "terminou_em": agora()})
 
 
 def testar_google():
@@ -3126,6 +3311,7 @@ def buscar():
         relatorio["falhas"] = falhas
         relatorio["chamadas_ia"] = _uso_local.chamadas
         BUSCA["chamadas_ia"] = _uso_local.chamadas
+        marca_fontes(novas)
         gravar_json(OFERTAS, {
             "versao": 2, "gerado_em": agora(), "origem": "ia_home_assistant",
             "lista": [item_ofertas(p, v) for p, v in lista.items()],
@@ -3166,6 +3352,7 @@ def mesclar_resultado(resultado, cfg, extra=None, mapa=None, completa=False, nov
                     l.pop("nova", None)
         if mapa:
             aplica_mapa(novas, mapa, cfg, marcar_novas=novas_lojas)
+        marca_fontes(novas)
         lista = juntar_categorias(parciais)
         relatorio = anterior.get("relatorio") if isinstance(anterior.get("relatorio"), dict) else {}
         relatorio["sem_preco"] = [n for n in nomes_da_lista(cfg) if n not in lista]
@@ -3554,7 +3741,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.13.9"
+    server_version = "EconomIA/0.14.0"
 
     def log_message(self, fmt, *args):
         pass
@@ -3637,6 +3824,8 @@ class Painel(BaseHTTPRequestHandler):
         elif rota == "/api/integracoes":
             ch = segredos().get("shopee") or {}
             self._json(200, {"shopee": {"app_id": str(ch.get("app_id") or ""), "tem_senha": bool(ch.get("secret"))}, "google": {"tem_chave": bool(google_chave())}})
+        elif rota == "/api/lojas-mapa/teste":
+            self._json(200, SONDA)
         elif rota == "/api/lojas-mapa":
             m = ler_json(LOJAS_MAPA, {}) or {}
             self._json(200, {"fontes": m.get("fontes") or [], "em": m.get("em"), "lojas": m.get("lojas") or {}})
@@ -3767,8 +3956,8 @@ class Painel(BaseHTTPRequestHandler):
             except ErroBusca as e:
                 return self._json(400, {"erro": str(e)})
         if urllib.parse.urlsplit(self.path).path == "/api/lojas-mapa/atualizar":
-            if BUSCA["rodando"]:
-                return self._json(200, {"ok": False, "msg": "Espere a busca terminar."})
+            if BUSCA["rodando"] or SONDA["rodando"]:
+                return self._json(200, {"ok": False, "msg": "Espere a busca terminar." if BUSCA["rodando"] else "Ainda estou testando as lojas. Espere terminar."})
             try:
                 n = int(self.headers.get("Content-Length") or 0)
                 dado = json.loads(self.rfile.read(n) or b"{}") if 0 < n < 20000 else {}

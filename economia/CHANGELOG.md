@@ -1,5 +1,12 @@
 # Mudanças
 
+## 0.14.0
+
+- **Encontrar lojas testa o preço de cada loja.** Depois de achar as lojas no mapa, o app tenta, sem IA, um preço de exemplo em cada loja que você acompanha (leite nos mercados, dipirona nas farmácias, ração nos pet shops). A loja mostra de onde dá para tirar preço: **Preço pelo site**, **Preço pelas páginas do site**, **Folheto da semana**, **Tem folheto**, **Só com IA** ou **Sem fonte de preço**, com um exemplo ("ex.: Leite Integral Tirol 1L por R$ 4,89").
+- **Como foi testado**: cada loja tem o passo a passo do teste, com ✓ e ✗. Por exemplo: o site não respondeu, o site pede para programas não consultarem, o site não publica a lista de produtos, não há folheto no Kimbino nem no Seus Folhetos. Assim dá para ver o que funcionou e o que não funcionou em cada uma.
+- O andamento aparece no Onde ("Testando o preço de cada loja: Farmácia Nissei (3 de 12)…"), e no fim um resumo: quantas têm preço direto do site, quantas com folheto, quantas só com IA.
+- O resultado do teste fica guardado (`fontes_preco.json`) e continua aparecendo depois das buscas.
+
 ## 0.13.9
 
 - Loja registrada pelo **Encontrar lojas** aparece com "Preços na próxima busca", e não mais "Sem preços", até a busca rodar. Ela também não entra no aviso "Sem preços de" das Ofertas.
