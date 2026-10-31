@@ -1,5 +1,9 @@
 # Mudanças
 
+## 0.15.2
+
+- Em IA do Home Assistant, as três escolhas (Para buscar ofertas, Para ler fotos e Para falar) ficam juntas, uma embaixo da outra, com a mesma largura. O Verificar de novo vem depois delas e testa as três.
+
 ## 0.15.1
 
 - **Para falar** com opções, como "Para ler fotos": em Mais › Integrações › IA do Home Assistant, escolha qual fala para texto o Falar usa. A lista traz os assistentes de voz do Home Assistant que têm fala para texto (com o nome do motor, por exemplo "Assistente: Home Assistant (Home Assistant Cloud)") e as outras entidades de fala para texto (por exemplo "Google Generative AI STT"). No padrão, continua o assistente de voz preferido do Home Assistant. Se a escolhida sumir, o app volta para o padrão e avisa.
