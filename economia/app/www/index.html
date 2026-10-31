@@ -484,6 +484,9 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .row.has-track .r-sub{padding-left:26px}
 .row.out .r-name,.row.out .r-val,.row.out .src{color:var(--muted)}
 .src{font-size:11px;font-weight:600;padding:1px 7px;border-radius:6px;border:1px solid var(--line);color:var(--ink)}
+.src.map-a{display:inline-flex;align-items:center;gap:3px;color:var(--accent);border-color:var(--accent);text-decoration:none}
+.src.map-a svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.src.sem{color:var(--muted);border-style:dashed}
 .note{font-size:13px;color:var(--muted)}
 
 footer{font-size:12.5px;color:var(--muted)}
@@ -1297,7 +1300,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.13.6</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.13.7</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -2603,6 +2606,19 @@ html:not(.sem-ia) .so-semia{display:none!important}
   }
   function siteManual(nome){ return estado.lojas.adicionar.filter(function(a){ return a.site && norm(a.nome).indexOf(norm(nome)) === 0; })[0]; }
   function host(u){ return String(u || '').replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]; }
+  // botão Mapa: abre a loja no Google Maps (pelo lugar do Google, pelas coordenadas ou pelo endereço)
+  function mapaUrl(l, nome){
+    var q = 'https://www.google.com/maps/search/?api=1&query=';
+    if (l.place_id) return q + encodeURIComponent(nome) + '&query_place_id=' + encodeURIComponent(l.place_id);
+    if (l.lat != null && l.lon != null) return q + l.lat + ',' + l.lon;
+    if (l.endereco && /\d/.test(l.endereco)) return q + encodeURIComponent(nome + ', ' + l.endereco);
+    return '';
+  }
+  function mapaChip(l, nome){
+    var u = mapaUrl(l, nome);
+    return u ? '<a class="src map-a" href="' + esc(u) + '" target="_blank" rel="noopener" aria-label="Abrir ' + esc(nome) + ' no mapa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Mapa</a>'
+      : '<span class="src sem">Sem localização</span>';
+  }
   var siteAberto = null, INAT_ABERTO = {};
   function pintaLojas(){
     var ativas = D.categorias.filter(function(c){ return estado.categorias.indexOf(c.id) >= 0; });
@@ -2621,11 +2637,11 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var rows = ord.map(function(l){
         var on = acompanha(l.rede), longe = l.distancia_km > estado.raio_km, mi = manualDe(G[l.rede].nome);
         if (mi >= 0) usadas[mi] = true;
-        var txt = longe ? (on ? 'Mais longe, mas você acompanha' : 'Mais longe que ' + estado.raio_km + ' km') : (on ? (l.horario || 'Horário não informado') : 'Você não acompanha');
+        var txt = longe ? (on ? 'Mais longe, mas você acompanha' : 'Mais longe que ' + estado.raio_km + ' km') : (on ? (l.horario || '') : 'Você não acompanha');
         return '<li class="row has-track' + (on ? '' : ' out') + '">'
           + '<label class="track"><input type="checkbox" data-rede="' + l.rede + '"' + (on ? ' checked' : '') + '><span class="r-name">' + esc(G[l.rede].nome) + '</span></label>'
           + '<span class="r-val num">' + km(l.distancia_km) + '</span>'
-          + '<span class="r-sub"><span>' + esc(txt) + '</span>' + (l.endereco ? '<span>' + esc(l.endereco) + '</span>' : '') + arr(l.fontes).map(function(f){ return '<span class="src">' + esc(f) + '</span>'; }).join('')
+          + '<span class="r-sub">' + (txt ? '<span>' + esc(txt) + '</span>' : '') + (l.endereco ? '<span>' + esc(l.endereco) + '</span>' : '') + mapaChip(l, G[l.rede].nome) + arr(l.fontes).filter(function(f){ return f !== 'Mapa'; }).map(function(f){ return '<span class="src">' + esc(f) + '</span>'; }).join('')
           + (l.encarte_auto ? '<span>Encarte lido do site ' + esc(host(l.site)) + '</span>' : '') + (l.folheto ? '<span>Folheto da semana' + (l.folheto_ate ? ' até ' + dataBR(l.folheto_ate) : '') + '</span>' : '') + avisoSemPreco(c, l)
           + (mi >= 0 ? '<span>Adicionada por você</span><button type="button" class="rm" data-loja="' + mi + '">remover</button>' : '') + '</span>'
           + (siteAberto === l.rede ? '<form class="site-form" novalidate data-site-form="' + esc(l.rede) + '" data-cat="' + c.id + '"><input class="field" type="url" inputmode="url" value="' + esc(l.site || '') + '" placeholder="Endereço da página de ofertas" aria-label="Site de ofertas de ' + esc(G[l.rede].nome) + '"><button class="btn" type="submit">Salvar</button><button type="button" class="ghost big" data-site-fecha="1">Cancelar</button></form>' : '')
@@ -3353,7 +3369,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.13.6' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.13.7' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

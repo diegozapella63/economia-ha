@@ -1,5 +1,10 @@
 # Mudanças
 
+## 0.13.7
+
+- Em Mais › Lojas, toda loja ganha o botão **Mapa**, com o ícone de localização: abre a loja no Google Maps (pelo lugar do Google, pelas coordenadas do mapa ou pelo endereço). Loja sem endereço nem localização aparece como "Sem localização". O selo "Mapa" de origem saiu, porque agora é o botão.
+- Sai o "Horário não informado" repetido nas lojas.
+
 ## 0.13.6
 
 - Sai a palavra "raio" da tela: o botão agora é só **Encontrar lojas**, e os textos falam em "lojas perto de casa".

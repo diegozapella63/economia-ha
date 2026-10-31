@@ -2673,7 +2673,8 @@ def osm_lojas(lat, lon, raio_m, cats):
         rua = ", ".join(x for x in [t.get("addr:street"), t.get("addr:housenumber")] if x)
         bairro = t.get("addr:suburb") or t.get("addr:neighbourhood")
         out.append({"nome": nome, "categoria": cat, "endereco": ", ".join(x for x in [rua, bairro] if x) or None,
-                    "distancia_km": km_entre(lat, lon, float(la), float(lo)), "fonte": "OpenStreetMap"})
+                    "distancia_km": km_entre(lat, lon, float(la), float(lo)), "fonte": "OpenStreetMap",
+                    "lat": round(float(la), 6), "lon": round(float(lo), 6)})
     return out
 
 
@@ -2686,7 +2687,7 @@ def google_lojas(lat, lon, raio_m, cats, chave):
             continue
         req = urllib.request.Request(GOOGLE_PLACES, data=json.dumps(corpo).encode(), method="POST", headers={
             "Content-Type": "application/json", "X-Goog-Api-Key": chave,
-            "X-Goog-FieldMask": "places.displayName,places.shortFormattedAddress,places.formattedAddress,places.location,places.businessStatus"})
+            "X-Goog-FieldMask": "places.id,places.displayName,places.shortFormattedAddress,places.formattedAddress,places.location,places.businessStatus"})
         try:
             with urllib.request.urlopen(req, timeout=25) as r:
                 d = json.loads(r.read(4_000_000).decode("utf-8") or "{}")
@@ -2704,7 +2705,8 @@ def google_lojas(lat, lon, raio_m, cats, chave):
             if not nome or loc.get("latitude") is None:
                 continue
             out.append({"nome": nome, "categoria": cat, "endereco": texto(pl.get("shortFormattedAddress") or pl.get("formattedAddress"), 90),
-                        "distancia_km": km_entre(lat, lon, loc["latitude"], loc["longitude"]), "fonte": "Google"})
+                        "distancia_km": km_entre(lat, lon, loc["latitude"], loc["longitude"]), "fonte": "Google",
+                        "lat": round(float(loc["latitude"]), 6), "lon": round(float(loc["longitude"]), 6), "place_id": texto(pl.get("id"), 200)})
     return out
 
 
@@ -2723,7 +2725,7 @@ def lojas_do_mapa(cfg, cats, forcar=False):
     except (TypeError, ValueError):
         raio_m = 2000
     g = google_chave()
-    chave = f"{lat:.4f},{lon:.4f},{raio_m},{','.join(sorted(cats))},{'g' if g else 'o'}"
+    chave = f"v2,{lat:.4f},{lon:.4f},{raio_m},{','.join(sorted(cats))},{'g' if g else 'o'}"
     memo = ler_json(LOJAS_MAPA, {}) or {}
     semana = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat(timespec="seconds")
     if not forcar and memo.get("chave") == chave and memo.get("em", "") >= semana:
@@ -2749,7 +2751,7 @@ def lojas_do_mapa(cfg, cats, forcar=False):
         if igual is None:
             lista.append(l)
         elif l["distancia_km"] < igual["distancia_km"] - 0.05:  # a filial mais perto da mesma rede
-            igual.update({k: l[k] for k in ("endereco", "distancia_km")})
+            igual.update({k: l.get(k) for k in ("endereco", "distancia_km", "lat", "lon", "place_id")})
     for c in lojas:
         lojas[c] = sorted(lojas[c], key=lambda x: x["distancia_km"])[:30]
     gravar_json(LOJAS_MAPA, {"chave": chave, "em": agora(), "fontes": fontes, "lojas": lojas})
@@ -2784,6 +2786,7 @@ def aplica_mapa(categorias, mapa, cfg):
                 usadas.add(m["nome"])
                 l["distancia_km"], l["endereco"] = m["distancia_km"], m.get("endereco") or l.get("endereco")
                 l["fontes"] = sorted(set(l.get("fontes") or []) | {"Mapa"})
+                l.update({k: m[k] for k in ("lat", "lon", "place_id") if m.get(k)})
         for m in lojas_m:
             if m["nome"] in usadas or any(mesma_loja(m["nome"], n) for n in nomes.values()):
                 continue
@@ -2792,7 +2795,9 @@ def aplica_mapa(categorias, mapa, cfg):
                 continue
             nomes[rid] = m["nome"]
             cat.setdefault("redes", []).append({"id": rid, "nome": m["nome"], "curto": m["nome"][:16]})
-            cat.setdefault("lojas", []).append({"rede": rid, "distancia_km": m["distancia_km"], "horario": "", "endereco": m.get("endereco"), "fontes": ["Mapa"]})
+            nova = {"rede": rid, "distancia_km": m["distancia_km"], "horario": "", "endereco": m.get("endereco"), "fontes": ["Mapa"]}
+            nova.update({k: m[k] for k in ("lat", "lon", "place_id") if m.get(k)})
+            cat.setdefault("lojas", []).append(nova)
         cat["lojas"] = sorted(cat.get("lojas") or [], key=lambda l: l["distancia_km"] if l.get("distancia_km") is not None else 99)
 
 
@@ -3511,7 +3516,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.13.6"
+    server_version = "EconomIA/0.13.7"
 
     def log_message(self, fmt, *args):
         pass
