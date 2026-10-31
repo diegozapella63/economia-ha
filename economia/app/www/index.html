@@ -1164,6 +1164,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
           <li><b>Página de ofertas do site.</b> Farmácias e mercados pequenos que mostram os produtos e os preços na própria página, como a Drogaria Floresta: o app lê o texto da página (a que você informou em Adicionar site de ofertas, ou a inicial) e procura os itens da lista nela. Sem IA.</li>
           <li><b>Shopee.</b> Pela API do Shopee Afiliados, quando ligada em Integrações. Sem IA.</li>
           <li class="so-ia"><b>Folheto da semana.</b> Para as lojas que você acompanha e que não têm preço pelo site, o folheto é procurado nos sites de encartes: Kimbino, Portafolhetos, Seus Folhetos e Catálogos Ofertas. A IA lê cada folheto uma vez; até ele vencer, os preços vêm do que ficou guardado.</li>
+          <li class="so-ia"><b>Instagram das lojas.</b> Com o Instagram ligado em Integrações, os posts de oferta dos últimos dias das lojas que você acompanha são lidos uma vez pela IA, como o folheto.</li>
           <li class="so-semia"><b>Folhetos já lidos.</b> Folheto novo precisa da IA para ser lido, então sem ela só entram os preços dos folhetos lidos quando a IA estava ligada, até eles vencerem.</li>
           <li class="so-ia"><b>Busca na web com IA.</b> Ofertas, cupons e o preço das lojas do mapa e dos marketplaces. A IA já recebe a lista de lojas e sabe quais têm preço, e não procura de novo.</li>
           <li class="so-ia"><b>Encarte do site.</b> Lojas com site de ofertas cadastrado, e até 2 lojas achadas sem nenhum preço.</li>
@@ -1211,6 +1212,13 @@ html:not(.sem-ia) .so-semia{display:none!important}
       <div class="sh-row"><label for="gKey"><span>Chave <span class="chip selo" id="gKeyOk" hidden>Guardada</span></span><input class="field" id="gKey" type="password" autocomplete="off" spellcheck="false"></label></div>
       <div class="row-form"><button type="button" class="btn" id="gSalvar">Salvar e testar</button><button type="button" class="ghost big" id="gTestar">Testar</button><button type="button" class="ghost big" id="gApagar" hidden>Apagar</button></div>
       <p class="ia-st" id="gSt"></p>
+    </section>
+    <section class="panel settings" aria-labelledby="h-insta">
+      <div class="set-head"><h2 id="h-insta"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="0.9"/></svg></span>Instagram (opcional)</h2><p class="sec-meta">Muito mercado do bairro posta o encarte da semana só no Instagram. Com uma chave da Meta, o app olha os posts das lojas que você acompanha e a IA lê o encarte uma vez. Precisa de uma conta profissional do Instagram (criador ou comercial) ligada a uma página do Facebook. A loja precisa ter conta comercial.</p></div>
+      <div class="sh-row"><label for="iKey"><span>Chave de acesso <span class="chip selo" id="iKeyOk" hidden>Guardada</span></span><input class="field" id="iKey" type="password" autocomplete="off" spellcheck="false"></label></div>
+      <div class="row-form"><button type="button" class="btn" id="iSalvar">Salvar e testar</button><button type="button" class="ghost big" id="iTestar">Testar</button><button type="button" class="ghost big" id="iApagar" hidden>Apagar</button></div>
+      <p class="ia-st" id="iSt"></p>
+      <p class="hint">O Instagram de cada loja vem do mapa ou de você: em Mais › Lojas, toque em Adicionar site de ofertas (ou Trocar site) na loja e escreva o @ dela, por exemplo @mercado_boidourado. O site que ela já tem continua valendo.</p>
     </section>
     <section class="panel settings so-ia" aria-labelledby="h-uso">
       <div class="set-head"><h2 id="h-uso"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Uso da IA</h2><p class="sec-meta">Cada busca, foto ou teste é uma chamada para a IA do Home Assistant. O Home Assistant não informa tokens nem custo, então o EconomIA conta as chamadas e estima os tokens pelo tamanho do texto.</p></div>
@@ -1307,7 +1315,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.14.9</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.15.0</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -2610,13 +2618,23 @@ html:not(.sem-ia) .so-semia{display:none!important}
     arr(c.ofertas).forEach(function(o){ com[o.rede] = 1; });
     arr(D.lista).forEach(function(i){ Object.keys(i.precos || {}).forEach(function(r){ com[r] = 1; }); arr(i.tamanhos).forEach(function(t){ com[t.rede] = 1; }); });
     return arr(c.lojas).filter(function(l){ return G[l.rede] && !com[l.rede] && !l.nova && acompanha(l.rede) && c.id !== 'online'
-      && !(l.preco_fonte && /^(site|paginas|ofertas_site|folheto)/.test(l.preco_fonte.como)); });
+      && !(l.preco_fonte && /^(site|paginas|ofertas_site|folheto|instagram)/.test(l.preco_fonte.como)); });
   }
   function siteManual(nome){ return estado.lojas.adicionar.filter(function(a){ return a.site && norm(a.nome).indexOf(norm(nome)) === 0; })[0]; }
   function host(u){ return String(u || '').replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]; }
+  function ehInsta(u){ return /(^@|instagram\.com\/)/i.test(String(u || '')); }
+  function instaDe(l){
+    var man = G[l.rede] && siteManual(G[l.rede].nome), u = man && ehInsta(man.site) ? man.site : (ehInsta(l.social) ? l.social : '');
+    var m = String(u).match(/instagram\.com\/([A-Za-z0-9._]+)/i) || String(u).match(/^@([A-Za-z0-9._]+)$/);
+    return m ? m[1].replace(/\.$/, '') : '';
+  }
+  function instaChip(l){
+    var h = instaDe(l);
+    return h ? '<a class="src map-a" href="https://www.instagram.com/' + esc(h) + '/" target="_blank" rel="noopener" aria-label="Abrir o Instagram de ' + esc(G[l.rede].nome) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/></svg>@' + esc(h) + '</a>' : '';
+  }
   function siteDe(l){
     var man = G[l.rede] && siteManual(G[l.rede].nome);
-    if (man) return man.site;
+    if (man && !ehInsta(man.site)) return man.site;
     if (l.site) return l.site;
     var t = l.preco_fonte && l.preco_fonte.site;
     return t ? 'https://' + String(t).replace(/^https?:\/\//, '') : '';
@@ -2663,10 +2681,10 @@ html:not(.sem-ia) .so-semia{display:none!important}
         return '<li class="row has-track' + (on ? '' : ' out') + '">'
           + '<label class="track"><input type="checkbox" data-rede="' + l.rede + '"' + (on ? ' checked' : '') + '><span class="r-name">' + esc(G[l.rede].nome) + '</span></label>'
           + '<span class="r-val num">' + km(l.distancia_km) + '</span>'
-          + '<span class="r-sub">' + (txt ? '<span>' + esc(txt) + '</span>' : '') + (l.endereco ? '<span>' + esc(l.endereco) + '</span>' : '') + mapaChip(l, G[l.rede].nome) + siteChip(l) + arr(l.fontes).filter(function(f){ return f !== 'Mapa' && !(f === 'Site' && siteDe(l)); }).map(function(f){ return '<span class="src">' + esc(f) + '</span>'; }).join('')
-          + (l.encarte_auto ? '<span>Encarte lido do site ' + esc(host(l.site)) + '</span>' : '') + (l.folheto ? '<span>Folheto da semana' + (l.folheto_ate ? ' até ' + dataBR(l.folheto_ate) : '') + '</span>' : '') + (l.preco_fonte && acompanha(l.rede) ? fonteHtml(l) : avisoSemPreco(c, l))
+          + '<span class="r-sub">' + (txt ? '<span>' + esc(txt) + '</span>' : '') + (l.endereco ? '<span>' + esc(l.endereco) + '</span>' : '') + mapaChip(l, G[l.rede].nome) + siteChip(l) + instaChip(l) + arr(l.fontes).filter(function(f){ return f !== 'Mapa' && !(f === 'Site' && siteDe(l)) && !(f === 'Instagram' && instaDe(l)); }).map(function(f){ return '<span class="src">' + esc(f) + '</span>'; }).join('')
+          + (l.encarte_auto ? '<span>Encarte lido do site ' + esc(host(l.site)) + '</span>' : '') + (l.folheto ? '<span>Folheto da semana' + (l.folheto_ate ? ' até ' + dataBR(l.folheto_ate) : '') + '</span>' : '') + (l.instagram ? '<a class="linkbtn" href="' + esc(l.instagram) + '" target="_blank" rel="noopener">Encarte do Instagram' + (l.instagram_ate ? ' até ' + dataBR(l.instagram_ate) : '') + '</a>' : '') + (l.preco_fonte && acompanha(l.rede) ? fonteHtml(l) : avisoSemPreco(c, l))
           + (mi >= 0 ? '<span>Adicionada por você</span><button type="button" class="rm" data-loja="' + mi + '">remover</button>' : '') + '</span>'
-          + (siteAberto === l.rede ? '<form class="site-form" novalidate data-site-form="' + esc(l.rede) + '" data-cat="' + c.id + '"><input class="field" type="url" inputmode="url" value="' + esc(siteDe(l)) + '" placeholder="Endereço do site ou da página de ofertas" aria-label="Site de ofertas de ' + esc(G[l.rede].nome) + '"><button class="btn" type="submit">Salvar</button><button type="button" class="ghost big" data-site-fecha="1">Cancelar</button></form>' : '')
+          + (siteAberto === l.rede ? '<form class="site-form" novalidate data-site-form="' + esc(l.rede) + '" data-cat="' + c.id + '"><input class="field" type="url" inputmode="url" value="' + esc(siteDe(l)) + '" placeholder="Site, página de ofertas ou @ do Instagram" aria-label="Site de ofertas de ' + esc(G[l.rede].nome) + '"><button class="btn" type="submit">Salvar</button><button type="button" class="ghost big" data-site-fecha="1">Cancelar</button></form>' : '')
           + '</li>';
       });
       var manuais = [];
@@ -2684,7 +2702,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     $('novaLojaCat').innerHTML = ativas.map(function(c){ return '<option value="' + c.id + '">' + esc(c.singular) + '</option>'; }).join('');
   }
   // resultado do teste de preço (Encontrar lojas): de onde dá para tirar preço e, passo a passo, o que funcionou
-  var FONTE_ROT = {site:['selo', 'Preço pelo site'], paginas:['selo', 'Preço pelas páginas do site'], ofertas_site:['selo', 'Preço pela página do site'], folheto:['', 'Folheto da semana'],
+  var FONTE_ROT = {site:['selo', 'Preço pelo site'], paginas:['selo', 'Preço pelas páginas do site'], ofertas_site:['selo', 'Preço pela página do site'], folheto:['', 'Folheto da semana'], instagram:['', 'Encarte do Instagram'], instagram_novo:['', 'Tem encarte no Instagram'],
     folheto_novo:['', 'Tem folheto'], ia:['', 'Só com IA'], nenhum:['warn', 'Sem fonte de preço']};
   function fonteHtml(l){
     var f = l.preco_fonte, r = FONTE_ROT[f.como] || FONTE_ROT.nenhum;
@@ -2703,7 +2721,9 @@ html:not(.sem-ia) .so-semia{display:none!important}
       + botaoSite(l);
   }
   function salvaSite(rid, cat, url){
-    url = url.trim(); if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
+    url = url.trim();
+    if (/^@[A-Za-z0-9._]{2,30}$/.test(url)) url = 'https://www.instagram.com/' + url.slice(1) + '/';
+    if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
     if (!/^https?:\/\/[^\s.]+\.[^\s]+$/i.test(url)){ toast('Esse endereço não parece um site.'); return false; }
     var nome = G[rid].nome, man = estado.lojas.adicionar.filter(function(a){ return norm(a.nome).indexOf(norm(nome)) === 0; })[0];
     if (man){ man.site = url; man.categoria = man.categoria || cat; } else estado.lojas.adicionar.push({categoria:cat, nome:nome, site:url});
@@ -2994,16 +3014,19 @@ html:not(.sem-ia) .so-semia{display:none!important}
     var el = $(id); el.value = sim ? OCULTO : ''; el.placeholder = sim ? '' : 'Cole aqui';
     $(id + 'Ok').hidden = !sim;
   }
-  ['shSenha', 'gKey'].forEach(function(id){
+  ['shSenha', 'gKey', 'iKey'].forEach(function(id){
     $(id).addEventListener('focus', function(){ if (this.value === OCULTO) this.value = ''; });
     $(id).addEventListener('blur', function(){ if (!this.value && !$(id + 'Ok').hidden) this.value = OCULTO; });
   });
   // ----- Shopee Afiliados: o App ID aparece; a senha fica só no Home Assistant -----
   function shSt(msg, ok){ var el = $('shSt'); el.className = 'ia-st' + (ok === true ? ' ok' : ok === false ? ' erro' : ''); el.textContent = msg; }
   function carregaShopee(){
-    if (MODO !== 'addon'){ shSt('No Home Assistant, aqui você liga a Shopee com o App ID e a senha.'); gSt('No Home Assistant, aqui você liga o Google Maps com a chave.'); return; }
+    if (MODO !== 'addon'){ shSt('No Home Assistant, aqui você liga a Shopee com o App ID e a senha.'); gSt('No Home Assistant, aqui você liga o Google Maps com a chave.'); iSt('No Home Assistant, aqui você liga o Instagram com a chave da Meta.'); return; }
     fetch('api/integracoes', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
-      var sh = j.shopee || {}, g = j.google || {};
+      var sh = j.shopee || {}, g = j.google || {}, ig = j.instagram || {};
+      guardado('iKey', ig.tem_chave);
+      $('iApagar').hidden = !ig.tem_chave;
+      iSt(ig.tem_chave ? 'Ligado' + (ig.usuario ? ' com a conta @' + ig.usuario : '') + ': os encartes postados pelas lojas entram na busca.' : 'Desligado.', ig.tem_chave ? true : null);
       guardado('gKey', g.tem_chave);
       $('gApagar').hidden = !g.tem_chave;
       gSt(g.tem_chave ? 'Ligada: as lojas vêm do OpenStreetMap e do Google Maps.' : 'Desligada: as lojas vêm só do OpenStreetMap.', g.tem_chave ? true : null);
@@ -3032,6 +3055,26 @@ html:not(.sem-ia) .so-semia{display:none!important}
       }).catch(function(){ shSt('Sem conexão com o Home Assistant.', false); });
   });
   $('shTestar').addEventListener('click', function(){ if (MODO === 'addon') testaShopee(); else toast('Só no Home Assistant'); });
+  // ----- Instagram: chave da Meta para ler os encartes que as lojas postam -----
+  function iSt(msg, ok){ var el = $('iSt'); el.className = 'ia-st' + (ok === true ? ' ok' : ok === false ? ' erro' : ''); el.textContent = msg; }
+  function testaInsta(){
+    iSt('Testando com o Instagram…');
+    fetch('api/integracoes/testar', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({servico:'instagram'})})
+      .then(function(r){ return r.json(); }).then(function(j){ iSt(j.msg || 'Sem resposta.', !!j.ok); }).catch(function(){ iSt('Sem conexão com o Home Assistant.', false); });
+  }
+  $('iSalvar').addEventListener('click', function(){
+    if (MODO !== 'addon'){ toast('Só no Home Assistant'); return; }
+    var k = $('iKey').value === OCULTO ? '' : $('iKey').value.replace(/\s/g, '');
+    if (!k){ if ($('iKey').value === OCULTO) testaInsta(); else iSt('Cole a chave de acesso da Meta.', false); return; }
+    fetch('api/integracoes', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({instagram:{token:k}})})
+      .then(function(r){ return r.json(); }).then(function(){ guardado('iKey', true); $('iApagar').hidden = false; testaInsta(); })
+      .catch(function(){ iSt('Sem conexão com o Home Assistant.', false); });
+  });
+  $('iTestar').addEventListener('click', function(){ if (MODO === 'addon') testaInsta(); else toast('Só no Home Assistant'); });
+  $('iApagar').addEventListener('click', function(){
+    fetch('api/integracoes', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({instagram:null})})
+      .then(function(){ toast('Chave do Instagram apagada'); carregaShopee(); }).catch(function(){ toast('Sem conexão com o Home Assistant.'); });
+  });
   // ----- Google Places: chave opcional para achar as lojas perto de casa -----
   function gSt(msg, ok){ var el = $('gSt'); el.className = 'ia-st' + (ok === true ? ' ok' : ok === false ? ' erro' : ''); el.textContent = msg; }
   function testaGoogle(){
@@ -3418,7 +3461,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.14.9' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.15.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

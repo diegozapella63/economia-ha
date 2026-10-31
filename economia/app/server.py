@@ -21,8 +21,8 @@ Rotas:
 - GET  /api/versoes   cópias anteriores do config.json (as 3 mais recentes)
 - GET  /api/lojas-diretas   lojas com busca direta no site (Giassi, Angeloni) e se atendem o CEP
 - GET  /api/integracoes   Shopee Afiliados: App ID e se a senha está guardada (a senha nunca sai daqui)
-- PUT  /api/integracoes   {"shopee": {"app_id", "secret"}} guarda em segredos.json; {"shopee": null} apaga
-- POST /api/integracoes/testar   {"servico": "shopee"} faz uma consulta de teste
+- PUT  /api/integracoes   {"shopee": {"app_id", "secret"}}, {"google": {"key"}}, {"instagram": {"token"}} guardam em segredos.json; null apaga
+- POST /api/integracoes/testar   {"servico": "shopee" | "google" | "instagram"} faz uma consulta de teste
 - GET  /api/folhetos   lojas com folheto lido no Kimbino ou no Seus Folhetos e como foi a última leitura
 - GET  /api/lojas-mapa   lojas do raio pelo mapa (OpenStreetMap e, com chave, Google Places)
 - POST /api/lojas-mapa/atualizar   {"raio_km", "categorias"}: lê o mapa agora, registra as lojas e começa o teste de preço de cada uma
@@ -1345,6 +1345,9 @@ def ler_encarte(loja, cfg):
             except OSError:
                 pass
     log(f"encarte de {loja['nome']}: {len(dados)} arquivo(s)")
+    val = data_ok((r or {}).get("validade")) if isinstance(r, dict) else None
+    if val and val < hoje_br():
+        raise ErroBusca(f"o encarte do site é antigo: venceu em {datetime.fromisoformat(val).strftime('%d/%m/%Y')}")
     return normalizar(loja["categoria"], bruto_encarte(loja, r), cfg)
 
 
@@ -1375,7 +1378,7 @@ def juntar_categoria(dest, cat):
         if l["rede"] in lojas:
             alvo = lojas[l["rede"]]
             alvo["fontes"] = sorted(set(alvo.get("fontes") or []) | set(l["fontes"]))
-            for k in ("folheto", "folheto_ate"):
+            for k in ("folheto", "folheto_ate", "instagram", "instagram_ate"):
                 if l.get(k):
                     alvo[k] = l[k]
         else:
@@ -2578,6 +2581,252 @@ def juntar_folheto_status(rel, st):
         rel["folhetos"] = list(atuais.values())
 
 
+# ---------- Instagram: encartes que as lojas postam (API oficial, Business Discovery) ----------
+# Com uma conta profissional do Instagram ligada a uma página do Facebook e uma chave da Meta, o add-on lê os posts
+# públicos das contas comerciais das lojas. Post de oferta (pela legenda) dos últimos dias é lido uma vez pela IA de
+# fotos e guardado até vencer, como o folheto. Raspar o Instagram sem a API não é permitido.
+GRAPH = os.environ.get("OFERTAS_GRAPH", "https://graph.facebook.com/v26.0")
+INSTAGRAM = os.path.join(DATA, "instagram.json")
+INSTA_DIAS = 8
+MAX_INSTA_NOVOS = 3
+LEGENDA_OFERTA = re.compile(r"(?i)(oferta|promo|encarte|v[aá]lid|imbat|pre[cç]o|desconto|sald[aã]o|show de|feir[aã]o|"
+                            r"ter[cç]a|quarta|quinta|sexta|fim de semana|semana|R\$|a[cç]ougue|hortifr|leve \d)")
+
+
+def insta_chave():
+    i = segredos().get("instagram") or {}
+    return str(i.get("token") or "").strip() or None, str(i.get("ig_id") or "").strip() or None
+
+
+def insta_pronto():
+    t, ig = insta_chave()
+    return bool(t and ig)
+
+
+def insta_handle(u):
+    """"https://www.instagram.com/mercado_boidourado/" ou "@mercado_boidourado" → "mercado_boidourado"."""
+    t = str(u or "").strip()
+    m = re.search(r"instagram\.com/([A-Za-z0-9._]{2,30})", t) or re.match(r"^@([A-Za-z0-9._]{2,30})$", t)
+    if not m or m.group(1).lower() in ("p", "reel", "reels", "explore", "stories", "accounts", "tv"):
+        return None
+    return m.group(1).lower().rstrip(".")
+
+
+def graph_get(caminho, params, token, timeout=25):
+    q = urllib.parse.urlencode(dict(params, access_token=token))
+    req = urllib.request.Request(f"{GRAPH}/{caminho.lstrip('/')}?{q}", headers={"Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.loads(r.read(6_000_000).decode("utf-8") or "{}")
+    except urllib.error.HTTPError as e:
+        try:
+            err = json.loads(e.read(100_000).decode("utf-8") or "{}").get("error") or {}
+        except (ValueError, OSError):
+            err = {}
+        c, msg = err.get("code"), str(err.get("message") or "")
+        if c == 190:
+            raise ErroBusca("A chave do Instagram venceu ou foi cancelada. Gere outra e cole em Mais › Integrações.") from e
+        if c in (4, 17, 32, 613):
+            raise ErroBusca("O Instagram pediu para esperar (limite de consultas). Tento de novo mais tarde.") from e
+        if c == 110 or err.get("error_subcode") == 2207013 or "cannot find user" in msg.lower():
+            raise ErroBusca("conta não encontrada ou não é comercial (a API só lê contas comerciais e de criador)") from e
+        if c in (10, 200) or "permission" in msg.lower():
+            raise ErroBusca("a chave não tem as permissões instagram_basic, instagram_manage_insights, pages_show_list e pages_read_engagement") from e
+        raise ErroBusca(f"O Instagram recusou o pedido ({e.code}: {msg[:120]}).") from e
+
+
+def insta_conta(token):
+    """A conta profissional do Instagram ligada a uma página do Facebook da chave: (id, usuário)."""
+    d = graph_get("me/accounts", {"fields": "name,instagram_business_account{id,username}", "limit": 50}, token)
+    for pg in d.get("data") or []:
+        ig = pg.get("instagram_business_account") or {}
+        if ig.get("id"):
+            return ig["id"], ig.get("username")
+    return None, None
+
+
+def insta_validade(token):
+    try:
+        d = (graph_get("debug_token", {"input_token": token}, token, timeout=15).get("data") or {})
+    except ErroBusca:
+        return ""
+    exp = d.get("data_access_expires_at") if not d.get("expires_at") else d.get("expires_at")
+    if d.get("expires_at") == 0:
+        return " A chave não vence."
+    if exp:
+        dia = (datetime.fromtimestamp(int(exp), timezone.utc) - timedelta(hours=3)).strftime("%d/%m/%Y")
+        return f" A chave vale até {dia}."
+    return ""
+
+
+def testar_instagram():
+    token, ig = insta_chave()
+    if not token:
+        return {"ok": False, "msg": "Falta a chave do Instagram."}
+    try:
+        usuario = (segredos().get("instagram") or {}).get("usuario")
+        if not ig:
+            ig, usuario = insta_conta(token)
+            if not ig:
+                return {"ok": False, "msg": "A chave funciona, mas não achei conta profissional do Instagram ligada a uma página do Facebook. "
+                                            "Ligue a conta à página (no app do Instagram: Configurações › Central de contas) e gere a chave de novo."}
+            seg = segredos()
+            seg["instagram"] = dict(seg.get("instagram") or {}, ig_id=ig, usuario=usuario)
+            grava_segredos(seg)
+        d = graph_get(ig, {"fields": "business_discovery.username(instagram){username,media_count}"}, token)
+        if not (d.get("business_discovery") or {}).get("username"):
+            return {"ok": False, "msg": "O Instagram não respondeu como esperado."}
+    except ErroBusca as e:
+        return {"ok": False, "msg": str(e)}
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "msg": f"Não consegui testar ({e})."}
+    return {"ok": True, "msg": f"Pronta: conta @{usuario or '?'}. Consigo ler os posts das contas comerciais das lojas." + insta_validade(token)}
+
+
+def insta_posts(handle, cache):
+    """Posts recentes de uma conta comercial, guardados por 12 horas: (posts, erro)."""
+    token, ig = insta_chave()
+    contas = cache.setdefault("contas", {})
+    c = contas.get(handle) or {}
+    meio_dia = (datetime.now(timezone.utc) - timedelta(hours=12)).isoformat(timespec="seconds")
+    if c.get("em", "") >= meio_dia:
+        return c.get("posts") or [], c.get("erro")
+    campos = ("business_discovery.username(" + handle + "){username,media.limit(12)"
+              "{id,caption,media_type,media_url,permalink,timestamp,children{media_type,media_url}}}")
+    try:
+        d = graph_get(ig, {"fields": campos}, token)
+        posts = (((d.get("business_discovery") or {}).get("media") or {}).get("data") or [])
+        contas[handle] = {"em": agora(), "posts": posts}
+        return posts, None
+    except ErroBusca as e:
+        contas[handle] = {"em": agora(), "posts": [], "erro": str(e)}
+        return [], str(e)
+
+
+def posts_encarte(posts):
+    """Posts de oferta dos últimos dias, pela legenda: [{id, url, de, imgs, legenda}] (até 3)."""
+    limite = (datetime.now(timezone.utc) - timedelta(days=INSTA_DIAS)).date().isoformat()
+    out = []
+    for p in posts:
+        if not isinstance(p, dict) or p.get("media_type") not in ("IMAGE", "CAROUSEL_ALBUM"):
+            continue
+        ts = str(p.get("timestamp") or "")[:10]
+        if not ts or ts < limite or not LEGENDA_OFERTA.search(str(p.get("caption") or "")):
+            continue
+        if p["media_type"] == "IMAGE":
+            imgs = [p.get("media_url")]
+        else:
+            imgs = [c.get("media_url") for c in ((p.get("children") or {}).get("data") or []) if c.get("media_type") == "IMAGE"]
+        imgs = [u for u in imgs if url_ok(u)][:6]
+        if imgs:
+            out.append({"id": str(p.get("id")), "url": p.get("permalink"), "de": ts, "imgs": imgs, "legenda": str(p.get("caption") or "")[:400]})
+    return out[:3]
+
+
+def lojas_instagram(cfg, cats=None, categorias=None):
+    """As lojas que você acompanha e que têm Instagram (do mapa ou informado por você): [{nome, categoria, handle}]."""
+    lojas_cfg = cfg.get("lojas") or {}
+    ignorar, manter = set(lojas_cfg.get("ignorar") or []), set(lojas_cfg.get("manter") or [])
+    try:
+        raio = float(cfg.get("raio_km") or 2)
+    except (TypeError, ValueError):
+        raio = 2.0
+    out, vistos = [], set()
+    for a in lojas_cfg.get("adicionar") or []:
+        h = insta_handle(a.get("site")) if isinstance(a, dict) else None
+        if h and h not in vistos and (cats is None or a.get("categoria") in cats):
+            vistos.add(h)
+            out.append({"nome": texto(a.get("nome"), 60).split(",")[0].strip(), "categoria": a.get("categoria") or "mercados", "handle": h})
+    if categorias is None:
+        categorias = (ler_json(OFERTAS, {}) or {}).get("categorias") or []
+    for c in categorias:
+        if not isinstance(c, dict) or c.get("id") not in ("mercados", "farmacias", "petshops") or (cats and c["id"] not in cats):
+            continue
+        nomes = {r.get("id"): r.get("nome") for r in c.get("redes") or [] if isinstance(r, dict)}
+        for l in c.get("lojas") or []:
+            rid, d = l.get("rede"), l.get("distancia_km")
+            h = insta_handle(l.get("social")) or insta_handle(l.get("instagram_perfil"))
+            if not h or h in vistos or not nomes.get(rid) or rid in ignorar or (isinstance(d, (int, float)) and d > raio and rid not in manter):
+                continue
+            vistos.add(h)
+            out.append({"nome": nomes[rid], "categoria": c["id"], "handle": h})
+    return out
+
+
+def resultado_instagram(loja, p, r, cfg):
+    cat, parcial = resultado_folheto(loja, {"url": p["url"], "ate": p.get("ate")}, r, cfg)
+    for l in cat["lojas"]:
+        l["fontes"] = ["Instagram"]
+        l["instagram"] = l.pop("folheto", None) or p["url"]
+        l["instagram_ate"] = l.pop("folheto_ate", None)
+    return cat, parcial
+
+
+def busca_instagram(cfg, cats, ja, ler=True, max_novos=MAX_INSTA_NOVOS):
+    """Encartes que as lojas postaram no Instagram. Devolve [(categoria, parcial)]."""
+    if not insta_pronto() or not opcao("folhetos", cfg):
+        return []
+    lojas = lojas_instagram(cfg, cats)
+    if not lojas:
+        return []
+    pular = {norm(n) for v in (ja or {}).values() for n in v}
+    hoje = hoje_br()
+    out, novos = [], 0
+    cache = ler_json(INSTAGRAM, {}) or {}
+    lidos = cache.setdefault("lidos", {})
+    velho = (datetime.now(timezone.utc) - timedelta(days=10)).isoformat(timespec="seconds")
+    for k in [k for k, v in lidos.items() if (v.get("ate") or "9999") < hoje or v.get("lido_em", "") < velho]:
+        lidos.pop(k, None)
+    for loja in lojas:
+        if norm(loja["nome"]) in pular:
+            continue  # já tem preço pelo site
+        for k, v in lidos.items():
+            if v.get("handle") == loja["handle"] and v.get("r") and (v.get("ate") or "9999") >= hoje:
+                out.append(resultado_instagram(loja, {"url": v.get("url"), "ate": v.get("ate")}, v["r"], cfg))
+        if not ler or not ia_ligada(cfg) or novos >= max_novos:
+            continue
+        BUSCA["etapa"] = "Instagram · " + loja["nome"]
+        posts, erro = insta_posts(loja["handle"], cache)
+        if erro:
+            log(f"Instagram de {loja['nome']} (@{loja['handle']}): {erro}")
+            continue
+        for p in posts_encarte(posts):
+            if p["id"] in lidos or novos >= max_novos:
+                continue
+            dados = []
+            for u in p["imgs"]:
+                try:
+                    dados.append(baixar(u, 8_000_000))
+                except Exception:  # noqa: BLE001
+                    continue
+            if not dados:
+                continue
+            BUSCA["etapa"] = "Instagram · " + loja["nome"] + " (lendo o encarte)"
+            try:
+                r = ia_com_arquivos(f"EconomIA: Instagram {loja['nome']}",
+                                    instrucoes_encarte(dict(loja, site=p["url"]), "Legenda do post: " + p["legenda"], len(dados), cfg), dados)
+            except ErroBusca as e:
+                log(f"Instagram de {loja['nome']}: {e}")
+                break
+            novos += 1
+            r = r if isinstance(r, dict) else {}
+            nomes = nomes_da_lista(cfg)
+            r["lista"] = [dict({k: v for k, v in it.items() if k != "item"}, produto=casar_item(it, nomes))
+                          for it in r.get("lista") or [] if isinstance(it, dict) and casar_item(it, nomes)]
+            ate = data_ok(r.get("validade"))
+            vazio = not [o for o in r.get("ofertas") or [] if isinstance(o, dict)]
+            vencido = bool(ate and ate < hoje)
+            lidos[p["id"]] = {"handle": loja["handle"], "loja": loja["nome"], "url": p["url"], "de": p["de"],
+                              "ate": ate or (datetime.fromisoformat(p["de"]) + timedelta(days=7)).date().isoformat(),
+                              "lido_em": agora(), "r": None if (vazio or vencido) else r}
+            gravar_json(INSTAGRAM, cache)
+            log(f"Instagram de {loja['nome']}: post de {p['de']} " + ("sem ofertas" if vazio else "vencido" if vencido else f"{len(r.get('ofertas') or [])} oferta(s)"))
+            if not vazio and not vencido:
+                out.append(resultado_instagram(loja, dict(p, ate=lidos[p["id"]]["ate"]), r, cfg))
+    gravar_json(INSTAGRAM, cache)
+    return out
+
+
 # ---------- primeiro o que não gasta IA ----------
 def busca_scripts(cfg, cats, itens=None, ler_folhetos=True):
     """Busca direta nas lojas, Shopee pela API e folhetos (lidos uma vez por semana). Devolve (resultado, relatório)."""
@@ -2633,6 +2882,14 @@ def busca_scripts(cfg, cats, itens=None, ler_folhetos=True):
         log(f"folhetos: {e}")
     resultado += fo
     juntar_folheto_status(rel, st)
+    try:
+        ig = busca_instagram(cfg, cats, ja, ler=ler_folhetos)
+    except Exception as e:  # noqa: BLE001
+        ig = []
+        log(f"Instagram: {e}")
+    if ig:
+        resultado += ig
+        rel["instagram"] = sorted({r["nome"] for c, _ in ig for r in c["redes"]})
     return resultado, rel, ja
 
 
@@ -2973,6 +3230,11 @@ def le_pagina_ofertas(url, regras):
         return g.get("ofertas") or [], g.get("links") or []
     html_txt = pagina_txt(url)
     ofs = ofertas_da_pagina(html_txt)
+    datas = [data_iso(m.group(1)) for m in re.finditer(r"(?i)v[aá]lid[oa]s?\b[^0-9<]{0,40}?(\d{1,2}/\d{1,2}/\d{2,4})", sem_tags(html_txt))]
+    datas = [d for d in datas if d]
+    if ofs and datas and max(datas) < hoje_br():
+        log(f"ofertas de {url}: a página diz que valem até {max(datas)}, ficam de fora")
+        ofs = []
     links = []
     for h in re.findall(r"""(?i)<a\b[^>]*href=["']([^"'#]+)""", html_txt):
         u = urllib.parse.urljoin(url, html_mod.unescape(h))
@@ -3466,6 +3728,9 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
     manual = next((a["site"] for a in ((cfg.get("lojas") or {}).get("adicionar") or [])
                    if isinstance(a, dict) and url_ok(a.get("site")) and texto(a.get("nome"), 60)
                    and mesma_loja(texto(a["nome"], 60).split(",")[0], nome)), None)
+    social_manual = manual if manual and rede_social(manual) else None
+    if social_manual:
+        manual = None
     site = manual or site_loja(l.get("site")) or site_da_rede(nome, cidade)
     if site:
         o = origem_de(site)
@@ -3546,12 +3811,37 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
                                         f"Não tem \"{termo}\" nas ofertas de hoje. A cada busca, os itens da sua lista são procurados nelas.")
                 elif lidas:
                     st["passos"].append(f"✗ Não achei preços no texto da página {lidas[0].split('://', 1)[-1][:50]} (o site pode montar os preços depois, só no navegador).")
-    elif rede_social(l.get("social") or l.get("site")):
-        u = l.get("social") or l.get("site")
-        st["passos"].append(f"✗ O site desta loja no mapa é {rede_social(u)} ({u.split('://', 1)[-1][:40]}), sem preços para ler. "
-                            "Se ela tiver site de verdade, dá para informar em Adicionar site de ofertas.")
+    elif rede_social(social_manual or l.get("social") or l.get("site")):
+        u = social_manual or l.get("social") or l.get("site")
+        if not insta_handle(u):
+            st["passos"].append(f"✗ O site desta loja no mapa é {rede_social(u)} ({u.split('://', 1)[-1][:40]}), sem preços para ler. "
+                                "Se ela tiver site de verdade, dá para informar em Adicionar site de ofertas.")
     else:
         st["passos"].append("✗ Não sei o site desta loja (o mapa não traz). Dá para informar em Adicionar site de ofertas.")
+    h = insta_handle(social_manual) or insta_handle(l.get("social"))
+    if h and not st["como"]:
+        st["instagram"] = h
+        if insta_pronto():
+            cache_i = ler_json(INSTAGRAM, {}) or {}
+            posts, erro = insta_posts(h, cache_i)
+            gravar_json(INSTAGRAM, cache_i)
+            lido = [v for v in (cache_i.get("lidos") or {}).values()
+                    if v.get("handle") == h and v.get("r") and (v.get("ate") or "9999") >= hoje_br()]
+            if lido:
+                st["como"] = "instagram"
+                st["passos"].append(f"✓ Encarte do Instagram (@{h}) já lido, guardado até {datetime.fromisoformat(max(v['ate'] for v in lido)).strftime('%d/%m')}.")
+            elif erro:
+                st["passos"].append(f"✗ Instagram @{h}: {erro}.")
+            else:
+                enc = posts_encarte(posts)
+                if enc:
+                    st["como"] = "instagram_novo"
+                    st["passos"].append(f"✓ Instagram @{h}: post de oferta de {datetime.fromisoformat(enc[0]['de']).strftime('%d/%m')}"
+                                        + ("; a IA lê na próxima busca." if ia_ligada(cfg) else "; ler o post precisa da IA."))
+                else:
+                    st["passos"].append(f"✗ Instagram @{h}: nenhum post de oferta nos últimos {INSTA_DIAS} dias.")
+        else:
+            st["passos"].append(f"Tem Instagram (@{h}). Para ler os encartes que a loja posta lá, ligue o Instagram em Mais › Integrações.")
     if not st["como"]:
         guardados = [v for v in (cache_f.get("itens") or {}).values() if norm(v.get("loja", "")) == norm(nome) and v.get("r")]
         if guardados:
@@ -3584,6 +3874,12 @@ def marca_fontes(categorias):
         por_cat = fontes.get(c.get("id")) or {}
         for l in c.get("lojas") or []:
             st = por_cat.get(norm(nomes.get(l.get("rede")) or ""))
+            if st and st.get("como") == "instagram_novo" and l.get("instagram"):  # a busca já leu o post
+                ate = l.get("instagram_ate")
+                st = dict(st, como="instagram", passos=[f"✓ Encarte do Instagram lido pela IA" + (f", vale até {datetime.fromisoformat(ate).strftime('%d/%m')}." if ate else ".")])
+            elif st and st.get("como") == "folheto_novo" and l.get("folheto"):
+                ate = l.get("folheto_ate")
+                st = dict(st, como="folheto", passos=[f"✓ Folheto da semana lido pela IA" + (f", vale até {datetime.fromisoformat(ate).strftime('%d/%m')}." if ate else ".")])
             if st:
                 l["preco_fonte"] = st
 
@@ -3619,8 +3915,9 @@ def sonda_lojas(cfg):
             gravar_json(OFERTAS, of)
         sem_ia = conta.get("site", 0) + conta.get("paginas", 0) + conta.get("ofertas_site", 0)
         partes = [f"{sem_ia} com preço direto do site"] if sem_ia else []
-        if conta.get("folheto", 0) + conta.get("folheto_novo", 0):
-            partes.append(f"{conta.get('folheto', 0) + conta.get('folheto_novo', 0)} com folheto")
+        enc = sum(conta.get(k, 0) for k in ("folheto", "folheto_novo", "instagram", "instagram_novo"))
+        if enc:
+            partes.append(f"{enc} com folheto ou encarte no Instagram")
         if conta.get("ia"):
             partes.append(f"{conta['ia']} só pela busca com IA")
         if conta.get("nenhum"):
@@ -4327,7 +4624,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.14.9"
+    server_version = "EconomIA/0.15.0"
 
     def log_message(self, fmt, *args):
         pass
@@ -4409,7 +4706,9 @@ class Painel(BaseHTTPRequestHandler):
             self._json(200, voz_status())
         elif rota == "/api/integracoes":
             ch = segredos().get("shopee") or {}
-            self._json(200, {"shopee": {"app_id": str(ch.get("app_id") or ""), "tem_senha": bool(ch.get("secret"))}, "google": {"tem_chave": bool(google_chave())}})
+            ig = segredos().get("instagram") or {}
+            self._json(200, {"shopee": {"app_id": str(ch.get("app_id") or ""), "tem_senha": bool(ch.get("secret"))}, "google": {"tem_chave": bool(google_chave())},
+                             "instagram": {"tem_chave": bool(ig.get("token")), "usuario": ig.get("usuario")}})
         elif rota == "/api/lojas-mapa/teste":
             self._json(200, SONDA)
         elif rota == "/api/lojas-mapa":
@@ -4509,6 +4808,13 @@ class Painel(BaseHTTPRequestHandler):
                     os.remove(LOJAS_MAPA)  # a próxima busca já usa (ou deixa de usar) o Google
                 except OSError:
                     pass
+            if "instagram" in dado:
+                novo = dado.get("instagram")
+                chave = re.sub(r"\s", "", str((novo or {}).get("token") or ""))[:600]
+                if chave:
+                    seg["instagram"] = {"token": chave}  # a conta do Instagram é achada de novo no teste
+                elif not novo:
+                    seg.pop("instagram", None)
             grava_segredos(seg)
             ch = seg.get("shopee") or {}
             self._json(200, {"ok": True, "shopee": {"app_id": str(ch.get("app_id") or ""), "tem_senha": bool(ch.get("secret"))},
@@ -4556,7 +4862,8 @@ class Painel(BaseHTTPRequestHandler):
                 dado = json.loads(self.rfile.read(n) or b"{}") if 0 < n < 10000 else {}
             except (ValueError, OSError):
                 dado = {}
-            return self._json(200, testar_google() if isinstance(dado, dict) and dado.get("servico") == "google" else testar_shopee())
+            serv = dado.get("servico") if isinstance(dado, dict) else None
+            return self._json(200, testar_google() if serv == "google" else testar_instagram() if serv == "instagram" else testar_shopee())
         if urllib.parse.urlsplit(self.path).path == "/api/ler-encarte":
             dado = self._corpo(MAX_FOTOS_BODY)
             if dado is None:

@@ -1,5 +1,13 @@
 # Mudanças
 
+## 0.15.0
+
+- **Instagram (opcional), em Mais › Integrações.** Muito mercado do bairro posta o encarte só no Instagram, como o Boi Dourado. Com uma chave da Meta, o app olha os posts das lojas que você acompanha (API oficial do Instagram, "Business Discovery"). Post de oferta dos últimos 8 dias, pela legenda, é lido uma vez pela IA, como o folheto, e os preços ficam guardados até a validade do encarte. Precisa de uma conta profissional do Instagram ligada a uma página do Facebook, e a loja precisa ter conta comercial. Passo a passo no DOCS.
+- O Instagram da loja vem do mapa (OpenStreetMap e Google) ou de você: em Adicionar site de ofertas, escreva o @ da loja. A loja mostra o @ com link e, depois da leitura, "Encarte do Instagram até 05/11" com o link do post.
+- "Como foi testado" diz se a loja tem post de oferta no Instagram, se o encarte já foi lido, ou que a conta não é comercial.
+- **Encarte vencido não entra mais.** A página do Mercado Engenho (keepo.bio) ainda mostra ofertas "válidas até 09/04/24": a leitura do encarte do site é descartada quando a validade já passou, e a leitura sem IA da página de ofertas também.
+- Depois da busca, "Tem folheto" e "Tem encarte no Instagram" viram "Folheto da semana" e "Encarte do Instagram" quando a IA já leu.
+
 ## 0.14.9
 
 - **Portafolhetos** entra como fonte de folhetos (é da mesma empresa do Kimbino e tem Angeloni, Atacadão, Bistek, Fort, Komprão, Drogasil e Pague Menos). Serve quando a loja não aparece no Kimbino.

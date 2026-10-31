@@ -98,6 +98,21 @@ Com a IA desligada, o Buscar faz só os passos 2 a 4, com os folhetos já lidos.
 
 Toda loja que você acompanha e que não tem preço pelo site, como Komprão e Atacadão, tem o folheto da semana procurado sozinho no Kimbino, no Portafolhetos, no Seus Folhetos e no Catálogos Ofertas (que tem o da Droga Raia e de outras redes), logo depois do site. Não precisa configurar nada (dá para desligar em Mais › Opções). Até 3 lojas com folheto novo por busca. A IA de fotos lê cada folheto uma vez, e as ofertas ficam guardadas até ele vencer. Os itens da sua lista que aparecem no folheto ganham preço, inclusive os que você adicionar depois, sem IA. Quando a loja tem vários folhetos regionais (o Atacadão tem um por região), a IA olha só a capa de cada um e escolhe os que valem para a sua cidade.
 
+## Instagram (opcional)
+
+Muito mercado do bairro posta o encarte da semana só no Instagram. Com a integração ligada, o EconomIA olha os posts das lojas que você acompanha pela API oficial do Instagram (Business Discovery). Post de oferta dos últimos 8 dias (pela legenda: "ofertas", "promoção", "válidas", "fim de semana", "R$"…) é lido uma vez pela IA de fotos, e os preços ficam guardados até a validade do encarte. Raspar o Instagram sem a API não é permitido pelas regras dele, por isso precisa da chave.
+
+O que precisa, uma vez:
+
+1. **Conta profissional no Instagram.** No app do Instagram: perfil › ☰ › Tipo de conta e ferramentas › Mudar para conta profissional › Criador (ou Empresa). Pode ser a sua conta ou uma conta nova só para isso.
+2. **Página no Facebook ligada a ela.** No Facebook, crie uma página (pode ser vazia, por exemplo "EconomIA de Diego"). Nas configurações da página, em Contas vinculadas › Instagram, conecte a conta do passo 1.
+3. **App da Meta.** Em developers.facebook.com › Meus apps › Criar app, escolha o uso "Outro" e o tipo "Empresa". O app fica em modo de desenvolvimento, só para você; não precisa de análise da Meta.
+4. **Chave de acesso.** No Explorador da Graph API (developers.facebook.com/tools/explorer), escolha o app, peça um token de usuário com as permissões `pages_show_list`, `pages_read_engagement`, `instagram_basic`, `instagram_manage_insights` e `business_management`, toque em Gerar e marque a página e a conta do Instagram.
+5. **Chave que dura.** A chave do Explorador vale umas horas. No Depurador de token (developers.facebook.com/tools/debug/accesstoken), cole a chave e toque em "Estender token de acesso": ela passa a valer 60 dias. Para uma chave que não vence, crie um usuário do sistema em business.facebook.com › Configurações do negócio › Usuários do sistema, dê a ele a página e a conta do Instagram, e gere a chave com validade "Nunca" e as mesmas permissões.
+6. Em **Mais › Integrações › Instagram**, cole a chave e toque em **Salvar e testar**. O teste acha a sua conta do Instagram sozinho e diz até quando a chave vale.
+
+O Instagram de cada loja vem do mapa ou de você: em Mais › Lojas, toque em Adicionar site de ofertas (ou Trocar site) e escreva o @ da loja. Só contas comerciais ou de criador podem ser lidas pela API; se a loja tiver perfil pessoal, o "Como foi testado" avisa. A chave fica em `segredos.json` e nunca volta para a página. Ler o encarte precisa da IA ligada.
+
 ## Google Places (opcional)
 
 O OpenStreetMap é gratuito, mas pode não ter as lojas pequenas do bairro. Em **Mais › Integrações › Google Places**, cole uma chave da Places API (New), criada em console.cloud.google.com › APIs e serviços. O Google pede cartão cadastrado e dá uma cota gratuita por mês; o EconomIA consulta uma vez por semana e quando você toca em Encontrar lojas: as lojas mais perto de cada tipo, a busca por "farmácia", "supermercado"… e o site das lojas que vieram sem site (guardado por 30 dias). São algumas dezenas de pedidos por vez, o que cabe na cota gratuita no uso normal. A chave fica em `segredos.json`.
