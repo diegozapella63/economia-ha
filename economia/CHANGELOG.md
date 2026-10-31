@@ -1,5 +1,9 @@
 # Mudanças
 
+## 0.13.2
+
+- Com **Usar IA** desligado, somem também o que só funciona com IA: em Opções, a leitura de folhetos novos, a busca dos itens sem preço e o encarte do site; em Lojas, Compras online (marketplaces, assinaturas e mercados que entregam, que a busca com IA procura); em Integrações, os sensores de uso da IA; e, no passo a passo da busca, as etapas com IA. Ficam a busca direta nas lojas, a Shopee, o Google Places e os folhetos já lidos.
+
 ## 0.13.1
 
 - **Lojas do raio pelo mapa.** As lojas perto de casa vêm da localização da zona Casa do Home Assistant e do OpenStreetMap, com endereço e distância certos, e de rede entra a filial mais perto. Antes, era a IA que estimava, e por isso aparecia a Droga Raia da Getúlio Vargas em vez da que fica do lado de casa, e a Farmácia Preço Popular ficava de fora. A IA recebe a lista pronta e só procura os preços. O mapa é atualizado uma vez por semana.

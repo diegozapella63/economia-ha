@@ -555,6 +555,7 @@ h3{font-size:13px;font-weight:600}
 .h-ic svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 /* Usar IA desligado: some tudo o que usa IA */
 .sem-ia .so-ia{display:none!important}
+html:not(.sem-ia) .so-semia{display:none!important}
 /* Escolher fotos, Colar mensagem e Falar numa linha só, em quadrinhos */
 .ler-tiles{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:8px}
 .ler-tile{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;min-height:76px;padding:14px 6px 10px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit;font-size:14px;font-weight:500;line-height:1.2;text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -1133,7 +1134,7 @@ h3{font-size:13px;font-weight:600}
           <ul class="rows" id="cupLista"></ul>
         </div>
       </section>
-        <section class="panel" aria-labelledby="h-online">
+        <section class="panel so-ia" aria-labelledby="h-online">
           <div class="sec-head"><h2 id="h-online"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 6h11v10H2zM13 9h4l4 4v3h-8z"/><circle cx="6.5" cy="17.5" r="2"/><circle cx="17.5" cy="17.5" r="2"/></svg></span>Compras online</h2></div>
           <div class="group"><h3>Onde procurar</h3><div class="picks" id="pMkt"></div></div>
           <div class="group"><h3>Assinaturas com frete grátis</h3><div class="picks" id="pAss"></div></div>
@@ -1151,11 +1152,12 @@ h3{font-size:13px;font-weight:600}
           <li><b>Páginas de produto.</b> Sites que só liberam as páginas de produto, como o do Bistek: a lista de produtos da loja é baixada uma vez por dia e o preço vem da página de cada produto (preço padrão do site). Sem IA.</li>
           <li><b>Shopee.</b> Pela API do Shopee Afiliados, quando ligada em Integrações. Sem IA.</li>
           <li><b>Folheto da semana.</b> Para as lojas que você acompanha e que não têm preço pelo site, o folheto é procurado no Kimbino e no Seus Folhetos. A IA lê cada folheto uma vez; até ele vencer, os preços vêm do que ficou guardado.</li>
-          <li><b>Busca na web com IA.</b> Ofertas, cupons e o preço das lojas do mapa e dos marketplaces. A IA já recebe a lista de lojas e sabe quais têm preço, e não procura de novo.</li>
-          <li><b>Encarte do site.</b> Lojas com site de ofertas cadastrado, e até 2 lojas achadas sem nenhum preço.</li>
-          <li><b>Itens sem preço.</b> No fim, uma pergunta só sobre os itens que ninguém achou.</li>
+          <li class="so-ia"><b>Busca na web com IA.</b> Ofertas, cupons e o preço das lojas do mapa e dos marketplaces. A IA já recebe a lista de lojas e sabe quais têm preço, e não procura de novo.</li>
+          <li class="so-ia"><b>Encarte do site.</b> Lojas com site de ofertas cadastrado, e até 2 lojas achadas sem nenhum preço.</li>
+          <li class="so-ia"><b>Itens sem preço.</b> No fim, uma pergunta só sobre os itens que ninguém achou.</li>
         </ol>
-        <p class="hint">Preço do site e do folheto vale mais que o da busca na web. Com a IA desligada, o Buscar faz os passos 2 a 4 e usa os folhetos já lidos.</p>
+        <p class="hint so-ia">Preço do site e do folheto vale mais que o da busca na web. Com a IA desligada, a busca faz só as etapas sem IA e usa os folhetos já lidos.</p>
+        <p class="hint so-semia">A IA está desligada: a busca faz só as etapas acima, sem IA, e usa os folhetos que já tinham sido lidos.</p>
       </section>
     </div>
     <div class="mais-painel" id="mp-integracoes" role="tabpanel" aria-labelledby="aba-integracoes" hidden>
@@ -1222,7 +1224,7 @@ h3{font-size:13px;font-weight:600}
         <input type="checkbox" class="switch" id="syncAcabando">
       </div>
     </section>
-    <section class="panel settings" aria-labelledby="h-sens">
+    <section class="panel settings so-ia" aria-labelledby="h-sens">
       <div class="set-head"><h2 id="h-sens"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span>Sensores no Home Assistant</h2><p class="sec-meta">Para painéis e automações: as chamadas de IA de hoje, com erros, cota e tokens estimados.</p></div>
       <div class="set-row">
         <div><h3 class="set-t"><label for="sensores">Criar os sensores</label></h3><p class="sec-meta" id="sensoresTxt"></p></div>
@@ -1278,21 +1280,21 @@ h3{font-size:13px;font-weight:600}
         <div><h3 class="set-t"><label for="opDiretas">Busca direta nas lojas</label></h3><p class="sec-meta">O site de cada mercado cadastrado ou achado na busca responde direto, com preço e link, sem IA, quando a loja permite (Giassi, Angeloni). Sites que só liberam as páginas de produto, como o do Bistek, são lidos uma vez por dia, pelo preço padrão do site.</p><p class="ia-st" id="opDiretasSt"></p></div>
         <input type="checkbox" class="switch" id="opDiretas">
       </div>
-      <div class="set-row">
+      <div class="set-row so-ia">
         <div><h3 class="set-t"><label for="opFolhetos">Folhetos dos sites de encartes</label></h3><p class="sec-meta">Para as lojas que você acompanha e que não têm preço pelo site: folheto do Kimbino e do Seus Folhetos, lido uma vez pela IA.</p></div>
         <input type="checkbox" class="switch" id="opFolhetos">
       </div>
-      <div class="set-row">
+      <div class="set-row so-ia">
         <div><h3 class="set-t"><label for="opItens">Procurar de novo os itens sem preço</label></h3><p class="sec-meta">No fim da busca, uma pergunta só sobre os itens que ficaram sem preço, procurando item por item. O botão Buscar este item continua no cartão.</p></div>
         <input type="checkbox" class="switch" id="opItens">
       </div>
-      <div class="set-row">
+      <div class="set-row so-ia">
         <div><h3 class="set-t"><label for="opEncartes">Ler o encarte das lojas sem preço</label></h3><p class="sec-meta">Quando a busca acha o site de uma loja do bairro sem nenhum preço, a IA de fotos lê o encarte (até 2 por busca). Os sites que você adicionou em Lojas são sempre lidos.</p></div>
         <input type="checkbox" class="switch" id="opEncartes">
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.13.1</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.13.2</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
   </section>
 
   <footer>Preço do site pode ser diferente do preço na loja. Confira validade e regras do cupom no carrinho.</footer>
@@ -1579,7 +1581,7 @@ h3{font-size:13px;font-weight:600}
     $('cats').innerHTML = ativas.map(function(c){ return '<button type="button" data-cat="' + c.id + '" aria-pressed="' + (c.id === CAT.id) + '">' + esc(c.nome) + '</button>'; }).join('');
     var sp = semPrecos(CAT);
     $('semPrecos').hidden = !sp.length;
-    $('semPrecos').innerHTML = sp.length ? '<span><b>Sem preços de:</b> ' + esc(sp.map(function(l){ return G[l.rede].nome; }).join(', ')) + '. Não achei site nem folheto da semana. Mande a foto do encarte ou adicione o site de ofertas.</span><button type="button" class="linkbtn so-ia" data-enc="' + esc(sp.length === 1 ? G[sp[0].rede].nome : '') + '">Mandar encarte</button><button type="button" class="linkbtn" data-ir="lojasSec">Adicionar site</button>' : '';
+    $('semPrecos').innerHTML = sp.length ? '<span><b>Sem preços de:</b> ' + esc(sp.map(function(l){ return G[l.rede].nome; }).join(', ')) + '' + (iaOn() ? '. Não achei site nem folheto da semana. Mande a foto do encarte ou adicione o site de ofertas.' : '. Não achei preço no site nem folheto já lido.') + '</span><button type="button" class="linkbtn so-ia" data-enc="' + esc(sp.length === 1 ? G[sp[0].rede].nome : '') + '">Mandar encarte</button><button type="button" class="linkbtn" data-ir="lojasSec">Adicionar site</button>' : '';
     $('catNote').textContent = CAT.id === 'petshops' && !petsTotal() ? 'Sem pets no seu perfil, as ofertas daqui ficam escondidas. Ajuste em Mais.' : (exemplo && CAT.aviso ? CAT.aviso : '');
     $('ofertasMeta').textContent = CAT.id === 'farmacias'
       ? 'O que combina com você aparece primeiro. Preço do site; na loja pode ser outro.'
