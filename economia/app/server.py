@@ -2797,7 +2797,7 @@ def mapa_txt(cfg, cat_id):
             "Procure o preço dos itens da lista nessas lojas e use esses nomes. Em \"lojas\", não repita as do mapa: traga só outras do raio que achar.")
 
 
-def aplica_mapa(categorias, mapa, cfg):
+def aplica_mapa(categorias, mapa, cfg, marcar_novas=False):
     """Endereço e distância de verdade nas lojas (filial mais perto) e as lojas do mapa que a busca não trouxe."""
     for cid in mapa:
         if mapa[cid] and cid in CATEGORIAS and not any(c.get("id") == cid for c in categorias):
@@ -2828,6 +2828,8 @@ def aplica_mapa(categorias, mapa, cfg):
             cat.setdefault("redes", []).append({"id": rid, "nome": m["nome"], "curto": m["nome"][:16]})
             nova = {"rede": rid, "distancia_km": m["distancia_km"], "horario": "", "endereco": m.get("endereco"), "fontes": ["Mapa"]}
             nova.update({k: m[k] for k in ("lat", "lon", "place_id", "site") if m.get(k)})
+            if marcar_novas:
+                nova["nova"] = True  # registrada pelo Encontrar lojas: os preços vêm na próxima busca
             cat.setdefault("lojas", []).append(nova)
         cat["lojas"] = sorted(cat.get("lojas") or [], key=lambda l: l["distancia_km"] if l.get("distancia_km") is not None else 99)
 
@@ -2850,7 +2852,7 @@ def atualizar_lojas_mapa(dado):
     mapa = lojas_do_mapa(cfg, cats, forcar=True)
     if not any(mapa.values()):
         return {"ok": False, "msg": "O mapa não respondeu agora ou não achou lojas nessa distância. Tente de novo em alguns minutos ou aumente a distância."}
-    mesclar_resultado([], cfg, mapa=mapa)
+    mesclar_resultado([], cfg, mapa=mapa, novas_lojas=True)
     threading.Thread(target=lambda: atualiza_diretas(cfg, max_novas=15), daemon=True).start()
     partes = [f"{len(v)} {CATEGORIAS[c]['nome'].lower()}" for c, v in mapa.items() if v]
     txt = partes[0] if len(partes) == 1 else ", ".join(partes[:-1]) + " e " + partes[-1]
@@ -3146,7 +3148,7 @@ def buscar():
 _mescla_trava = threading.Lock()
 
 
-def mesclar_resultado(resultado, cfg, extra=None, mapa=None, completa=False):
+def mesclar_resultado(resultado, cfg, extra=None, mapa=None, completa=False, novas_lojas=False):
     """Junta [(categoria, parcial)] ao ofertas.json atual, sem apagar o resto. Devolve a lista de preços juntada."""
     with _mescla_trava:
         anterior = ler_json(OFERTAS, {}) or {}
@@ -3158,8 +3160,12 @@ def mesclar_resultado(resultado, cfg, extra=None, mapa=None, completa=False):
                                       "tamanhos": list(i.get("tamanhos") or []), "links": dict(i.get("links") or {})}
         parciais = [base]
         juntar_focada(novas, parciais, resultado)
+        if completa:  # busca feita: nenhuma loja está mais "esperando a próxima busca"
+            for c in novas:
+                for l in c.get("lojas") or []:
+                    l.pop("nova", None)
         if mapa:
-            aplica_mapa(novas, mapa, cfg)
+            aplica_mapa(novas, mapa, cfg, marcar_novas=novas_lojas)
         lista = juntar_categorias(parciais)
         relatorio = anterior.get("relatorio") if isinstance(anterior.get("relatorio"), dict) else {}
         relatorio["sem_preco"] = [n for n in nomes_da_lista(cfg) if n not in lista]
@@ -3548,7 +3554,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.13.8"
+    server_version = "EconomIA/0.13.9"
 
     def log_message(self, fmt, *args):
         pass
