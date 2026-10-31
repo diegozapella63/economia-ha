@@ -1,5 +1,10 @@
 # Mudanças
 
+## 0.15.3
+
+- **Menos texto.** Saíram as explicações do óbvio em todas as telas: o porquê de cada opção, o que a IA faz depois de cada botão, o que já está no nome do botão ou da opção. Os textos que ficaram dizem só o que é preciso para usar (de onde vem a chave, o que precisa ligar). Exemplos: "Desmarque as lojas que não quer ver" no lugar de três frases; "Em quantas lojas você topa parar?"; o passo a passo da busca com uma frase por etapa; o rodapé só com a versão.
+- "Como foi testado" mais curto: sem repetir "dá para informar em Adicionar site de ofertas" (o botão está logo abaixo).
+
 ## 0.15.2
 
 - Em IA do Home Assistant, as três escolhas (Para buscar ofertas, Para ler fotos e Para falar) ficam juntas, uma embaixo da outra, com a mesma largura. O Verificar de novo vem depois delas e testa as três.

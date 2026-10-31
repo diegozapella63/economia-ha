@@ -3810,14 +3810,13 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
                     st["passos"].append(f"✓ Achei \"{termo}\": {st['exemplo']}." if alvo else
                                         f"Não tem \"{termo}\" nas ofertas de hoje. A cada busca, os itens da sua lista são procurados nelas.")
                 elif lidas:
-                    st["passos"].append(f"✗ Não achei preços no texto da página {lidas[0].split('://', 1)[-1][:50]} (o site pode montar os preços depois, só no navegador).")
+                    st["passos"].append(f"✗ Não achei preços no texto da página {lidas[0].split('://', 1)[-1][:50]} (o site monta os preços no navegador).")
     elif rede_social(social_manual or l.get("social") or l.get("site")):
         u = social_manual or l.get("social") or l.get("site")
         if not insta_handle(u):
-            st["passos"].append(f"✗ O site desta loja no mapa é {rede_social(u)} ({u.split('://', 1)[-1][:40]}), sem preços para ler. "
-                                "Se ela tiver site de verdade, dá para informar em Adicionar site de ofertas.")
+            st["passos"].append(f"✗ O site desta loja no mapa é {rede_social(u)} ({u.split('://', 1)[-1][:40]}), sem preços para ler.")
     else:
-        st["passos"].append("✗ Não sei o site desta loja (o mapa não traz). Dá para informar em Adicionar site de ofertas.")
+        st["passos"].append("✗ O mapa não traz o site desta loja.")
     h = insta_handle(social_manual) or insta_handle(l.get("social"))
     if h and not st["como"]:
         st["instagram"] = h
@@ -3841,7 +3840,7 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
                 else:
                     st["passos"].append(f"✗ Instagram @{h}: nenhum post de oferta nos últimos {INSTA_DIAS} dias.")
         else:
-            st["passos"].append(f"Tem Instagram (@{h}). Para ler os encartes que a loja posta lá, ligue o Instagram em Mais › Integrações.")
+            st["passos"].append(f"Tem Instagram (@{h}): ligue o Instagram em Mais › Integrações para ler os encartes.")
     if not st["como"]:
         guardados = [v for v in (cache_f.get("itens") or {}).values() if norm(v.get("loja", "")) == norm(nome) and v.get("r")]
         if guardados:
@@ -4628,7 +4627,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.15.2"
+    server_version = "EconomIA/0.15.3"
 
     def log_message(self, fmt, *args):
         pass
