@@ -1,5 +1,9 @@
 # Mudanças
 
+## 0.13.6
+
+- Sai a palavra "raio" da tela: o botão agora é só **Encontrar lojas**, e os textos falam em "lojas perto de casa".
+
 ## 0.13.5
 
 - **Encontrar lojas no raio**, em Mais › Casa › Onde: lê o mapa (OpenStreetMap e, com chave, Google Maps) na hora e registra as lojas do raio em Mais › Lojas, sem buscar preços e sem IA. Funciona antes da primeira busca e usa a distância escolhida, mesmo antes de salvar.

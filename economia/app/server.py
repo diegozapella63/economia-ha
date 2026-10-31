@@ -2813,7 +2813,7 @@ def atualizar_lojas_mapa(dado):
         return {"ok": False, "msg": "Não achei a localização da Casa no Home Assistant. Confira em Configurações › Sistema › Geral."}
     mapa = lojas_do_mapa(cfg, cats, forcar=True)
     if not any(mapa.values()):
-        return {"ok": False, "msg": "O mapa não respondeu agora ou não achou lojas no raio. Tente de novo em alguns minutos ou aumente a distância."}
+        return {"ok": False, "msg": "O mapa não respondeu agora ou não achou lojas nessa distância. Tente de novo em alguns minutos ou aumente a distância."}
     mesclar_resultado([], cfg, mapa=mapa)
     partes = [f"{len(v)} {CATEGORIAS[c]['nome'].lower()}" for c, v in mapa.items() if v]
     txt = partes[0] if len(partes) == 1 else ", ".join(partes[:-1]) + " e " + partes[-1]
@@ -2954,7 +2954,7 @@ def buscar():
         BUSCA.update({"etapa": "sites das lojas", "total": 0})
         scripts, rel_s, ja = busca_scripts(cfg, cats, ler_folhetos=ia)
         relatorio.update(rel_s)
-        BUSCA["etapa"] = "lojas do raio no mapa"
+        BUSCA["etapa"] = "lojas no mapa"
         try:
             mapa = lojas_do_mapa(cfg, cats)
         except Exception as e:  # noqa: BLE001
@@ -2964,7 +2964,7 @@ def buscar():
             mesclar_resultado(scripts, cfg, relatorio, mapa, completa=True)
             BUSCA["chamadas_ia"] = 0
             if not scripts:
-                BUSCA["avisos"] = ["Com a IA desligada, nenhum site trouxe preço agora" + ("; as lojas do raio foram atualizadas pelo mapa." if mapa else ".")]
+                BUSCA["avisos"] = ["Com a IA desligada, nenhum site trouxe preço agora" + ("; as lojas foram atualizadas pelo mapa." if mapa else ".")]
             log("busca sem IA: " + (", ".join(rel_s) or "nenhum site trouxe preço") + (", mapa atualizado" if mapa else ""))
             return
         cfg_ia = dict(cfg, _ja_tenho=ja, _mapa=mapa)
@@ -3511,7 +3511,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.13.5"
+    server_version = "EconomIA/0.13.6"
 
     def log_message(self, fmt, *args):
         pass
