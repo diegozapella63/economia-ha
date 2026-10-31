@@ -20,6 +20,7 @@ Rotas:
 - POST /api/voz   áudio PCM 16 kHz, 16 bits, mono → {"texto"} pela fala para texto do Home Assistant
 - GET  /api/versoes   cópias anteriores do config.json (as 3 mais recentes)
 - GET  /api/lojas-diretas   lojas com busca direta no site (Giassi, Angeloni) e se atendem o CEP
+- POST /api/ler-encarte   {"imagens": [...], "loja", "categoria"}: a IA lê o encarte ou o print de preços e junta ao resultado
 - POST /api/versoes/guardar {"motivo"} | /api/versoes/restaurar {"nome"}
 - GET  /api/busca    andamento da busca
 - GET  /api/exportar/lista.xlsx | lista.json   exporta a lista
@@ -1191,7 +1192,9 @@ def texto_da_pagina(pagina_html):
 def instrucoes_encarte(loja, texto_pag, n, cfg):
     aspas = chr(34) * 3
     fonte = f"{n} imagem(ns) ou PDF do encarte de ofertas" if n else "o texto da página de ofertas"
-    return f"""Você recebe {fonte} do site da loja "{loja['nome']}" ({loja['site']}). Hoje é {hoje_br()}.
+    de_onde = f'do site da loja "{loja["nome"]}" ({loja["site"]})' if loja.get("site") else \
+        f'da loja "{loja["nome"]}": fotos ou prints do encarte, do app ou da gôndola, mandados pelo morador'
+    return f"""Você recebe {fonte} {de_onde}. Hoje é {hoje_br()}.
 {('Texto da página: ' + aspas + texto_pag[:4000] + aspas) if texto_pag else ''}
 
 Extraia as ofertas legíveis: "produto" com marca e tamanho (por exemplo "Café Pilão 500 g"), "preco" (o preço da oferta), "preco_normal" só se o encarte mostrar o preço "de", "unidade" ("kg" quando o preço for por quilo), "condicao" (por exemplo "leve 3 pague 2", "no cartão da loja", "clube"), "tipo" ("clube" quando for preço de clube, senão "promo") e "tamanho". Não invente nada que não esteja legível.
@@ -1251,10 +1254,17 @@ def ler_encarte(loja, cfg):
                 os.remove(a)
             except OSError:
                 pass
-    nome, url, val = loja["nome"], loja["site"], data_ok(r.get("validade"))
+    log(f"encarte de {loja['nome']}: {len(dados)} arquivo(s)")
+    return normalizar(loja["categoria"], bruto_encarte(loja, r), cfg)
+
+
+def bruto_encarte(loja, r):
+    """A resposta da IA sobre um encarte no formato da busca (lojas, ofertas e preços da lista)."""
+    r = r if isinstance(r, dict) else {}
+    nome, url, val = loja["nome"], loja.get("site"), data_ok(r.get("validade"))
     marca_rede = lambda x: dict(x, rede=nome, fonte=url)  # noqa: E731
     bruto = {
-        "lojas": [{"rede": nome, "endereco": None, "distancia_km": None, "fontes": ["Site", "Encarte"]}],
+        "lojas": [{"rede": nome, "endereco": None, "distancia_km": None, "fontes": ["Site", "Encarte"] if url else ["Encarte"]}],
         "cupons": [],
         "ofertas": [dict(o, rede=nome, preco_oferta=o.get("preco"), fonte=url, encarte=True, valido_ate=val)
                     for o in r.get("ofertas") or [] if isinstance(o, dict)],
@@ -1262,8 +1272,7 @@ def ler_encarte(loja, cfg):
                        tamanhos=[marca_rede(x) for x in it.get("tamanhos") or [] if isinstance(x, dict)])
                   for it in r.get("lista") or [] if isinstance(it, dict)],
     }
-    log(f"encarte de {nome}: {len(dados)} arquivo(s), {len(bruto['ofertas'])} oferta(s)")
-    return normalizar(loja["categoria"], bruto, cfg)
+    return bruto
 
 
 def juntar_categoria(dest, cat):
@@ -1768,6 +1777,30 @@ def buscar():
         BUSCA.update({"rodando": False, "etapa": None, "terminou_em": agora()})
 
 
+_mescla_trava = threading.Lock()
+
+
+def mesclar_resultado(resultado, cfg):
+    """Junta [(categoria, parcial)] ao ofertas.json atual, sem apagar o resto. Devolve a lista de preços juntada."""
+    with _mescla_trava:
+        anterior = ler_json(OFERTAS, {}) or {}
+        novas = [c for c in (anterior.get("categorias") or []) if isinstance(c, dict)]
+        base = {}
+        for i in anterior.get("lista") or []:
+            if isinstance(i, dict) and i.get("produto"):
+                base[i["produto"]] = {"precos": dict(i.get("precos") or {}), "base": i.get("base"),
+                                      "tamanhos": list(i.get("tamanhos") or []), "links": dict(i.get("links") or {})}
+        parciais = [base]
+        juntar_focada(novas, parciais, resultado)
+        lista = juntar_categorias(parciais)
+        relatorio = anterior.get("relatorio") if isinstance(anterior.get("relatorio"), dict) else {}
+        relatorio["sem_preco"] = [n for n in nomes_da_lista(cfg) if n not in lista]
+        gravar_json(OFERTAS, dict(anterior, versao=2, origem="ia_home_assistant", gerado_em=anterior.get("gerado_em") or agora(),
+                                  atualizado_em=agora(), lista=[item_ofertas(p, v) for p, v in lista.items()],
+                                  categorias=novas, relatorio=relatorio))
+        return lista
+
+
 def buscar_itens(itens):
     cfg = ler_json(CONFIG, {}) or {}
     cats = [c for c in (cfg.get("categorias") or list(CATEGORIAS)) if c in CATEGORIAS]
@@ -1788,22 +1821,8 @@ def buscar_itens(itens):
         except ErroBusca:
             if not resultado:
                 raise
-        anterior = ler_json(OFERTAS, {}) or {}
-        novas = [c for c in (anterior.get("categorias") or []) if isinstance(c, dict)]
-        base = {}
-        for i in anterior.get("lista") or []:
-            if isinstance(i, dict) and i.get("produto"):
-                base[i["produto"]] = {"precos": dict(i.get("precos") or {}), "base": i.get("base"),
-                                      "tamanhos": list(i.get("tamanhos") or []), "links": dict(i.get("links") or {})}
-        parciais = [base]
-        juntar_focada(novas, parciais, resultado)
-        lista = juntar_categorias(parciais)
-        relatorio = anterior.get("relatorio") if isinstance(anterior.get("relatorio"), dict) else {}
+        lista = mesclar_resultado(resultado, cfg)
         achados = [n for n in itens if n in lista and any(n in p for _, p in resultado)]
-        relatorio["sem_preco"] = [n for n in nomes_da_lista(cfg) if n not in lista]
-        gravar_json(OFERTAS, dict(anterior, versao=2, origem="ia_home_assistant", gerado_em=anterior.get("gerado_em") or agora(),
-                                  atualizado_em=agora(), lista=[item_ofertas(p, v) for p, v in lista.items()],
-                                  categorias=novas, relatorio=relatorio))
         if not achados:
             BUSCA["avisos"] = ["Não achei preço para " + ", ".join(itens) + ". Tente com marca e tamanho, por exemplo \"Detergente Ypê 500 ml\"."]
         BUSCA["chamadas_ia"] = _uso_local.chamadas
@@ -1957,6 +1976,64 @@ def comeca_leitura(dado):
     return job
 
 
+# ---------- encarte ou print de preços mandado pelo morador ----------
+def ler_encarte_fotos(job, fotos, loja):
+    pasta = os.path.join(MEDIA, "economia")
+    arquivos, anexos = [], []
+    try:
+        os.makedirs(pasta, exist_ok=True)
+        for n, (dado, mime) in enumerate(fotos):
+            ext = "png" if mime == "image/png" else "webp" if mime == "image/webp" else "jpg"
+            nome = f"encarte-{job}-{n}.{ext}"
+            with open(os.path.join(pasta, nome), "wb") as f:
+                f.write(dado)
+            arquivos.append(os.path.join(pasta, nome))
+            anexos.append({"media_content_id": f"{MEDIA_URI}/economia/{nome}", "media_content_type": mime})
+        cfg = ler_config()
+        r = chamar_ai_task(f"EconomIA: encarte {loja['nome']}", instrucoes_encarte(loja, "", len(anexos), cfg), anexos, uso="fotos")
+        cat, parcial = normalizar(loja["categoria"], bruto_encarte(loja, r), cfg)
+        for l in cat["lojas"]:
+            l["fontes"] = sorted(set(l.get("fontes") or []) | {"Encarte"})
+        mesclar_resultado([(cat, parcial)], cfg)
+        LEITURAS[job].update({"status": "pronto", "ofertas": len(cat["ofertas"]), "precos": sorted(parcial),
+                              "loja": loja["nome"], "itens": [{"produto": o["produto"], "preco": o["preco_oferta"]} for o in cat["ofertas"][:40]]})
+        log(f"encarte por foto {loja['nome']}: {len(cat['ofertas'])} oferta(s), {len(parcial)} item(ns) da lista")
+    except ErroBusca as e:
+        LEITURAS[job].update({"status": "erro", "erro": str(e)})
+    except Exception as e:  # noqa: BLE001
+        LEITURAS[job].update({"status": "erro", "erro": f"Erro inesperado ao ler: {e}"})
+        log(LEITURAS[job]["erro"])
+    finally:
+        for a in arquivos:
+            try:
+                os.remove(a)
+            except OSError:
+                pass
+
+
+def comeca_encarte(dado):
+    fotos = []
+    for img in (dado.get("imagens") or [])[:8]:
+        m = re.match(r"^data:(image/(?:jpeg|png|webp));base64,(.+)$", str(img), re.S)
+        if m:
+            try:
+                bruto = base64.b64decode(m.group(2), validate=False)
+            except ValueError:
+                continue
+            if 0 < len(bruto) <= 6 * 1024 * 1024:
+                fotos.append((bruto, m.group(1)))
+    nome = texto(dado.get("loja"), 60)
+    cat = dado.get("categoria") if dado.get("categoria") in CATEGORIAS and dado.get("categoria") != "online" else "mercados"
+    if not fotos or not nome:
+        return None
+    job = datetime.now().strftime("%H%M%S") + "-" + os.urandom(3).hex()
+    for antigo in sorted(LEITURAS)[:-20]:
+        LEITURAS.pop(antigo, None)
+    LEITURAS[job] = {"status": "lendo", "itens": [], "erro": None}
+    threading.Thread(target=ler_encarte_fotos, args=(job, fotos, {"nome": nome, "site": None, "categoria": cat}), daemon=True).start()
+    return job
+
+
 # ---------- Falar: o áudio vai para a fala para texto do Home Assistant ----------
 VOZ = voz.Voz(HA_API, HA_WS, None, lambda *a: log(" ".join(str(x) for x in a)), simulada=VOZ_SIMULADA)
 
@@ -2102,7 +2179,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.12.0"
+    server_version = "EconomIA/0.12.1"
 
     def log_message(self, fmt, *args):
         pass
@@ -2275,6 +2352,16 @@ class Painel(BaseHTTPRequestHandler):
                 return self._json(200, voz_texto(self.rfile.read(tamanho)))
             except ErroBusca as e:
                 return self._json(400, {"erro": str(e)})
+        if urllib.parse.urlsplit(self.path).path == "/api/ler-encarte":
+            dado = self._corpo(MAX_FOTOS_BODY)
+            if dado is None:
+                return
+            if not ia_ligada():
+                return self._json(400, {"erro": IA_DESLIGADA})
+            job = comeca_encarte(dado)
+            if not job:
+                return self._json(400, {"erro": "Escolha as fotos do encarte e diga de qual loja é."})
+            return self._json(202, {"id": job})
         if urllib.parse.urlsplit(self.path).path == "/api/versoes/guardar":
             dado = self._corpo() or {}
             try:

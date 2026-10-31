@@ -1,5 +1,10 @@
 # Mudanças
 
+## 0.12.1
+
+- **Encarte ou print de preços**, nas Ofertas: mande fotos ou prints do encarte (do WhatsApp, do Tiendeo, do app da loja ou da gôndola), diga de qual loja é e toque em **Ler com IA**. As ofertas entram com o rótulo "Encarte" e os preços que batem com a sua lista entram na comparação e no roteiro, sem apagar o resto da busca. Serve para mercados sem site de ofertas, como Koch, Komprão e Atacadão.
+- O aviso **Sem preços de** das Ofertas ganhou o atalho **Mandar encarte**.
+
 ## 0.12.0
 
 - **Busca direta nas lojas**: o **Giassi** e o **Angeloni** respondem direto pelo próprio site, com o preço da loja que atende o seu CEP, o link do produto e as promoções (preço "de" e "por"). Não precisa de login nem gasta IA, e o preço do site vale mais que o que a busca na web achou. Entra na busca e no **Buscar este item**.

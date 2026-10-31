@@ -78,6 +78,7 @@ A busca na web lê texto; muitos mercados do bairro publicam as ofertas como **i
 - A busca procura também mercadinhos e lojas independentes do raio. Se achar o site de uma loja sem nenhum preço, o EconomIA abre o site, baixa o encarte e a IA de fotos lê os preços (até 2 lojas por busca).
 - Loja que continua sem preço aparece com o selo **Sem preços** em Mais › Lojas e um aviso nas Ofertas. Toque em **Adicionar site de ofertas** e cole o endereço da página do encarte (por exemplo `mercadosalles.com.br/ofertas`): a partir da próxima busca, o encarte é lido sempre.
 - Também dá para informar o site ao **Adicionar loja**.
+- Mercado sem site de ofertas (Koch, Komprão, Atacadão): nas Ofertas, toque em **Encarte ou print de preços**, escolha as fotos ou prints do encarte (até 8: do WhatsApp, do Tiendeo, do app da loja ou da gôndola), diga de qual loja é e toque em **Ler com IA**. Os preços valem até a próxima busca.
 
 As ofertas de encarte aparecem com o rótulo "Encarte" e a validade, e os preços entram na comparação da lista e no roteiro.
 

@@ -41,6 +41,7 @@ O botão **Buscar** chama `ai_task.generate_data` pela API do Home Assistant (`h
 | GET | `/api/versoes` | `{versoes: [{nome, quando, motivo, itens, cep}]}`: as 3 cópias mais recentes do `config.json`, em `/data/versoes`. |
 | POST | `/api/versoes/guardar` | `{motivo: "importar"|"limpar"}`: guarda uma cópia agora. |
 | POST | `/api/versoes/restaurar` | `{nome}`: guarda uma cópia do atual e volta para essa versão. Devolve `{config}`. |
+| POST | `/api/ler-encarte` | `{imagens: ["data:image/jpeg;base64,..."], loja, categoria}` (até 8 imagens). A IA de fotos lê o encarte ou o print com o mesmo pedido do encarte do site; o resultado é juntado ao `ofertas.json` (loja com `fontes: ["Encarte"]`). Devolve `{id}`; o andamento sai em `GET /api/ler-lista?id=` com `{status, ofertas, precos, loja, itens}`. |
 | GET | `/api/lojas-diretas` | `{lojas: [{id, nome, atende, loja}]}`: as lojas com busca direta e se atendem o CEP. |
 | GET | `/api/exportar/ofertas.json` | O `ofertas.json` da última busca. |
 | GET | `/api/uso-ia` | `{hoje, semana, mes: {chamadas, erros, cota, tokens, imagens, segundos, tipos, ias}, dias: [{dia, chamadas, erros, cota}], ultimas: [...]}`. Também vai em `/api/estado` como `uso_ia`. |

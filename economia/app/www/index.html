@@ -452,6 +452,7 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .foto-add{aspect-ratio:1;border:1.5px dashed var(--accent);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--accent);font-size:12px;font-weight:600;text-align:center;cursor:pointer}
 .foto-add svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .foto-box textarea{resize:vertical;min-height:72px;font:inherit}
+.enc-loja{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:600}
 .foto-itens{display:flex;flex-direction:column;gap:6px}
 .foto-itens li{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .foto-itens .field{flex:1 1 160px}
@@ -905,6 +906,17 @@ h3{font-size:13px;font-weight:600}
       <p class="cat-note" id="catNote"></p>
       <div class="sem-precos" id="semPrecos" hidden></div>
     </div>
+    <div class="enc so-ia" id="encSec">
+      <div class="row-form"><label class="ghost big" for="encArq" id="encBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Encarte ou print de preços</label></div>
+      <input type="file" id="encArq" class="arq" accept="image/*" multiple>
+      <div class="foto-box" id="encBox" hidden>
+        <div class="fotos" id="encPrev"></div>
+        <label class="enc-loja"><span>De qual loja?</span><input class="field" id="encLoja" list="encLojas" autocomplete="off" placeholder="Ex.: Komprão, Koch, Atacadão"></label>
+        <datalist id="encLojas"></datalist>
+        <div class="row-form"><button type="button" class="btn" id="encLer">Ler com IA</button><button type="button" class="ghost big" id="encFechar">Fechar</button></div>
+        <p class="hint" id="encMsg" aria-live="polite">Foto ou print do encarte (do site, do Tiendeo, do WhatsApp ou do papel), do app da loja ou da etiqueta na gôndola. A IA lê os preços e eles entram nas ofertas e na sua lista.</p>
+      </div>
+    </div>
     <div class="summary" id="resumo" aria-label="Resumo">
       <div class="fact" id="factCupom"><span class="k">Melhor cupom agora</span><span class="v num" id="sumCupom">—</span><span class="s" id="sumCupomS"></span></div>
       <div class="fact" id="factTop"><span class="k">Destaque para você</span><span class="v num" id="sumTop">—</span><span class="s" id="sumTopS"></span></div>
@@ -1233,7 +1245,7 @@ h3{font-size:13px;font-weight:600}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.12.0</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.12.1</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
   </section>
 
   <footer>Preço do site pode ser diferente do preço na loja. Confira validade e regras do cupom no carrinho.</footer>
@@ -1519,7 +1531,7 @@ h3{font-size:13px;font-weight:600}
     $('cats').innerHTML = ativas.map(function(c){ return '<button type="button" data-cat="' + c.id + '" aria-pressed="' + (c.id === CAT.id) + '">' + esc(c.nome) + '</button>'; }).join('');
     var sp = semPrecos(CAT);
     $('semPrecos').hidden = !sp.length;
-    $('semPrecos').innerHTML = sp.length ? '<span><b>Sem preços de:</b> ' + esc(sp.map(function(l){ return G[l.rede].nome; }).join(', ')) + '. Se tiver site de ofertas, adicione que o EconomIA lê o encarte.</span><button type="button" class="linkbtn" data-ir="lojasSec">Adicionar site</button>' : '';
+    $('semPrecos').innerHTML = sp.length ? '<span><b>Sem preços de:</b> ' + esc(sp.map(function(l){ return G[l.rede].nome; }).join(', ')) + '. Se tiver site de ofertas, adicione que o EconomIA lê o encarte, ou mande a foto do encarte.</span><button type="button" class="linkbtn" data-ir="lojasSec">Adicionar site</button><button type="button" class="linkbtn so-ia" data-enc="' + esc(sp.length === 1 ? G[sp[0].rede].nome : '') + '">Mandar encarte</button>' : '';
     $('catNote').textContent = CAT.id === 'petshops' && !petsTotal() ? 'Sem pets no seu perfil, as ofertas daqui ficam escondidas. Ajuste em Mais.' : (exemplo && CAT.aviso ? CAT.aviso : '');
     $('ofertasMeta').textContent = CAT.id === 'farmacias'
       ? 'O que combina com você aparece primeiro. Preço do site; na loja pode ser outro.'
@@ -2055,6 +2067,60 @@ h3{font-size:13px;font-weight:600}
       .then(function(j){ esperaLeitura(j.id, 0); })
       .catch(function(e){ b.disabled = false; msg.className = 'hint err'; msg.textContent = e.message; });
   }
+  // ===== Encarte ou print de preços: a IA lê e os preços entram nas ofertas e na lista
+  var encSel = [], encT = null;
+  function pintaEnc(){
+    $('encBox').hidden = !encSel.length;
+    $('encPrev').innerHTML = encSel.map(function(u, i){ return '<div class="foto-th"><img src="' + u + '" alt="Foto ' + (i + 1) + '"><button type="button" class="foto-rm" data-i="' + i + '" aria-label="Tirar a foto ' + (i + 1) + '">×</button></div>'; }).join('')
+      + (encSel.length && encSel.length < MAX_FOTOS ? '<label class="foto-add" for="encArq">' + ICO_MAIS + 'Mais fotos</label>' : '');
+    var cat = CAT && CAT.id !== 'online' ? CAT : D.categorias.filter(function(c){ return c.id === 'mercados'; })[0];
+    $('encLojas').innerHTML = cat ? arr(cat.redes).map(function(r){ return '<option value="' + esc(r.nome) + '">'; }).join('') : '';
+  }
+  $('encArq').addEventListener('change', function(){
+    var inp = this, arqs = [].slice.call(inp.files || []).slice(0, MAX_FOTOS - encSel.length);
+    if (!arqs.length){ inp.value = ''; return; }
+    Promise.all(arqs.map(reduz)).then(function(urls){
+      encSel = encSel.concat(urls); inp.value = ''; pintaEnc();
+      $('encMsg').className = 'hint'; $('encMsg').textContent = (encSel.length > 1 ? encSel.length + ' fotos.' : '1 foto.') + ' Diga de qual loja é e toque em Ler com IA.';
+      if (!$('encLoja').value) $('encLoja').focus();
+    }, function(){ inp.value = ''; $('encMsg').className = 'hint err'; $('encMsg').textContent = 'Não consegui abrir essa imagem.'; });
+  });
+  $('encPrev').addEventListener('click', function(e){ var b = e.target.closest('.foto-rm'); if (!b) return; encSel.splice(Number(b.dataset.i), 1); pintaEnc(); });
+  $('encFechar').addEventListener('click', function(){ clearTimeout(encT); encSel = []; $('encLoja').value = ''; pintaEnc(); });
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('[data-enc]'); if (!b) return;
+    if (b.dataset.enc) $('encLoja').value = b.dataset.enc;
+    $('encArq').click();
+  });
+  function esperaEnc(id, n){
+    encT = setTimeout(function(){
+      fetch('api/ler-lista?id=' + encodeURIComponent(id), {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
+        if (j.status === 'lendo' && n < 120) return esperaEnc(id, n + 1);
+        $('encLer').disabled = false;
+        var msg = $('encMsg');
+        if (j.status !== 'pronto'){ msg.className = 'hint err'; msg.textContent = j.erro || 'A leitura demorou demais. Tente de novo.'; return; }
+        var lista = arr(j.precos);
+        msg.className = 'hint ok';
+        msg.textContent = (j.ofertas ? 'Li ' + j.ofertas + (j.ofertas > 1 ? ' ofertas' : ' oferta') + ' do ' + j.loja + '.' : 'Não achei ofertas legíveis do ' + j.loja + '.')
+          + (lista.length ? ' ' + (lista.length > 1 ? lista.length + ' itens da sua lista ganharam preço: ' : '1 item da sua lista ganhou preço: ') + lista.join(', ') + '.' : '');
+        encSel = []; $('encPrev').innerHTML = '';
+        recarrega();
+      }).catch(function(){ if (n < 120) esperaEnc(id, n + 1); else $('encLer').disabled = false; });
+    }, 1500);
+  }
+  $('encLer').addEventListener('click', function(){
+    var loja = $('encLoja').value.trim(), msg = $('encMsg'), b = this;
+    if (!encSel.length){ msg.className = 'hint err'; msg.textContent = 'Escolha as fotos do encarte.'; return; }
+    if (loja.length < 2){ msg.className = 'hint err'; msg.textContent = 'Diga de qual loja é o encarte.'; $('encLoja').focus(); return; }
+    if (MODO !== 'addon'){ msg.className = 'hint'; msg.textContent = 'No Home Assistant, a IA lê o encarte do ' + loja + ' e os preços entram nas ofertas e na sua lista.'; return; }
+    msg.className = 'hint'; msg.textContent = 'A IA está lendo ' + (encSel.length > 1 ? 'as fotos' : 'a foto') + ' do encarte… pode levar até um minuto.'; b.disabled = true;
+    var cat = CAT && CAT.id !== 'online' ? CAT.id : 'mercados';
+    fetch('api/ler-encarte', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({imagens:encSel, loja:loja, categoria:cat})})
+      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if (!r.ok) throw new Error(j.erro || 'Não deu para enviar. As fotos podem estar grandes demais.'); return j; }); })
+      .then(function(j){ esperaEnc(j.id, 0); })
+      .catch(function(err){ b.disabled = false; msg.className = 'hint err'; msg.textContent = err.message; });
+  });
+
   // ===== Falar: o microfone grava PCM cru, 16 kHz, 16 bits, mono (o que a fala para texto do Home Assistant recebe).
   // O add-on manda para o assistente de voz preferido; o texto passa pela mesma leitura por IA de uma mensagem colada.
   var VOZ_TAXA = 16000, VOZ_MAX_S = 120, VOZ_ST = null, GRAV = null, gravT = null, gravNivel = 0, vozRec = 'off';
@@ -3101,7 +3167,7 @@ h3{font-size:13px;font-weight:600}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.12.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.12.1' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;
