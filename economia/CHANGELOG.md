@@ -1,5 +1,11 @@
 # Mudanças
 
+## 0.14.4
+
+- **Pet shop não aparece mais em Farmácias.** O Google marca como farmácia o pet shop que vende remédio (Vanilla Pet Center) e a farmácia veterinária (Animal Farma). Agora valem o tipo principal da loja no Google e o nome (pet, vet, veterinária, animal, agropecuária). As que o mapa já tinha registrado saem da lista no próximo Encontrar lojas ou Buscar.
+- **FarmaSesi** reconhecida pelo nome, com o site farmasesi.com.br, mesmo sem o Google.
+- Redes de farmácia com o nome da filial depois ("FarmaSesi - Itoupava Norte", "Drogaria Catarinense Floresta") também são reconhecidas: Raia, Drogasil, Pague Menos, Nissei, Panvel, Catarinense, São João e FarmaSesi.
+
 ## 0.14.3
 
 - **Mais lojas do Google.** Além das 20 lojas mais perto de cada tipo, o Encontrar lojas procura também por "farmácia", "drogaria", "supermercado", "mercado" e "pet shop" no Google Maps, página a página, até a distância escolhida. Entram lojas que antes ficavam de fora, como a Drogaria Drogão.

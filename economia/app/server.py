@@ -1587,14 +1587,19 @@ SITES_REDES = {
     "sao joao": "https://www.saojoaofarmacias.com.br", "cobasi": "https://www.cobasi.com.br", "petz": "https://www.petz.com.br",
     "bistek": "https://www.bistek.com.br", "fort": "https://www.fortatacadista.com.br", "atacadao": "https://www.atacadao.com.br",
     "giassi": "https://www.giassi.com.br", "angeloni": "https://super.angeloni.com.br",
+    "farmasesi": "https://www.farmasesi.com.br", "sesi": "https://www.farmasesi.com.br",
 }
+# redes de farmácia cujo nome no mapa costuma vir com a filial depois ("FarmaSesi - Itoupava Norte", "Drogaria Catarinense Floresta")
+SITES_COM_FILIAL = {"raia", "drogasil", "pague menos", "nissei", "panvel", "catarinense", "sao joao", "farmasesi", "sesi"}
 
 
 def site_da_rede(nome, cidade=""):
     """Site de rede conhecida pelo nome ("Atacadão Joinville" → atacadao.com.br; "Atacadão Dia a Dia" não é a mesma rede)."""
     tira = set(norm(cidade or "").split())
     k = " ".join(w for w in chave_loja(nome).split() if w not in tira)
-    return SITES_REDES.get(k)
+    if k in SITES_REDES:
+        return SITES_REDES[k]
+    return next((SITES_REDES[r] for r in SITES_COM_FILIAL if k.startswith(r + " ")), None)
 
 
 def candidatos_site(cfg):
@@ -2661,9 +2666,21 @@ OSM_TIPOS = {
     "petshops": ['nwr["shop"="pet"]'],
 }
 GOOGLE_TIPOS = {"farmacias": ["pharmacy", "drugstore"], "mercados": ["supermarket", "grocery_store"], "petshops": ["pet_store"]}
+# pet shop que vende remédio também é "pharmacy" no Google: o tipo principal e o nome dizem que não é farmácia
+OUTRA_CATEGORIA = {"farmacias": {"pet_store", "veterinary_care"}, "mercados": {"pet_store", "veterinary_care", "pharmacy", "drugstore"}}
+NOME_FORA = {"farmacias": re.compile(r"\b(pet|pets|petshop|vet|veterinari[ao]s?|animal|animais|agropecuari[ao]|agrovet\w*)\b"),
+             "mercados": re.compile(r"\b(pet|pets|petshop|veterinari[ao]s?|agrovet\w*)\b")}
 PALAVRAS_LOJA = {"farmacia", "farmacias", "drogaria", "drogarias", "droga", "supermercado", "supermercados", "mercado", "mercados",
                  "mercearia", "minimercado", "hipermercado", "atacadista", "atacado", "pet", "shop", "petshop", "loja", "lojas",
                  "super", "hiper", "de", "do", "da", "dos", "das", "e", "ltda", "me", "filial", "unidade"}
+
+
+def da_categoria(cat, nome, primario=None):
+    """A loja é mesmo desta categoria? ("Vanilla Pet Center" e "Farmácia Veterinária" não entram em farmácias.)"""
+    if primario and primario in OUTRA_CATEGORIA.get(cat, ()):
+        return False
+    r = NOME_FORA.get(cat)
+    return not (r and r.search(norm(nome)))
 
 
 def casa(cfg=None):
@@ -2715,6 +2732,8 @@ def osm_lojas(lat, lon, raio_m, cats):
         if not nome or la is None or lo is None:
             continue
         cat = "farmacias" if t.get("amenity") == "pharmacy" or t.get("shop") == "chemist" else "petshops" if t.get("shop") == "pet" else "mercados"
+        if not da_categoria(cat, nome):
+            continue
         rua = ", ".join(x for x in [t.get("addr:street"), t.get("addr:housenumber")] if x)
         bairro = t.get("addr:suburb") or t.get("addr:neighbourhood")
         out.append({"nome": nome, "categoria": cat, "endereco": ", ".join(x for x in [rua, bairro] if x) or None,
@@ -2733,7 +2752,7 @@ def google_lojas(lat, lon, raio_m, cats, chave):
             continue
         req = urllib.request.Request(GOOGLE_PLACES, data=json.dumps(corpo).encode(), method="POST", headers={
             "Content-Type": "application/json", "X-Goog-Api-Key": chave,
-            "X-Goog-FieldMask": "places.id,places.displayName,places.shortFormattedAddress,places.formattedAddress,places.location,places.businessStatus,places.websiteUri"})
+            "X-Goog-FieldMask": "places.id,places.displayName,places.shortFormattedAddress,places.formattedAddress,places.location,places.businessStatus,places.websiteUri,places.primaryType"})
         try:
             with urllib.request.urlopen(req, timeout=25) as r:
                 d = json.loads(r.read(4_000_000).decode("utf-8") or "{}")
@@ -2748,7 +2767,7 @@ def google_lojas(lat, lon, raio_m, cats, chave):
                 continue
             nome = nome_bonito((pl.get("displayName") or {}).get("text"))
             loc = pl.get("location") or {}
-            if not nome or loc.get("latitude") is None:
+            if not nome or loc.get("latitude") is None or not da_categoria(cat, nome, pl.get("primaryType")):
                 continue
             out.append({"nome": nome, "categoria": cat, "endereco": texto(pl.get("shortFormattedAddress") or pl.get("formattedAddress"), 90),
                         "distancia_km": km_entre(lat, lon, loc["latitude"], loc["longitude"]), "fonte": "Google",
@@ -2791,7 +2810,7 @@ def google_varredura(lat, lon, raio_m, cats, chave, paginas=3):
     dlo = raio_m / (111_000.0 * max(0.2, math.cos(math.radians(lat))))
     caixa = {"rectangle": {"low": {"latitude": lat - dla, "longitude": lon - dlo}, "high": {"latitude": lat + dla, "longitude": lon + dlo}}}
     campos = ("places.id,places.displayName,places.shortFormattedAddress,places.formattedAddress,places.location,"
-              "places.businessStatus,places.websiteUri,places.types,nextPageToken")
+              "places.businessStatus,places.websiteUri,places.types,places.primaryType,nextPageToken")
     out = []
     for cat in cats:
         tipos = set(GOOGLE_TIPOS.get(cat, []))
@@ -2806,7 +2825,7 @@ def google_varredura(lat, lon, raio_m, cats, chave, paginas=3):
                     if not nome or loc.get("latitude") is None or pl.get("businessStatus") == "CLOSED_PERMANENTLY":
                         continue
                     km = km_entre(lat, lon, loc["latitude"], loc["longitude"])
-                    if km * 1000 > raio_m or (tipos and not tipos & set(pl.get("types") or [])):
+                    if km * 1000 > raio_m or (tipos and not tipos & set(pl.get("types") or [])) or not da_categoria(cat, nome, pl.get("primaryType")):
                         continue
                     dentro += 1
                     out.append({"nome": nome, "categoria": cat, "endereco": texto(pl.get("shortFormattedAddress") or pl.get("formattedAddress"), 90),
@@ -2851,7 +2870,7 @@ def lojas_do_mapa(cfg, cats, forcar=False):
     except (TypeError, ValueError):
         raio_m = 2000
     g = google_chave()
-    chave = f"v5,{lat:.4f},{lon:.4f},{raio_m},{','.join(sorted(cats))},{'g' if g else 'o'}"
+    chave = f"v6,{lat:.4f},{lon:.4f},{raio_m},{','.join(sorted(cats))},{'g' if g else 'o'}"
     memo = ler_json(LOJAS_MAPA, {}) or {}
     semana = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat(timespec="seconds")
     if not forcar and memo.get("chave") == chave and memo.get("em", "") >= semana:
@@ -2931,9 +2950,12 @@ def aplica_mapa(categorias, mapa, cfg, marcar_novas=False):
                                "redes": [], "lojas": [], "cupons": [], "ofertas": [], "contas": []})
     for cat in categorias:
         lojas_m = mapa.get(cat.get("id")) or []
+        nomes = {r["id"]: r["nome"] for r in cat.get("redes") or []}
+        if cat.get("lojas"):  # registradas antes pelo mapa, mas de outra categoria (pet shop nas farmácias): saem
+            cat["lojas"] = [l for l in cat["lojas"] if not (set(l.get("fontes") or []) <= {"Mapa"}
+                                                            and not da_categoria(cat.get("id"), nomes.get(l.get("rede"), "")))]
         if not lojas_m:
             continue
-        nomes = {r["id"]: r["nome"] for r in cat.get("redes") or []}
         usadas = set()
         for l in cat.get("lojas") or []:
             m = next((x for x in lojas_m if mesma_loja(x["nome"], nomes.get(l["rede"], ""))), None)
@@ -3865,7 +3887,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.14.3"
+    server_version = "EconomIA/0.14.4"
 
     def log_message(self, fmt, *args):
         pass
