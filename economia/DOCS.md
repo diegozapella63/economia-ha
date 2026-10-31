@@ -96,7 +96,7 @@ Com a IA desligada, o Buscar faz só os passos 2 a 4, com os folhetos já lidos.
 
 ## Folhetos de encarte
 
-Toda loja que você acompanha e que não tem preço pelo site, como Komprão e Atacadão, tem o folheto da semana procurado sozinho no Kimbino e no Seus Folhetos, logo depois do site. Não precisa configurar nada (dá para desligar em Mais › Opções). Até 3 lojas com folheto novo por busca. A IA de fotos lê cada folheto uma vez, e as ofertas ficam guardadas até ele vencer. Os itens da sua lista que aparecem no folheto ganham preço, inclusive os que você adicionar depois, sem IA. Quando a loja tem vários folhetos regionais (o Atacadão tem um por região), a IA olha só a capa de cada um e escolhe os que valem para a sua cidade.
+Toda loja que você acompanha e que não tem preço pelo site, como Komprão e Atacadão, tem o folheto da semana procurado sozinho no Kimbino, no Seus Folhetos e no Catálogos Ofertas (que tem o da Droga Raia e de outras redes), logo depois do site. Não precisa configurar nada (dá para desligar em Mais › Opções). Até 3 lojas com folheto novo por busca. A IA de fotos lê cada folheto uma vez, e as ofertas ficam guardadas até ele vencer. Os itens da sua lista que aparecem no folheto ganham preço, inclusive os que você adicionar depois, sem IA. Quando a loja tem vários folhetos regionais (o Atacadão tem um por região), a IA olha só a capa de cada um e escolhe os que valem para a sua cidade.
 
 ## Google Places (opcional)
 

@@ -1976,7 +1976,83 @@ AGREGADORES = [
      "variantes": ["{}", "{}-atacadista", "{}-supermercados", "supermercados-{}", "{}-supermercado"]},
     {"id": "seusfolhetos", "nome": "Seus Folhetos", "base": "https://seusfolhetos.com.br", "loja": "/{}-ofertas",
      "variantes": ["{}", "{}-atacadista", "supermercados-{}"]},
+    # Catálogos Ofertas: o robots.txt libera /lojas/ e /vista/ofertas/ (sem parâmetros) e não define sinal de IA
+    {"id": "catalogosofertas", "nome": "Catálogos Ofertas", "base": "https://www.catalogosofertas.com.br", "loja": "/lojas/{}/ofertas-catalogos",
+     "variantes": ["{}", "{}-atacadista", "supermercados-{}"]},
 ]
+MESES = {"jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6, "jul": 7, "ago": 8, "set": 9, "out": 10, "nov": 11, "dez": 12}
+PERIODO_MES = re.compile(r"(\d{1,2})\s+(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\w*\.?\s*(?:-|–|a|até)\s*(\d{1,2})\s+(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)", re.I)
+PERIODO_TRACO = re.compile(r"(\d{2})-(\d{2})-(\d{4})\D{1,12}?(\d{2})-(\d{2})-(\d{4})")
+CO_IMG = re.compile(r"(?:https?://[^\"'\s<>]*?)?/assets/uploads/flyers/(\d+)/([A-Za-z0-9_]+)/([a-z0-9-]+?)-(\d+)-(\d+)-([0-9a-f]+)\.(webp|jpe?g|png)", re.I)
+# tamanhos que a página do folheto não mostra (ela traz só miniaturas de 260 px): o add-on testa e guarda o que existir
+CO_TAMANHOS = ["1040x1080WebP", "780x810WebP", "1300x1350WebP", "1000x1000WebP", "1200x1200WebP", "1500x1500WebP", "800x800WebP",
+               "normalWebP", "normal", "largeWebP", "large", "bigWebP", "big", "zoomWebP", "zoom", "original", "520x540WebP"]
+CO_LARGURA_MIN = 700
+CO_TAMANHO_ARQ = os.path.join(DATA, "catalogos_tamanho.json")
+_robots_agreg = {}
+
+
+def periodo_mes(t):
+    """"30 out. até 10 nov." → ("2026-10-30", "2026-11-10")."""
+    m = PERIODO_MES.search(str(t or ""))
+    if not m:
+        return None, None
+    ano = int(hoje_br()[:4])
+    m1, m2 = MESES[m.group(2).lower()[:3]], MESES[m.group(4).lower()[:3]]
+    try:
+        de = datetime(ano, m1, int(m.group(1))).date()
+        ate = datetime(ano + (1 if m2 < m1 else 0), m2, int(m.group(3))).date()
+    except ValueError:
+        return None, None
+    return de.isoformat(), ate.isoformat()
+
+
+def tamanho_imagem(d):
+    """(largura, altura) pelo cabeçalho de um WebP, JPEG ou PNG."""
+    try:
+        if d[:4] == b"RIFF" and d[8:12] == b"WEBP":
+            c = d[12:16]
+            if c == b"VP8X":
+                return 1 + int.from_bytes(d[24:27], "little"), 1 + int.from_bytes(d[27:30], "little")
+            if c == b"VP8 ":
+                return int.from_bytes(d[26:28], "little") & 0x3FFF, int.from_bytes(d[28:30], "little") & 0x3FFF
+            if c == b"VP8L":
+                b = int.from_bytes(d[21:25], "little")
+                return (b & 0x3FFF) + 1, ((b >> 14) & 0x3FFF) + 1
+        if d[:8] == b"\x89PNG\r\n\x1a\n":
+            return int.from_bytes(d[16:20], "big"), int.from_bytes(d[20:24], "big")
+        if d[:2] == b"\xff\xd8":
+            i = 2
+            while i + 9 < len(d):
+                if d[i] != 0xFF:
+                    i += 1
+                    continue
+                mk = d[i + 1]
+                if 0xC0 <= mk <= 0xCF and mk not in (0xC4, 0xC8, 0xCC):
+                    return int.from_bytes(d[i + 7:i + 9], "big"), int.from_bytes(d[i + 5:i + 7], "big")
+                i += 2 + int.from_bytes(d[i + 2:i + 4], "big")
+    except (IndexError, ValueError):
+        pass
+    return None
+
+
+def agreg_permite(url):
+    """O robots.txt do site de encartes deixa programas abrirem este endereço? (lido uma vez por dia)"""
+    sp = urllib.parse.urlsplit(url)
+    if FOLHETOS_TESTE and url.startswith(FOLHETOS_TESTE):
+        base, caminho = FOLHETOS_TESTE.rstrip("/") + "/" + sp.path.strip("/").split("/")[0], "/" + "/".join(sp.path.strip("/").split("/")[1:])
+    else:
+        base, caminho = f"{sp.scheme}://{sp.netloc}", sp.path or "/"
+    g = _robots_agreg.get(base)
+    if not g or g[0] < time.time() - 86400:
+        try:
+            regras = robots_regras(pagina_txt(base + "/robots.txt"))
+        except urllib.error.HTTPError as e:
+            regras = [] if e.code == 404 else [("disallow", "/")]
+        except Exception:  # noqa: BLE001
+            regras = [("disallow", "/")]  # sem resposta: não abre
+        g = _robots_agreg[base] = (time.time(), regras)
+    return robots_permite(g[1], caminho + (("?" + sp.query) if sp.query else ""))
 MAX_FOLHETOS_LOJA = 2
 MAX_PAGINAS = 12
 DATA_BR = re.compile(r"(\d{1,2})/(\d{1,2})(?:/(\d{2,4}))?")
@@ -2020,6 +2096,18 @@ def periodo_de(m):
 def folhetos_da_pagina(a, url_loja, html_txt):
     """Os folhetos listados na página da loja: [{url, id, de, ate}]."""
     caminho = urllib.parse.urlsplit(url_loja).path.rstrip("/")
+    if a["id"] == "catalogosofertas":
+        loja_slug = caminho.split("/lojas/", 1)[-1].split("/")[0]
+        out, vistos = [], set()
+        achados = list(re.finditer(r"href=[\"']((?:https?://[^/\"']+)?(?:/[a-z0-9-]+)?/vista/ofertas/([a-z0-9-]+)-(\d{5,}))/?[\"']", html_txt, re.I))
+        for i, m in enumerate(achados):
+            if loja_slug not in m.group(2) or m.group(3) in vistos:
+                continue  # "encartes parecidos" de outras lojas ficam de fora
+            vistos.add(m.group(3))
+            fim = achados[i + 1].start() if i + 1 < len(achados) else min(len(html_txt), m.end() + 3000)
+            de, ate = periodo_mes(sem_tags(html_txt[m.start():min(fim, m.end() + 3000)]))
+            out.append({"url": urllib.parse.urljoin(url_loja, html_mod.unescape(m.group(1))), "id": a["id"] + ":" + m.group(3), "de": de, "ate": ate})
+        return out
     if a["id"] == "kimbino":
         padrao = re.compile(r"href=[\"']((?:https?://[^/\"']+)?" + re.escape(caminho) + r"/[a-z0-9-]+-(\d{6,})/?)[\"']", re.I)
     else:
@@ -2065,7 +2153,22 @@ def paginas_folheto(a, f):
         m = (PERIODO.search(html_mod.unescape(desc.group(1))) if desc else None) or PERIODO.search(sem_tags(html_txt)[:20000])
         if m:
             f["de"], f["ate"] = periodo_de(m)
+    if not f.get("ate") and a["id"] == "catalogosofertas":
+        m = PERIODO_TRACO.search(html_txt)
+        if m:
+            f["de"], f["ate"] = f"{m.group(3)}-{m.group(2)}-{m.group(1)}", f"{m.group(6)}-{m.group(5)}-{m.group(4)}"
+        else:
+            f["de"], f["ate"] = periodo_mes(sem_tags(html_txt)[:20000])
     paginas = {}
+    if a["id"] == "catalogosofertas":
+        fid = f["id"].split(":", 1)[-1]
+        for m in CO_IMG.finditer(html_txt):
+            if m.group(1) == fid:
+                paginas.setdefault(int(m.group(4)), urllib.parse.urljoin(f["url"], m.group(0)))
+        grandes = paginas_grandes([paginas[k] for k in sorted(paginas)][:MAX_PAGINAS])
+        f["pequeno"] = bool(paginas) and not grandes
+        f["paginas"] = grandes
+        return grandes
     if a["id"] == "kimbino":
         achados = [(m.group(1), int(m.group(2)), m.group(0).replace("&amp;", "&").rstrip(",")) for m in KIMBI_IMG.finditer(html_txt)]
         # o folheto é a pasta que mais aparece (as outras são capas de folhetos sugeridos)
@@ -2094,6 +2197,37 @@ def paginas_folheto(a, f):
                     paginas.setdefault(i, u)
     f["paginas"] = [paginas[k] for k in sorted(paginas)][:MAX_PAGINAS]
     return f["paginas"]
+
+
+def paginas_grandes(miniaturas):
+    """Troca a pasta de tamanho das miniaturas pela maior que o servidor de imagens tiver (o tamanho achado fica guardado)."""
+    if not miniaturas:
+        return []
+    g = ler_json(CO_TAMANHO_ARQ, {}) or {}
+    mes = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat(timespec="seconds")
+    semana = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat(timespec="seconds")
+    troca = lambda u, t: re.sub(r"(/assets/uploads/flyers/\d+/)[A-Za-z0-9_]+/", r"\g<1>" + t + "/", u)  # noqa: E731
+    if g.get("pasta") and g.get("em", "") >= mes:
+        return [troca(u, g["pasta"]) for u in miniaturas]
+    if g.get("nenhum") and g.get("em", "") >= semana:
+        return []
+    melhor = None
+    for t in CO_TAMANHOS:
+        u = troca(miniaturas[0], t)
+        if not agreg_permite(u):
+            continue
+        try:
+            dado, _ = baixar(u, 6_000_000, timeout=15)
+        except Exception:  # noqa: BLE001
+            continue
+        wh = tamanho_imagem(dado)
+        if wh and wh[0] >= CO_LARGURA_MIN and (not melhor or wh[0] > melhor[1]):
+            melhor = (t, wh[0])
+            if wh[0] >= 1000:
+                break
+    gravar_json(CO_TAMANHO_ARQ, {"pasta": melhor[0], "largura": melhor[1], "em": agora()} if melhor else {"nenhum": True, "em": agora()})
+    log("Catálogos Ofertas: " + (f"páginas em {melhor[0]} ({melhor[1]} px)" if melhor else "só miniaturas, pequenas demais para ler"))
+    return [troca(u, melhor[0]) for u in miniaturas] if melhor else []
 
 
 def cidade_do_cep(cep, cache):
@@ -2193,7 +2327,7 @@ def bases_loja(nome, cache):
 
 
 def achar_folhetos(loja, cache):
-    """Acha a página da loja no Kimbino ou no Seus Folhetos e os folhetos válidos hoje: (agregador, url, folhetos)."""
+    """Acha a página da loja no Kimbino, no Seus Folhetos ou no Catálogos Ofertas e os folhetos válidos hoje: (agregador, url, folhetos)."""
     alvo = slug(loja["nome"], 40)
     bases = bases_loja(loja["nome"], cache)
     memo = cache.setdefault("_lojas", {})
@@ -2211,6 +2345,8 @@ def achar_folhetos(loja, cache):
         urls = urls or list(dict.fromkeys(agreg_base(a) + a["loja"].format(v.format(b)) for b in bases for v in a["variantes"]))
         achou = None
         for u in urls:
+            if a["id"] == "catalogosofertas" and not agreg_permite(u):
+                continue
             try:
                 html_txt = pagina_txt(u)
             except Exception:  # noqa: BLE001
@@ -2372,7 +2508,7 @@ def busca_folhetos(cfg, lojas, so_guardados=False, max_novas=MAX_FOLHETOS_NOVOS)
                 BUSCA["etapa"] = "folheto · " + loja["nome"]
                 a, _, cands = achar_folhetos(loja, cache)
                 if not cands:
-                    st["erro"] = "Não achei folheto desta semana no Kimbino nem no Seus Folhetos."
+                    st["erro"] = "Não achei folheto desta semana no Kimbino, no Seus Folhetos nem no Catálogos Ofertas."
                 else:
                     st["fonte"], st["folhetos"] = a["nome"], len(cands)
                     escolhidos = escolhe_folhetos(loja, a, cands, cache, cfg)
@@ -2388,7 +2524,8 @@ def busca_folhetos(cfg, lojas, so_guardados=False, max_novas=MAX_FOLHETOS_NOVOS)
                         else:
                             imgs = paginas_folheto(a, f)
                             if not imgs:
-                                st["erro"] = "Achei o folheto, mas não as páginas dele."
+                                st["erro"] = (f"Achei o folheto no {a['nome']}, mas só em miniatura, pequena demais para ler." if f.get("pequeno")
+                                              else "Achei o folheto, mas não as páginas dele.")
                                 continue
                             r = ler_folheto(loja, f, imgs, cfg)
                             novas += st["lidos"] == 0
@@ -2409,7 +2546,7 @@ def busca_folhetos(cfg, lojas, so_guardados=False, max_novas=MAX_FOLHETOS_NOVOS)
                 st["erro"] = None  # não está no Kimbino nem no Seus Folhetos: é o normal para muita loja
                 st["sem_folheto"] = True
             status[norm(loja["nome"])] = st
-            log(f"folheto de {loja['nome']}: " + ("não está no Kimbino nem no Seus Folhetos" if st.get("sem_folheto") else st["erro"] or f"{st['fonte']}, {st['lidos']} lido(s) agora, {st['guardados']} guardado(s), {st['ofertas']} oferta(s)"))
+            log(f"folheto de {loja['nome']}: " + ("não está no Kimbino, no Seus Folhetos nem no Catálogos Ofertas" if st.get("sem_folheto") else st["erro"] or f"{st['fonte']}, {st['lidos']} lido(s) agora, {st['guardados']} guardado(s), {st['ofertas']} oferta(s)"))
         if status:
             cache["_status"] = dict(cache.get("_status") or {}, **status)
         gravar_json(FOLHETOS, cache)
@@ -3417,7 +3554,7 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
                 st["como"] = "folheto_novo"
                 st["passos"].append(f"✓ Tem folheto da semana no {a['nome']}" + ("; a IA lê na próxima busca." if ia_ligada(cfg) else "; ler o folheto precisa da IA."))
             else:
-                st["passos"].append("✗ Sem folheto no Kimbino e no Seus Folhetos.")
+                st["passos"].append("✗ Sem folheto no Kimbino, no Seus Folhetos e no Catálogos Ofertas.")
     if not st["como"]:
         st["como"] = "ia" if ia_ligada(cfg) else "nenhum"
         st["passos"].append("Preço só pela busca na web com IA." if ia_ligada(cfg) else "✗ Sem IA, não há de onde tirar o preço desta loja.")
@@ -4177,7 +4314,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.14.7"
+    server_version = "EconomIA/0.14.8"
 
     def log_message(self, fmt, *args):
         pass

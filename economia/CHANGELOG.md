@@ -1,5 +1,11 @@
 # Mudanças
 
+## 0.14.8
+
+- **Catálogos Ofertas** entra como terceira fonte de folhetos, depois do Kimbino e do Seus Folhetos. Ele tem o encarte da **Droga Raia** (e de outras redes que não estão nos outros dois). O app abre só a página da loja e a do encarte, que o robots.txt do site libera, e confere essas regras antes de abrir.
+- A página do encarte traz só miniaturas de 260 px. O add-on procura sozinho o maior tamanho que o servidor de imagens tiver e guarda o que achou por 30 dias. Se só houver miniatura, o folheto não é mandado para a IA (não dá para ler preço nelas) e o app diz isso, em vez de gastar IA à toa.
+- Ler o folheto continua precisando da IA ligada: uma leitura por folheto, guardada até ele vencer.
+
 ## 0.14.7
 
 - A loja mostra o site que ela já tem, com link (ex.: "drogariadrogao.com.br"), ao lado do Mapa. O site é o que você informou, o do mapa ou o que o teste usou.
