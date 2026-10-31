@@ -239,6 +239,7 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .filters .f-sep{grid-column:1/-1;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:6px 0 0}
 .sh-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,12em),1fr));gap:8px}
 .sh-row label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
+.sh-row label .chip{margin-left:6px;vertical-align:1px}
 .deals{display:flex;flex-direction:column}
 .deal{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 14px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
 .deal:first-child{border-top:0}
@@ -1040,7 +1041,8 @@ html:not(.sem-ia) .so-semia{display:none!important}
               <button class="btn" type="submit">Salvar</button>
             </div>
             <div class="checks" id="catsCfg" role="group" aria-label="O que acompanhar"></div>
-            <p class="hint" id="ondeMsg">As lojas são procuradas a partir deste CEP.</p>
+            <div class="row-form"><button type="button" class="ghost big" id="acharLojas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Encontrar lojas no raio</button></div>
+            <p class="hint" id="ondeMsg">As lojas do raio vêm do mapa, a partir da localização da Casa no Home Assistant.</p>
           </form>
         </section>
         <section class="panel" aria-labelledby="h-casa">
@@ -1189,14 +1191,14 @@ html:not(.sem-ia) .so-semia{display:none!important}
       <div class="set-head"><h2 id="h-shopee"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6z"/><path d="M9 8a3 3 0 0 1 6 0"/><path d="M10 13.5c0 1 .9 1.5 2 1.5s2 .5 2 1.5-1 1.5-2 1.5-1.7-.4-2-1M14 13c-.3-.6-1-1-2-1"/></svg></span>Shopee Afiliados</h2><p class="sec-meta">Com o App ID e a senha da Open API do Shopee Afiliados, os preços da Shopee vêm direto da Shopee, sem IA. Pegue os dois em affiliate.shopee.com.br › Open API. Ficam guardados só neste Home Assistant e a senha não aparece de novo aqui.</p></div>
       <div class="sh-row">
         <label for="shApp">App ID<input class="field" id="shApp" inputmode="numeric" autocomplete="off" spellcheck="false"></label>
-        <label for="shSenha">Senha (Secret)<input class="field" id="shSenha" type="password" autocomplete="new-password" spellcheck="false"></label>
+        <label for="shSenha"><span>Senha (Secret) <span class="chip selo" id="shSenhaOk" hidden>Guardada</span></span><input class="field" id="shSenha" type="password" autocomplete="new-password" spellcheck="false"></label>
       </div>
       <div class="row-form"><button type="button" class="btn" id="shSalvar">Salvar e testar</button><button type="button" class="ghost big" id="shTestar">Testar</button><button type="button" class="ghost big" id="shApagar" hidden>Apagar</button></div>
       <p class="ia-st" id="shSt"></p>
     </section>
     <section class="panel settings" aria-labelledby="h-google">
       <div class="set-head"><h2 id="h-google"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg></span>Google Places (opcional)</h2><p class="sec-meta">As lojas do raio vêm do OpenStreetMap, de graça, mas ele pode não ter as lojas pequenas. Com uma chave do Google Places, o app usa também o Google Maps, uma vez por semana. O Google pede um cartão cadastrado, mas dá uma cota gratuita por mês que cobre esse uso. Crie a chave em console.cloud.google.com › APIs e serviços, com a Places API (New) ligada.</p></div>
-      <div class="sh-row"><label for="gKey">Chave<input class="field" id="gKey" type="password" autocomplete="off" spellcheck="false"></label></div>
+      <div class="sh-row"><label for="gKey"><span>Chave <span class="chip selo" id="gKeyOk" hidden>Guardada</span></span><input class="field" id="gKey" type="password" autocomplete="off" spellcheck="false"></label></div>
       <div class="row-form"><button type="button" class="btn" id="gSalvar">Salvar e testar</button><button type="button" class="ghost big" id="gTestar">Testar</button><button type="button" class="ghost big" id="gApagar" hidden>Apagar</button></div>
       <p class="ia-st" id="gSt"></p>
     </section>
@@ -1295,10 +1297,9 @@ html:not(.sem-ia) .so-semia{display:none!important}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.13.4</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.13.5</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
   </section>
 
-  <footer>Preço do site pode ser diferente do preço na loja. Confira validade e regras do cupom no carrinho.</footer>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 </div>
 
@@ -2937,17 +2938,27 @@ html:not(.sem-ia) .so-semia{display:none!important}
   $('opFolhetos').addEventListener('change', function(){ estado.opcoes.folhetos = this.checked; salvar(this.checked ? 'Folhetos ligados' : 'Folhetos desligados'); });
   $('onEntrega').addEventListener('change', function(){ estado.online.mercados_entrega = this.checked; salvar(this.checked ? 'Mercados que entregam: ligado' : 'Mercados que entregam: desligado'); });
 
+  // ----- chave guardada: o campo aparece preenchido (••••); tocar nele limpa para colar outra -----
+  var OCULTO = '••••••••••••••••';
+  function guardado(id, sim){
+    var el = $(id); el.value = sim ? OCULTO : ''; el.placeholder = sim ? '' : 'Cole aqui';
+    $(id + 'Ok').hidden = !sim;
+  }
+  ['shSenha', 'gKey'].forEach(function(id){
+    $(id).addEventListener('focus', function(){ if (this.value === OCULTO) this.value = ''; });
+    $(id).addEventListener('blur', function(){ if (!this.value && !$(id + 'Ok').hidden) this.value = OCULTO; });
+  });
   // ----- Shopee Afiliados: o App ID aparece; a senha fica só no Home Assistant -----
   function shSt(msg, ok){ var el = $('shSt'); el.className = 'ia-st' + (ok === true ? ' ok' : ok === false ? ' erro' : ''); el.textContent = msg; }
   function carregaShopee(){
     if (MODO !== 'addon'){ shSt('No Home Assistant, aqui você liga a Shopee com o App ID e a senha.'); gSt('No Home Assistant, aqui você liga o Google Maps com a chave.'); return; }
     fetch('api/integracoes', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
       var sh = j.shopee || {}, g = j.google || {};
-      $('gKey').value = ''; $('gKey').placeholder = g.tem_chave ? 'Guardada. Deixe em branco para manter' : '';
+      guardado('gKey', g.tem_chave);
       $('gApagar').hidden = !g.tem_chave;
       gSt(g.tem_chave ? 'Ligada: as lojas do raio vêm do OpenStreetMap e do Google Maps.' : 'Desligada: as lojas do raio vêm só do OpenStreetMap.', g.tem_chave ? true : null);
       $('shApp').value = sh.app_id || '';
-      $('shSenha').value = ''; $('shSenha').placeholder = sh.tem_senha ? 'Guardada. Deixe em branco para manter' : '';
+      guardado('shSenha', sh.tem_senha);
       $('shApagar').hidden = !sh.app_id;
       shSt(sh.app_id && sh.tem_senha ? 'Ligada. Os preços da Shopee vêm direto da Shopee.' : 'Desligada: a Shopee entra pela busca com IA.', sh.app_id && sh.tem_senha ? true : null);
     }).catch(function(){ shSt('Não consegui ler agora.'); });
@@ -2959,13 +2970,13 @@ html:not(.sem-ia) .so-semia{display:none!important}
   }
   $('shSalvar').addEventListener('click', function(){
     if (MODO !== 'addon'){ toast('Só no Home Assistant'); return; }
-    var app = $('shApp').value.replace(/\s/g, ''), senha = $('shSenha').value.trim();
+    var app = $('shApp').value.replace(/\s/g, ''), senha = $('shSenha').value === OCULTO ? '' : $('shSenha').value.trim();
     if (!app){ shSt('Escreva o App ID.', false); return; }
     fetch('api/integracoes', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({shopee:{app_id:app, secret:senha}})})
       .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
       .then(function(x){
         if (!x.ok){ shSt(x.j.erro || 'Não deu para salvar.', false); return; }
-        $('shSenha').value = ''; $('shSenha').placeholder = x.j.shopee.tem_senha ? 'Guardada. Deixe em branco para manter' : '';
+        guardado('shSenha', x.j.shopee.tem_senha);
         $('shApagar').hidden = false;
         if (x.j.shopee.tem_senha) testaShopee(); else shSt('Falta a senha.', false);
       }).catch(function(){ shSt('Sem conexão com o Home Assistant.', false); });
@@ -2980,10 +2991,10 @@ html:not(.sem-ia) .so-semia{display:none!important}
   }
   $('gSalvar').addEventListener('click', function(){
     if (MODO !== 'addon'){ toast('Só no Home Assistant'); return; }
-    var k = $('gKey').value.replace(/\s/g, '');
-    if (!k){ gSt('Cole a chave do Google.', false); return; }
+    var k = $('gKey').value === OCULTO ? '' : $('gKey').value.replace(/\s/g, '');
+    if (!k){ if ($('gKey').value === OCULTO) testaGoogle(); else gSt('Cole a chave do Google.', false); return; }
     fetch('api/integracoes', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({google:{key:k}})})
-      .then(function(r){ return r.json(); }).then(function(){ $('gKey').value = ''; $('gKey').placeholder = 'Guardada. Deixe em branco para manter'; $('gApagar').hidden = false; testaGoogle(); })
+      .then(function(r){ return r.json(); }).then(function(){ guardado('gKey', true); $('gApagar').hidden = false; testaGoogle(); })
       .catch(function(){ gSt('Sem conexão com o Home Assistant.', false); });
   });
   $('gTestar').addEventListener('click', function(){ if (MODO === 'addon') testaGoogle(); else toast('Só no Home Assistant'); });
@@ -3275,8 +3286,24 @@ html:not(.sem-ia) .so-semia{display:none!important}
     if (cep.replace('-', '').length !== 8){ msg.className = 'hint err'; msg.textContent = 'Digite os 8 números do CEP.'; $('cep').focus(); return; }
     if (!cats.length){ msg.className = 'hint err'; msg.textContent = 'Marque pelo menos um tipo de loja.'; return; }
     estado.cep = cep; estado.raio_km = Number($('raio').value); estado.categorias = cats;
-    msg.className = 'hint ok'; msg.textContent = 'Salvo. Toque em Buscar, no menu de baixo, para procurar as lojas perto deste CEP.';
+    msg.className = 'hint ok'; msg.textContent = 'Salvo. Toque em Encontrar lojas no raio para registrar as lojas, ou em Buscar para os preços.';
     salvar('Endereço salvo'); tudo();
+  });
+
+  // Encontrar lojas: só o mapa, na hora, sem buscar preços
+  $('acharLojas').addEventListener('click', function(){
+    var b = this, msg = $('ondeMsg');
+    if (MODO !== 'addon'){ toast('No Home Assistant, este botão registra as lojas do raio pelo mapa.'); return; }
+    var cats = Array.prototype.filter.call($('catsCfg').querySelectorAll('input'), function(i){ return i.checked; }).map(function(i){ return i.value; });
+    b.disabled = true; msg.className = 'hint'; msg.textContent = 'Procurando as lojas do raio no mapa…';
+    fetch('api/lojas-mapa/atualizar', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({raio_km:Number($('raio').value), categorias:cats})})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        b.disabled = false; msg.className = 'hint ' + (j.ok ? 'ok' : 'err');
+        msg.innerHTML = esc(j.msg || 'Sem resposta.') + (j.ok ? ' <button type="button" class="linkbtn" data-ir="lojasSec">Ver lojas</button>' : '');
+        if (j.ok) recarrega();
+      })
+      .catch(function(){ b.disabled = false; msg.className = 'hint err'; msg.textContent = 'Sem conexão com o Home Assistant. Tente de novo.'; });
   });
 
   // ---------- início ----------
@@ -3326,7 +3353,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.13.4' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.13.5' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

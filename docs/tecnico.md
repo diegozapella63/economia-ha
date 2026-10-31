@@ -46,6 +46,7 @@ O botão **Buscar** chama `ai_task.generate_data` pela API do Home Assistant (`h
 | GET | `/api/integracoes` | `{shopee: {app_id, tem_senha}}`. A senha nunca sai do add-on. |
 | PUT | `/api/integracoes` | `{shopee: {app_id, secret}}` grava em `segredos.json` (modo 600); `secret` vazio mantém a senha guardada; `{shopee: null}` apaga. |
 | POST | `/api/integracoes/testar` | `{servico: "shopee"}` → `{ok, msg}`: uma consulta de teste na Open API. |
+| POST | `/api/lojas-mapa/atualizar` | `{raio_km, categorias}`: lê o mapa agora (`forcar`) e junta as lojas ao `ofertas.json` (`mesclar_resultado` com `mapa`), sem buscar preços. Devolve `{ok, msg, lojas: {categoria: n}}`. |
 | GET | `/api/lojas-mapa` | `{fontes, em, lojas: {categoria: [{nome, endereco, distancia_km, fonte}]}}`: as lojas do raio pelo mapa. |
 | GET | `/api/folhetos` | `{lojas: [{nome, categoria, status: {fonte, folhetos, lidos, guardados, ofertas, ate, erro, em}}]}`. |
 | GET | `/api/exportar/ofertas.json` | O `ofertas.json` da última busca. |

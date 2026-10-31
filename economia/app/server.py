@@ -25,6 +25,7 @@ Rotas:
 - POST /api/integracoes/testar   {"servico": "shopee"} faz uma consulta de teste
 - GET  /api/folhetos   lojas com folheto lido no Kimbino ou no Seus Folhetos e como foi a última leitura
 - GET  /api/lojas-mapa   lojas do raio pelo mapa (OpenStreetMap e, com chave, Google Places)
+- POST /api/lojas-mapa/atualizar   {"raio_km", "categorias"}: lê o mapa agora e registra as lojas, sem buscar preços
 - POST /api/ler-encarte   {"imagens": [...], "loja", "categoria"}: a IA lê o encarte ou o print de preços e junta ao resultado
 - POST /api/versoes/guardar {"motivo"} | /api/versoes/restaurar {"nome"}
 - GET  /api/busca    andamento da busca
@@ -1733,7 +1734,7 @@ def busca_direta(cfg, itens=None, cats=("mercados",)):
             log(f"busca direta {loja['nome']}: não atende o CEP {cfg.get('cep')}")
             continue
         cat_id = loja.get("categoria") or "mercados"
-        BUSCA["etapa"] = "preços no site do " + loja["nome"]
+        BUSCA["etapa"] = "preços no site · " + loja["nome"]
         n = 0
         for nome in nomes:
             try:
@@ -2113,7 +2114,7 @@ def escolhe_folhetos(loja, a, cands, cache, cfg):
             capas.append((f, dado, t))
         for i in range(0, len(capas), 8):
             grupo = capas[i:i + 8]
-            BUSCA["etapa"] = f"capas dos folhetos de {loja['nome']}"
+            BUSCA["etapa"] = f"capas dos folhetos · {loja['nome']}"
             try:
                 r = ia_com_arquivos(f"EconomIA: capas de {loja['nome']}", instrucoes_capas(loja, len(grupo), cidade, uf, cfg),
                                     [(d, t) for _, d, t in grupo])
@@ -2213,7 +2214,7 @@ def ler_folheto(loja, f, imgs, cfg):
     nomes = nomes_da_lista(cfg)
     for i in range(0, len(dados), 8):
         parte = dados[i:i + 8]
-        BUSCA["etapa"] = f"folheto de {loja['nome']}" + (f" ({i // 8 + 1}ª parte)" if len(dados) > 8 else "")
+        BUSCA["etapa"] = f"folheto · {loja['nome']}" + (f" ({i // 8 + 1}ª parte)" if len(dados) > 8 else "")
         r = ia_com_arquivos(f"EconomIA: folheto {loja['nome']}", instrucoes_encarte(dict(loja, site=f["url"]), "", len(parte), cfg), parte)
         r = r if isinstance(r, dict) else {}
         junto["validade"] = junto["validade"] or data_ok(r.get("validade"))
@@ -2319,7 +2320,7 @@ def busca_folhetos(cfg, lojas, so_guardados=False, max_novas=MAX_FOLHETOS_NOVOS)
                 continue
             st = {"loja": loja["nome"], "fonte": None, "folhetos": 0, "lidos": 0, "guardados": 0, "ofertas": 0, "ate": None, "erro": None, "em": agora()}
             try:
-                BUSCA["etapa"] = "folheto de " + loja["nome"]
+                BUSCA["etapa"] = "folheto · " + loja["nome"]
                 a, _, cands = achar_folhetos(loja, cache)
                 if not cands:
                     st["erro"] = "Não achei folheto desta semana no Kimbino nem no Seus Folhetos."
@@ -2566,7 +2567,7 @@ def busca_catalogos(cfg, itens=None, cats=None):
             cat_id = "online"  # fora do raio: mercado que entrega
         if cats and cat_id not in cats:
             continue
-        BUSCA["etapa"] = "lista de produtos do " + m["nome"]
+        BUSCA["etapa"] = "lista de produtos · " + m["nome"]
         try:
             cat = baixa_catalogo(origem, m)
         except Exception as e:  # noqa: BLE001
@@ -2574,7 +2575,7 @@ def busca_catalogos(cfg, itens=None, cats=None):
             continue
         if not cat.get("urls"):
             continue
-        BUSCA["etapa"] = "preços no site do " + m["nome"]
+        BUSCA["etapa"] = "preços no site · " + m["nome"]
         lista_bruta, n = [], 0
         for nome in nomes:
             cands = []
@@ -2767,6 +2768,10 @@ def mapa_txt(cfg, cat_id):
 
 def aplica_mapa(categorias, mapa, cfg):
     """Endereço e distância de verdade nas lojas (filial mais perto) e as lojas do mapa que a busca não trouxe."""
+    for cid in mapa:
+        if mapa[cid] and cid in CATEGORIAS and not any(c.get("id") == cid for c in categorias):
+            categorias.append({"id": cid, "nome": CATEGORIAS[cid]["nome"], "singular": CATEGORIAS[cid]["singular"],
+                               "redes": [], "lojas": [], "cupons": [], "ofertas": [], "contas": []})
     for cat in categorias:
         lojas_m = mapa.get(cat.get("id")) or []
         if not lojas_m:
@@ -2789,6 +2794,33 @@ def aplica_mapa(categorias, mapa, cfg):
             cat.setdefault("redes", []).append({"id": rid, "nome": m["nome"], "curto": m["nome"][:16]})
             cat.setdefault("lojas", []).append({"rede": rid, "distancia_km": m["distancia_km"], "horario": "", "endereco": m.get("endereco"), "fontes": ["Mapa"]})
         cat["lojas"] = sorted(cat.get("lojas") or [], key=lambda l: l["distancia_km"] if l.get("distancia_km") is not None else 99)
+
+
+def atualizar_lojas_mapa(dado):
+    """O botão Encontrar lojas: lê o mapa agora e registra as lojas do raio, sem buscar preços."""
+    cfg = ler_config()
+    try:
+        if dado.get("raio_km"):
+            cfg = dict(cfg, raio_km=float(dado["raio_km"]))
+    except (TypeError, ValueError):
+        pass
+    cats = [c for c in (dado.get("categorias") or cfg.get("categorias") or list(CATEGORIAS)) if c in OSM_TIPOS]
+    if not cats:
+        return {"ok": False, "msg": "Marque farmácias, mercados ou pet shops."}
+    try:
+        casa(cfg)
+    except Exception:  # noqa: BLE001
+        return {"ok": False, "msg": "Não achei a localização da Casa no Home Assistant. Confira em Configurações › Sistema › Geral."}
+    mapa = lojas_do_mapa(cfg, cats, forcar=True)
+    if not any(mapa.values()):
+        return {"ok": False, "msg": "O mapa não respondeu agora ou não achou lojas no raio. Tente de novo em alguns minutos ou aumente a distância."}
+    mesclar_resultado([], cfg, mapa=mapa)
+    partes = [f"{len(v)} {CATEGORIAS[c]['nome'].lower()}" for c, v in mapa.items() if v]
+    txt = partes[0] if len(partes) == 1 else ", ".join(partes[:-1]) + " e " + partes[-1]
+    fontes = (ler_json(LOJAS_MAPA, {}) or {}).get("fontes") or []
+    raio = str(cfg.get("raio_km") or 2).replace(".0", "")
+    return {"ok": True, "msg": f"Achei {txt} até {raio} km ({' e '.join(fontes)}).",
+            "lojas": {c: len(v) for c, v in mapa.items()}}
 
 
 def testar_google():
@@ -2919,7 +2951,7 @@ def buscar():
         _uso_local.chamadas = 0
         ia = ia_ligada(cfg)
         # primeiro o que não gasta IA: site das lojas, Shopee e folhetos guardados
-        BUSCA["etapa"] = "sites das lojas"
+        BUSCA.update({"etapa": "sites das lojas", "total": 0})
         scripts, rel_s, ja = busca_scripts(cfg, cats, ler_folhetos=ia)
         relatorio.update(rel_s)
         BUSCA["etapa"] = "lojas do raio no mapa"
@@ -2936,6 +2968,7 @@ def buscar():
             log("busca sem IA: " + (", ".join(rel_s) or "nenhum site trouxe preço") + (", mapa atualizado" if mapa else ""))
             return
         cfg_ia = dict(cfg, _ja_tenho=ja, _mapa=mapa)
+        BUSCA["total"] = len(cats)
         for i, cat_id in enumerate(cats, 1):
             BUSCA.update({"atual": i, "etapa": CATEGORIAS[cat_id]["nome"].lower()})
             if cat_id == "online" and not mkts_online(cfg) and not entrega_ligada(cfg):
@@ -3478,7 +3511,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.13.4"
+    server_version = "EconomIA/0.13.5"
 
     def log_message(self, fmt, *args):
         pass
@@ -3690,6 +3723,15 @@ class Painel(BaseHTTPRequestHandler):
                 return self._json(200, voz_texto(self.rfile.read(tamanho)))
             except ErroBusca as e:
                 return self._json(400, {"erro": str(e)})
+        if urllib.parse.urlsplit(self.path).path == "/api/lojas-mapa/atualizar":
+            if BUSCA["rodando"]:
+                return self._json(200, {"ok": False, "msg": "Espere a busca terminar."})
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+                dado = json.loads(self.rfile.read(n) or b"{}") if 0 < n < 20000 else {}
+            except (ValueError, OSError):
+                dado = {}
+            return self._json(200, atualizar_lojas_mapa(dado if isinstance(dado, dict) else {}))
         if urllib.parse.urlsplit(self.path).path == "/api/integracoes/testar":
             try:
                 n = int(self.headers.get("Content-Length") or 0)

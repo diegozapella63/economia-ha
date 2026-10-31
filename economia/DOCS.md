@@ -14,7 +14,7 @@ O EconomIA usa a IA do próprio Home Assistant (Anthropic Claude, OpenAI, Google
 ## Como usar
 
 1. Abra **EconomIA** no menu lateral do Home Assistant.
-2. Em **Mais › Casa**, preencha o CEP, quem mora na casa (incluindo quantos pets), restrições, interesses e os dias em que você costuma comprar.
+2. Em **Mais › Casa**, preencha o CEP e a distância e toque em **Encontrar lojas no raio** para registrar as lojas perto de casa pelo mapa. Preencha também quem mora na casa (incluindo quantos pets), restrições, interesses e os dias em que você costuma comprar.
 3. Em **Minha lista**, adicione o que você compra sempre, pelo campo do topo, por **Escolher fotos**, por **Colar mensagem** ou por **Falar**. Toque em **Comprei hoje** quando comprar: o painel aprende de quanto em quanto tempo cada coisa acaba. **Limpar lista** apaga tudo, com opção de desfazer.
 4. Toque em **Buscar**, no centro do menu de baixo. A busca leva alguns minutos e você pode continuar usando o painel.
 5. Em **Ofertas**, use **Não mostrar** em qualquer oferta que não faça sentido para você. Cada oferta tem um link para a fonte.

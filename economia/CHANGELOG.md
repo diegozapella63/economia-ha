@@ -1,5 +1,12 @@
 # Mudanças
 
+## 0.13.5
+
+- **Encontrar lojas no raio**, em Mais › Casa › Onde: lê o mapa (OpenStreetMap e, com chave, Google Maps) na hora e registra as lojas do raio em Mais › Lojas, sem buscar preços e sem IA. Funciona antes da primeira busca e usa a distância escolhida, mesmo antes de salvar.
+- Chave guardada aparece preenchida (••••) e com o selo **Guardada** (senha da Shopee e chave do Google). Tocar no campo limpa para colar outra.
+- Sai o rodapé "Preço do site pode ser diferente do preço na loja".
+- O andamento da busca não mostra mais "(0 de 4)" nas etapas sem IA, e os nomes ficam no formato "preços no site · Drogaria Catarinense".
+
 ## 0.13.4
 
 - Com a IA desligada, o passo a passo da busca (fim de Mais › Lojas) não diz mais que a IA lê os folhetos: a etapa vira **Folhetos já lidos**, explicando que só entram os que foram lidos com a IA ligada, e a nota final diz como ligar a IA.
