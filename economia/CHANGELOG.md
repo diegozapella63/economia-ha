@@ -1,5 +1,12 @@
 # Mudanças
 
+## 0.14.6
+
+- "Como foi testado" mostra qual site e qual página foram testados ("O site drogao….com.br não publica a lista de produtos", "Não achei preços no texto da página …").
+- Quando o "site" da loja no Google ou no OpenStreetMap é Instagram, Facebook, WhatsApp, Linktree ou iFood, o app não testa como site e diz isso no "Como foi testado".
+- Lojas registradas antes com o nome todo em maiúsculas ("DROGARIA DROGÃO JOINVILLE") passam a aparecer com o nome normal.
+- Texto do erro do site mais limpo: "recusou o acesso de programas (erro 403). Tento de novo amanhã."
+
 ## 0.14.5
 
 - **Preço pela página do site, sem IA.** Farmácias e mercados pequenos que mostram os produtos e os preços na própria página (como a Drogaria Floresta, "Comprar pelo WhatsApp") agora têm preço sem IA. O app lê o texto da página que você informou em Adicionar site de ofertas (ou a página inicial e a página de ofertas ligada a ela), acha os cartões "produto + R$" (também dados schema.org e os dados que a página traz em JSON) e procura os itens da lista neles. A loja aparece com **Preço pela página do site** e um exemplo. Vale o robots.txt; cada página é lida no máximo a cada 12 horas.

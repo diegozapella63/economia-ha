@@ -2910,6 +2910,27 @@ PALAVRAS_LOJA = {"farmacia", "farmacias", "drogaria", "drogarias", "droga", "sup
                  "super", "hiper", "de", "do", "da", "dos", "das", "e", "ltda", "me", "filial", "unidade"}
 
 
+REDES_SOCIAIS = {"instagram.com": "o Instagram", "facebook.com": "o Facebook", "fb.com": "o Facebook", "wa.me": "o WhatsApp",
+                 "whatsapp.com": "o WhatsApp", "linktr.ee": "um Linktree", "tiktok.com": "o TikTok", "youtube.com": "o YouTube",
+                 "ifood.com.br": "o iFood", "rappi.com.br": "o Rappi", "business.site": "uma página do Google", "g.page": "uma página do Google"}
+
+
+def rede_social(u):
+    """"o Instagram" quando o "site" da loja no mapa é rede social, WhatsApp ou app de entrega (não tem preço para ler)."""
+    if not url_ok(u):
+        return None
+    h = urllib.parse.urlsplit(u).netloc.lower().split(":")[0]
+    return next((v for k, v in REDES_SOCIAIS.items() if h == k or h.endswith("." + k)), None)
+
+
+def site_loja(u):
+    return u if url_ok(u) and not rede_social(u) else None
+
+
+def social_loja(u):
+    return u if rede_social(u) else None
+
+
 def da_categoria(cat, nome, primario=None):
     """A loja é mesmo desta categoria? ("Vanilla Pet Center" e "Farmácia Veterinária" não entram em farmácias.)"""
     if primario and primario in OUTRA_CATEGORIA.get(cat, ()):
@@ -2974,7 +2995,8 @@ def osm_lojas(lat, lon, raio_m, cats):
         out.append({"nome": nome, "categoria": cat, "endereco": ", ".join(x for x in [rua, bairro] if x) or None,
                     "distancia_km": km_entre(lat, lon, float(la), float(lo)), "fonte": "OpenStreetMap",
                     "lat": round(float(la), 6), "lon": round(float(lo), 6),
-                    "site": next((u for u in (t.get("website"), t.get("contact:website"), t.get("brand:website")) if url_ok(u)), None)})
+                    "site": next((u for u in (t.get("website"), t.get("contact:website"), t.get("brand:website")) if site_loja(u)), None),
+                    "social": next((u for u in (t.get("website"), t.get("contact:website"), t.get("contact:instagram")) if social_loja(u)), None)})
     return out
 
 
@@ -3007,7 +3029,7 @@ def google_lojas(lat, lon, raio_m, cats, chave):
             out.append({"nome": nome, "categoria": cat, "endereco": texto(pl.get("shortFormattedAddress") or pl.get("formattedAddress"), 90),
                         "distancia_km": km_entre(lat, lon, loc["latitude"], loc["longitude"]), "fonte": "Google",
                         "lat": round(float(loc["latitude"]), 6), "lon": round(float(loc["longitude"]), 6), "place_id": texto(pl.get("id"), 200),
-                        "site": pl.get("websiteUri") if url_ok(pl.get("websiteUri")) else None})
+                        "site": site_loja(pl.get("websiteUri")), "social": social_loja(pl.get("websiteUri"))})
     return out
 
 
@@ -3065,7 +3087,7 @@ def google_varredura(lat, lon, raio_m, cats, chave, paginas=3):
                     dentro += 1
                     out.append({"nome": nome, "categoria": cat, "endereco": texto(pl.get("shortFormattedAddress") or pl.get("formattedAddress"), 90),
                                 "distancia_km": km, "fonte": "Google", "lat": round(float(loc["latitude"]), 6), "lon": round(float(loc["longitude"]), 6),
-                                "place_id": texto(pl.get("id"), 200), "site": pl.get("websiteUri") if url_ok(pl.get("websiteUri")) else None})
+                                "place_id": texto(pl.get("id"), 200), "site": site_loja(pl.get("websiteUri")), "social": social_loja(pl.get("websiteUri"))})
                 if not d.get("nextPageToken") or not dentro:
                     break
                 corpo = dict(corpo, pageToken=d["nextPageToken"])
@@ -3086,7 +3108,7 @@ def google_site(nome, lat, lon, chave):
         if loc.get("latitude") is None or not mesma_loja(nome, (pl.get("displayName") or {}).get("text") or ""):
             continue
         if km_entre(lat, lon, loc["latitude"], loc["longitude"]) <= 0.4:
-            return {"site": pl.get("websiteUri") if url_ok(pl.get("websiteUri")) else None, "place_id": texto(pl.get("id"), 200)}
+            return {"site": site_loja(pl.get("websiteUri")), "social": social_loja(pl.get("websiteUri")), "place_id": texto(pl.get("id"), 200)}
     return {}
 
 
@@ -3137,8 +3159,9 @@ def lojas_do_mapa(cfg, cats, forcar=False):
         if igual is None:
             lista.append(l)
         else:
-            if not igual.get("site") and l.get("site"):
-                igual["site"] = l["site"]
+            for k in ("site", "social"):
+                if not igual.get(k) and l.get(k):
+                    igual[k] = l[k]
         if igual is not None and l["distancia_km"] < igual["distancia_km"] - 0.05:  # a filial mais perto da mesma rede
             igual.update({k: l.get(k) for k in ("endereco", "distancia_km", "lat", "lon", "place_id")})
     for c in lojas:
@@ -3160,7 +3183,7 @@ def lojas_do_mapa(cfg, cats, forcar=False):
                 except Exception as e:  # noqa: BLE001
                     log(f"mapa: site de {l['nome']} no Google: {e}")
                     break
-            for k in ("site", "place_id"):
+            for k in ("site", "social", "place_id"):
                 if sites[ks].get(k) and not l.get(k):
                     l[k] = sites[ks][k]
     gravar_json(LOJAS_MAPA, {"chave": chave, "em": agora(), "fontes": fontes, "lojas": lojas, "sites": sites})
@@ -3185,6 +3208,10 @@ def aplica_mapa(categorias, mapa, cfg, marcar_novas=False):
                                "redes": [], "lojas": [], "cupons": [], "ofertas": [], "contas": []})
     for cat in categorias:
         lojas_m = mapa.get(cat.get("id")) or []
+        for r in cat.get("redes") or []:  # "DROGARIA DROGÃO JOINVILLE", registrada antes assim, vira "Drogaria Drogão Joinville"
+            if r.get("nome") and r["nome"] == r["nome"].upper():
+                r["nome"] = nome_bonito(r["nome"])
+                r["curto"] = r["nome"][:16]
         nomes = {r["id"]: r["nome"] for r in cat.get("redes") or []}
         if cat.get("lojas"):  # registradas antes pelo mapa, mas de outra categoria (pet shop nas farmácias): saem
             cat["lojas"] = [l for l in cat["lojas"] if not (set(l.get("fontes") or []) <= {"Mapa"}
@@ -3198,7 +3225,10 @@ def aplica_mapa(categorias, mapa, cfg, marcar_novas=False):
                 usadas.add(m["nome"])
                 l["distancia_km"], l["endereco"] = m["distancia_km"], m.get("endereco") or l.get("endereco")
                 l["fontes"] = sorted(set(l.get("fontes") or []) | {"Mapa"})
-                l.update({k: m[k] for k in ("lat", "lon", "place_id") if m.get(k)})
+                l.update({k: m[k] for k in ("lat", "lon", "place_id", "social") if m.get(k)})
+                if not site_loja(l.get("site")) and l.get("site"):
+                    l["social"] = l.get("social") or social_loja(l["site"])
+                    l.pop("site", None)
                 if m.get("site") and not url_ok(l.get("site")):
                     l["site"] = m["site"]
         for m in lojas_m:
@@ -3210,7 +3240,7 @@ def aplica_mapa(categorias, mapa, cfg, marcar_novas=False):
             nomes[rid] = m["nome"]
             cat.setdefault("redes", []).append({"id": rid, "nome": m["nome"], "curto": m["nome"][:16]})
             nova = {"rede": rid, "distancia_km": m["distancia_km"], "horario": "", "endereco": m.get("endereco"), "fontes": ["Mapa"]}
-            nova.update({k: m[k] for k in ("lat", "lon", "place_id", "site") if m.get(k)})
+            nova.update({k: m[k] for k in ("lat", "lon", "place_id", "site", "social") if m.get(k)})
             if marcar_novas:
                 nova["nova"] = True  # registrada pelo Encontrar lojas: os preços vêm na próxima busca
             cat.setdefault("lojas", []).append(nova)
@@ -3286,7 +3316,7 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
     manual = next((a["site"] for a in ((cfg.get("lojas") or {}).get("adicionar") or [])
                    if isinstance(a, dict) and url_ok(a.get("site")) and texto(a.get("nome"), 60)
                    and mesma_loja(texto(a["nome"], 60).split(",")[0], nome)), None)
-    site = manual or (l.get("site") if url_ok(l.get("site")) else site_da_rede(nome, cidade))
+    site = manual or site_loja(l.get("site")) or site_da_rede(nome, cidade)
     if site:
         o = origem_de(site)
         st["site"] = o.split("://", 1)[-1].replace("www.", "")
@@ -3295,7 +3325,7 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
         if not m or m.get("sem_resposta"):  # no Encontrar lojas, site que falhou é testado de novo na hora
             m = memo[o] = dict(testa_site(o, cfg.get("cep")), nome=nome, categoria=cat_id)
         if m.get("sem_resposta"):
-            st["passos"].append(f"✗ O site {st['site']} {m.get('erro') or 'não respondeu'} (tento de novo amanhã).")
+            st["passos"].append(f"✗ O site {st['site']} {m.get('erro') or 'não respondeu'}. Tento de novo amanhã.")
         elif m.get("vtex") and m.get("permite"):
             k = chave_direta(o)
             if not k:
@@ -3330,7 +3360,7 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
             except Exception:  # noqa: BLE001
                 cat = {"urls": []}
             if not cat.get("urls"):
-                st["passos"].append("✗ O site não publica a lista de produtos (sitemap).")
+                st["passos"].append(f"✗ O site {st['site']} não publica a lista de produtos (sitemap).")
             else:
                 st["passos"].append(f"✓ Lista de produtos do site: {len(cat['urls'])} páginas.")
                 achou = None
@@ -3365,7 +3395,11 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
                     st["passos"].append(f"✓ Achei \"{termo}\": {st['exemplo']}." if alvo else
                                         f"Não tem \"{termo}\" nas ofertas de hoje. A cada busca, os itens da sua lista são procurados nelas.")
                 elif lidas:
-                    st["passos"].append("✗ Não achei preços no texto da página do site (podem ser carregados depois, só no navegador).")
+                    st["passos"].append(f"✗ Não achei preços no texto da página {lidas[0].split('://', 1)[-1][:50]} (o site pode montar os preços depois, só no navegador).")
+    elif rede_social(l.get("social") or l.get("site")):
+        u = l.get("social") or l.get("site")
+        st["passos"].append(f"✗ O site desta loja no mapa é {rede_social(u)} ({u.split('://', 1)[-1][:40]}), sem preços para ler. "
+                            "Se ela tiver site de verdade, dá para informar em Adicionar site de ofertas.")
     else:
         st["passos"].append("✗ Não sei o site desta loja (o mapa não traz). Dá para informar em Adicionar site de ofertas.")
     if not st["como"]:
@@ -4143,7 +4177,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.14.5"
+    server_version = "EconomIA/0.14.6"
 
     def log_message(self, fmt, *args):
         pass
