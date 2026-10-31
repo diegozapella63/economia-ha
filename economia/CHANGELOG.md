@@ -1,5 +1,10 @@
 # Mudanças
 
+## 0.14.7
+
+- A loja mostra o site que ela já tem, com link (ex.: "drogariadrogao.com.br"), ao lado do Mapa. O site é o que você informou, o do mapa ou o que o teste usou.
+- Com site, o botão diz **Trocar site** (e o campo já vem com o endereço). "Adicionar site de ofertas" só aparece quando a loja não tem site.
+
 ## 0.14.6
 
 - "Como foi testado" mostra qual site e qual página foram testados ("O site drogao….com.br não publica a lista de produtos", "Não achei preços no texto da página …").
