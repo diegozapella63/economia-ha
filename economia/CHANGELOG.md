@@ -1,5 +1,9 @@
 # Mudanças
 
+## 0.15.1
+
+- **Para falar** com opções, como "Para ler fotos": em Mais › Integrações › IA do Home Assistant, escolha qual fala para texto o Falar usa. A lista traz os assistentes de voz do Home Assistant que têm fala para texto (com o nome do motor, por exemplo "Assistente: Home Assistant (Home Assistant Cloud)") e as outras entidades de fala para texto (por exemplo "Google Generative AI STT"). No padrão, continua o assistente de voz preferido do Home Assistant. Se a escolhida sumir, o app volta para o padrão e avisa.
+
 ## 0.15.0
 
 - **Instagram (opcional), em Mais › Integrações.** Muito mercado do bairro posta o encarte só no Instagram, como o Boi Dourado. Com uma chave da Meta, o app olha os posts das lojas que você acompanha (API oficial do Instagram, "Business Discovery"). Post de oferta dos últimos 8 dias, pela legenda, é lido uma vez pela IA, como o folheto, e os preços ficam guardados até a validade do encarte. Precisa de uma conta profissional do Instagram ligada a uma página do Facebook, e a loja precisa ter conta comercial. Passo a passo no DOCS.

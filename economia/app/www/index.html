@@ -1194,8 +1194,10 @@ html:not(.sem-ia) .so-semia{display:none!important}
       <div class="row-form"><button type="button" class="ghost big" id="iaTestar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>Verificar de novo</button></div>
       <p class="hint">Google Gemini: a Pesquisa Google funciona num <b>assistente de conversa</b> com "Enable Google Search tool" ligado e "Controlar o Home Assistant" em nenhum. Escolha esse assistente em "Para buscar ofertas" e deixe o Google AI Task para ler fotos.</p>
       <div class="set-row">
-        <div><h3 class="set-t">Falar</h3><p class="ia-st" id="vozSt">Verificando o assistente de voz…</p></div>
+        <div><h3 class="set-t"><label for="iaVoz">Para falar</label></h3><p class="ia-st" id="vozSt">Verificando o assistente de voz…</p></div>
+        <select class="field" id="iaVoz"></select>
       </div>
+      <p class="hint">A fala vira texto pela fala para texto escolhida aqui (a de um assistente de voz do Home Assistant ou outra). Depois, a IA de "Para ler fotos" separa os itens.</p>
       </div>
     </section>
     <section class="panel settings" aria-labelledby="h-shopee">
@@ -1315,7 +1317,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.15.0</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.15.1</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -1443,7 +1445,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       lista: arr(c.lista).map(function(i){ return typeof i === 'string' ? {produto:i, compras:[]} : {produto:String(i.produto || ''), compras:arr(i.compras), origem:i.origem === 'ha' ? 'ha' : undefined}; }).filter(function(i){ return i.produto; }),
       perfil: {adultos:n0(p.adultos, 1), criancas:n0(p.criancas, 0), bebes:n0(p.bebes, 0), pets:petsDe(p.pets), restricoes:arr(p.restricoes), interesses:arr(p.interesses), nunca:arr(p.nunca)},
       cotidiano: {mercado:arr(r.mercado), farmacia:arr(r.farmacia), avisar:r.avisar || 'vespera', estoque:['pouco', 'normal', 'bastante'].indexOf(r.estoque) >= 0 ? r.estoque : 'normal'},
-      ia: {busca:String((c.ia || {}).busca || ''), fotos:String((c.ia || {}).fotos || '')},
+      ia: {busca:String((c.ia || {}).busca || ''), fotos:String((c.ia || {}).fotos || ''), voz:String((c.ia || {}).voz || '')},
       clubes: arr(c.clubes),
       cupons_meus: arr(c.cupons_meus).filter(function(k){ return k && k.beneficio && k.rede; }),
       roteiro: {paradas:Math.min(4, Math.max(1, Math.round(Number(ro.paradas)) || 2)), escopo:ro.escopo === 'acabando' ? 'acabando' : 'tudo', online:ro.online !== false},
@@ -2282,15 +2284,24 @@ html:not(.sem-ia) .so-semia{display:none!important}
   function pintaVoz(){
     var ok = vozPronta();
     [].forEach.call(document.querySelectorAll('.so-voz'), function(el){ el.hidden = !ok; });
-    var el = $('vozSt'), v = VOZ_ST;
-    el.className = 'ia-st' + (v && v.pronta ? ' ok' : '');
+    var el = $('vozSt'), v = VOZ_ST, sel = $('iaVoz'), ops = arr(v && v.opcoes);
+    sel.innerHTML = '<option value="">Padrão do Home Assistant (assistente preferido)</option>'
+      + ops.map(function(o){ return '<option value="' + esc(o.id) + '">' + esc(o.nome + (o.preferido ? ' · preferido' : '')) + '</option>'; }).join('')
+      + (estado.ia.voz && !ops.some(function(o){ return o.id === estado.ia.voz; }) ? '<option value="' + esc(estado.ia.voz) + '">' + esc(estado.ia.voz) + ' (não existe mais)</option>' : '');
+    sel.value = estado.ia.voz || '';
+    sel.disabled = !ops.length;
+    el.className = 'ia-st' + (v && v.pronta ? ' ok' : v && v.pronta === false ? ' erro' : '');
     el.textContent = !v ? 'Verificando o assistente de voz…'
-      : v.pronta ? 'Pronto, com ' + (v.nome || 'a fala para texto do Home Assistant') + '. O microfone fica no alto da tela; fale os itens e a IA separa cada um para você conferir.'
+      : v.pronta ? (v.escolha_sumiu ? 'A fala para texto escolhida não existe mais; usando ' : 'Usando ') + (v.nome || 'a fala para texto do Home Assistant') + '. O microfone fica no alto da tela.'
         : (v.motivo || 'Não está pronto.');
   }
   function carregaVoz(){
     if (!iaOn()){ VOZ_ST = null; pintaVoz(); return; }
-    if (MODO !== 'addon'){ VOZ_ST = {pronta:true, nome:'a fala simulada do exemplo'}; pintaVoz(); return; }
+    if (MODO !== 'addon'){
+      var ops = [{id:'pipeline:01', nome:'Assistente: Home Assistant (Home Assistant Cloud)', preferido:true}, {id:'stt.google_generative_ai_stt', nome:'Fala para texto: Google Generative AI STT', preferido:false}];
+      var u = ops.filter(function(o){ return o.id === estado.ia.voz; })[0] || ops[0];
+      VOZ_ST = {pronta:true, nome:u.nome, opcoes:ops, escolha:estado.ia.voz}; pintaVoz(); return;
+    }
     fetch('api/voz/status', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){ VOZ_ST = j; pintaVoz(); })
       .catch(function(){ VOZ_ST = {pronta:false, motivo:'Não consegui falar com o add-on.'}; pintaVoz(); });
   }
@@ -3256,7 +3267,12 @@ html:not(.sem-ia) .so-semia{display:none!important}
     salvar('IA para ler fotos: ' + this.options[this.selectedIndex].text); pintaIA();
     setTimeout(function(){ testaIA('fotos'); }, 800);
   });
-  $('iaTestar').addEventListener('click', function(){ carregaIAs(); testaIA('busca'); testaIA('fotos'); });
+  $('iaTestar').addEventListener('click', function(){ carregaIAs(); testaIA('busca'); testaIA('fotos'); carregaVoz(); });
+  $('iaVoz').addEventListener('change', function(){
+    estado.ia.voz = this.value; VOZ_ST = null; pintaVoz();
+    salvar('Para falar: ' + this.options[this.selectedIndex].text);
+    setTimeout(carregaVoz, 800);
+  });
 
   // lista do Home Assistant
   var LISTAS_HA = null, ultimoSync = null;
@@ -3461,7 +3477,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.15.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.15.1' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

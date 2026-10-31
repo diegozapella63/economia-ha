@@ -36,7 +36,7 @@ O botão **Buscar** chama `ai_task.generate_data` pela API do Home Assistant (`h
 | GET | `/api/ler-lista?id=...` | `{status: "lendo|pronto|erro", itens: [{produto, quantidade, ja_na_lista}], erro}`. |
 | GET | `/api/ias` | `{tarefas: [{id, nome, anexos}], agentes: [{id, nome}]}`: entidades `ai_task.*` e `conversation.*`. |
 | POST | `/api/testar-ia` | `{uso: "busca"|"fotos"}` → `{ok, msg}`. A busca faz uma pergunta curta que exige busca na web. |
-| GET | `/api/voz/status` | `{pronta, motor, idioma, nome}` ou `{pronta: false, motivo}`: a fala para texto do assistente de voz preferido. |
+| GET | `/api/voz/status` | `{pronta, motor, idioma, nome, usando, escolha, escolha_sumiu, opcoes: [{id, nome, preferido}]}` ou `{pronta: false, motivo}`. `opcoes`: os assistentes de voz com fala para texto (`pipeline:{id}`) e as entidades `stt.*` que nenhum assistente usa. A escolha fica em `config.ia.voz`; em branco (ou se sumiu), vale o assistente preferido. |
 | POST | `/api/voz` | Corpo: áudio PCM cru, 16 kHz, 16 bits, mono (até 2 min). Manda para `POST /api/stt/<motor>` do HA com o cabeçalho `X-Speech-Content` e devolve `{texto}`. O painel lê o texto em `/api/ler-lista` com `origem: "fala"`. |
 | GET | `/api/versoes` | `{versoes: [{nome, quando, motivo, itens, cep}]}`: as 3 cópias mais recentes do `config.json`, em `/data/versoes`. |
 | POST | `/api/versoes/guardar` | `{motivo: "importar"|"limpar"}`: guarda uma cópia agora. |

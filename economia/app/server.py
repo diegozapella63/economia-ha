@@ -4489,7 +4489,11 @@ def voz_status():
     VOZ.token = token_ha()
     if not VOZ.token and not VOZ_SIMULADA:
         return {"pronta": False, "motivo": "Fora do Home Assistant não dá para falar."}
-    return VOZ.status()
+    escolha = str((ler_config().get("ia") or {}).get("voz") or "").strip() or None
+    st = VOZ.status(escolha)
+    st["opcoes"] = [{"id": o["id"], "nome": o["nome"], "preferido": o["preferido"]} for o in VOZ.opcoes()]
+    st["escolha"] = escolha or ""
+    return st
 
 
 def voz_texto(pcm):
@@ -4498,7 +4502,7 @@ def voz_texto(pcm):
     VOZ.token = token_ha()
     inicio = time.time()
     try:
-        r = VOZ.texto(pcm)
+        r = VOZ.texto(pcm, str((ler_config().get("ia") or {}).get("voz") or "").strip() or None)
     except voz.ErroVoz as e:
         log(f"Falar: {e}")
         raise ErroBusca(str(e)) from e
@@ -4624,7 +4628,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.15.0"
+    server_version = "EconomIA/0.15.1"
 
     def log_message(self, fmt, *args):
         pass
