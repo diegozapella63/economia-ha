@@ -1562,19 +1562,43 @@ def testa_site(origem, cep):
     return res
 
 
+SITES_REDES = {
+    "raia": "https://www.drogaraia.com.br", "drogasil": "https://www.drogasil.com.br", "pague menos": "https://www.paguemenos.com.br",
+    "nissei": "https://www.farmaciasnissei.com.br", "panvel": "https://www.panvel.com", "catarinense": "https://www.drogariacatarinense.com.br",
+    "sao joao": "https://www.saojoaofarmacias.com.br", "cobasi": "https://www.cobasi.com.br", "petz": "https://www.petz.com.br",
+    "bistek": "https://www.bistek.com.br", "fort": "https://www.fortatacadista.com.br", "atacadao": "https://www.atacadao.com.br",
+}
+
+
+def site_da_rede(nome, cidade=""):
+    """Site de rede conhecida pelo nome ("Atacadão Joinville" → atacadao.com.br; "Atacadão Dia a Dia" não é a mesma rede)."""
+    tira = set(norm(cidade or "").split())
+    k = " ".join(w for w in chave_loja(nome).split() if w not in tira)
+    return SITES_REDES.get(k)
+
+
 def candidatos_site(cfg):
     """Sites das lojas cadastradas e das achadas pela última busca: {origem: (nome, categoria)}."""
     out = {}
     for a in ((cfg.get("lojas") or {}).get("adicionar") or []):
         if isinstance(a, dict) and url_ok(a.get("site")) and a.get("categoria") in ("mercados", "farmacias", "petshops") and texto(a.get("nome"), 60):
             out[origem_de(a["site"])] = (texto(a["nome"], 60).split(",")[0].strip(), a["categoria"])
+    cidade = ((ler_json(FOLHETOS, {}) or {}).get("_cep") or {}).get("cidade") or ""
+    if not cidade and cfg.get("cep"):
+        try:
+            cidade = cidade_do_cep(cfg.get("cep"), {})[0] or ""
+        except Exception:  # noqa: BLE001
+            cidade = ""
     for c in (ler_json(OFERTAS, {}) or {}).get("categorias") or []:
         if not isinstance(c, dict) or c.get("id") not in ("mercados", "farmacias", "petshops"):
             continue
         nomes = {r.get("id"): r.get("nome") for r in c.get("redes") or [] if isinstance(r, dict)}
         for l in c.get("lojas") or []:
-            if isinstance(l, dict) and url_ok(l.get("site")) and nomes.get(l.get("rede")) and "folheto" not in l:
-                out.setdefault(origem_de(l["site"]), (nomes[l["rede"]], c["id"]))
+            if not isinstance(l, dict) or not nomes.get(l.get("rede")) or "folheto" in l:
+                continue
+            site = l.get("site") if url_ok(l.get("site")) else site_da_rede(nomes[l["rede"]], cidade)
+            if site:
+                out.setdefault(origem_de(site), (nomes[l["rede"]], c["id"]))
     of = ler_json(OFERTAS, {}) or {}
     links = {}
     for i in of.get("lista") or []:
@@ -2432,8 +2456,8 @@ def busca_scripts(cfg, cats, itens=None, ler_folhetos=True):
 # produtos que a própria loja publica no sitemap é baixada uma vez por dia, os itens da lista são achados pelo nome
 # e o preço é lido na página de cada produto (dados schema.org). Sem IA. É o preço padrão do site.
 CATALOGOS = os.path.join(DATA, "catalogos")
-MAX_CATALOGOS = 3
-PAGINAS_ITEM = 3
+MAX_CATALOGOS = 6
+PAGINAS_ITEM = 2
 LD_JSON = re.compile(r"<script[^>]+application/ld\+json[^>]*>(.*?)</script>", re.S | re.I)
 
 
@@ -2472,8 +2496,8 @@ def baixa_catalogo(origem, info):
             prod = [u for u in locs if re.search(r"product|produto", u, re.I)]
             fila += prod or [u for u in locs if not re.search(r"categor|brand|marca|institucional|blog|image", u, re.I)]
         else:
-            de_produto = bool(re.search(r"product|produto", sm, re.I))
-            urls += [u for u in locs if de_produto or re.search(r"/p/?$", u)]
+            outros = bool(re.search(r"categor|brand|marca|institucional|blog|image|bulario|receita|loja", sm, re.I))
+            urls += [u for u in locs if re.search(r"/p/?$", u) or not outros]
     c = {"em": agora(), "urls": list(dict.fromkeys(urls))[:200_000], "precos": c.get("precos") or {}}
     os.makedirs(CATALOGOS, exist_ok=True)
     gravar_json(arq, c)
@@ -2674,7 +2698,8 @@ def osm_lojas(lat, lon, raio_m, cats):
         bairro = t.get("addr:suburb") or t.get("addr:neighbourhood")
         out.append({"nome": nome, "categoria": cat, "endereco": ", ".join(x for x in [rua, bairro] if x) or None,
                     "distancia_km": km_entre(lat, lon, float(la), float(lo)), "fonte": "OpenStreetMap",
-                    "lat": round(float(la), 6), "lon": round(float(lo), 6)})
+                    "lat": round(float(la), 6), "lon": round(float(lo), 6),
+                    "site": next((u for u in (t.get("website"), t.get("contact:website"), t.get("brand:website")) if url_ok(u)), None)})
     return out
 
 
@@ -2687,7 +2712,7 @@ def google_lojas(lat, lon, raio_m, cats, chave):
             continue
         req = urllib.request.Request(GOOGLE_PLACES, data=json.dumps(corpo).encode(), method="POST", headers={
             "Content-Type": "application/json", "X-Goog-Api-Key": chave,
-            "X-Goog-FieldMask": "places.id,places.displayName,places.shortFormattedAddress,places.formattedAddress,places.location,places.businessStatus"})
+            "X-Goog-FieldMask": "places.id,places.displayName,places.shortFormattedAddress,places.formattedAddress,places.location,places.businessStatus,places.websiteUri"})
         try:
             with urllib.request.urlopen(req, timeout=25) as r:
                 d = json.loads(r.read(4_000_000).decode("utf-8") or "{}")
@@ -2706,7 +2731,8 @@ def google_lojas(lat, lon, raio_m, cats, chave):
                 continue
             out.append({"nome": nome, "categoria": cat, "endereco": texto(pl.get("shortFormattedAddress") or pl.get("formattedAddress"), 90),
                         "distancia_km": km_entre(lat, lon, loc["latitude"], loc["longitude"]), "fonte": "Google",
-                        "lat": round(float(loc["latitude"]), 6), "lon": round(float(loc["longitude"]), 6), "place_id": texto(pl.get("id"), 200)})
+                        "lat": round(float(loc["latitude"]), 6), "lon": round(float(loc["longitude"]), 6), "place_id": texto(pl.get("id"), 200),
+                        "site": pl.get("websiteUri") if url_ok(pl.get("websiteUri")) else None})
     return out
 
 
@@ -2725,7 +2751,7 @@ def lojas_do_mapa(cfg, cats, forcar=False):
     except (TypeError, ValueError):
         raio_m = 2000
     g = google_chave()
-    chave = f"v2,{lat:.4f},{lon:.4f},{raio_m},{','.join(sorted(cats))},{'g' if g else 'o'}"
+    chave = f"v3,{lat:.4f},{lon:.4f},{raio_m},{','.join(sorted(cats))},{'g' if g else 'o'}"
     memo = ler_json(LOJAS_MAPA, {}) or {}
     semana = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat(timespec="seconds")
     if not forcar and memo.get("chave") == chave and memo.get("em", "") >= semana:
@@ -2750,7 +2776,10 @@ def lojas_do_mapa(cfg, cats, forcar=False):
         igual = next((x for x in lista if mesma_loja(x["nome"], l["nome"])), None)
         if igual is None:
             lista.append(l)
-        elif l["distancia_km"] < igual["distancia_km"] - 0.05:  # a filial mais perto da mesma rede
+        else:
+            if not igual.get("site") and l.get("site"):
+                igual["site"] = l["site"]
+        if igual is not None and l["distancia_km"] < igual["distancia_km"] - 0.05:  # a filial mais perto da mesma rede
             igual.update({k: l.get(k) for k in ("endereco", "distancia_km", "lat", "lon", "place_id")})
     for c in lojas:
         lojas[c] = sorted(lojas[c], key=lambda x: x["distancia_km"])[:30]
@@ -2787,6 +2816,8 @@ def aplica_mapa(categorias, mapa, cfg):
                 l["distancia_km"], l["endereco"] = m["distancia_km"], m.get("endereco") or l.get("endereco")
                 l["fontes"] = sorted(set(l.get("fontes") or []) | {"Mapa"})
                 l.update({k: m[k] for k in ("lat", "lon", "place_id") if m.get(k)})
+                if m.get("site") and not url_ok(l.get("site")):
+                    l["site"] = m["site"]
         for m in lojas_m:
             if m["nome"] in usadas or any(mesma_loja(m["nome"], n) for n in nomes.values()):
                 continue
@@ -2796,7 +2827,7 @@ def aplica_mapa(categorias, mapa, cfg):
             nomes[rid] = m["nome"]
             cat.setdefault("redes", []).append({"id": rid, "nome": m["nome"], "curto": m["nome"][:16]})
             nova = {"rede": rid, "distancia_km": m["distancia_km"], "horario": "", "endereco": m.get("endereco"), "fontes": ["Mapa"]}
-            nova.update({k: m[k] for k in ("lat", "lon", "place_id") if m.get(k)})
+            nova.update({k: m[k] for k in ("lat", "lon", "place_id", "site") if m.get(k)})
             cat.setdefault("lojas", []).append(nova)
         cat["lojas"] = sorted(cat.get("lojas") or [], key=lambda l: l["distancia_km"] if l.get("distancia_km") is not None else 99)
 
@@ -2820,6 +2851,7 @@ def atualizar_lojas_mapa(dado):
     if not any(mapa.values()):
         return {"ok": False, "msg": "O mapa não respondeu agora ou não achou lojas nessa distância. Tente de novo em alguns minutos ou aumente a distância."}
     mesclar_resultado([], cfg, mapa=mapa)
+    threading.Thread(target=lambda: atualiza_diretas(cfg, max_novas=15), daemon=True).start()
     partes = [f"{len(v)} {CATEGORIAS[c]['nome'].lower()}" for c, v in mapa.items() if v]
     txt = partes[0] if len(partes) == 1 else ", ".join(partes[:-1]) + " e " + partes[-1]
     fontes = (ler_json(LOJAS_MAPA, {}) or {}).get("fontes") or []
@@ -3516,7 +3548,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.13.7"
+    server_version = "EconomIA/0.13.8"
 
     def log_message(self, fmt, *args):
         pass

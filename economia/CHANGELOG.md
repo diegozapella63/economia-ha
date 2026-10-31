@@ -1,5 +1,11 @@
 # Mudanças
 
+## 0.13.8
+
+- **Preço sem IA também nas farmácias de rede.** As lojas que vieram do mapa agora trazem o site (do OpenStreetMap ou do Google), e as redes conhecidas (Pague Menos, Nissei, Drogaria Catarinense, Panvel, Raia, Drogasil, São João, Cobasi, Petz, Bistek, Fort, Atacadão) são reconhecidas pelo nome. O app testa o site de cada uma: Pague Menos usa VTEX e pode responder direto; Nissei, Drogaria Catarinense e Panvel publicam a lista de produtos e são lidas pelas páginas de produto, uma vez por dia. A Raia não publica a lista de produtos, então continua dependendo da busca com IA.
+- **Encontrar lojas** já testa os sites das lojas achadas, em segundo plano.
+- A leitura pela lista de produtos aceita sitemaps simples (Magento, WooCommerce) e lê até 6 lojas por busca.
+
 ## 0.13.7
 
 - Em Mais › Lojas, toda loja ganha o botão **Mapa**, com o ícone de localização: abre a loja no Google Maps (pelo lugar do Google, pelas coordenadas do mapa ou pelo endereço). Loja sem endereço nem localização aparece como "Sem localização". O selo "Mapa" de origem saiu, porque agora é o botão.

@@ -65,6 +65,8 @@ Giassi e Angeloni (fixos) e as lojas achadas por `testa_site` usam a plataforma 
 
 Candidatas: as lojas de `lojas.adicionar` com site, as lojas das categorias físicas do `ofertas.json` com `site` e os mercados regionais de Online (o site sai dos links dos preços). Cada origem é testada uma vez por semana (`testa_site`): lê o `robots.txt` (regras de `User-agent: *`, com `*` e `$`, a regra mais longa vale) e só chama `/api/checkout/pub/regions` se `/api/checkout/pub/regions` e `/api/io/_v/api/intelligent-search/product_search/` forem permitidos. Resposta em lista = VTEX → entra em `VTEX_ACHADAS` e na busca direta, na categoria da loja.
 
+Sites das lojas do mapa: `osm_lojas` guarda `website`/`contact:website`/`brand:website`; `google_lojas` pede `places.websiteUri`. Sem site, `site_da_rede` reconhece redes conhecidas pelo nome sem palavras genéricas nem a cidade (`SITES_REDES`); o `testa_site` confirma. `POST /api/lojas-mapa/atualizar` também chama `atualiza_diretas(max_novas=15)` em segundo plano.
+
 ### Páginas de produto (`catalogos/`)
 
 Para origens com `paginas: true` que não são VTEX liberada: `baixa_catalogo` lê os `Sitemap:` do robots.txt (ou `/sitemap.xml`), segue o índice priorizando os sitemaps de produto (aceita .gz) e guarda as URLs de produto (VTEX: terminam em `/p`) por 1 dia, respeitando o robots.txt. Para cada item, as até 3 URLs cujo texto tem as palavras do item (`combina`) são abertas, uma a cada 0,3 s, e o preço sai do JSON-LD `Product` → `offers` (`price`/`lowPrice`, sem `OutOfStock`) ou da meta `product:price:amount`, guardado por 1 dia. Loja fora do raio (não está em `lojas_perto` nem em `lojas.adicionar`) entra em `online` com `frete: null, carrinho: true`.
