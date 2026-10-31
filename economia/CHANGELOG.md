@@ -1,5 +1,11 @@
 # Mudanças
 
+## 0.14.5
+
+- **Preço pela página do site, sem IA.** Farmácias e mercados pequenos que mostram os produtos e os preços na própria página (como a Drogaria Floresta, "Comprar pelo WhatsApp") agora têm preço sem IA. O app lê o texto da página que você informou em Adicionar site de ofertas (ou a página inicial e a página de ofertas ligada a ela), acha os cartões "produto + R$" (também dados schema.org e os dados que a página traz em JSON) e procura os itens da lista neles. A loja aparece com **Preço pela página do site** e um exemplo. Vale o robots.txt; cada página é lida no máximo a cada 12 horas.
+- No teste de preço, o site que você informou em Adicionar site de ofertas vale mais que o do mapa.
+- Quando a página não traz os preços no texto (o site monta tudo depois, no navegador), o "Como foi testado" diz isso.
+
 ## 0.14.4
 
 - **Pet shop não aparece mais em Farmácias.** O Google marca como farmácia o pet shop que vende remédio (Vanilla Pet Center) e a farmácia veterinária (Animal Farma). Agora valem o tipo principal da loja no Google e o nome (pet, vet, veterinária, animal, agropecuária). As que o mapa já tinha registrado saem da lista no próximo Encontrar lojas ou Buscar.

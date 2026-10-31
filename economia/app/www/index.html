@@ -1161,6 +1161,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
           <li><b>Lojas perto de casa, pelo mapa.</b> A localização da Casa no Home Assistant e o OpenStreetMap (e o Google Maps, com chave em Integrações) dizem quais farmácias, mercados e pet shops existem perto de casa, com endereço e distância certos. De rede, entra a filial mais perto. Atualiza uma vez por semana. Sem IA.</li>
           <li><b>Site da loja.</b> Giassi, Angeloni e os mercados cujo site permite consulta respondem direto, com o preço da loja que atende o seu CEP. O app testa o site de cada loja sozinho, uma vez por semana. Sem IA.</li>
           <li><b>Páginas de produto.</b> Sites que só liberam as páginas de produto, como o do Bistek: a lista de produtos da loja é baixada uma vez por dia e o preço vem da página de cada produto (preço padrão do site). Sem IA.</li>
+          <li><b>Página de ofertas do site.</b> Farmácias e mercados pequenos que mostram os produtos e os preços na própria página, como a Drogaria Floresta: o app lê o texto da página (a que você informou em Adicionar site de ofertas, ou a inicial) e procura os itens da lista nela. Sem IA.</li>
           <li><b>Shopee.</b> Pela API do Shopee Afiliados, quando ligada em Integrações. Sem IA.</li>
           <li class="so-ia"><b>Folheto da semana.</b> Para as lojas que você acompanha e que não têm preço pelo site, o folheto é procurado no Kimbino e no Seus Folhetos. A IA lê cada folheto uma vez; até ele vencer, os preços vêm do que ficou guardado.</li>
           <li class="so-semia"><b>Folhetos já lidos.</b> Folheto novo precisa da IA para ser lido, então sem ela só entram os preços dos folhetos lidos quando a IA estava ligada, até eles vencerem.</li>
@@ -1306,7 +1307,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.14.4</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.14.5</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -2609,7 +2610,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     arr(c.ofertas).forEach(function(o){ com[o.rede] = 1; });
     arr(D.lista).forEach(function(i){ Object.keys(i.precos || {}).forEach(function(r){ com[r] = 1; }); arr(i.tamanhos).forEach(function(t){ com[t.rede] = 1; }); });
     return arr(c.lojas).filter(function(l){ return G[l.rede] && !com[l.rede] && !l.nova && acompanha(l.rede) && c.id !== 'online'
-      && !(l.preco_fonte && /^(site|paginas|folheto)/.test(l.preco_fonte.como)); });
+      && !(l.preco_fonte && /^(site|paginas|ofertas_site|folheto)/.test(l.preco_fonte.como)); });
   }
   function siteManual(nome){ return estado.lojas.adicionar.filter(function(a){ return a.site && norm(a.nome).indexOf(norm(nome)) === 0; })[0]; }
   function host(u){ return String(u || '').replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]; }
@@ -2669,7 +2670,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     $('novaLojaCat').innerHTML = ativas.map(function(c){ return '<option value="' + c.id + '">' + esc(c.singular) + '</option>'; }).join('');
   }
   // resultado do teste de preço (Encontrar lojas): de onde dá para tirar preço e, passo a passo, o que funcionou
-  var FONTE_ROT = {site:['selo', 'Preço pelo site'], paginas:['selo', 'Preço pelas páginas do site'], folheto:['', 'Folheto da semana'],
+  var FONTE_ROT = {site:['selo', 'Preço pelo site'], paginas:['selo', 'Preço pelas páginas do site'], ofertas_site:['selo', 'Preço pela página do site'], folheto:['', 'Folheto da semana'],
     folheto_novo:['', 'Tem folheto'], ia:['', 'Só com IA'], nenhum:['warn', 'Sem fonte de preço']};
   function fonteHtml(l){
     var f = l.preco_fonte, r = FONTE_ROT[f.como] || FONTE_ROT.nenhum;
@@ -3403,7 +3404,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.14.4' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.14.5' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

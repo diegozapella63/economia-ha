@@ -2456,6 +2456,16 @@ def busca_scripts(cfg, cats, itens=None, ler_folhetos=True):
             rel["diretas"] = sorted(set(rel.get("diretas") or []) | {r["nome"] for c, _ in ca for r in c["redes"]})
             for c, _ in ca:
                 ja[c["id"]] = sorted(set(ja.get(c["id"]) or []) | {r["nome"] for r in c["redes"]})
+        try:
+            po = busca_paginas_ofertas(cfg, cats, ja, itens)
+        except Exception as e:  # noqa: BLE001
+            po = []
+            log(f"ofertas do site: {e}")
+        if po:
+            resultado += po
+            rel["diretas"] = sorted(set(rel.get("diretas") or []) | {r["nome"] for c, _ in po for r in c["redes"]})
+            for c, _ in po:
+                ja[c["id"]] = sorted(set(ja.get(c["id"]) or []) | {r["nome"] for r in c["redes"]})
     if "online" in cats and shopee_pronta():
         try:
             sh = busca_shopee(cfg, itens)
@@ -2547,6 +2557,33 @@ def procura_catalogo(urls, nome, n=PAGINAS_ITEM):
     return [u for _, u in sorted(achadas)[:n]]
 
 
+def produto_ld(x):
+    """Um Product do schema.org: {nome, marca, preco, disponivel} ou None."""
+    if not isinstance(x, dict) or "Product" not in str(x.get("@type")):
+        return None
+    of = x.get("offers") or {}
+    ofs = of if isinstance(of, list) else [of]
+    if isinstance(of, dict) and isinstance(of.get("offers"), list):
+        ofs = of["offers"] or [of]
+    precos, disp = [], False
+    for o in ofs:
+        if not isinstance(o, dict):
+            continue
+        v = numero(o.get("price")) or numero(o.get("lowPrice"))
+        estoque = "outofstock" not in str(o.get("availability") or "").lower().replace(" ", "")
+        if v and estoque:
+            precos.append(v)
+            disp = True
+    if not precos and isinstance(of, dict) and not isinstance(of.get("offers"), list) and numero(of.get("lowPrice")) \
+            and "outofstock" not in str(of.get("availability") or "").lower():
+        precos, disp = [numero(of["lowPrice"])], True
+    if not precos:
+        return None
+    marca = x.get("brand")
+    marca = marca.get("name") if isinstance(marca, dict) else marca
+    return {"nome": texto(x.get("name"), 100), "marca": texto(marca, 30), "preco": min(precos), "disponivel": disp}
+
+
 def preco_da_pagina(html_txt):
     """Nome, preço e se tem estoque, pelos dados schema.org da página do produto (ou pelas meta tags)."""
     for bloco in LD_JSON.findall(html_txt):
@@ -2556,28 +2593,9 @@ def preco_da_pagina(html_txt):
             continue
         itens = d if isinstance(d, list) else (d.get("@graph") or [d]) if isinstance(d, dict) else []
         for x in itens:
-            if not isinstance(x, dict) or "Product" not in str(x.get("@type")):
-                continue
-            of = x.get("offers") or {}
-            ofs = of if isinstance(of, list) else [of]
-            if isinstance(of, dict) and isinstance(of.get("offers"), list):
-                ofs = of["offers"] or [of]
-            precos, disp = [], False
-            for o in ofs:
-                if not isinstance(o, dict):
-                    continue
-                v = numero(o.get("price")) or numero(o.get("lowPrice"))
-                estoque = "outofstock" not in str(o.get("availability") or "").lower().replace(" ", "")
-                if v and estoque:
-                    precos.append(v)
-                    disp = True
-            if not precos and isinstance(of, dict) and not isinstance(of.get("offers"), list) and numero(of.get("lowPrice")) \
-                    and "outofstock" not in str(of.get("availability") or "").lower():
-                precos, disp = [numero(of["lowPrice"])], True
-            if precos:
-                marca = x.get("brand")
-                marca = marca.get("name") if isinstance(marca, dict) else marca
-                return {"nome": texto(x.get("name"), 100), "marca": texto(marca, 30), "preco": min(precos), "disponivel": disp}
+            r = produto_ld(x)
+            if r:
+                return r
     m = re.search(r"product:price:amount[\"'][^>]*content=[\"']([\d.,]+)", html_txt)
     if m and numero(m.group(1)):
         t = re.search(r"<title>(.*?)</title>", html_txt, re.S | re.I)
@@ -2649,6 +2667,223 @@ def busca_catalogos(cfg, itens=None, cats=None):
             lojas_b = [] if cat_id == "online" else [{"rede": m["nome"], "site": origem, "fontes": ["Site"]}]
             out.append(normalizar(cat_id, {"lojas": lojas_b, "cupons": [], "ofertas": [], "lista": lista_bruta, "_via": "site"},
                                   dict(cfg, lista=[{"produto": x} for x in nomes])))
+    return out
+
+
+# ---------- página de ofertas do site, lida sem IA ----------
+# Muita farmácia pequena tem uma página com os produtos e os preços no próprio HTML ("Ofertas", "Comprar pelo WhatsApp"),
+# sem sitemap nem busca. O texto da página é lido por regras: dados schema.org, dados da página (JSON) ou os cartões
+# "nome do produto" + "R$ 0,00". Os itens da lista são achados pelo nome, como no folheto. Respeita o robots.txt.
+PAGINAS_OF = os.path.join(DATA, "paginas_ofertas.json")
+PRECO_BR = re.compile(r"R\$\s*(\d{1,3}(?:\.\d{3})+,\d{2}|\d+,\d{2})")
+PARCELA = re.compile(r"(?i)(\b\d{1,2}\s*x\b|sem juros|parcela|/\s*m[eê]s)")
+RUIDO_BLOCO = re.compile(r"(?i)(comprar|adicionar|carrinho|whatsapp|ver mais|ver todos|saiba mais|entrar|login|cadastr|cookie|aceitar|recusar|"
+                         r"configurar|pol[ií]tica|termos|busque|buscar|frete|economize|desconto|cupom|esgotado|indispon[ií]vel|avise-me|"
+                         r"copyright|direitos reservados|cnpj|telefone|hor[aá]rio|acima de)")
+NOME_JSON = re.compile(r'"(?:name|nome|title|titulo|productName|produto|descricao)"\s*:\s*"((?:[^"\\]|\\.){6,140})"')
+PRECO_JSON = re.compile(r'"(price|preco|valor|sellingPrice|salePrice|bestPrice|finalPrice|precoPor|preco_por|precoVenda|preco_venda|'
+                        r'special_price|promotional_price|price_promotional)"\s*:\s*"?(\d+(?:[.,]\d{1,2})?)"?', re.I)
+
+
+def parece_nome(b):
+    if len(b) < 6 or len(b) > 140 or PRECO_BR.search(b) or RUIDO_BLOCO.search(b) or "~" in b:
+        return False
+    return len(re.findall(r"[A-Za-zÀ-ÿ]{2,}", b)) >= 2 and sum(ch.isdigit() for ch in b) <= len(b) / 3
+
+
+def _ld_produtos(d, out, fundo=0):
+    if fundo > 6:
+        return
+    if isinstance(d, list):
+        for x in d:
+            _ld_produtos(x, out, fundo + 1)
+    elif isinstance(d, dict):
+        r = produto_ld(d)
+        if r and r.get("nome") and r.get("disponivel"):
+            out.append({"produto": r["nome"], "preco": r["preco"]})
+            return
+        for k in ("@graph", "itemListElement", "item", "mainEntity"):
+            if k in d:
+                _ld_produtos(d[k], out, fundo + 1)
+
+
+def ofertas_json_embutido(html_txt):
+    """Produtos nos dados que a página traz em <script> (Next, Nuxt, lojas próprias): nome e preço vizinhos."""
+    out = []
+    for sc in re.findall(r"(?is)<script\b(?![^>]*ld\+json)[^>]*>(.*?)</script>", html_txt):
+        if len(sc) < 50 or '"' not in sc:
+            continue
+        nomes = []
+        for m in NOME_JSON.finditer(sc):
+            try:
+                n = json.loads('"' + m.group(1) + '"')
+            except ValueError:
+                n = m.group(1)
+            n = texto(sem_tags(n), 120)
+            if n and parece_nome(n):
+                nomes.append((m.start(), m.end(), n))
+        if not nomes:
+            continue
+        p1 = PRECO_JSON.search(sc)
+        preco_antes = bool(p1 and p1.start() < nomes[0][0])  # {"price": 9.9, "name": "..."}: o preço vem antes do nome
+        for i, (ini, fim, n) in enumerate(nomes):
+            if preco_antes:
+                janela = sc[max(nomes[i - 1][1] if i else 0, ini - 800):ini]
+            else:
+                janela = sc[fim:min(nomes[i + 1][0] if i + 1 < len(nomes) else len(sc), fim + 800)]
+            precos = []
+            for p in PRECO_JSON.finditer(janela):
+                bruto = p.group(2)
+                v = float(bruto.replace(",", "."))
+                if not re.search(r"[.,]", bruto) and p.group(1).lower() in ("sellingprice", "bestprice"):
+                    v /= 100  # VTEX: em centavos
+                if 0.5 <= v <= 20000:
+                    precos.append(round(v, 2))
+            if precos:
+                out.append({"produto": n, "preco": min(precos)})
+    return out
+
+
+def blocos_da_pagina(html_txt):
+    t = re.sub(r"(?is)<(script|style|noscript|svg|head|template)\b[^>]*>.*?</\1>", " ", html_txt)
+    t = re.sub(r"(?is)<(del|s|strike)\b[^>]*>(.*?)</\1>", lambda m: " ~" + re.sub(r"<[^>]+>", " ", m.group(2)) + "~ ", t)
+    partes = [" ".join(html_mod.unescape(x).split()) for x in re.split(r"<[^>]+>", t)]
+    s = "\n".join(x for x in partes if x)
+    s = re.sub(r"R\$\s*\n\s*", "R$ ", s)  # <span>R$</span><span>159</span><span>,90</span>
+    s = re.sub(r"(\d)\s*\n\s*(,\d{2})", r"\1\2", s)
+    return s.split("\n")
+
+
+def ofertas_texto(html_txt):
+    """Cartões de produto no texto da página: um nome de produto e, logo depois, o preço (o riscado é o preço "de")."""
+    out, nome, precos = [], None, []
+
+    def fecha():
+        if nome and precos:
+            atuais = [v for v, r in precos if not r] or [v for v, r in precos]
+            riscados = [v for v, r in precos if r]
+            p = min(atuais)
+            normal = max(riscados) if riscados and max(riscados) > p else max(atuais) if max(atuais) > p else None
+            out.append({"produto": nome, "preco": p, "preco_normal": normal})
+    for b in blocos_da_pagina(html_txt):
+        m = PRECO_BR.search(b)
+        if m:
+            if PARCELA.search(b) or RUIDO_BLOCO.search(b):
+                continue  # "3x de R$ 53,30", "frete grátis acima de R$ 99,00"
+            antes = b[:m.start()].strip(" -–:|~")
+            if parece_nome(antes) and not re.match(r"(?i)^(de|por|ou|apenas|a partir)\b", antes):
+                fecha()
+                nome, precos = antes, []
+            if nome:
+                riscado = "~" in b or bool(re.match(r"(?i)^\W*de\b", b))
+                precos += [(numero(x.group(1)), riscado) for x in PRECO_BR.finditer(b) if numero(x.group(1))]
+            continue
+        if parece_nome(b):
+            if precos:
+                fecha()
+                nome, precos = b, []
+            elif nome and (b[:1].islower() or re.match(r"(?i)^(c/|com\b|cx|caixa|cont[eé]m|embalagem|\d)", b)) and len(nome) + len(b) < 140:
+                nome = nome + " " + b  # "Dipirona 500 mg" + "caixa com 10 comprimidos"
+            else:
+                nome = b
+    fecha()
+    return out
+
+
+def ofertas_da_pagina(html_txt):
+    """Produtos e preços que a página mostra, sem IA."""
+    out = []
+    for bloco in LD_JSON.findall(html_txt):
+        try:
+            _ld_produtos(json.loads(html_mod.unescape(bloco.strip())), out)
+        except ValueError:
+            continue
+    if len(out) < 3:
+        out += ofertas_json_embutido(html_txt)
+    if len(out) < 3:
+        out += ofertas_texto(html_txt)
+    vistos, final = set(), []
+    for o in out:
+        k = norm(o["produto"])
+        if k and k not in vistos and o.get("preco") and 0.5 <= o["preco"] <= 20000:
+            vistos.add(k)
+            final.append({"produto": texto(o["produto"], 120), "preco": o["preco"], "preco_normal": o.get("preco_normal")})
+    return final[:300]
+
+
+def le_pagina_ofertas(url, regras):
+    """(ofertas, links para páginas de ofertas do mesmo site). Guardado por 12 horas. None se o robots.txt não deixa."""
+    sp = urllib.parse.urlsplit(url)
+    if regras and not robots_permite(regras, (sp.path or "/") + (("?" + sp.query) if sp.query else "")):
+        return None
+    cache = ler_json(PAGINAS_OF, {}) or {}
+    meio_dia = (datetime.now(timezone.utc) - timedelta(hours=12)).isoformat(timespec="seconds")
+    g = cache.get(url)
+    if g and g.get("em", "") >= meio_dia:
+        return g.get("ofertas") or [], g.get("links") or []
+    html_txt = pagina_txt(url)
+    ofs = ofertas_da_pagina(html_txt)
+    links = []
+    for h in re.findall(r"""(?i)<a\b[^>]*href=["']([^"'#]+)""", html_txt):
+        u = urllib.parse.urljoin(url, html_mod.unescape(h))
+        su = urllib.parse.urlsplit(u)
+        if su.netloc == sp.netloc and re.search(r"(?i)oferta|promo", su.path) and u.rstrip("/") != url.rstrip("/") and u not in links:
+            links.append(u)
+    velho = (datetime.now(timezone.utc) - timedelta(days=3)).isoformat(timespec="seconds")
+    cache = {k: v for k, v in cache.items() if isinstance(v, dict) and v.get("em", "") >= velho}
+    cache[url] = {"em": agora(), "ofertas": ofs, "links": links[:3]}
+    gravar_json(PAGINAS_OF, cache)
+    return ofs, links[:3]
+
+
+def ofertas_do_site(site, info):
+    """Ofertas da página do site (a que o morador informou, ou a inicial) e da página de ofertas ligada a ela."""
+    regras = info.get("regras") or []
+    r = le_pagina_ofertas(site, regras)
+    if r is None:
+        return None, []
+    ofs, links = r
+    lidas = [site]
+    if links and len(ofs) < 60:
+        r2 = le_pagina_ofertas(links[0], regras)
+        if r2:
+            vistos = {norm(o["produto"]) for o in ofs}
+            ofs = ofs + [o for o in r2[0] if norm(o["produto"]) not in vistos]
+            lidas.append(links[0])
+    return ofs, lidas
+
+
+def busca_paginas_ofertas(cfg, cats, ja, itens=None):
+    """Lojas cuja página do site mostra os preços (achadas no teste do Encontrar lojas): itens da lista e ofertas, sem IA."""
+    fontes = ler_json(SONDA_FILE, {}) or {}
+    memo = ler_json(LOJAS_SITE, {}) or {}
+    nomes = (itens or nomes_da_lista(cfg))[:40]
+    pular = {norm(n) for v in ja.values() for n in v}
+    out, n = [], 0
+    for cat_id, por in fontes.items():
+        if cats and cat_id not in cats:
+            continue
+        for k, st in (por or {}).items():
+            if not isinstance(st, dict) or st.get("como") != "ofertas_site" or not url_ok(st.get("url")) or k in pular or n >= 8:
+                continue
+            n += 1
+            nome, url = st.get("nome") or k, st["url"]
+            BUSCA["etapa"] = "ofertas do site · " + nome
+            try:
+                ofs, _ = ofertas_do_site(url, memo.get(origem_de(url)) or {})
+            except Exception as e:  # noqa: BLE001
+                log(f"ofertas do site de {nome}: {e}")
+                continue
+            if not ofs:
+                continue
+            lista = precos_por_oferta(ofs, nomes, set())
+            marca = lambda x: dict(x, rede=nome, fonte=url)  # noqa: E731
+            bruto = {"_via": "site", "cupons": [],
+                     "lojas": [{"rede": nome, "endereco": None, "distancia_km": None, "fontes": ["Site"]}],
+                     "ofertas": [dict(o, rede=nome, preco_oferta=o["preco"], fonte=url, encarte=True) for o in ofs[:20]],
+                     "lista": [dict(it, precos=[marca(x) for x in it["precos"]], tamanhos=[marca(x) for x in it["tamanhos"]]) for it in lista]}
+            out.append(normalizar(cat_id, bruto, dict(cfg, lista=[{"produto": x} for x in nomes])))
+            log(f"ofertas do site de {nome}: {len(ofs)} produto(s) na página, {len(lista)} item(ns) da lista")
     return out
 
 
@@ -3047,8 +3282,11 @@ def lojas_acompanhadas(cfg, categorias):
 def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto):
     """Tenta um preço de exemplo sem IA e diz, passo a passo, o que funcionou e o que não."""
     termo = TERMO_TESTE.get(cat_id, "leite")
-    st = {"como": None, "exemplo": None, "site": None, "passos": [], "em": agora()}
-    site = l.get("site") if url_ok(l.get("site")) else site_da_rede(nome, cidade)
+    st = {"como": None, "exemplo": None, "site": None, "passos": [], "em": agora(), "nome": nome}
+    manual = next((a["site"] for a in ((cfg.get("lojas") or {}).get("adicionar") or [])
+                   if isinstance(a, dict) and url_ok(a.get("site")) and texto(a.get("nome"), 60)
+                   and mesma_loja(texto(a["nome"], 60).split(",")[0], nome)), None)
+    site = manual or (l.get("site") if url_ok(l.get("site")) else site_da_rede(nome, cidade))
     if site:
         o = origem_de(site)
         st["site"] = o.split("://", 1)[-1].replace("www.", "")
@@ -3110,6 +3348,24 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
                     st["passos"].append(f"✓ Preço lido na página do produto: {st['exemplo']}.")
                 else:
                     st["passos"].append(f"✗ Não consegui ler o preço de \"{termo}\" nas páginas do site.")
+            if not st["como"]:  # sem lista de produtos: os preços que a própria página do site mostra
+                pag = manual or site
+                try:
+                    ofs, lidas = ofertas_do_site(pag if urllib.parse.urlsplit(pag).path not in ("", "/") else o + "/", m)
+                except Exception as e:  # noqa: BLE001
+                    ofs, lidas = [], []
+                    st["passos"].append(f"✗ Não consegui abrir a página do site ({str(e)[:60]}).")
+                if ofs is None:
+                    st["passos"].append("✗ O site pede para programas não lerem essa página.")
+                elif ofs:
+                    alvo = next((x for x in ofs if combina(termo, x["produto"])), None)
+                    ex = alvo or ofs[0]
+                    st.update(como="ofertas_site", url=lidas[0], exemplo=f"{ex['produto'][:45]} por {br_preco(ex['preco'])}")
+                    st["passos"].append(f"✓ A página do site mostra {len(ofs)} produto(s) com preço, lidos sem IA" + (f" ({len(lidas)} páginas)" if len(lidas) > 1 else "") + ".")
+                    st["passos"].append(f"✓ Achei \"{termo}\": {st['exemplo']}." if alvo else
+                                        f"Não tem \"{termo}\" nas ofertas de hoje. A cada busca, os itens da sua lista são procurados nelas.")
+                elif lidas:
+                    st["passos"].append("✗ Não achei preços no texto da página do site (podem ser carregados depois, só no navegador).")
     else:
         st["passos"].append("✗ Não sei o site desta loja (o mapa não traz). Dá para informar em Adicionar site de ofertas.")
     if not st["como"]:
@@ -3177,7 +3433,7 @@ def sonda_lojas(cfg):
             of = ler_json(OFERTAS, {}) or {}
             marca_fontes(of.get("categorias") or [])
             gravar_json(OFERTAS, of)
-        sem_ia = conta.get("site", 0) + conta.get("paginas", 0)
+        sem_ia = conta.get("site", 0) + conta.get("paginas", 0) + conta.get("ofertas_site", 0)
         partes = [f"{sem_ia} com preço direto do site"] if sem_ia else []
         if conta.get("folheto", 0) + conta.get("folheto_novo", 0):
             partes.append(f"{conta.get('folheto', 0) + conta.get('folheto_novo', 0)} com folheto")
@@ -3887,7 +4143,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.14.4"
+    server_version = "EconomIA/0.14.5"
 
     def log_message(self, fmt, *args):
         pass
