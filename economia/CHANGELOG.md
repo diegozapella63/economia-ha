@@ -1,5 +1,12 @@
 # Mudanças
 
+## 0.14.3
+
+- **Mais lojas do Google.** Além das 20 lojas mais perto de cada tipo, o Encontrar lojas procura também por "farmácia", "drogaria", "supermercado", "mercado" e "pet shop" no Google Maps, página a página, até a distância escolhida. Entram lojas que antes ficavam de fora, como a Drogaria Drogão.
+- **Site das lojas que o mapa trouxe sem site.** Quando a loja veio só do OpenStreetMap, o app pergunta ao Google o site dela (como a Farmácia Fique Bem). A resposta fica guardada por 30 dias, para não gastar a cota do Google.
+- Nomes em maiúsculas no Google aparecem normais ("DROGARIA DROGÃO JOINVILLE" vira "Drogaria Drogão Joinville").
+- "Como foi testado" diz quando o site **fechou a conexão sem responder ao EconomIA** (no navegador ele abre: é a proteção do site contra programas, como acontece com a Droga Raia). Nos outros erros, mostra o detalhe técnico, para dar para entender o que houve.
+
 ## 0.14.2
 
 - No **Encontrar lojas**, o site que tinha falhado é testado de novo na hora, em vez de esperar o dia seguinte.

@@ -1549,11 +1549,21 @@ def testa_site(origem, cep):
                            else f"respondeu com erro {e.code}")
     except Exception as e:  # noqa: BLE001
         txt = None
-        t = str(getattr(e, "reason", e)).lower()
-        res["erro"] = ("demorou demais para responder" if "timed out" in t or "timeout" in t
-                       else "teve erro de conexão segura" if "ssl" in t or "certificate" in t
-                       else "não foi encontrado" if "name or service" in t or "getaddrinfo" in t or "nodename" in t
-                       else "não respondeu")
+        r = getattr(e, "reason", None) or e
+        bruto = f"{type(r).__name__}: {r}"[:140]
+        t = bruto.lower()
+        res["detalhe"] = bruto
+        if "timed out" in t or "timeout" in t:
+            res["erro"] = "demorou demais para responder"
+        elif any(x in t for x in ("remotedisconnected", "closed connection", "connection reset", "connectionreset",
+                                  "connection aborted", "eof occurred", "unexpected_eof", "incompleteread")):
+            res["erro"] = "fechou a conexão sem responder ao EconomIA. No navegador ele abre: é a proteção do site contra acesso de programas"
+        elif "ssl" in t or "certificate" in t:
+            res["erro"] = "teve erro de conexão segura"
+        elif "name or service" in t or "getaddrinfo" in t or "nodename" in t:
+            res["erro"] = "não foi encontrado"
+        else:
+            res["erro"] = f"não respondeu ({bruto[:80]})"
     if txt is None:
         res["em"] = (datetime.now(timezone.utc) - timedelta(days=6)).isoformat(timespec="seconds")  # sem resposta: tenta amanhã
         res["sem_resposta"] = True
@@ -1643,7 +1653,7 @@ def atualiza_diretas(cfg, max_novas=6):
             continue
         novas += 1
         memo[o] = dict(testa_site(o, cfg.get("cep")), nome=nome, categoria=cat)
-        log(f"site de {nome}: " + ("sem resposta, tento de novo amanhã" if memo[o].get("sem_resposta") else "busca direta ligada" if memo[o]["vtex"] else
+        log(f"site de {nome}: " + (f"sem resposta ({memo[o].get('detalhe') or memo[o].get('erro')}), tento de novo amanhã" if memo[o].get("sem_resposta") else "busca direta ligada" if memo[o]["vtex"] else
                                    "não deixa programas usarem a busca do site" + (", mas deixa abrir as páginas de produto" if memo[o].get("paginas") else "")
                                    if not memo[o]["permite"] else "sem busca direta"))
     if novas:
@@ -2643,6 +2653,7 @@ def busca_catalogos(cfg, itens=None, cats=None):
 LOJAS_MAPA = os.path.join(DATA, "lojas_mapa.json")
 OVERPASS = os.environ.get("OFERTAS_OVERPASS", "https://overpass-api.de/api/interpreter")
 GOOGLE_PLACES = os.environ.get("OFERTAS_GOOGLE_PLACES", "https://places.googleapis.com/v1/places:searchNearby")
+GOOGLE_TEXTO = os.environ.get("OFERTAS_GOOGLE_TEXTO", "https://places.googleapis.com/v1/places:searchText")
 CASA_TESTE = os.environ.get("OFERTAS_CASA")  # só para testes: "lat,lon" no lugar da zona Casa do HA
 OSM_TIPOS = {
     "farmacias": ['nwr["amenity"="pharmacy"]', 'nwr["shop"="chemist"]'],
@@ -2735,7 +2746,7 @@ def google_lojas(lat, lon, raio_m, cats, chave):
         for pl in d.get("places") or []:
             if pl.get("businessStatus") == "CLOSED_PERMANENTLY":
                 continue
-            nome = texto((pl.get("displayName") or {}).get("text"), 60)
+            nome = nome_bonito((pl.get("displayName") or {}).get("text"))
             loc = pl.get("location") or {}
             if not nome or loc.get("latitude") is None:
                 continue
@@ -2744,6 +2755,85 @@ def google_lojas(lat, lon, raio_m, cats, chave):
                         "lat": round(float(loc["latitude"]), 6), "lon": round(float(loc["longitude"]), 6), "place_id": texto(pl.get("id"), 200),
                         "site": pl.get("websiteUri") if url_ok(pl.get("websiteUri")) else None})
     return out
+
+
+def nome_bonito(n):
+    """"DROGARIA DROGÃO JOINVILLE" → "Drogaria Drogão Joinville" (nomes todos em maiúsculas no Google)."""
+    n = texto(n, 60)
+    if not n or n != n.upper() or not any(ch.isalpha() for ch in n):
+        return n
+    pequenas = {"de", "do", "da", "dos", "das", "e"}
+    return " ".join(w.lower() if i and w.lower() in pequenas else w.capitalize() for i, w in enumerate(n.split()))
+
+
+GOOGLE_BUSCA = {"farmacias": ["farmácia", "drogaria"], "mercados": ["supermercado", "mercado"], "petshops": ["pet shop"]}
+
+
+def google_post(url, corpo, chave, campos, timeout=25):
+    req = urllib.request.Request(url, data=json.dumps(corpo).encode(), method="POST", headers={
+        "Content-Type": "application/json", "X-Goog-Api-Key": chave, "X-Goog-FieldMask": campos})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.loads(r.read(4_000_000).decode("utf-8") or "{}")
+    except urllib.error.HTTPError as e:
+        try:
+            msg = (json.loads(e.read(100_000).decode("utf-8") or "{}").get("error") or {}).get("message")
+        except (ValueError, OSError):
+            msg = None
+        raise ErroBusca(f"O Google recusou o pedido ({e.code}{': ' + str(msg)[:120] if msg else ''}).") from e
+
+
+def google_varredura(lat, lon, raio_m, cats, chave, paginas=3):
+    """Text Search por "farmácia", "supermercado"…: até 60 lugares por palavra, dentro do quadrado da casa.
+    O Nearby para em 20; aqui a busca continua página a página enquanto vierem lojas dentro da distância."""
+    import math
+    dla = raio_m / 111_000.0
+    dlo = raio_m / (111_000.0 * max(0.2, math.cos(math.radians(lat))))
+    caixa = {"rectangle": {"low": {"latitude": lat - dla, "longitude": lon - dlo}, "high": {"latitude": lat + dla, "longitude": lon + dlo}}}
+    campos = ("places.id,places.displayName,places.shortFormattedAddress,places.formattedAddress,places.location,"
+              "places.businessStatus,places.websiteUri,places.types,nextPageToken")
+    out = []
+    for cat in cats:
+        tipos = set(GOOGLE_TIPOS.get(cat, []))
+        for q in GOOGLE_BUSCA.get(cat, []):
+            corpo = {"textQuery": q, "pageSize": 20, "languageCode": "pt-BR", "regionCode": "BR", "locationRestriction": caixa, "rankPreference": "DISTANCE"}
+            for _ in range(paginas):
+                d = google_post(GOOGLE_TEXTO, corpo, chave, campos)
+                dentro = 0
+                for pl in d.get("places") or []:
+                    loc = pl.get("location") or {}
+                    nome = nome_bonito((pl.get("displayName") or {}).get("text"))
+                    if not nome or loc.get("latitude") is None or pl.get("businessStatus") == "CLOSED_PERMANENTLY":
+                        continue
+                    km = km_entre(lat, lon, loc["latitude"], loc["longitude"])
+                    if km * 1000 > raio_m or (tipos and not tipos & set(pl.get("types") or [])):
+                        continue
+                    dentro += 1
+                    out.append({"nome": nome, "categoria": cat, "endereco": texto(pl.get("shortFormattedAddress") or pl.get("formattedAddress"), 90),
+                                "distancia_km": km, "fonte": "Google", "lat": round(float(loc["latitude"]), 6), "lon": round(float(loc["longitude"]), 6),
+                                "place_id": texto(pl.get("id"), 200), "site": pl.get("websiteUri") if url_ok(pl.get("websiteUri")) else None})
+                if not d.get("nextPageToken") or not dentro:
+                    break
+                corpo = dict(corpo, pageToken=d["nextPageToken"])
+    return out
+
+
+def google_site(nome, lat, lon, chave):
+    """O site de uma loja pelo Google (Text Search), para as que o mapa trouxe sem site: {site, place_id} ou {}."""
+    corpo = {"textQuery": nome, "maxResultCount": 3, "languageCode": "pt-BR",
+             "locationBias": {"circle": {"center": {"latitude": lat, "longitude": lon}, "radius": 500.0}}}
+    req = urllib.request.Request(GOOGLE_TEXTO, data=json.dumps(corpo).encode(), method="POST", headers={
+        "Content-Type": "application/json", "X-Goog-Api-Key": chave,
+        "X-Goog-FieldMask": "places.id,places.displayName,places.location,places.websiteUri"})
+    with urllib.request.urlopen(req, timeout=20) as r:
+        d = json.loads(r.read(2_000_000).decode("utf-8") or "{}")
+    for pl in d.get("places") or []:
+        loc = pl.get("location") or {}
+        if loc.get("latitude") is None or not mesma_loja(nome, (pl.get("displayName") or {}).get("text") or ""):
+            continue
+        if km_entre(lat, lon, loc["latitude"], loc["longitude"]) <= 0.4:
+            return {"site": pl.get("websiteUri") if url_ok(pl.get("websiteUri")) else None, "place_id": texto(pl.get("id"), 200)}
+    return {}
 
 
 def lojas_do_mapa(cfg, cats, forcar=False):
@@ -2761,7 +2851,7 @@ def lojas_do_mapa(cfg, cats, forcar=False):
     except (TypeError, ValueError):
         raio_m = 2000
     g = google_chave()
-    chave = f"v3,{lat:.4f},{lon:.4f},{raio_m},{','.join(sorted(cats))},{'g' if g else 'o'}"
+    chave = f"v5,{lat:.4f},{lon:.4f},{raio_m},{','.join(sorted(cats))},{'g' if g else 'o'}"
     memo = ler_json(LOJAS_MAPA, {}) or {}
     semana = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat(timespec="seconds")
     if not forcar and memo.get("chave") == chave and memo.get("em", "") >= semana:
@@ -2778,6 +2868,12 @@ def lojas_do_mapa(cfg, cats, forcar=False):
             fontes.append("Google")
         except Exception as e:  # noqa: BLE001
             log(f"mapa: {e}")
+        try:
+            todas += google_varredura(lat, lon, raio_m, cats, g)
+            if "Google" not in fontes:
+                fontes.append("Google")
+        except Exception as e:  # noqa: BLE001
+            log(f"mapa: busca por texto no Google: {e}")
     if not fontes:
         return memo.get("lojas") or {}
     lojas = {}
@@ -2793,7 +2889,27 @@ def lojas_do_mapa(cfg, cats, forcar=False):
             igual.update({k: l.get(k) for k in ("endereco", "distancia_km", "lat", "lon", "place_id")})
     for c in lojas:
         lojas[c] = sorted(lojas[c], key=lambda x: x["distancia_km"])[:30]
-    gravar_json(LOJAS_MAPA, {"chave": chave, "em": agora(), "fontes": fontes, "lojas": lojas})
+    mes = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat(timespec="seconds")
+    sites = {k: v for k, v in (memo.get("sites") or {}).items() if isinstance(v, dict) and v.get("em", "") >= mes}
+    if g:  # lojas sem site (o OpenStreetMap quase nunca traz): pergunta ao Google, uma por uma, até 30; a resposta vale 30 dias
+        n = 0
+        for l in [x for c in lojas for x in lojas[c]]:
+            if l.get("site") or site_da_rede(l["nome"]) or l.get("lat") is None:
+                continue
+            ks = f"{chave_loja(l['nome'])}@{l['lat']:.3f},{l['lon']:.3f}"
+            if ks not in sites:
+                if n >= 30:
+                    continue
+                n += 1
+                try:
+                    sites[ks] = dict(google_site(l["nome"], l["lat"], l["lon"], g), em=agora())
+                except Exception as e:  # noqa: BLE001
+                    log(f"mapa: site de {l['nome']} no Google: {e}")
+                    break
+            for k in ("site", "place_id"):
+                if sites[ks].get(k) and not l.get(k):
+                    l[k] = sites[ks][k]
+    gravar_json(LOJAS_MAPA, {"chave": chave, "em": agora(), "fontes": fontes, "lojas": lojas, "sites": sites})
     log("mapa: " + ", ".join(f"{len(v)} {CATEGORIAS[c]['nome'].lower()}" for c, v in lojas.items()) + f" no raio ({' e '.join(fontes)})")
     return lojas
 
@@ -3749,7 +3865,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.14.2"
+    server_version = "EconomIA/0.14.3"
 
     def log_message(self, fmt, *args):
         pass

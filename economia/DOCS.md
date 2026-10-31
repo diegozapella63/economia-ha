@@ -86,7 +86,7 @@ As ofertas de encarte aparecem com o rótulo "Encarte" e a validade, e os preço
 
 A busca começa pelo que não gasta IA e só chama a IA para o que faltar (o passo a passo também está no fim de Mais › Lojas):
 
-1. **Lojas do raio, pelo mapa.** A localização da zona Casa do Home Assistant e o OpenStreetMap dizem quais farmácias, mercados e pet shops existem no raio, com endereço e distância certos (de rede, a filial mais perto). Com uma chave do Google Places em Mais › Integrações, entra também o Google Maps, que tem as lojas pequenas. Atualiza uma vez por semana.
+1. **Lojas do raio, pelo mapa.** A localização da zona Casa do Home Assistant e o OpenStreetMap dizem quais farmácias, mercados e pet shops existem no raio, com endereço e distância certos (de rede, a filial mais perto). Com uma chave do Google Places em Mais › Integrações, entra também o Google Maps, que tem as lojas pequenas e o site de cada uma. Atualiza uma vez por semana e quando você toca em Encontrar lojas.
 2. **Site das lojas.** O site de cada mercado cadastrado ou achado na busca é testado uma vez por semana. Se a loja usa VTEX e o robots.txt permite, o preço vem direto da loja que atende o seu CEP (Giassi, Angeloni e outros). Se o site não deixa programas usarem a busca, mas libera as páginas de produto (como o Bistek), o EconomIA baixa uma vez por dia a lista de produtos que a loja publica, acha os itens da sua lista pelo nome e lê o preço na página de cada produto. Esse é o preço padrão do site, que pode variar de loja para loja. O EconomIA não dribla bloqueio de site.
 3. **Shopee**, pela Open API do Shopee Afiliados, se você ligou em Mais › Integrações.
 4. **Folheto da semana** das lojas que você acompanha e que não têm preço pelo site (veja abaixo).
@@ -100,7 +100,7 @@ Toda loja que você acompanha e que não tem preço pelo site, como Komprão e A
 
 ## Google Places (opcional)
 
-O OpenStreetMap é gratuito, mas pode não ter as lojas pequenas do bairro. Em **Mais › Integrações › Google Places**, cole uma chave da Places API (New), criada em console.cloud.google.com › APIs e serviços. O Google pede cartão cadastrado e dá uma cota gratuita por mês; o EconomIA consulta uma vez por semana, três pedidos (farmácias, mercados e pet shops). A chave fica em `segredos.json`.
+O OpenStreetMap é gratuito, mas pode não ter as lojas pequenas do bairro. Em **Mais › Integrações › Google Places**, cole uma chave da Places API (New), criada em console.cloud.google.com › APIs e serviços. O Google pede cartão cadastrado e dá uma cota gratuita por mês; o EconomIA consulta uma vez por semana e quando você toca em Encontrar lojas: as lojas mais perto de cada tipo, a busca por "farmácia", "supermercado"… e o site das lojas que vieram sem site (guardado por 30 dias). São algumas dezenas de pedidos por vez, o que cabe na cota gratuita no uso normal. A chave fica em `segredos.json`.
 
 ## Lojas inativas
 
