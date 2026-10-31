@@ -1,5 +1,9 @@
 # Mudanças
 
+## 0.13.4
+
+- Com a IA desligada, o passo a passo da busca (fim de Mais › Lojas) não diz mais que a IA lê os folhetos: a etapa vira **Folhetos já lidos**, explicando que só entram os que foram lidos com a IA ligada, e a nota final diz como ligar a IA.
+
 ## 0.13.3
 
 - Com a IA desligada, o **Buscar** também atualiza as **lojas do raio pelo mapa** (OpenStreetMap e Google Places). Antes o mapa só entrava na busca com IA, e por isso a Farmácia Medfarma Popular não aparecia em Lojas.

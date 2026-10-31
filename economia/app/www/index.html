@@ -1151,13 +1151,14 @@ html:not(.sem-ia) .so-semia{display:none!important}
           <li><b>Site da loja.</b> Giassi, Angeloni e os mercados cujo site permite consulta respondem direto, com o preço da loja que atende o seu CEP. O app testa o site de cada loja sozinho, uma vez por semana. Sem IA.</li>
           <li><b>Páginas de produto.</b> Sites que só liberam as páginas de produto, como o do Bistek: a lista de produtos da loja é baixada uma vez por dia e o preço vem da página de cada produto (preço padrão do site). Sem IA.</li>
           <li><b>Shopee.</b> Pela API do Shopee Afiliados, quando ligada em Integrações. Sem IA.</li>
-          <li><b>Folheto da semana.</b> Para as lojas que você acompanha e que não têm preço pelo site, o folheto é procurado no Kimbino e no Seus Folhetos. A IA lê cada folheto uma vez; até ele vencer, os preços vêm do que ficou guardado.</li>
+          <li class="so-ia"><b>Folheto da semana.</b> Para as lojas que você acompanha e que não têm preço pelo site, o folheto é procurado no Kimbino e no Seus Folhetos. A IA lê cada folheto uma vez; até ele vencer, os preços vêm do que ficou guardado.</li>
+          <li class="so-semia"><b>Folhetos já lidos.</b> Folheto novo precisa da IA para ser lido, então sem ela só entram os preços dos folhetos lidos quando a IA estava ligada, até eles vencerem.</li>
           <li class="so-ia"><b>Busca na web com IA.</b> Ofertas, cupons e o preço das lojas do mapa e dos marketplaces. A IA já recebe a lista de lojas e sabe quais têm preço, e não procura de novo.</li>
           <li class="so-ia"><b>Encarte do site.</b> Lojas com site de ofertas cadastrado, e até 2 lojas achadas sem nenhum preço.</li>
           <li class="so-ia"><b>Itens sem preço.</b> No fim, uma pergunta só sobre os itens que ninguém achou.</li>
         </ol>
         <p class="hint so-ia">Preço do site e do folheto vale mais que o da busca na web. Com a IA desligada, a busca faz só as etapas sem IA e usa os folhetos já lidos.</p>
-        <p class="hint so-semia">A IA está desligada: a busca faz só as etapas acima, sem IA, e usa os folhetos que já tinham sido lidos.</p>
+        <p class="hint so-semia">A IA está desligada, então a busca faz só as etapas acima. Para ler os folhetos novos e procurar na web, ligue a IA em Mais › Integrações.</p>
       </section>
     </div>
     <div class="mais-painel" id="mp-integracoes" role="tabpanel" aria-labelledby="aba-integracoes" hidden>
@@ -1294,7 +1295,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.13.3</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.13.4</span> · seus dados ficam em arquivos abertos (JSON) dentro do Home Assistant.</p>
   </section>
 
   <footer>Preço do site pode ser diferente do preço na loja. Confira validade e regras do cupom no carrinho.</footer>
@@ -3325,7 +3326,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.13.3' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.13.4' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;
