@@ -213,3 +213,9 @@ Encarte vencido: `ler_encarte` recusa quando a validade lida já passou; `le_pag
 `busca_do_site(origem, info, termo)`: tenta os modelos de `BUSCAS_SITE` (`/pesquisa?terms={}`, `/busca?q={}`, `/search?q={}`…), só os permitidos por `robots_permite`, e lê o resultado com `ofertas_da_pagina`, ficando com os produtos que `combina` com o termo. O modelo que funcionou fica em `lojas_site.json › {origem}.busca`; sem nenhum, `sem_busca` (tenta de novo em 7 dias, ou no Testar agora). No teste de preço vem antes da lista de produtos (sitemap), que é pesada: `como: "busca_site"`. Na busca, `busca_sites` (até `MAX_SITES_BUSCA` lojas e `ITENS_BUSCA_SITE` itens, 0,4 s entre pedidos) monta os preços com `montar_item`; loja fora do raio vai para Online com frete no carrinho.
 
 Agropecuárias: `OSM_TIPOS.petshops` inclui `shop=agrarian`; `GOOGLE_BUSCA.petshops` inclui "agropecuária" e aceita o lugar sem o tipo `pet_store` quando o nome tem "agro" ou "ração" (`AGRO`).
+
+## Site das lojas pela IA
+
+`sites_por_ia(cfg, lojas)`: as lojas acompanhadas sem site por nenhum caminho (`sem_site`: informado em `lojas.adicionar`, `site` do mapa ou `site_da_rede`) vão numa pergunta só para a IA de busca (`instrucoes_sites`, até 15), que devolve `{"lojas": [{"n", "site"}]}`. Só entra site de verdade (`site_loja`: sem rede social, WhatsApp, iFood…). Fica em `sites_ia.json` por 30 dias, por nome normalizado, também o `null`. O `sonda_lojas` (Encontrar lojas) e o `sonda_loja` (Testar agora) passam o site como `_site_ia` para `testa_preco_loja`, que guarda `site_url` no resultado; `marca_fontes` põe esse site na loja.
+
+`preco_da_pagina` sem schema.org nem `product:price:amount`: pega o título (og:title, h1 ou title) e o produto de `ofertas_json_embutido` + `ofertas_texto` com `SequenceMatcher` ≥ 0,6 contra ele; página com "esgotado", "indisponível" ou "avise-me" não conta. No teste de preço, sem o item de exemplo nas páginas do sitemap, testa 3 outros produtos.

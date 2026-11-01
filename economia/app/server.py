@@ -3028,6 +3028,20 @@ def preco_da_pagina(html_txt):
     if m and numero(m.group(1)):
         t = re.search(r"<title>(.*?)</title>", html_txt, re.S | re.I)
         return {"nome": texto(sem_tags(t.group(1)) if t else None, 100), "marca": None, "preco": numero(m.group(1)), "disponivel": True}
+    # sem schema.org (lojas com página montada por JavaScript, como a da Cobasi): o produto de nome parecido com o título
+    import difflib
+    tit = re.search(r"""<meta[^>]+property=["']og:title["'][^>]*content=["']([^"']+)""", html_txt, re.I) \
+        or re.search(r"<h1[^>]*>(.*?)</h1>", html_txt, re.S | re.I) or re.search(r"<title>(.*?)</title>", html_txt, re.S | re.I)
+    titulo = texto(sem_tags(html_mod.unescape(tit.group(1))), 120) if tit else ""
+    if not titulo or re.search(r"(?i)esgotado|indispon[ií]vel|avise-me quando chegar", sem_tags(html_txt)[:20000]):
+        return None
+    melhor = None
+    for o in ofertas_json_embutido(html_txt) + ofertas_texto(html_txt):
+        nota = difflib.SequenceMatcher(None, norm(titulo), norm(o["produto"])).ratio()
+        if nota >= 0.6 and (not melhor or nota > melhor[0]):
+            melhor = (nota, o)
+    if melhor:
+        return {"nome": titulo, "marca": None, "preco": melhor[1]["preco"], "disponivel": True}
     return None
 
 
@@ -3852,13 +3866,15 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
     """Tenta um preço de exemplo sem IA e diz, passo a passo, o que funcionou e o que não."""
     termo = TERMO_TESTE.get(cat_id, "leite")
     st = {"como": None, "exemplo": None, "site": None, "passos": [], "em": agora(), "nome": nome}
+    if l.get("_site_ia"):
+        st["site_url"] = l["_site_ia"]
     manual = next((a["site"] for a in ((cfg.get("lojas") or {}).get("adicionar") or [])
                    if isinstance(a, dict) and url_ok(a.get("site")) and texto(a.get("nome"), 60)
                    and mesma_loja(texto(a["nome"], 60).split(",")[0], nome)), None)
     social_manual = manual if manual and rede_social(manual) else None
     if social_manual:
         manual = None
-    site = manual or site_loja(l.get("site")) or site_da_rede(nome, cidade)
+    site = manual or site_loja(l.get("site")) or site_da_rede(nome, cidade) or l.get("_site_ia")
     if site:
         o = origem_de(site)
         st["site"] = o.split("://", 1)[-1].replace("www.", "")
@@ -3926,11 +3942,23 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
                     gravar_json(arquivo_catalogo(o), cat)
                 except OSError:
                     pass
+                if not achou:  # a loja pode não vender o item de exemplo (cama, roupa de pet): tenta outros produtos
+                    tentadas = set(procura_catalogo(cat["urls"], termo, 3))
+                    for u in [x for x in cat["urls"] if x not in tentadas][:3]:
+                        r = preco_produto(o, cat, u)
+                        if r and r.get("preco") and r.get("disponivel"):
+                            achou = r
+                            st["passos"].append(f"Não achei \"{termo}\" no site; testei outro produto.")
+                            break
+                    try:
+                        gravar_json(arquivo_catalogo(o), cat)
+                    except OSError:
+                        pass
                 if achou:
                     st.update(como="paginas", exemplo=f"{(achou.get('nome') or termo)[:40]} por {br_preco(achou['preco'])}")
                     st["passos"].append(f"✓ Preço lido na página do produto: {st['exemplo']}.")
                 else:
-                    st["passos"].append(f"✗ Não consegui ler o preço de \"{termo}\" nas páginas do site.")
+                    st["passos"].append("✗ Não consegui ler o preço nas páginas de produto do site.")
             if not st["como"]:  # sem lista de produtos: os preços que a própria página do site mostra
                 pag = manual or site
                 try:
@@ -3954,7 +3982,7 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
         if not insta_handle(u):
             st["passos"].append(f"✗ O site desta loja no mapa é {rede_social(u)} ({u.split('://', 1)[-1][:40]}), sem preços para ler.")
     else:
-        st["passos"].append("✗ O mapa não traz o site desta loja.")
+        st["passos"].append("✗ O mapa não traz o site desta loja." + ("" if ia_ligada(cfg) else " Com a IA ligada, o app procura o site na web."))
     h = insta_handle(social_manual) or insta_handle(l.get("social"))
     if h and not st["como"]:
         st["instagram"] = h
@@ -4004,6 +4032,46 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
     return st
 
 
+SITES_IA = os.path.join(DATA, "sites_ia.json")
+
+
+def instrucoes_sites(lojas, cidade, uf):
+    itens = [f"{i}) {l['nome']}" + (f" ({l['endereco']})" if l.get("endereco") else "") for i, l in enumerate(lojas, 1)]
+    onde = f"{cidade} ({uf})" if cidade else "a cidade do morador"
+    return f"""Use a busca na web agora e ache o site oficial destas lojas de {onde}, no Brasil: {'; '.join(itens)}.
+Para cada uma, o endereço do site da própria loja, de preferência a página de ofertas ou a loja online com preços. Não vale Instagram, Facebook, WhatsApp, iFood, Rappi, Google Maps, guias ou listas de empresas, nem marketplace. Se a loja não tiver site, null. Não invente.
+Responda somente com um objeto JSON, sem texto antes ou depois: {{"lojas": [{{"n": 1, "site": "https://... ou null"}}]}}"""
+
+
+def sites_por_ia(cfg, lojas):
+    """{nome normalizado: site} das lojas sem site no mapa, pela busca na web da IA. Guardado 30 dias (também o "não tem")."""
+    cache = ler_json(SITES_IA, {}) or {}
+    mes = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat(timespec="seconds")
+    falta = [l for l in lojas if (cache.get(norm(l["nome"])) or {}).get("em", "") < mes][:15]
+    if falta and ia_ligada(cfg):
+        cidade, uf = cidade_do_cep(cfg.get("cep"), ler_json(FOLHETOS, {}) or {})
+        try:
+            r = chamar_ai_task("EconomIA: sites das lojas", instrucoes_sites(falta, cidade or "", uf or ""), uso="busca")
+        except ErroBusca as e:
+            log(f"sites das lojas: {e}")
+            r = None
+        if isinstance(r, dict):
+            resp = {int(x["n"]): x.get("site") for x in r.get("lojas") or [] if isinstance(x, dict) and str(x.get("n", "")).isdigit()}
+            for i, l in enumerate(falta, 1):
+                u = resp.get(i)
+                cache[norm(l["nome"])] = {"site": u if url_ok(u) and site_loja(u) else None, "em": agora()}
+            gravar_json(SITES_IA, cache)
+            log("sites das lojas pela IA: " + ", ".join(f"{l['nome']} → {cache[norm(l['nome'])]['site'] or 'sem site'}" for l in falta))
+    return {k: v["site"] for k, v in cache.items() if isinstance(v, dict) and v.get("site")}
+
+
+def sem_site(l, nome, cidade, cfg):
+    """A loja não tem site por nenhum caminho (informado, mapa, rede conhecida)?"""
+    manual = next((a["site"] for a in ((cfg.get("lojas") or {}).get("adicionar") or [])
+                   if isinstance(a, dict) and url_ok(a.get("site")) and mesma_loja(texto(a.get("nome"), 60).split(",")[0], nome)), None)
+    return not (manual or site_loja(l.get("site")) or site_da_rede(nome, cidade))
+
+
 def marca_fontes(categorias):
     """Põe em cada loja o resultado do último teste de preço (guardado à parte, sobrevive às buscas)."""
     fontes = ler_json(SONDA_FILE, {}) or {}
@@ -4022,6 +4090,8 @@ def marca_fontes(categorias):
                 st = dict(st, como="folheto", passos=[f"✓ Folheto da semana lido pela IA" + (f", vale até {datetime.fromisoformat(ate).strftime('%d/%m')}." if ate else ".")])
             if st:
                 l["preco_fonte"] = st
+                if st.get("site_url") and not site_loja(l.get("site")):  # site achado pela IA: a loja passa a mostrar
+                    l["site"] = st["site_url"]
 
 
 def sonda_lojas(cfg):
@@ -4034,6 +4104,12 @@ def sonda_lojas(cfg):
         memo = ler_json(LOJAS_SITE, {}) or {}
         cache_f = ler_json(FOLHETOS, {}) or {}
         cidade, _ = cidade_do_cep(cfg.get("cep"), cache_f)
+        faltam = [{"nome": nome, "endereco": l.get("endereco")} for _, _, nome, l in alvos if sem_site(l, nome, cidade or "", cfg)]
+        if faltam:
+            SONDA["loja"] = "procurando o site das lojas"
+            achados = sites_por_ia(cfg, faltam)
+            alvos = [(c, r, n, dict(l, _site_ia=achados[norm(n)]) if norm(n) in achados and sem_site(l, n, cidade or "", cfg) else l)
+                     for c, r, n, l in alvos]
         fontes = ler_json(SONDA_FILE, {}) or {}
         buscas_folheto = [0]
         conta = {}
@@ -4086,6 +4162,10 @@ def sonda_loja(cfg, cat_id, rid):
         memo = ler_json(LOJAS_SITE, {}) or {}
         cache_f = ler_json(FOLHETOS, {}) or {}
         cidade, _ = cidade_do_cep(cfg.get("cep"), cache_f)
+        if sem_site(l, nome, cidade or "", cfg):
+            achados = sites_por_ia(cfg, [{"nome": nome, "endereco": l.get("endereco")}])
+            if achados.get(norm(nome)):
+                l = dict(l, _site_ia=achados[norm(nome)])
         try:
             st = testa_preco_loja(cat_id, nome, l, memo, cidade or "", cache_f, cfg, [0], forcar=True)
         except Exception as e:  # noqa: BLE001
@@ -4806,7 +4886,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.15.9"
+    server_version = "EconomIA/0.16.0"
 
     def log_message(self, fmt, *args):
         pass

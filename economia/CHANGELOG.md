@@ -1,5 +1,11 @@
 # Mudanças
 
+## 0.16.0
+
+- **O app procura o site das lojas sozinho.** Loja que o mapa trouxe sem site (como a Agropecuária Manchester) tem o site procurado pela busca na web da IA: uma pergunta só, para todas as lojas sem site, no Encontrar lojas (e no Testar agora daquela loja). A resposta fica guardada por 30 dias, também o "não tem site". O site achado é testado na hora e passa a aparecer na loja, com o Trocar site. Precisa da IA ligada; sem ela, o "Como foi testado" avisa.
+- **Preço da página do produto sem dados schema.org.** Sites que mostram o preço só no texto (Cobasi, Pet Finess) agora têm o preço lido pelo produto de nome parecido com o título da página. Preço de "Compra Programada", parcelas e produtos sugeridos ficam de fora.
+- **Loja que não vende o item de teste.** Se o site não tem "ração" (uma loja de camas, por exemplo), o teste lê o preço de outro produto do site, para mostrar que o preço vem dali.
+
 ## 0.15.9
 
 - **Preço pela busca do site.** Sites como o da Cobasi não têm a busca direta (API) nem os dados de preço nas páginas de produto, mas a página de resultados da busca mostra os produtos com preço. O teste de preço agora tenta a busca do próprio site (nos endereços comuns, como `/pesquisa?terms=` e `/busca?q=`, só os que o robots.txt deixa), guarda o endereço que funcionou e, nas buscas, procura cada item da lista ali (até 15 itens, devagar). A loja aparece com **Preço pela busca do site**. Sem IA.
