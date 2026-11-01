@@ -2062,19 +2062,27 @@ def agreg_permite(url):
         base, caminho = f"{sp.scheme}://{sp.netloc}", sp.path or "/"
     g = _robots_agreg.get(base)
     if not g or g[0] < time.time() - 86400:
+        motivo = "o robots.txt do site não deixa"
         try:
             txt = pagina_txt(base + "/robots.txt")
             regras = robots_regras(txt)
             # sinal de conteúdo (Cloudflare): "ai-input=no" proíbe mandar o conteúdo para uma IA, que é o que o folheto faz
             if re.search(r"(?im)^\s*content-signal\s*:.*\bai-input\s*=\s*no\b", txt):
                 regras = [("disallow", "/")]
-                log(f"{base}: o site não deixa mandar o conteúdo para IA (ai-input=no)")
+                motivo = "o site não deixa mandar o conteúdo para IA (ai-input=no)"
+                log(f"{base}: {motivo}")
         except urllib.error.HTTPError as e:
             regras = [] if e.code == 404 else [("disallow", "/")]
-        except Exception:  # noqa: BLE001
+            if e.code != 404:
+                motivo = f"o site recusou o acesso de programas (erro {e.code})" if e.code in (401, 403, 429) else f"o site respondeu com erro {e.code}"
+        except Exception as e:  # noqa: BLE001
             regras = [("disallow", "/")]  # sem resposta: não abre
-        g = _robots_agreg[base] = (time.time(), regras)
-    return robots_permite(g[1], caminho + (("?" + sp.query) if sp.query else ""))
+            motivo = f"o site não respondeu ({str(getattr(e, 'reason', e))[:60]})"
+        g = _robots_agreg[base] = (time.time(), regras, motivo)
+    if robots_permite(g[1], caminho + (("?" + sp.query) if sp.query else "")):
+        return True
+    _robots_agreg["_ultimo"] = g[2] if len(g) > 2 else "o robots.txt do site não deixa"
+    return False
 MAX_FOLHETOS_LOJA = 2
 MAX_PAGINAS = 12
 DATA_BR = re.compile(r"(\d{1,2})/(\d{1,2})(?:/(\d{2,4}))?")
@@ -2360,9 +2368,12 @@ def achar_folhetos(loja, cache):
     memo = cache.setdefault("_lojas", {})
     hoje = hoje_br()
     dias = lambda n: (datetime.now(timezone.utc) - timedelta(days=n)).isoformat(timespec="seconds")  # noqa: E731
+    diag = loja.setdefault("_diag", {})
     for a in AGREGADORES:
         chave = a["id"] + ":" + alvo
         m = memo.get(chave) or {}
+        if m.get("motivo") and not m.get("url") and m.get("em", "") >= dias(7):
+            diag[a["nome"]] = m["motivo"]
         if m.get("url"):
             urls = [m["url"]] if m.get("em", "") >= dias(14) else []
         elif m and m.get("em", "") >= dias(7):
@@ -2370,23 +2381,36 @@ def achar_folhetos(loja, cache):
         else:
             urls = []
         urls = urls or list(dict.fromkeys(agreg_base(a) + a["loja"].format(v.format(b)) for b in bases for v in a["variantes"]))
-        achou = None
+        achou, motivo = None, None
         for u in urls:
             if not agreg_permite(u):
-                continue
+                motivo = _robots_agreg.get("_ultimo")
+                break
             try:
                 html_txt = pagina_txt(u)
-            except Exception:  # noqa: BLE001
+            except urllib.error.HTTPError as e:
+                if e.code in (401, 403, 429):
+                    motivo = f"o site recusou o acesso de programas (erro {e.code})"
+                    break
+                if e.code != 404:
+                    motivo = f"o site respondeu com erro {e.code}"
+                continue
+            except Exception as e:  # noqa: BLE001
+                motivo = f"o site não respondeu ({str(getattr(e, 'reason', e))[:60]})"
                 continue
             fs = folhetos_da_pagina(a, u, html_txt)
             if fs:
                 achou = (u, fs)
                 break
-        memo[chave] = {"url": achou[0] if achou else None, "em": agora()}
+        memo[chave] = {"url": achou[0] if achou else None, "em": agora(), "motivo": motivo}
+        if motivo and not achou:
+            diag[a["nome"]] = motivo
+            log(f"folheto de {loja['nome']} no {a['nome']}: {motivo}")
         if achou:
             validos = [f for f in achou[1] if (not f["ate"] or f["ate"] >= hoje) and (not f["de"] or f["de"] <= hoje)]
             if validos:
                 return a, achou[0], validos
+            diag[a["nome"]] = "só tem folheto vencido"
     return None, None, []
 
 
@@ -4018,15 +4042,20 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
             if forcar:  # procura a loja de novo nos sites de encartes, sem a memória de "não tem"
                 for k in [k for k in (cache_f.get("_lojas") or {}) if k.endswith(":" + slug(nome, 40))]:
                     cache_f["_lojas"].pop(k, None)
+            alvo_f = {"nome": nome, "categoria": cat_id}
             try:
-                a, _, cands = achar_folhetos({"nome": nome, "categoria": cat_id}, cache_f)
+                a, _, cands = achar_folhetos(alvo_f, cache_f)
             except Exception:  # noqa: BLE001
                 a, cands = None, []
+            diag_f = alvo_f.get("_diag") or {}
             if cands:
                 st["como"] = "folheto_novo"
                 st["passos"].append(f"✓ Tem folheto da semana no {a['nome']}" + ("; a IA lê na próxima busca." if ia_ligada(cfg) else "; ler o folheto precisa da IA."))
             else:
-                st["passos"].append("✗ Sem folheto no Kimbino, Portafolhetos, Seus Folhetos e Catálogos Ofertas.")
+                sem = [x["nome"] for x in AGREGADORES if x["nome"] not in diag_f]
+                txt = ("✗ Sem folheto no " + ", ".join(sem[:-1]) + (" e " if len(sem) > 1 else "") + sem[-1]) if sem else "✗ Sem folheto"
+                txt += "".join(f"; {k}: {v}" for k, v in diag_f.items())
+                st["passos"].append(txt + ".")
     if not st["como"]:
         st["como"] = "ia" if ia_ligada(cfg) else "nenhum"
         st["passos"].append("Preço só pela busca na web com IA." if ia_ligada(cfg) else "✗ Sem IA, não há de onde tirar o preço desta loja.")
@@ -4968,7 +4997,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.16.1"
+    server_version = "EconomIA/0.16.2"
 
     def log_message(self, fmt, *args):
         pass

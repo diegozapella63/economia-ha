@@ -1,5 +1,9 @@
 # Mudanças
 
+## 0.16.2
+
+- "Como foi testado" diz por que cada site de encartes não trouxe o folheto, em vez de só "Sem folheto": "Catálogos Ofertas: o site recusou o acesso de programas (erro 403)", "o robots.txt do site não deixa", "o site não deixa mandar o conteúdo para IA", "só tem folheto vencido" ou "o site não respondeu". Os sites que simplesmente não têm a loja continuam em "Sem folheto no …".
+
 ## 0.16.1
 
 - **Brave Search (opcional), em Mais › Integrações.** Acha o site das lojas que o mapa não traz, sem IA: o app busca "nome da loja + cidade" e fica com o primeiro resultado que é o site da própria loja (pula Instagram, Facebook, guias e listas de empresas, CNPJ, marketplaces, iFood e sites de encartes, e exige uma palavra do nome da loja no endereço ou no título). O site achado é testado na hora. Chave grátis com 2.000 buscas por mês em api-dashboard.search.brave.com; o app faz uma busca por segundo, só para as lojas sem site, e guarda a resposta por 30 dias.
