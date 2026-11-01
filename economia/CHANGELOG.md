@@ -1,5 +1,10 @@
 # Mudanças
 
+## 0.16.3
+
+- Catálogos Ofertas: o link do folheto é achado em qualquer lugar da página da loja (link com parâmetros, atributos `data-*` ou os dados que a página traz em JSON), não só num `href` simples. O encarte da Droga Raia não era reconhecido na página real.
+- "Como foi testado" diz quando a página da loja abriu mas não tinha folheto que o app consiga ler (com o tamanho da página) e quando o site pediu verificação de robô (Cloudflare).
+
 ## 0.16.2
 
 - "Como foi testado" diz por que cada site de encartes não trouxe o folheto, em vez de só "Sem folheto": "Catálogos Ofertas: o site recusou o acesso de programas (erro 403)", "o robots.txt do site não deixa", "o site não deixa mandar o conteúdo para IA", "só tem folheto vencido" ou "o site não respondeu". Os sites que simplesmente não têm a loja continuam em "Sem folheto no …".

@@ -2129,14 +2129,16 @@ def folhetos_da_pagina(a, url_loja, html_txt):
     if a["id"] == "catalogosofertas":
         loja_slug = caminho.split("/lojas/", 1)[-1].split("/")[0]
         out, vistos = [], set()
-        achados = list(re.finditer(r"href=[\"']((?:https?://[^/\"']+)?(?:/[a-z0-9-]+)?/vista/ofertas/([a-z0-9-]+)-(\d{5,}))/?[\"']", html_txt, re.I))
+        achados = list(re.finditer(r"((?:https?:)?(?:\\?/\\?/[^/\"'\s]+)?(?:\\?/[a-z0-9-]+)?\\?/vista\\?/ofertas\\?/([a-z0-9-]+)-(\d{5,}))(?![\d])", html_txt, re.I))
         for i, m in enumerate(achados):
             if loja_slug not in m.group(2) or m.group(3) in vistos:
                 continue  # "encartes parecidos" de outras lojas ficam de fora
             vistos.add(m.group(3))
-            fim = achados[i + 1].start() if i + 1 < len(achados) else min(len(html_txt), m.end() + 3000)
+            fim = next((x.start() for x in achados[i + 1:] if x.group(3) != m.group(3)), min(len(html_txt), m.end() + 3000))
             de, ate = periodo_mes(sem_tags(html_txt[m.start():min(fim, m.end() + 3000)]))
-            out.append({"url": urllib.parse.urljoin(url_loja, html_mod.unescape(m.group(1))), "id": a["id"] + ":" + m.group(3), "de": de, "ate": ate})
+            caminho_f = m.group(1).replace("\\/", "/")
+            caminho_f = caminho_f[caminho_f.index("/vista/"):] if not caminho_f.startswith("http") else caminho_f
+            out.append({"url": urllib.parse.urljoin(url_loja, html_mod.unescape(caminho_f)), "id": a["id"] + ":" + m.group(3), "de": de, "ate": ate})
         return out
     if a.get("tipo", a["id"]) == "kimbino":
         padrao = re.compile(r"href=[\"']((?:https?://[^/\"']+)?" + re.escape(caminho) + r"/[a-z0-9-]+-(\d{6,})/?)[\"']", re.I)
@@ -2398,10 +2400,15 @@ def achar_folhetos(loja, cache):
             except Exception as e:  # noqa: BLE001
                 motivo = f"o site não respondeu ({str(getattr(e, 'reason', e))[:60]})"
                 continue
+            if re.search(r"(?i)cf-chl|challenge-platform|just a moment\.\.\.|attention required", html_txt[:30000]):
+                motivo = "o site pediu verificação de robô (Cloudflare)"
+                break
             fs = folhetos_da_pagina(a, u, html_txt)
             if fs:
                 achou = (u, fs)
                 break
+            if a["id"] == "catalogosofertas" or "/" + bases[-1] in u:
+                motivo = motivo or f"abri a página da loja ({len(html_txt) // 1024} KB), mas não achei folheto nela"
         memo[chave] = {"url": achou[0] if achou else None, "em": agora(), "motivo": motivo}
         if motivo and not achou:
             diag[a["nome"]] = motivo
@@ -4997,7 +5004,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.16.2"
+    server_version = "EconomIA/0.16.3"
 
     def log_message(self, fmt, *args):
         pass
