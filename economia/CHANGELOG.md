@@ -1,5 +1,11 @@
 # Mudanças
 
+## 0.16.6
+
+- **Online:** os marketplaces escolhidos (Amazon, Shopee, Magalu, Americanas, Casas Bahia, iFood, Rappi) aparecem como o Mercado Livre: caixa de marcar, "Entrega no seu CEP", Site e App. Desmarcar tira o marketplace da busca (vai para Inativas, onde dá para marcar de novo); é o mesmo "Onde procurar" de Compras online.
+- **Testar agora nas lojas online.** Marketplace: a Shopee pela API de afiliados (quando ligada); os outros pela busca do próprio site, se o robots.txt deixar e o resultado mostrar preço. Se a busca do site funcionar, ela entra nas próximas buscas, sem IA. A lista de produtos (sitemap) de marketplace nunca é baixada. Mercados da região que entregam usam o mesmo teste das lojas físicas.
+- **Só sem fonte de preço**, em Mais › Lojas: mostra só as lojas com "Sem fonte de preço" ou "Sem preços" (também nas Inativas), com a contagem ao lado.
+
 ## 0.16.5
 
 - Preço da página do produto pelas meta tags em qualquer ordem de atributos (`<meta content="90.25" property="product:price:amount">`), também `og:price` e o preço promocional (`product:sale_price:amount`, fica o menor). É o caso da Farmácia Fique Bem (plataforma Magazord): a vitrine e a busca do site são montadas por JavaScript, e a busca é proibida para robôs, mas a página de cada produto traz o preço do PIX nas meta tags.

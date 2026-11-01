@@ -102,6 +102,9 @@ CATEGORIAS = {
 }
 MARKETPLACES = {"ifood": "iFood", "rappi": "Rappi", "mercadolivre": "Mercado Livre", "amazon": "Amazon", "shopee": "Shopee", "magalu": "Magalu",
                 "americanas": "Americanas", "casasbahia": "Casas Bahia"}
+MKT_SITES = {"ifood": "https://www.ifood.com.br", "rappi": "https://www.rappi.com.br", "mercadolivre": "https://www.mercadolivre.com.br",
+             "amazon": "https://www.amazon.com.br", "shopee": "https://shopee.com.br", "magalu": "https://www.magazineluiza.com.br",
+             "americanas": "https://www.americanas.com.br", "casasbahia": "https://www.casasbahia.com.br"}
 ASSINATURAS = {"prime": "Amazon Prime", "melimais": "Meli+", "clubeifood": "Clube iFood"}
 TAGS = {"bebe", "pet", "gato", "cachorro", "alcool", "medicamento", "maquiagem", "geriatrico", "skincare", "suplementos",
         "cafe", "bucal", "limpeza", "carnes", "alimentos", "higiene", "lactose", "gluten", "acucar"}
@@ -1010,6 +1013,14 @@ Regras: em "lojas", inclua também mercadinhos e lojas independentes do raio, me
 def e_marketplace(nome):
     n = norm(nome)
     return any(norm(m) in n for m in list(MARKETPLACES.values()) + ["magazine luiza", "aliexpress", "temu", "shein", "submarino"])
+
+
+def mkt_id(nome):
+    """"Mercado Livre" → "mercadolivre"; "Magazine Luiza" → "magalu"; None se não for um dos marketplaces do app."""
+    n = norm(nome)
+    if "magazine luiza" in n:
+        return "magalu"
+    return next((k for k, v in MARKETPLACES.items() if norm(v) in n), None)
 
 
 def normalizar(cat_id, bruto, cfg):
@@ -3183,7 +3194,8 @@ def busca_catalogos(cfg, itens=None, cats=None):
     perto = {norm(n) for n in lojas_perto(cfg)}
     perto |= {norm(texto(a["nome"], 60).split(",")[0]) for a in ((cfg.get("lojas") or {}).get("adicionar") or [])
               if isinstance(a, dict) and texto(a.get("nome"), 60)}  # loja que o morador cadastrou: é do bairro
-    lojas = [(o, m) for o, m in memo.items() if m.get("nome") and m.get("paginas") and not (m.get("vtex") and m.get("permite"))]
+    lojas = [(o, m) for o, m in memo.items() if m.get("nome") and m.get("paginas") and not (m.get("vtex") and m.get("permite"))
+             and not m.get("marketplace") and not e_marketplace(m["nome"])]  # o sitemap de marketplace tem milhões de páginas
     out = []
     for origem, m in lojas[:MAX_CATALOGOS]:
         cat_id = m.get("categoria") or "mercados"
@@ -4284,6 +4296,8 @@ def marca_fontes(categorias):
             continue
         nomes = {r.get("id"): r.get("nome") for r in c.get("redes") or [] if isinstance(r, dict)}
         por_cat = fontes.get(c.get("id")) or {}
+        if c.get("id") == "online":
+            c["fontes_mkt"] = {k[4:]: v for k, v in por_cat.items() if k.startswith("mkt:") and isinstance(v, dict)}
         for l in c.get("lojas") or []:
             st = por_cat.get(norm(nomes.get(l.get("rede")) or ""))
             if st and st.get("como") == "instagram_novo" and l.get("instagram"):  # a busca já leu o post
@@ -4350,6 +4364,56 @@ def sonda_lojas(cfg):
         SONDA.update({"rodando": False, "loja": None, "terminou_em": agora()})
 
 
+TERMO_ONLINE = "café"
+
+
+def testa_marketplace(cfg, mid, nome, memo):
+    """Teste de preço de um marketplace (botão Testar agora em Online): API de afiliados, busca do site, senão só IA.
+    A lista de produtos (sitemap) fica de fora: num marketplace ela tem milhões de páginas."""
+    termo = TERMO_ONLINE
+    st = {"como": None, "exemplo": None, "site": None, "passos": [], "em": agora(), "nome": nome}
+    if mid == "shopee":
+        if shopee_pronta():
+            try:
+                nodes = shopee_produtos(termo + " 500 g", 5)
+            except ErroShopee as e:
+                nodes = None
+                st["passos"].append(f"✗ API de afiliados da Shopee: {e}")
+            x = next((n for n in nodes or [] if numero(n.get("priceMin"))), None)
+            if x:
+                st.update(como="api", exemplo=f"{texto(x.get('productName'), 45)} por {br_preco(numero(x['priceMin']))}")
+                st["passos"].append(f"✓ API de afiliados da Shopee: \"{termo}\", {st['exemplo']}.")
+                return st
+            if nodes is not None:
+                st["passos"].append("✗ A API de afiliados da Shopee não trouxe produtos no teste.")
+        else:
+            st["passos"].append("A Shopee tem API de afiliados, que dá preço sem IA: ligue em Mais › Integrações.")
+    o = MKT_SITES.get(mid)
+    if o:
+        st["site"] = o.split("://", 1)[-1].replace("www.", "")
+        m = dict(testa_site(o, cfg.get("cep")), nome=nome, categoria="online", marketplace=True)
+        if m.get("sem_resposta"):
+            st["passos"].append(f"✗ O site {st['site']} {m.get('erro') or 'não respondeu'}.")
+        elif not m.get("paginas"):
+            st["passos"].append(f"✗ O site {st['site']} pede para programas não consultarem os preços.")
+        else:
+            try:
+                ofs = busca_do_site(o, m, termo, True)
+            except Exception:  # noqa: BLE001
+                ofs = []
+            if ofs:
+                ex = min(ofs, key=lambda x: x["preco"])
+                st.update(como="busca_site", exemplo=f"{ex['produto'][:45]} por {br_preco(ex['preco'])}")
+                st["passos"].append(f"✓ A busca do site traz os preços (sem IA): \"{termo}\", {st['exemplo']}.")
+                memo[o] = m  # a busca do site entra nas próximas buscas (só ela; a lista de produtos não)
+            else:
+                st["passos"].append(f"✗ A busca do site {st['site']} não mostra os preços para programas (ou o robots.txt não deixa).")
+    if not st["como"]:
+        st["como"] = "ia" if ia_ligada(cfg) else "nenhum"
+        st["passos"].append("Preço só pela busca na web com IA." if ia_ligada(cfg) else "✗ Sem IA, não há de onde tirar o preço deste marketplace.")
+    return st
+
+
 def sonda_loja(cfg, cat_id, rid):
     """O teste de preço de uma loja só, de novo e sem o que ficou guardado (botão Testar agora)."""
     SONDA.update({"rodando": True, "atual": 1, "total": 1, "loja": None, "resumo": None})
@@ -4358,26 +4422,31 @@ def sonda_loja(cfg, cat_id, rid):
         cat = next((c for c in of.get("categorias") or [] if isinstance(c, dict) and c.get("id") == cat_id), None)
         nomes = {r.get("id"): r.get("nome") for r in (cat or {}).get("redes") or [] if isinstance(r, dict)}
         l = next((x for x in (cat or {}).get("lojas") or [] if isinstance(x, dict) and x.get("rede") == rid), None)
-        if not l or not nomes.get(rid):
+        mid = rid[4:] if rid.startswith("mkt:") else (mkt_id(nomes.get(rid) or "") if cat_id == "online" else None)
+        if mid and mid not in MARKETPLACES:
+            mid = None
+        if not mid and (not l or not nomes.get(rid)):
             SONDA["resumo"] = "Não achei essa loja."
             return
-        nome = nomes[rid]
+        nome = nomes.get(rid) or MARKETPLACES[mid]
         SONDA["loja"] = nome
         memo = ler_json(LOJAS_SITE, {}) or {}
         cache_f = ler_json(FOLHETOS, {}) or {}
         cidade, _ = cidade_do_cep(cfg.get("cep"), cache_f)
-        if sem_site(l, nome, cidade or "", cfg):
+        if not mid and sem_site(l, nome, cidade or "", cfg):
             achados = sites_por_ia(cfg, [{"nome": nome, "endereco": l.get("endereco")}], forcar=True)
             if achados.get(norm(nome)):
                 l = dict(l, _site_ia=achados[norm(nome)])
         try:
-            st = testa_preco_loja(cat_id, nome, l, memo, cidade or "", cache_f, cfg, [0], forcar=True)
+            st = testa_marketplace(cfg, mid, nome, memo) if mid else testa_preco_loja(cat_id, nome, l, memo, cidade or "", cache_f, cfg, [0], forcar=True)
         except Exception as e:  # noqa: BLE001
             st = {"como": "nenhum", "exemplo": None, "passos": [f"✗ Erro no teste: {str(e)[:80]}"], "em": agora(), "nome": nome}
         gravar_json(LOJAS_SITE, memo)
         gravar_json(FOLHETOS, cache_f)
         fontes = ler_json(SONDA_FILE, {}) or {}
         fontes.setdefault(cat_id, {})[norm(nome)] = st
+        if mid:
+            fontes[cat_id]["mkt:" + mid] = st  # para o marketplace que ainda não tem loja na última busca
         gravar_json(SONDA_FILE, fontes)
         with _mescla_trava:
             of = ler_json(OFERTAS, {}) or {}
@@ -5090,7 +5159,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.16.5"
+    server_version = "EconomIA/0.16.6"
 
     def log_message(self, fmt, *args):
         pass
@@ -5337,8 +5406,8 @@ class Painel(BaseHTTPRequestHandler):
                 dado = {}
             if SONDA.get("rodando"):
                 return self._json(409, {"ok": False, "msg": "Já tem um teste rodando. Espere ele terminar."})
-            cat_id, rid = str((dado or {}).get("categoria") or ""), str((dado or {}).get("rede") or "")
-            if cat_id not in TERMO_TESTE or not rid:
+            cat_id, rid = str((dado or {}).get("categoria") or ""), str((dado or {}).get("rede") or "")[:80]
+            if (cat_id not in TERMO_TESTE and cat_id != "online") or not rid:
                 return self._json(400, {"ok": False, "msg": "Loja inválida."})
             SONDA["rodando"] = True
             threading.Thread(target=sonda_loja, args=(ler_config(), cat_id, rid), daemon=True).start()
