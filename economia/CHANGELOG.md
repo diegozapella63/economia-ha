@@ -1,5 +1,10 @@
 # Mudanças
 
+## 0.15.4
+
+- Em Mais › Lojas › Online aparecem todos os marketplaces escolhidos (Mercado Livre e Amazon, por padrão), mesmo os que a última busca não trouxe, com a fonte do preço: **Preço pela API** (Shopee, com a integração ligada) ou **Só com IA** (Amazon, Mercado Livre e os outros, que não têm API aberta). Com a IA desligada, eles aparecem como Sem fonte de preço.
+- Loja online não mostra mais "Sem localização" nem a distância.
+
 ## 0.15.3
 
 - **Menos texto.** Saíram as explicações do óbvio em todas as telas: o porquê de cada opção, o que a IA faz depois de cada botão, o que já está no nome do botão ou da opção. Os textos que ficaram dizem só o que é preciso para usar (de onde vem a chave, o que precisa ligar). Exemplos: "Desmarque as lojas que não quer ver" no lugar de três frases; "Em quantas lojas você topa parar?"; o passo a passo da busca com uma frase por etapa; o rodapé só com a versão.
