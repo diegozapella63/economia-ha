@@ -2867,6 +2867,16 @@ def busca_scripts(cfg, cats, itens=None, ler_folhetos=True):
             for c, _ in ca:
                 ja[c["id"]] = sorted(set(ja.get(c["id"]) or []) | {r["nome"] for r in c["redes"]})
         try:
+            bs = busca_sites(cfg, itens, cats)
+        except Exception as e:  # noqa: BLE001
+            bs = []
+            log(f"busca do site: {e}")
+        if bs:
+            resultado += bs
+            rel["diretas"] = sorted(set(rel.get("diretas") or []) | {r["nome"] for c, _ in bs for r in c["redes"]})
+            for c, _ in bs:
+                ja[c["id"]] = sorted(set(ja.get(c["id"]) or []) | {r["nome"] for r in c["redes"]})
+        try:
             po = busca_paginas_ofertas(cfg, cats, ja, itens)
         except Exception as e:  # noqa: BLE001
             po = []
@@ -3276,6 +3286,79 @@ def ofertas_do_site(site, info, forcar=False):
     return ofs, lidas
 
 
+BUSCAS_SITE = ["/pesquisa?terms={}", "/busca?q={}", "/search?q={}", "/busca?termo={}", "/pesquisa?q={}", "/busca/{}",
+               "/catalogsearch/result/?q={}", "/search?type=product&q={}", "/{}?_q={}&map=ft"]
+MAX_SITES_BUSCA = 6
+ITENS_BUSCA_SITE = 15
+
+
+def busca_do_site(origem, info, termo, forcar=False):
+    """Usa a busca do próprio site, nos endereços que o robots.txt deixa, e lê os produtos com preço do resultado.
+    O endereço que funcionou fica guardado (info["busca"]); sem nenhum, tenta de novo na semana seguinte."""
+    regras = info.get("regras") or []
+    tpl = info.get("busca")
+    semana = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat(timespec="seconds")
+    if tpl:
+        tentar = [tpl]
+    elif info.get("sem_busca", "") >= semana and not forcar:
+        return []
+    else:
+        tentar = BUSCAS_SITE
+    q = urllib.parse.quote(termo)
+    for t in tentar:
+        caminho = t.replace("{}", q)
+        if not robots_permite(regras, caminho):
+            continue
+        try:
+            html_txt = pagina_txt(origem + caminho)
+        except Exception:  # noqa: BLE001
+            continue
+        ofs = [o for o in ofertas_da_pagina(html_txt) if combina(termo, o["produto"])]
+        if ofs:
+            info["busca"] = t
+            info.pop("sem_busca", None)
+            return ofs
+    if not tpl:
+        info["sem_busca"] = agora()
+    return []
+
+
+def busca_sites(cfg, itens=None, cats=None):
+    """Itens da lista pela busca do próprio site das lojas onde ela funcionou no teste. Devolve [(categoria, parcial)]."""
+    nomes = (itens or nomes_da_lista(cfg))[:ITENS_BUSCA_SITE]
+    memo = ler_json(LOJAS_SITE, {}) or {}
+    perto = {norm(n) for n in lojas_perto(cfg)}
+    perto |= {norm(texto(a["nome"], 60).split(",")[0]) for a in ((cfg.get("lojas") or {}).get("adicionar") or [])
+              if isinstance(a, dict) and texto(a.get("nome"), 60)}
+    out = []
+    for origem, m in [(o, m) for o, m in memo.items() if m.get("busca") and m.get("nome")][:MAX_SITES_BUSCA]:
+        cat_id = m.get("categoria") or "mercados"
+        if cat_id != "online" and norm(m["nome"]) not in perto:
+            cat_id = "online"  # fora do raio: loja que entrega
+        if cats and cat_id not in cats:
+            continue
+        BUSCA["etapa"] = "busca do site · " + m["nome"]
+        lista_bruta = []
+        for nome in nomes:
+            try:
+                ofs = busca_do_site(origem, m, nome)
+            except Exception as e:  # noqa: BLE001
+                log(f"busca do site de {m['nome']}: {e}")
+                break
+            time.sleep(0.4)  # devagar, para não pesar no site da loja
+            cands = [{"nome": o["produto"], "preco": o["preco"], "de": o.get("preco_normal"), "tam": tamanho_nome(o["produto"]),
+                      "link": origem + m["busca"].replace("{}", urllib.parse.quote(nome))} for o in ofs[:8]]
+            if cands:
+                ent, _ = montar_item(nome, {m["nome"]: cands}, frete="carrinho" if cat_id == "online" else None)
+                lista_bruta.append(ent)
+        log(f"busca do site de {m['nome']}: {len(lista_bruta)} de {len(nomes)} item(ns) com preço")
+        if lista_bruta:
+            lojas_b = [] if cat_id == "online" else [{"rede": m["nome"], "site": origem, "fontes": ["Site"]}]
+            out.append(normalizar(cat_id, {"lojas": lojas_b, "cupons": [], "ofertas": [], "lista": lista_bruta, "_via": "site"},
+                                  dict(cfg, lista=[{"produto": x} for x in nomes])))
+    return out
+
+
 def busca_paginas_ofertas(cfg, cats, ja, itens=None):
     """Lojas cuja página do site mostra os preços (achadas no teste do Encontrar lojas): itens da lista e ofertas, sem IA."""
     fontes = ler_json(SONDA_FILE, {}) or {}
@@ -3321,7 +3404,7 @@ CASA_TESTE = os.environ.get("OFERTAS_CASA")  # só para testes: "lat,lon" no lug
 OSM_TIPOS = {
     "farmacias": ['nwr["amenity"="pharmacy"]', 'nwr["shop"="chemist"]'],
     "mercados": ['nwr["shop"~"^(supermarket|convenience|wholesale|greengrocer|butcher)$"]'],
-    "petshops": ['nwr["shop"="pet"]'],
+    "petshops": ['nwr["shop"="pet"]', 'nwr["shop"="agrarian"]'],
 }
 GOOGLE_TIPOS = {"farmacias": ["pharmacy", "drugstore"], "mercados": ["supermarket", "grocery_store"], "petshops": ["pet_store"]}
 # pet shop que vende remédio também é "pharmacy" no Google: o tipo principal e o nome dizem que não é farmácia
@@ -3424,7 +3507,8 @@ def osm_lojas(lat, lon, raio_m, cats):
         la, lo = e.get("lat") or (e.get("center") or {}).get("lat"), e.get("lon") or (e.get("center") or {}).get("lon")
         if not nome or la is None or lo is None:
             continue
-        cat = "farmacias" if t.get("amenity") == "pharmacy" or t.get("shop") == "chemist" else "petshops" if t.get("shop") == "pet" else "mercados"
+        cat = ("farmacias" if t.get("amenity") == "pharmacy" or t.get("shop") == "chemist"
+               else "petshops" if t.get("shop") in ("pet", "agrarian") else "mercados")
         if not da_categoria(cat, nome):
             continue
         rua = ", ".join(x for x in [t.get("addr:street"), t.get("addr:housenumber")] if x)
@@ -3479,7 +3563,8 @@ def nome_bonito(n):
     return " ".join(w.lower() if i and w.lower() in pequenas else w.capitalize() for i, w in enumerate(n.split()))
 
 
-GOOGLE_BUSCA = {"farmacias": ["farmácia", "drogaria"], "mercados": ["supermercado", "mercado"], "petshops": ["pet shop"]}
+GOOGLE_BUSCA = {"farmacias": ["farmácia", "drogaria"], "mercados": ["supermercado", "mercado"], "petshops": ["pet shop", "agropecuária"]}
+AGRO = re.compile(r"\bagro|\bra[cç](?:ao|ão|oes|ões)\b", re.I)
 
 
 def google_post(url, corpo, chave, campos, timeout=25):
@@ -3519,7 +3604,8 @@ def google_varredura(lat, lon, raio_m, cats, chave, paginas=3):
                     if not nome or loc.get("latitude") is None or pl.get("businessStatus") == "CLOSED_PERMANENTLY":
                         continue
                     km = km_entre(lat, lon, loc["latitude"], loc["longitude"])
-                    if km * 1000 > raio_m or (tipos and not tipos & set(pl.get("types") or [])) or not da_categoria(cat, nome, pl.get("primaryType")):
+                    agro = cat == "petshops" and AGRO.search(norm(nome))
+                    if km * 1000 > raio_m or (tipos and not tipos & set(pl.get("types") or []) and not agro) or not da_categoria(cat, nome, pl.get("primaryType")):
                         continue
                     dentro += 1
                     out.append({"nome": nome, "categoria": cat, "endereco": texto(pl.get("shortFormattedAddress") or pl.get("formattedAddress"), 90),
@@ -3811,8 +3897,17 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
         elif not m.get("paginas"):
             st["passos"].append(f"✗ O site {st['site']} pede para programas não consultarem os preços.")
         else:
-            if not m.get("permite"):
-                st["passos"].append("✗ O site não deixa programas usarem a busca dele, mas deixa abrir as páginas de produto.")
+            try:
+                ofs_b = busca_do_site(o, m, termo, forcar)
+            except Exception:  # noqa: BLE001
+                ofs_b = []
+            if ofs_b:
+                ex = min(ofs_b, key=lambda x: x["preco"])
+                st.update(como="busca_site", exemplo=f"{ex['produto'][:45]} por {br_preco(ex['preco'])}")
+                st["passos"].append(f"✓ A busca do site traz os preços (sem IA): \"{termo}\", {st['exemplo']}.")
+            else:
+                st["passos"].append("✗ Não achei uma busca do site que mostre os preços para programas.")
+        if not st["como"] and m and not m.get("sem_resposta") and not (m.get("vtex") and m.get("permite")) and m.get("paginas"):
             try:
                 cat = baixa_catalogo(o, m)
             except Exception:  # noqa: BLE001
@@ -3958,7 +4053,7 @@ def sonda_lojas(cfg):
             of = ler_json(OFERTAS, {}) or {}
             marca_fontes(of.get("categorias") or [])
             gravar_json(OFERTAS, of)
-        sem_ia = conta.get("site", 0) + conta.get("paginas", 0) + conta.get("ofertas_site", 0)
+        sem_ia = sum(conta.get(k, 0) for k in ("site", "paginas", "ofertas_site", "busca_site"))
         partes = [f"{sem_ia} com preço direto do site"] if sem_ia else []
         enc = sum(conta.get(k, 0) for k in ("folheto", "folheto_novo", "instagram", "instagram_novo"))
         if enc:
@@ -4711,7 +4806,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.15.8"
+    server_version = "EconomIA/0.15.9"
 
     def log_message(self, fmt, *args):
         pass

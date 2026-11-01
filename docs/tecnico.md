@@ -207,3 +207,9 @@ Encarte vencido: `ler_encarte` recusa quando a validade lida já passou; `le_pag
 ## Lojas repetidas
 
 `chave_loja` ignora o que vem depois de " - ", " – " ou " | " (filial, bairro ou cidade), a não ser que antes do traço só haja palavras genéricas. `mesmo_lugar`: até 150 m e `difflib.SequenceMatcher` ≥ 0,8 entre as chaves (erro de digitação). Vale na junção do mapa (OpenStreetMap + Google) e no `aplica_mapa`, que também renomeia a rede para o nome do Google quando o casamento foi por lugar e tira as lojas só do mapa repetidas (fica a de mais fontes). Na página, o Online esconde o mercado regional cuja chave existe numa categoria física.
+
+## Busca do site
+
+`busca_do_site(origem, info, termo)`: tenta os modelos de `BUSCAS_SITE` (`/pesquisa?terms={}`, `/busca?q={}`, `/search?q={}`…), só os permitidos por `robots_permite`, e lê o resultado com `ofertas_da_pagina`, ficando com os produtos que `combina` com o termo. O modelo que funcionou fica em `lojas_site.json › {origem}.busca`; sem nenhum, `sem_busca` (tenta de novo em 7 dias, ou no Testar agora). No teste de preço vem antes da lista de produtos (sitemap), que é pesada: `como: "busca_site"`. Na busca, `busca_sites` (até `MAX_SITES_BUSCA` lojas e `ITENS_BUSCA_SITE` itens, 0,4 s entre pedidos) monta os preços com `montar_item`; loja fora do raio vai para Online com frete no carrinho.
+
+Agropecuárias: `OSM_TIPOS.petshops` inclui `shop=agrarian`; `GOOGLE_BUSCA.petshops` inclui "agropecuária" e aceita o lugar sem o tipo `pet_store` quando o nome tem "agro" ou "ração" (`AGRO`).

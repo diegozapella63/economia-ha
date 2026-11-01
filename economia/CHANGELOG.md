@@ -1,5 +1,10 @@
 # Mudanças
 
+## 0.15.9
+
+- **Preço pela busca do site.** Sites como o da Cobasi não têm a busca direta (API) nem os dados de preço nas páginas de produto, mas a página de resultados da busca mostra os produtos com preço. O teste de preço agora tenta a busca do próprio site (nos endereços comuns, como `/pesquisa?terms=` e `/busca?q=`, só os que o robots.txt deixa), guarda o endereço que funcionou e, nas buscas, procura cada item da lista ali (até 15 itens, devagar). A loja aparece com **Preço pela busca do site**. Sem IA.
+- **Agropecuárias** (que vendem ração) entram em Pet shops: no OpenStreetMap (`shop=agrarian`) e na busca do Google por "agropecuária".
+
 ## 0.15.8
 
 - **Comparar tamanhos repetido.** O mesmo produto da mesma loja ("Pilão 500 g · Giassi · R$ 19,98") entrava de novo a cada busca e a lista crescia. Agora cada produto de cada loja aparece uma vez, com o preço mais recente; a tela já esconde os repetidos que estavam guardados, e a próxima busca limpa o arquivo.
