@@ -3099,6 +3099,28 @@ def produto_ld(x):
     return {"nome": texto(x.get("name"), 100), "marca": texto(marca, 30), "preco": min(precos), "disponivel": disp}
 
 
+def meta_tag(html_txt, nome):
+    """O content de <meta property|name|itemprop="nome">, em qualquer ordem de atributos."""
+    for m in re.finditer(r"<meta\b[^>]*>", html_txt, re.I):
+        t = m.group(0)
+        if re.search(r"""(?:property|name|itemprop)\s*=\s*["']""" + re.escape(nome) + r"""["']""", t, re.I):
+            c = re.search(r"""content\s*=\s*(?:"([^"]*)"|'([^']*)')""", t, re.I)
+            if c:
+                return html_mod.unescape(c.group(1) if c.group(1) is not None else c.group(2)).strip()
+    return None
+
+
+def parece_produto(u):
+    """Nota de quanto o endereço parece página de produto (e não categoria, marca ou página institucional)."""
+    caminho, t = urllib.parse.urlsplit(u).path, texto_url(u)
+    nota = 3 if re.search(r"/p/?$", caminho) else 0
+    nota += 2 if re.search(r"(?i)\d+\s*(?:ml|g|kg|mg|mcg|l|un|unid|cps|caps|capsulas|comprimidos|cp)\b", t) else 0
+    nota += 1 if len(t.split()) >= 4 else 0
+    if re.search(r"(?i)categor|/marca|brand|institucional|blog|como-comprar|politica|contato|sobre|login|carrinho|minha-conta|busca", caminho):
+        nota -= 5
+    return nota
+
+
 def preco_da_pagina(html_txt):
     """Nome, preço e se tem estoque, pelos dados schema.org da página do produto (ou pelas meta tags)."""
     for bloco in LD_JSON.findall(html_txt):
@@ -3111,10 +3133,14 @@ def preco_da_pagina(html_txt):
             r = produto_ld(x)
             if r:
                 return r
-    m = re.search(r"product:price:amount[\"'][^>]*content=[\"']([\d.,]+)", html_txt)
-    if m and numero(m.group(1)):
-        t = re.search(r"<title>(.*?)</title>", html_txt, re.S | re.I)
-        return {"nome": texto(sem_tags(t.group(1)) if t else None, 100), "marca": None, "preco": numero(m.group(1)), "disponivel": True}
+    # meta tags de produto (Magazord e outras): o atributo content pode vir antes ou depois do property
+    precos = [numero(meta_tag(html_txt, n)) for n in ("product:price:amount", "product:sale_price:amount", "og:price:amount", "og:price")]
+    precos = [v for v in precos if v]
+    if precos:
+        disp = meta_tag(html_txt, "product:availability") or meta_tag(html_txt, "og:availability") or ""
+        t = meta_tag(html_txt, "og:title") or (re.search(r"<h1[^>]*>(.*?)</h1>", html_txt, re.S | re.I) or [None, None])[1]
+        return {"nome": texto(sem_tags(t), 100) if t else None, "marca": texto(meta_tag(html_txt, "product:brand"), 30),
+                "preco": min(precos), "disponivel": not re.search(r"(?i)out ?of ?stock|oos|esgotado|indispon", disp)}
     # sem schema.org (lojas com página montada por JavaScript, como a da Cobasi): o produto de nome parecido com o título
     import difflib
     tit = re.search(r"""<meta[^>]+property=["']og:title["'][^>]*content=["']([^"']+)""", html_txt, re.I) \
@@ -3140,6 +3166,8 @@ def preco_produto(origem, cat, u):
         return g.get("r")
     try:
         r = preco_da_pagina(pagina_txt(u))
+        if r and not r.get("nome"):
+            r["nome"] = texto_url(u).strip().capitalize()[:100]
     except Exception as e:  # noqa: BLE001
         log(f"página de produto {u}: {e}")
         r = None
@@ -4031,7 +4059,9 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
                     pass
                 if not achou:  # a loja pode não vender o item de exemplo (cama, roupa de pet): tenta outros produtos
                     tentadas = set(procura_catalogo(cat["urls"], termo, 3))
-                    for u in [x for x in cat["urls"] if x not in tentadas][:3]:
+                    resto = [x for x in cat["urls"] if x not in tentadas]
+                    # o sitemap pode começar pelas categorias: vão primeiro os endereços com cara de produto
+                    for u in sorted(resto[:5000], key=parece_produto, reverse=True)[:4]:
                         r = preco_produto(o, cat, u)
                         if r and r.get("preco") and r.get("disponivel"):
                             achou = r
@@ -5060,7 +5090,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.16.4"
+    server_version = "EconomIA/0.16.5"
 
     def log_message(self, fmt, *args):
         pass

@@ -1,5 +1,11 @@
 # Mudanças
 
+## 0.16.5
+
+- Preço da página do produto pelas meta tags em qualquer ordem de atributos (`<meta content="90.25" property="product:price:amount">`), também `og:price` e o preço promocional (`product:sale_price:amount`, fica o menor). É o caso da Farmácia Fique Bem (plataforma Magazord): a vitrine e a busca do site são montadas por JavaScript, e a busca é proibida para robôs, mas a página de cada produto traz o preço do PIX nas meta tags.
+- O nome do produto vem do `og:title` ou do `<h1>`; sem eles, do endereço da página (o `<title>` desses sites costuma ser texto de SEO). Produto marcado como sem estoque na meta tag fica de fora.
+- No teste, quando a loja não vende o item de exemplo, o app escolhe no sitemap os endereços com cara de produto (com tamanho, como "50ml", ou terminados em `/p`) em vez dos primeiros da lista, que podem ser categorias.
+
 ## 0.16.4
 
 - Catálogos Ofertas: o app pede a página como um navegador comum pede (dizendo que aceita HTML) e guarda os cookies que o próprio site manda entre um redirecionamento e outro. Na 0.16.3 a página da Droga Raia chegava vazia ao Home Assistant (0 KB), embora tenha o encarte.
