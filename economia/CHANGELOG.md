@@ -1,5 +1,9 @@
 # Mudanças
 
+## 0.16.10
+
+- Mais › Lojas: campo **Procurar loja na lista**. Mostra só as lojas com aquele nome, em todas as categorias e também nas Inativas (que abrem sozinhas), nos marketplaces e nas lojas adicionadas por você. Funciona junto com o Só sem fonte de preço.
+
 ## 0.16.9
 
 - Clubes conferidos de mais redes, com o nome no botão de cada loja:

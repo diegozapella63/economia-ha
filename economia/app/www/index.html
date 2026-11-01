@@ -494,6 +494,7 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .r-val{font-family:var(--font-display);font-stretch:75%;font-weight:750;font-size:1.15rem;text-align:right}
 .track{display:inline-flex;align-items:center;gap:9px;cursor:pointer;min-width:0}
 .row.has-track .r-sub{padding-left:26px}
+#lojaBusca{width:100%;margin-top:12px}
 .lojas-filtro{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0 4px}
 .lojas-filtro label{font-size:15px;font-weight:600;cursor:pointer}
 .lojas-filtro .n{color:var(--muted);font-weight:500}
@@ -1130,6 +1131,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
         <div class="row-form"><button type="button" class="ghost big" id="acharLojas2"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Encontrar lojas</button></div>
         <p class="hint" id="lojasAcharMsg" aria-live="polite" hidden></p>
         <p class="hint" id="clubeSemIA" hidden>IA desligada: o preço de clube só chega pela IA (busca, encarte ou print dos cupons).</p>
+        <input class="field" type="search" id="lojaBusca" placeholder="Procurar loja na lista" aria-label="Procurar loja na lista" autocomplete="off" enterkeyhint="search">
         <div class="lojas-filtro"><label for="soSemFonte">Só sem fonte de preço <span class="n" id="nSemFonte"></span></label><input type="checkbox" class="switch" id="soSemFonte"></div>
         <div id="lojasCats" class="group"></div>
         <form class="row-form" id="addLoja" novalidate>
@@ -1336,7 +1338,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.16.9</span></p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.16.10</span></p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -2735,7 +2737,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     return '<button type="button" class="src clube" data-clube="' + esc(l.rede) + '" aria-pressed="' + socio + '" aria-label="' + esc((socio ? 'Sair do clube: ' : 'Sou do clube: ') + G[l.rede].nome) + '">' + SVG_CLUBE + esc(rot) + '</button>';
   }
   // mesma regra do selo: "Sem fonte de preço" (teste sem fonte, ou só com IA e a IA desligada) e "Sem preços"
-  var SO_SEM_FONTE = !!ui.soSemFonte;
+  var SO_SEM_FONTE = !!ui.soSemFonte, TERMO_LOJA = '';
   function semFonte(c, l, web){
     if (l.preco_fonte) return l.preco_fonte.como === 'nenhum' || (l.preco_fonte.como === 'ia' && !iaOn());
     if (web) return !iaOn() && !(norm(G[l.rede].nome) === 'shopee' && (D.relatorio || {}).shopee);
@@ -2778,11 +2780,11 @@ html:not(.sem-ia) .so-semia{display:none!important}
         }
         return -1;
       };
-      var semF = [];
+      var semF = [], nomeOk = [];
       var rows = ord.map(function(l){
         var on = acompanha(l.rede), longe = l.distancia_km > estado.raio_km, mi = manualDe(G[l.rede].nome), web = c.id === 'online' && !regional(l.rede);
         if (mi >= 0) usadas[mi] = true;
-        semF.push(semFonte(c, l, web));
+        semF.push(semFonte(c, l, web)); nomeOk.push(!TERMO_LOJA || norm(G[l.rede].nome).indexOf(TERMO_LOJA) >= 0);
         var txt = longe ? (on ? 'Mais longe, mas você acompanha' : 'Mais longe que ' + estado.raio_km + ' km') : (on ? (l.horario || '') : 'Você não acompanha');
         return '<li class="row has-track' + (on ? '' : ' out') + '">'
           + '<label class="track"><input type="checkbox" data-rede="' + l.rede + '"' + (on ? ' checked' : '') + '><span class="r-name">' + esc(G[l.rede].nome) + '</span></label>'
@@ -2795,7 +2797,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       });
       var manuais = [];
       estado.lojas.adicionar.forEach(function(a, i){
-        if (a.categoria !== c.id || usadas[i]) return;
+        if (a.categoria !== c.id || usadas[i] || (TERMO_LOJA && norm(a.nome).indexOf(TERMO_LOJA) < 0)) return;
         manuais.push('<li class="row"><span class="r-name">' + esc(a.nome) + '</span><button type="button" class="rm" data-loja="' + i + '">remover</button><span class="r-sub"><span>Adicionada por você · ' + (a.site ? 'o encarte de ' + esc(host(a.site)) + ' é lido a cada busca' : 'entra na próxima busca') + '</span></span></li>');
       });
       var mktOn = [], mktOff = [];
@@ -2806,25 +2808,25 @@ html:not(.sem-ia) .so-semia{display:none!important}
           if (tem.some(function(n){ return n.indexOf(norm(m.nome)) === 0; })) return;
           var on = estado.online.marketplaces.indexOf(m.id) >= 0, f = (c.fontes_mkt || {})[m.id], l = {rede:'mkt:' + m.id, preco_fonte:f};
           var sf = f ? (f.como === 'nenhum' || (f.como === 'ia' && !iaOn())) : !iaOn() && !(m.id === 'shopee' && (D.relatorio || {}).shopee);
-          if (SO_SEM_FONTE && !sf) return;
+          if ((SO_SEM_FONTE && !sf) || (TERMO_LOJA && norm(m.nome).indexOf(TERMO_LOJA) < 0)) return;
           (on ? mktOn : mktOff).push('<li class="row has-track' + (on ? '' : ' out') + '"><label class="track"><input type="checkbox" data-mkt="' + m.id + '"' + (on ? ' checked' : '') + '><span class="r-name">' + esc(m.nome) + '</span></label><span class="r-val num"></span>'
             + '<span class="r-sub"><span>' + (on ? 'Entrega no seu CEP' : 'Você não acompanha') + '</span><span class="src">Site</span><span class="src">App</span>'
             + (f ? fonteHtml(l, 'online') : fonteOnline(m.nome) + botaoTestar(l, 'online')) + '</span></li>');
         });
       }
-      if (SO_SEM_FONTE){  // só as lojas sem fonte de preço (as adicionadas à mão ainda não foram testadas)
-        var fica = rows.map(function(_, i){ return semF[i]; });
+      if (SO_SEM_FONTE || TERMO_LOJA){  // só as sem fonte de preço (as adicionadas à mão ainda não foram testadas) e/ou só o nome procurado
+        var fica = rows.map(function(_, i){ return (!SO_SEM_FONTE || semF[i]) && nomeOk[i]; });
         rows = rows.filter(function(_, i){ return fica[i]; }); ativa = ativa.filter(function(_, i){ return fica[i]; });
-        ord = ord.filter(function(_, i){ return fica[i]; }); manuais = [];
+        ord = ord.filter(function(_, i){ return fica[i]; }); if (SO_SEM_FONTE) manuais = [];
       }
       var inat = rows.filter(function(_, i){ return !ativa[i]; }).concat(mktOff);
-      var inativas = inat.length ? '<details class="inativas" data-inat="' + c.id + '"' + (INAT_ABERTO[c.id] ? ' open' : '') + '><summary>Inativas (' + inat.length + ')</summary><ul class="rows">' + inat.join('') + '</ul></details>' : '';
+      var inativas = inat.length ? '<details class="inativas" data-inat="' + c.id + '"' + (INAT_ABERTO[c.id] || TERMO_LOJA ? ' open' : '') + '><summary>Inativas (' + inat.length + ')</summary><ul class="rows">' + inat.join('') + '</ul></details>' : '';
       var reg = ord.map(function(l){ return c.id === 'online' && regional(l.rede); });
       var mk = rows.filter(function(_, i){ return ativa[i] && !reg[i]; }), rg = rows.filter(function(_, i){ return ativa[i] && reg[i]; });
-      if (SO_SEM_FONTE && !mk.length && !mktOn.length && !rg.length && !inat.length) return '';
+      if ((SO_SEM_FONTE || TERMO_LOJA) && !mk.length && !mktOn.length && !manuais.length && !rg.length && !inat.length) return '';
       return '<div class="group"><h3>' + esc(c.nome) + '</h3><ul class="rows">' + mk.concat(mktOn, manuais).join('') + '</ul>' + (rg.length ? '' : inativas) + '</div>'
         + (rg.length ? '<div class="group"><h3>Mercados da região que entregam</h3><ul class="rows">' + rg.join('') + '</ul>' + inativas + '</div>' : '');
-    }).join('') || (SO_SEM_FONTE ? '<p class="hint">Todas as lojas têm fonte de preço.</p>' : '');
+    }).join('') || (TERMO_LOJA ? '<p class="hint">Nenhuma loja com esse nome.</p>' : SO_SEM_FONTE ? '<p class="hint">Todas as lojas têm fonte de preço.</p>' : '');
     $('clubeSemIA').hidden = iaOn() || !estado.clubes.length;
     var nSem = contaSemFonte(ativas);
     $('nSemFonte').textContent = nSem ? '(' + nSem + ')' : '';
@@ -2914,6 +2916,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     var d = e.target; if (d && d.classList && d.classList.contains('inativas')) INAT_ABERTO[d.dataset.inat] = d.open;
     if (d && d.dataset && d.dataset.fonte) FONTE_ABERTA[d.dataset.fonte] = d.open;
   }, true);
+  $('lojaBusca').addEventListener('input', function(){ TERMO_LOJA = norm(this.value); pintaLojas(); });
   $('soSemFonte').addEventListener('change', function(){ SO_SEM_FONTE = this.checked; ui.soSemFonte = SO_SEM_FONTE; salvarUI(); pintaLojas(); });
   $('lojasCats').addEventListener('change', function(e){
     var mk = e.target.closest('input[data-mkt]');
@@ -3650,7 +3653,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.16.9' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.16.10' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;
