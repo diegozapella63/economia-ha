@@ -1,5 +1,9 @@
 # Mudanças
 
+## 0.16.7
+
+- Mais › Lojas: no "Loja que não apareceu", o tipo de loja e o botão Adicionar têm a mesma largura, e os dois campos de texto ficam alinhados.
+
 ## 0.16.6
 
 - **Online:** os marketplaces escolhidos (Amazon, Shopee, Magalu, Americanas, Casas Bahia, iFood, Rappi) aparecem como o Mercado Livre: caixa de marcar, "Entrega no seu CEP", Site e App. Desmarcar tira o marketplace da busca (vai para Inativas, onde dá para marcar de novo); é o mesmo "Onde procurar" de Compras online.
