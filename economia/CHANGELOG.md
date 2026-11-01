@@ -1,5 +1,9 @@
 # Mudanças
 
+## 0.15.7
+
+- **Testar agora** também nas lojas Inativas, e o resultado do teste aparece nelas. Dá para ver se vale a pena voltar a acompanhar uma loja antes de marcar.
+
 ## 0.15.6
 
 - **Loja repetida.** A mesma loja vinha duas vezes quando o OpenStreetMap e o Google escrevem o nome diferente ("Supermercado Impeatriz", com erro de digitação, e "Supermercado Imperatriz - Joinville"). Agora:
