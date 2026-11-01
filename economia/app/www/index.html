@@ -415,6 +415,9 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .i-det > summary::before{content:"▸ "}
 .i-det[open] > summary::before{content:"▾ "}
 .i-det > summary + div{border-top:0;padding-top:6px}
+.testando{color:var(--muted);font-size:14px}
+.testando::before{content:"";display:inline-block;width:10px;height:10px;margin-right:6px;border-radius:50%;border:2px solid var(--accent);border-right-color:transparent;vertical-align:-1px}
+@media (prefers-reduced-motion:no-preference){.testando::before{animation:gira .8s linear infinite}}
 .inativas{margin-top:6px;border-top:1px dashed var(--line);padding-top:6px}
 .fonte-det{flex-basis:100%;font-size:13px}
 .fonte-det > summary{cursor:pointer;color:var(--accent);font-weight:600;list-style:none;padding:2px 0}
@@ -1316,7 +1319,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.15.4</span></p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.15.5</span></p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -2695,7 +2698,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
           + '<label class="track"><input type="checkbox" data-rede="' + l.rede + '"' + (on ? ' checked' : '') + '><span class="r-name">' + esc(G[l.rede].nome) + '</span></label>'
           + '<span class="r-val num">' + (web ? '' : km(l.distancia_km)) + '</span>'
           + '<span class="r-sub">' + (txt ? '<span>' + esc(txt) + '</span>' : '') + (l.endereco ? '<span>' + esc(l.endereco) + '</span>' : '') + (web ? '' : mapaChip(l, G[l.rede].nome)) + siteChip(l) + instaChip(l) + arr(l.fontes).filter(function(f){ return f !== 'Mapa' && !(f === 'Site' && siteDe(l)) && !(f === 'Instagram' && instaDe(l)); }).map(function(f){ return '<span class="src">' + esc(f) + '</span>'; }).join('')
-          + (l.encarte_auto ? '<span>Encarte lido do site ' + esc(host(l.site)) + '</span>' : '') + (l.folheto ? '<span>Folheto da semana' + (l.folheto_ate ? ' até ' + dataBR(l.folheto_ate) : '') + '</span>' : '') + (l.instagram ? '<a class="linkbtn" href="' + esc(l.instagram) + '" target="_blank" rel="noopener">Encarte do Instagram' + (l.instagram_ate ? ' até ' + dataBR(l.instagram_ate) : '') + '</a>' : '') + (l.preco_fonte && acompanha(l.rede) ? fonteHtml(l) : web && on ? fonteOnline(G[l.rede].nome) : avisoSemPreco(c, l))
+          + (l.encarte_auto ? '<span>Encarte lido do site ' + esc(host(l.site)) + '</span>' : '') + (l.folheto ? '<span>Folheto da semana' + (l.folheto_ate ? ' até ' + dataBR(l.folheto_ate) : '') + '</span>' : '') + (l.instagram ? '<a class="linkbtn" href="' + esc(l.instagram) + '" target="_blank" rel="noopener">Encarte do Instagram' + (l.instagram_ate ? ' até ' + dataBR(l.instagram_ate) : '') + '</a>' : '') + (l.preco_fonte && acompanha(l.rede) ? fonteHtml(l, c.id) : web && on ? fonteOnline(G[l.rede].nome) : avisoSemPreco(c, l) + botaoTestar(l, c.id))
           + (mi >= 0 ? '<span>Adicionada por você</span><button type="button" class="rm" data-loja="' + mi + '">remover</button>' : '') + '</span>'
           + (siteAberto === l.rede ? '<form class="site-form" novalidate data-site-form="' + esc(l.rede) + '" data-cat="' + c.id + '"><input class="field" type="url" inputmode="url" value="' + esc(siteDe(l)) + '" placeholder="Site, página de ofertas ou @ do Instagram" aria-label="Site de ofertas de ' + esc(G[l.rede].nome) + '"><button class="btn" type="submit">Salvar</button><button type="button" class="ghost big" data-site-fecha="1">Cancelar</button></form>' : '')
           + '</li>';
@@ -2725,13 +2728,44 @@ html:not(.sem-ia) .so-semia{display:none!important}
   // resultado do teste de preço (Encontrar lojas): de onde dá para tirar preço e, passo a passo, o que funcionou
   var FONTE_ROT = {site:['selo', 'Preço pelo site'], paginas:['selo', 'Preço pelas páginas do site'], ofertas_site:['selo', 'Preço pela página do site'], folheto:['', 'Folheto da semana'], instagram:['', 'Encarte do Instagram'], instagram_novo:['', 'Tem encarte no Instagram'],
     folheto_novo:['', 'Tem folheto'], ia:['', 'Só com IA'], nenhum:['warn', 'Sem fonte de preço']};
-  function fonteHtml(l){
+  var TESTANDO = null, FONTE_ABERTA = {};
+  function botaoTestar(l, cid){
+    if (!/^(farmacias|mercados|petshops)$/.test(cid) || !acompanha(l.rede)) return '';
+    return TESTANDO === l.rede ? '<span class="testando">Testando…</span>'
+      : '<button type="button" class="linkbtn" data-testar="' + esc(l.rede) + '" data-cat="' + cid + '"' + (TESTANDO ? ' disabled' : '') + '>Testar agora</button>';
+  }
+  function testaLoja(cid, rid){
+    if (MODO !== 'addon'){ toast('No Home Assistant, este botão testa o preço desta loja na hora.'); return; }
+    TESTANDO = rid; FONTE_ABERTA[rid] = true; pintaLojas();
+    var fim = function(msg){
+      TESTANDO = null;
+      fetch('api/estado', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(api){
+        if (api.ofertas && api.ofertas.categorias){ D = api.ofertas; exemplo = false; indexa(); tudo(); }
+        else pintaLojas();
+        if (msg) toast(msg);
+      }).catch(function(){ pintaLojas(); if (msg) toast(msg); });
+    };
+    fetch('api/lojas-mapa/testar-loja', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({categoria:cid, rede:rid})})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+      .then(function(x){
+        if (!x.ok){ TESTANDO = null; pintaLojas(); toast(x.j.msg || 'Não deu para testar agora.'); return; }
+        var espera = function(n){
+          fetch('api/lojas-mapa/teste', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(t){
+            if (t.rodando && n < 120){ setTimeout(function(){ espera(n + 1); }, 1500); return; }
+            fim(t.resumo);
+          }).catch(function(){ if (n < 120) setTimeout(function(){ espera(n + 1); }, 3000); else fim('Sem resposta do Home Assistant.'); });
+        };
+        espera(0);
+      })
+      .catch(function(){ TESTANDO = null; pintaLojas(); toast('Sem conexão com o Home Assistant.'); });
+  }
+  function fonteHtml(l, cid){
     var f = l.preco_fonte, r = FONTE_ROT[f.como] || FONTE_ROT.nenhum;
     var rot = f.como === 'ia' && !iaOn() ? FONTE_ROT.nenhum : r;
     return '<span class="chip ' + rot[0] + '">' + rot[1] + '</span>' + (f.exemplo ? '<span>ex.: ' + esc(f.exemplo) + '</span>' : '')
-      + (arr(f.passos).length ? '<details class="fonte-det"><summary>Como foi testado' + (f.em ? ' · ' + esc(quandoCurto(f.em)) : '') + '</summary><ul>'
+      + (arr(f.passos).length ? '<details class="fonte-det"' + (FONTE_ABERTA[l.rede] ? ' open' : '') + ' data-fonte="' + esc(l.rede) + '"><summary>Como foi testado' + (f.em ? ' · ' + esc(quandoCurto(f.em)) : '') + '</summary><ul>'
         + arr(f.passos).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></details>' : '')
-      + (f.como === 'ia' || f.como === 'nenhum' ? botaoSite(l) : '');
+      + botaoTestar(l, cid) + (f.como === 'ia' || f.como === 'nenhum' ? botaoSite(l) : '');
   }
   function avisoSemPreco(c, l){
     if (l.nova && acompanha(l.rede)) return '<span>Preços na próxima busca</span>';
@@ -2752,6 +2786,8 @@ html:not(.sem-ia) .so-semia{display:none!important}
     return true;
   }
   $('lojasCats').addEventListener('click', function(e){
+    var tl = e.target.closest('[data-testar]');
+    if (tl){ if (!TESTANDO) testaLoja(tl.dataset.cat, tl.dataset.testar); return; }
     var b = e.target.closest('[data-site]');
     if (b){ siteAberto = b.dataset.site; pintaLojas(); var f = document.querySelector('[data-site-form] input'); if (f) f.focus(); return; }
     if (e.target.closest('[data-site-fecha]')){ siteAberto = null; pintaLojas(); }
@@ -2763,6 +2799,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   });
   $('lojasCats').addEventListener('toggle', function(e){
     var d = e.target; if (d && d.classList && d.classList.contains('inativas')) INAT_ABERTO[d.dataset.inat] = d.open;
+    if (d && d.dataset && d.dataset.fonte) FONTE_ABERTA[d.dataset.fonte] = d.open;
   }, true);
   $('lojasCats').addEventListener('change', function(e){
     var c = e.target.closest('input[data-rede]'); if (!c) return;
@@ -3487,7 +3524,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.15.4' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.15.5' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

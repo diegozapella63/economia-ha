@@ -1,5 +1,9 @@
 # Mudanças
 
+## 0.15.5
+
+- **Testar agora**, em cada loja de Mais › Lojas: testa o preço só daquela loja, na hora, sem a busca geral nem o Encontrar lojas. Testa de novo o site, a página de ofertas, o Instagram e os sites de encartes, sem usar o que ficou guardado, e abre o "Como foi testado" com o resultado. Serve para conferir na hora o que mudou numa loja (um site trocado, um @ do Instagram).
+
 ## 0.15.4
 
 - Em Mais › Lojas › Online aparecem todos os marketplaces escolhidos (Mercado Livre e Amazon, por padrão), mesmo os que a última busca não trouxe, com a fonte do preço: **Preço pela API** (Shopee, com a integração ligada) ou **Só com IA** (Amazon, Mercado Livre e os outros, que não têm API aberta). Com a IA desligada, eles aparecem como Sem fonte de preço.

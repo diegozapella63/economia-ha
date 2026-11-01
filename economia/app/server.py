@@ -2683,13 +2683,13 @@ def testar_instagram():
     return {"ok": True, "msg": f"Pronta: conta @{usuario or '?'}. Consigo ler os posts das contas comerciais das lojas." + insta_validade(token)}
 
 
-def insta_posts(handle, cache):
+def insta_posts(handle, cache, forcar=False):
     """Posts recentes de uma conta comercial, guardados por 12 horas: (posts, erro)."""
     token, ig = insta_chave()
     contas = cache.setdefault("contas", {})
     c = contas.get(handle) or {}
     meio_dia = (datetime.now(timezone.utc) - timedelta(hours=12)).isoformat(timespec="seconds")
-    if c.get("em", "") >= meio_dia:
+    if c.get("em", "") >= meio_dia and not forcar:
         return c.get("posts") or [], c.get("erro")
     campos = ("business_discovery.username(" + handle + "){username,media.limit(12)"
               "{id,caption,media_type,media_url,permalink,timestamp,children{media_type,media_url}}}")
@@ -3218,7 +3218,7 @@ def ofertas_da_pagina(html_txt):
     return final[:300]
 
 
-def le_pagina_ofertas(url, regras):
+def le_pagina_ofertas(url, regras, forcar=False):
     """(ofertas, links para páginas de ofertas do mesmo site). Guardado por 12 horas. None se o robots.txt não deixa."""
     sp = urllib.parse.urlsplit(url)
     if regras and not robots_permite(regras, (sp.path or "/") + (("?" + sp.query) if sp.query else "")):
@@ -3226,7 +3226,7 @@ def le_pagina_ofertas(url, regras):
     cache = ler_json(PAGINAS_OF, {}) or {}
     meio_dia = (datetime.now(timezone.utc) - timedelta(hours=12)).isoformat(timespec="seconds")
     g = cache.get(url)
-    if g and g.get("em", "") >= meio_dia:
+    if g and g.get("em", "") >= meio_dia and not forcar:
         return g.get("ofertas") or [], g.get("links") or []
     html_txt = pagina_txt(url)
     ofs = ofertas_da_pagina(html_txt)
@@ -3248,16 +3248,16 @@ def le_pagina_ofertas(url, regras):
     return ofs, links[:3]
 
 
-def ofertas_do_site(site, info):
+def ofertas_do_site(site, info, forcar=False):
     """Ofertas da página do site (a que o morador informou, ou a inicial) e da página de ofertas ligada a ela."""
     regras = info.get("regras") or []
-    r = le_pagina_ofertas(site, regras)
+    r = le_pagina_ofertas(site, regras, forcar)
     if r is None:
         return None, []
     ofs, links = r
     lidas = [site]
     if links and len(ofs) < 60:
-        r2 = le_pagina_ofertas(links[0], regras)
+        r2 = le_pagina_ofertas(links[0], regras, forcar)
         if r2:
             vistos = {norm(o["produto"]) for o in ofs}
             ofs = ofs + [o for o in r2[0] if norm(o["produto"]) not in vistos]
@@ -3721,7 +3721,7 @@ def lojas_acompanhadas(cfg, categorias):
     return out
 
 
-def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto):
+def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto, forcar=False):
     """Tenta um preço de exemplo sem IA e diz, passo a passo, o que funcionou e o que não."""
     termo = TERMO_TESTE.get(cat_id, "leite")
     st = {"como": None, "exemplo": None, "site": None, "passos": [], "em": agora(), "nome": nome}
@@ -3737,6 +3737,8 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
         st["site"] = o.split("://", 1)[-1].replace("www.", "")
         k0 = chave_direta(o)
         m = {"vtex": True, "permite": True} if k0 and todas_diretas()[k0].get("fixa") else memo.get(o) or {}
+        if forcar and not (k0 and todas_diretas()[k0].get("fixa")):
+            m = {}
         if not m or m.get("sem_resposta"):  # no Encontrar lojas, site que falhou é testado de novo na hora
             m = memo[o] = dict(testa_site(o, cfg.get("cep")), nome=nome, categoria=cat_id)
         if m.get("sem_resposta"):
@@ -3796,7 +3798,7 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
             if not st["como"]:  # sem lista de produtos: os preços que a própria página do site mostra
                 pag = manual or site
                 try:
-                    ofs, lidas = ofertas_do_site(pag if urllib.parse.urlsplit(pag).path not in ("", "/") else o + "/", m)
+                    ofs, lidas = ofertas_do_site(pag if urllib.parse.urlsplit(pag).path not in ("", "/") else o + "/", m, forcar)
                 except Exception as e:  # noqa: BLE001
                     ofs, lidas = [], []
                     st["passos"].append(f"✗ Não consegui abrir a página do site ({str(e)[:60]}).")
@@ -3822,7 +3824,7 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
         st["instagram"] = h
         if insta_pronto():
             cache_i = ler_json(INSTAGRAM, {}) or {}
-            posts, erro = insta_posts(h, cache_i)
+            posts, erro = insta_posts(h, cache_i, forcar)
             gravar_json(INSTAGRAM, cache_i)
             lido = [v for v in (cache_i.get("lidos") or {}).values()
                     if v.get("handle") == h and v.get("r") and (v.get("ate") or "9999") >= hoje_br()]
@@ -3848,6 +3850,9 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
             st["passos"].append("✓ Folheto da semana já lido, guardado até vencer.")
         elif buscas_folheto[0] < 8:
             buscas_folheto[0] += 1
+            if forcar:  # procura a loja de novo nos sites de encartes, sem a memória de "não tem"
+                for k in [k for k in (cache_f.get("_lojas") or {}) if k.endswith(":" + slug(nome, 40))]:
+                    cache_f["_lojas"].pop(k, None)
             try:
                 a, _, cands = achar_folhetos({"nome": nome, "categoria": cat_id}, cache_f)
             except Exception:  # noqa: BLE001
@@ -3922,6 +3927,44 @@ def sonda_lojas(cfg):
         if conta.get("nenhum"):
             partes.append(f"{conta['nenhum']} sem fonte de preço sem IA")
         SONDA["resumo"] = ("Testei " + str(len(alvos)) + (" loja: " if len(alvos) == 1 else " lojas: ") + ", ".join(partes) + ".") if alvos else "Nenhuma loja para testar."
+    except Exception as e:  # noqa: BLE001
+        SONDA["resumo"] = f"O teste parou: {e}"
+        log(SONDA["resumo"])
+    finally:
+        SONDA.update({"rodando": False, "loja": None, "terminou_em": agora()})
+
+
+def sonda_loja(cfg, cat_id, rid):
+    """O teste de preço de uma loja só, de novo e sem o que ficou guardado (botão Testar agora)."""
+    SONDA.update({"rodando": True, "atual": 1, "total": 1, "loja": None, "resumo": None})
+    try:
+        of = ler_json(OFERTAS, {}) or {}
+        cat = next((c for c in of.get("categorias") or [] if isinstance(c, dict) and c.get("id") == cat_id), None)
+        nomes = {r.get("id"): r.get("nome") for r in (cat or {}).get("redes") or [] if isinstance(r, dict)}
+        l = next((x for x in (cat or {}).get("lojas") or [] if isinstance(x, dict) and x.get("rede") == rid), None)
+        if not l or not nomes.get(rid):
+            SONDA["resumo"] = "Não achei essa loja."
+            return
+        nome = nomes[rid]
+        SONDA["loja"] = nome
+        memo = ler_json(LOJAS_SITE, {}) or {}
+        cache_f = ler_json(FOLHETOS, {}) or {}
+        cidade, _ = cidade_do_cep(cfg.get("cep"), cache_f)
+        try:
+            st = testa_preco_loja(cat_id, nome, l, memo, cidade or "", cache_f, cfg, [0], forcar=True)
+        except Exception as e:  # noqa: BLE001
+            st = {"como": "nenhum", "exemplo": None, "passos": [f"✗ Erro no teste: {str(e)[:80]}"], "em": agora(), "nome": nome}
+        gravar_json(LOJAS_SITE, memo)
+        gravar_json(FOLHETOS, cache_f)
+        fontes = ler_json(SONDA_FILE, {}) or {}
+        fontes.setdefault(cat_id, {})[norm(nome)] = st
+        gravar_json(SONDA_FILE, fontes)
+        with _mescla_trava:
+            of = ler_json(OFERTAS, {}) or {}
+            marca_fontes(of.get("categorias") or [])
+            gravar_json(OFERTAS, of)
+        log(f"teste de preço {nome} (só ela): {st['como']}" + (f" ({st['exemplo']})" if st.get("exemplo") else ""))
+        SONDA["resumo"] = f"{nome}: " + (st["exemplo"] and f"achei {st['exemplo']}." or "veja em Como foi testado.")
     except Exception as e:  # noqa: BLE001
         SONDA["resumo"] = f"O teste parou: {e}"
         log(SONDA["resumo"])
@@ -4627,7 +4670,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.15.4"
+    server_version = "EconomIA/0.15.5"
 
     def log_message(self, fmt, *args):
         pass
@@ -4859,6 +4902,20 @@ class Painel(BaseHTTPRequestHandler):
             except (ValueError, OSError):
                 dado = {}
             return self._json(200, atualizar_lojas_mapa(dado if isinstance(dado, dict) else {}))
+        if urllib.parse.urlsplit(self.path).path == "/api/lojas-mapa/testar-loja":
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+                dado = json.loads(self.rfile.read(n) or b"{}") if 0 < n < 10000 else {}
+            except (ValueError, OSError):
+                dado = {}
+            if SONDA.get("rodando"):
+                return self._json(409, {"ok": False, "msg": "Já tem um teste rodando. Espere ele terminar."})
+            cat_id, rid = str((dado or {}).get("categoria") or ""), str((dado or {}).get("rede") or "")
+            if cat_id not in TERMO_TESTE or not rid:
+                return self._json(400, {"ok": False, "msg": "Loja inválida."})
+            SONDA["rodando"] = True
+            threading.Thread(target=sonda_loja, args=(ler_config(), cat_id, rid), daemon=True).start()
+            return self._json(200, {"ok": True})
         if urllib.parse.urlsplit(self.path).path == "/api/integracoes/testar":
             try:
                 n = int(self.headers.get("Content-Length") or 0)
