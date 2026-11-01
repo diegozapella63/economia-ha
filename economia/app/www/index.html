@@ -1162,7 +1162,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
         <p class="sec-meta">Primeiro o que não gasta IA. A IA entra por último, só para o que faltar.</p>
         <ol class="passos">
           <li><b>Lojas perto de casa.</b> Pelo mapa (OpenStreetMap e Google Maps). Sem IA.</li>
-          <li class="so-ia"><b>Site das lojas sem site.</b> A IA procura na web, uma vez por mês.</li>
+          <li><b>Site das lojas sem site.</b> Pela busca do Brave (chave em Integrações) e, com a IA ligada, pela IA. Uma vez por mês.</li>
           <li><b>Site da loja.</b> Preço direto, quando o site permite (Giassi, Angeloni…). Sem IA.</li>
           <li><b>Busca do site.</b> A página de resultados da busca da loja, como a da Cobasi. Sem IA.</li>
           <li><b>Páginas de produto.</b> Sites que só liberam a página do produto, como o do Bistek. Sem IA.</li>
@@ -1218,6 +1218,12 @@ html:not(.sem-ia) .so-semia{display:none!important}
       <div class="sh-row"><label for="gKey"><span>Chave <span class="chip selo" id="gKeyOk" hidden>Guardada</span></span><input class="field" id="gKey" type="password" autocomplete="off" spellcheck="false"></label></div>
       <div class="row-form"><button type="button" class="btn" id="gSalvar">Salvar e testar</button><button type="button" class="ghost big" id="gTestar">Testar</button><button type="button" class="ghost big" id="gApagar" hidden>Apagar</button></div>
       <p class="ia-st" id="gSt"></p>
+    </section>
+    <section class="panel settings" aria-labelledby="h-brave">
+      <div class="set-head"><h2 id="h-brave"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></span>Brave Search (opcional)</h2><p class="sec-meta">Acha o site das lojas que o mapa não traz, sem IA. Chave grátis (2.000 buscas por mês) em api-dashboard.search.brave.com.</p></div>
+      <div class="sh-row"><label for="bKey"><span>Chave <span class="chip selo" id="bKeyOk" hidden>Guardada</span></span><input class="field" id="bKey" type="password" autocomplete="off" spellcheck="false"></label></div>
+      <div class="row-form"><button type="button" class="btn" id="bSalvar">Salvar e testar</button><button type="button" class="ghost big" id="bTestar">Testar</button><button type="button" class="ghost big" id="bApagar" hidden>Apagar</button></div>
+      <p class="ia-st" id="bSt"></p>
     </section>
     <section class="panel settings" aria-labelledby="h-insta">
       <div class="set-head"><h2 id="h-insta"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="0.9"/></svg></span>Instagram (opcional)</h2><p class="sec-meta">Lê os encartes que as lojas postam. Precisa de conta profissional do Instagram ligada a uma página do Facebook; a loja precisa ter conta comercial.</p></div>
@@ -1321,7 +1327,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.16.0</span></p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.16.1</span></p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -3086,16 +3092,19 @@ html:not(.sem-ia) .so-semia{display:none!important}
     var el = $(id); el.value = sim ? OCULTO : ''; el.placeholder = sim ? '' : 'Cole aqui';
     $(id + 'Ok').hidden = !sim;
   }
-  ['shSenha', 'gKey', 'iKey'].forEach(function(id){
+  ['shSenha', 'gKey', 'iKey', 'bKey'].forEach(function(id){
     $(id).addEventListener('focus', function(){ if (this.value === OCULTO) this.value = ''; });
     $(id).addEventListener('blur', function(){ if (!this.value && !$(id + 'Ok').hidden) this.value = OCULTO; });
   });
   // ----- Shopee Afiliados: o App ID aparece; a senha fica só no Home Assistant -----
   function shSt(msg, ok){ var el = $('shSt'); el.className = 'ia-st' + (ok === true ? ' ok' : ok === false ? ' erro' : ''); el.textContent = msg; }
   function carregaShopee(){
-    if (MODO !== 'addon'){ shSt('No Home Assistant, aqui você liga a Shopee com o App ID e a senha.'); gSt('No Home Assistant, aqui você liga o Google Maps com a chave.'); iSt('No Home Assistant, aqui você liga o Instagram com a chave da Meta.'); return; }
+    if (MODO !== 'addon'){ shSt('No Home Assistant, aqui você liga a Shopee com o App ID e a senha.'); gSt('No Home Assistant, aqui você liga o Google Maps com a chave.'); iSt('No Home Assistant, aqui você liga o Instagram com a chave da Meta.'); bSt('No Home Assistant, aqui você liga o Brave com a chave.'); return; }
     fetch('api/integracoes', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
-      var sh = j.shopee || {}, g = j.google || {}, ig = j.instagram || {};
+      var sh = j.shopee || {}, g = j.google || {}, ig = j.instagram || {}, br = j.brave || {};
+      guardado('bKey', br.tem_chave);
+      $('bApagar').hidden = !br.tem_chave;
+      bSt(br.tem_chave ? 'Ligado.' : 'Desligado.', br.tem_chave ? true : null);
       guardado('iKey', ig.tem_chave);
       $('iApagar').hidden = !ig.tem_chave;
       iSt(ig.tem_chave ? 'Ligado' + (ig.usuario ? ' com a conta @' + ig.usuario : '') + ': os encartes postados pelas lojas entram na busca.' : 'Desligado.', ig.tem_chave ? true : null);
@@ -3127,6 +3136,26 @@ html:not(.sem-ia) .so-semia{display:none!important}
       }).catch(function(){ shSt('Sem conexão com o Home Assistant.', false); });
   });
   $('shTestar').addEventListener('click', function(){ if (MODO === 'addon') testaShopee(); else toast('Só no Home Assistant'); });
+  // ----- Brave Search: acha o site das lojas sem site, sem IA -----
+  function bSt(msg, ok){ var el = $('bSt'); el.className = 'ia-st' + (ok === true ? ' ok' : ok === false ? ' erro' : ''); el.textContent = msg; }
+  function testaBrave(){
+    bSt('Testando com o Brave…');
+    fetch('api/integracoes/testar', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({servico:'brave'})})
+      .then(function(r){ return r.json(); }).then(function(j){ bSt(j.msg || 'Sem resposta.', !!j.ok); }).catch(function(){ bSt('Sem conexão com o Home Assistant.', false); });
+  }
+  $('bSalvar').addEventListener('click', function(){
+    if (MODO !== 'addon'){ toast('Só no Home Assistant'); return; }
+    var k = $('bKey').value === OCULTO ? '' : $('bKey').value.replace(/\s/g, '');
+    if (!k){ if ($('bKey').value === OCULTO) testaBrave(); else bSt('Cole a chave do Brave.', false); return; }
+    fetch('api/integracoes', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({brave:{key:k}})})
+      .then(function(r){ return r.json(); }).then(function(){ guardado('bKey', true); $('bApagar').hidden = false; testaBrave(); })
+      .catch(function(){ bSt('Sem conexão com o Home Assistant.', false); });
+  });
+  $('bTestar').addEventListener('click', function(){ if (MODO === 'addon') testaBrave(); else toast('Só no Home Assistant'); });
+  $('bApagar').addEventListener('click', function(){
+    fetch('api/integracoes', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({brave:null})})
+      .then(function(){ toast('Chave do Brave apagada'); carregaShopee(); }).catch(function(){ toast('Sem conexão com o Home Assistant.'); });
+  });
   // ----- Instagram: chave da Meta para ler os encartes que as lojas postam -----
   function iSt(msg, ok){ var el = $('iSt'); el.className = 'ia-st' + (ok === true ? ' ok' : ok === false ? ' erro' : ''); el.textContent = msg; }
   function testaInsta(){
@@ -3538,7 +3567,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.16.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.16.1' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

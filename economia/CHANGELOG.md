@@ -1,5 +1,11 @@
 # Mudanças
 
+## 0.16.1
+
+- **Brave Search (opcional), em Mais › Integrações.** Acha o site das lojas que o mapa não traz, sem IA: o app busca "nome da loja + cidade" e fica com o primeiro resultado que é o site da própria loja (pula Instagram, Facebook, guias e listas de empresas, CNPJ, marketplaces, iFood e sites de encartes, e exige uma palavra do nome da loja no endereço ou no título). O site achado é testado na hora. Chave grátis com 2.000 buscas por mês em api-dashboard.search.brave.com; o app faz uma busca por segundo, só para as lojas sem site, e guarda a resposta por 30 dias.
+- Com o Brave e a IA, o Brave procura primeiro; a IA só procura as lojas que ele não achou.
+- O Testar agora procura o site de novo, sem o que ficou guardado.
+
 ## 0.16.0
 
 - **O app procura o site das lojas sozinho.** Loja que o mapa trouxe sem site (como a Agropecuária Manchester) tem o site procurado pela busca na web da IA: uma pergunta só, para todas as lojas sem site, no Encontrar lojas (e no Testar agora daquela loja). A resposta fica guardada por 30 dias, também o "não tem site". O site achado é testado na hora e passa a aparecer na loja, com o Trocar site. Precisa da IA ligada; sem ela, o "Como foi testado" avisa.

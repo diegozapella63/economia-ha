@@ -3982,7 +3982,8 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
         if not insta_handle(u):
             st["passos"].append(f"✗ O site desta loja no mapa é {rede_social(u)} ({u.split('://', 1)[-1][:40]}), sem preços para ler.")
     else:
-        st["passos"].append("✗ O mapa não traz o site desta loja." + ("" if ia_ligada(cfg) else " Com a IA ligada, o app procura o site na web."))
+        st["passos"].append("✗ O mapa não traz o site desta loja." + ("" if ia_ligada(cfg) or brave_chave() else
+                                                                        " Com a chave do Brave em Integrações (ou a IA ligada), o app procura o site."))
     h = insta_handle(social_manual) or insta_handle(l.get("social"))
     if h and not st["como"]:
         st["instagram"] = h
@@ -4043,11 +4044,90 @@ Para cada uma, o endereço do site da própria loja, de preferência a página d
 Responda somente com um objeto JSON, sem texto antes ou depois: {{"lojas": [{{"n": 1, "site": "https://... ou null"}}]}}"""
 
 
-def sites_por_ia(cfg, lojas):
-    """{nome normalizado: site} das lojas sem site no mapa, pela busca na web da IA. Guardado 30 dias (também o "não tem")."""
+BRAVE = os.environ.get("OFERTAS_BRAVE", "https://api.search.brave.com/res/v1/web/search")
+# resultados que não são o site da própria loja
+NAO_SITE = ("google.", "facebook.", "instagram.", "linkedin.", "youtube.", "tiktok.", "twitter.", "x.com", "wa.me", "whatsapp.",
+            "ifood.", "rappi.", "mercadolivre.", "olx.", "shopee.", "amazon.", "magazineluiza.", "americanas.", "aliexpress.",
+            "guiamais.", "apontador.", "telelistas.", "cnpj", "econodata.", "casadosdados.", "solutudo.", "cylex", "hotfrog.",
+            "tiendeo.", "kimbino.", "seusfolhetos.", "portafolhetos.", "catalogosofertas.", "reclameaqui.", "yelp.", "tripadvisor.",
+            "foursquare.", "wikipedia.", "indeed.", "glassdoor.", "infojobs.", "vagas.", "catho.", "jusbrasil.", "gov.br",
+            "linktr.ee", "keepo.bio", "listamais.", "encontra", "brasilempresas", "empresasdobrasil", "consultasocio", "waze.")
+
+
+def brave_chave():
+    return str((segredos().get("brave") or {}).get("key") or "").strip() or None
+
+
+def brave_busca(q, chave, n=10):
+    req = urllib.request.Request(BRAVE + "?" + urllib.parse.urlencode({"q": q, "country": "BR", "search_lang": "pt-br", "count": n}),
+                                 headers={"Accept": "application/json", "X-Subscription-Token": chave})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            d = json.loads(r.read(3_000_000).decode("utf-8") or "{}")
+    except urllib.error.HTTPError as e:
+        if e.code in (401, 403, 422):
+            raise ErroBusca(f"O Brave recusou a chave ({e.code}). Confira em Mais › Integrações.") from e
+        if e.code == 429:
+            raise ErroBusca("O Brave pediu para esperar (limite de buscas do plano).") from e
+        raise ErroBusca(f"O Brave respondeu com erro {e.code}.") from e
+    return [x for x in ((d.get("web") or {}).get("results") or []) if isinstance(x, dict) and url_ok(x.get("url"))]
+
+
+def site_pelo_brave(nome, cidade, chave):
+    """O site da própria loja nos resultados do Brave: o primeiro que não é rede social, guia, marketplace nem site de
+    encartes e que tem no endereço ou no título uma palavra do nome da loja."""
+    gen = {"agropecuaria", "agropet", "agro", "veterinaria", "acougue", "padaria", "hortifruti", "comercio", "produtos",
+           "drogaria", "farmacia", "supermercado", "mercado", "petshop", "center", "store", "brasil"} | set(norm(cidade).split())
+    palavras = [w for w in chave_loja(nome).split() if len(w) >= 4 and w not in gen]
+    if not palavras:
+        return None  # nome só com palavras genéricas: o resultado seria um chute
+    for x in brave_busca(f"{nome} {cidade}".strip(), chave):
+        u = x["url"]
+        host = urllib.parse.urlsplit(u).netloc.lower()
+        if any(k in host for k in NAO_SITE) or not site_loja(u):
+            continue
+        onde = norm(u.replace(".", " ").replace("/", " ").replace("-", " ") + " " + str(x.get("title") or ""))
+        if any(w in onde.split() or w in norm(host).replace(" ", "") for w in palavras):
+            return u
+    return None
+
+
+def testar_brave():
+    ch = brave_chave()
+    if not ch:
+        return {"ok": False, "msg": "Falta a chave do Brave."}
+    try:
+        r = brave_busca("Giassi supermercados Joinville", ch, n=3)
+    except ErroBusca as e:
+        return {"ok": False, "msg": str(e)}
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "msg": f"Não consegui testar ({e})."}
+    return {"ok": True, "msg": "Pronta: o app procura o site das lojas que o mapa não traz." if r else "O Brave aceitou a chave, mas não trouxe resultados."}
+
+
+def sites_por_ia(cfg, lojas, forcar=False):
+    """{nome normalizado: site} das lojas sem site no mapa. Primeiro a busca do Brave (sem IA, com chave em Integrações);
+    o que faltar, pela busca na web da IA, numa pergunta só. Guardado 30 dias (também o "não tem")."""
     cache = ler_json(SITES_IA, {}) or {}
     mes = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat(timespec="seconds")
-    falta = [l for l in lojas if (cache.get(norm(l["nome"])) or {}).get("em", "") < mes][:15]
+    velho = lambda l: forcar or (cache.get(norm(l["nome"])) or {}).get("em", "") < mes  # noqa: E731
+    mudou = False
+    ch = brave_chave()
+    if ch:
+        cidade, _ = cidade_do_cep(cfg.get("cep"), ler_json(FOLHETOS, {}) or {})
+        for l in [l for l in lojas if velho(l)][:15]:
+            try:
+                u = site_pelo_brave(l["nome"], cidade or "", ch)
+            except ErroBusca as e:
+                log(f"sites das lojas (Brave): {e}")
+                break
+            cache[norm(l["nome"])] = {"site": u, "em": agora(), "via": "brave"}
+            mudou = True
+            log(f"site de {l['nome']} pelo Brave: {u or 'não achei'}")
+            time.sleep(1.1)  # plano grátis: uma busca por segundo
+    # a IA tenta as que ninguém achou ainda (ou que só o Brave procurou)
+    falta = [l for l in lojas if velho(l) or (not (cache.get(norm(l["nome"])) or {}).get("site")
+                                             and (cache.get(norm(l["nome"])) or {}).get("via") != "ia")][:15]
     if falta and ia_ligada(cfg):
         cidade, uf = cidade_do_cep(cfg.get("cep"), ler_json(FOLHETOS, {}) or {})
         try:
@@ -4059,9 +4139,11 @@ def sites_por_ia(cfg, lojas):
             resp = {int(x["n"]): x.get("site") for x in r.get("lojas") or [] if isinstance(x, dict) and str(x.get("n", "")).isdigit()}
             for i, l in enumerate(falta, 1):
                 u = resp.get(i)
-                cache[norm(l["nome"])] = {"site": u if url_ok(u) and site_loja(u) else None, "em": agora()}
-            gravar_json(SITES_IA, cache)
+                cache[norm(l["nome"])] = {"site": u if url_ok(u) and site_loja(u) else None, "em": agora(), "via": "ia"}
+            mudou = True
             log("sites das lojas pela IA: " + ", ".join(f"{l['nome']} → {cache[norm(l['nome'])]['site'] or 'sem site'}" for l in falta))
+    if mudou:
+        gravar_json(SITES_IA, cache)
     return {k: v["site"] for k, v in cache.items() if isinstance(v, dict) and v.get("site")}
 
 
@@ -4163,7 +4245,7 @@ def sonda_loja(cfg, cat_id, rid):
         cache_f = ler_json(FOLHETOS, {}) or {}
         cidade, _ = cidade_do_cep(cfg.get("cep"), cache_f)
         if sem_site(l, nome, cidade or "", cfg):
-            achados = sites_por_ia(cfg, [{"nome": nome, "endereco": l.get("endereco")}])
+            achados = sites_por_ia(cfg, [{"nome": nome, "endereco": l.get("endereco")}], forcar=True)
             if achados.get(norm(nome)):
                 l = dict(l, _site_ia=achados[norm(nome)])
         try:
@@ -4886,7 +4968,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.16.0"
+    server_version = "EconomIA/0.16.1"
 
     def log_message(self, fmt, *args):
         pass
@@ -4970,7 +5052,7 @@ class Painel(BaseHTTPRequestHandler):
             ch = segredos().get("shopee") or {}
             ig = segredos().get("instagram") or {}
             self._json(200, {"shopee": {"app_id": str(ch.get("app_id") or ""), "tem_senha": bool(ch.get("secret"))}, "google": {"tem_chave": bool(google_chave())},
-                             "instagram": {"tem_chave": bool(ig.get("token")), "usuario": ig.get("usuario")}})
+                             "instagram": {"tem_chave": bool(ig.get("token")), "usuario": ig.get("usuario")}, "brave": {"tem_chave": bool(brave_chave())}})
         elif rota == "/api/lojas-mapa/teste":
             self._json(200, SONDA)
         elif rota == "/api/lojas-mapa":
@@ -5070,6 +5152,13 @@ class Painel(BaseHTTPRequestHandler):
                     os.remove(LOJAS_MAPA)  # a próxima busca já usa (ou deixa de usar) o Google
                 except OSError:
                     pass
+            if "brave" in dado:
+                novo = dado.get("brave")
+                chave = re.sub(r"\s", "", str((novo or {}).get("key") or ""))[:120]
+                if chave:
+                    seg["brave"] = {"key": chave}
+                elif not novo:
+                    seg.pop("brave", None)
             if "instagram" in dado:
                 novo = dado.get("instagram")
                 chave = re.sub(r"\s", "", str((novo or {}).get("token") or ""))[:600]
@@ -5139,7 +5228,8 @@ class Painel(BaseHTTPRequestHandler):
             except (ValueError, OSError):
                 dado = {}
             serv = dado.get("servico") if isinstance(dado, dict) else None
-            return self._json(200, testar_google() if serv == "google" else testar_instagram() if serv == "instagram" else testar_shopee())
+            return self._json(200, testar_google() if serv == "google" else testar_instagram() if serv == "instagram"
+                              else testar_brave() if serv == "brave" else testar_shopee())
         if urllib.parse.urlsplit(self.path).path == "/api/ler-encarte":
             dado = self._corpo(MAX_FOTOS_BODY)
             if dado is None:
