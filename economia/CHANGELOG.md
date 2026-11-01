@@ -1,5 +1,12 @@
 # Mudanças
 
+## 0.16.9
+
+- Clubes conferidos de mais redes, com o nome no botão de cada loja:
+  - **Preço de membro pelo CPF:** Bem Panvel, Clube DC (Drogaria Catarinense), Clube PP (Preço Popular), Mais Saúde (Raia e Drogasil) e Clube Mais (Fort).
+  - **Ofertas ativadas no app:** Clube Bistek, Super Clube (Imperatriz), Clube K (Komprão), Meu Atacadão, Sempre Bem (Pague Menos), Amigo Cobasi e Clubz (Petz). Essas ofertas também entram pelo print em Cupons do app.
+- Drogão, FarmaSesi e São João ficam como "Adicionar clube" até dar para confirmar as regras.
+
 ## 0.16.8
 
 - **Clube em cada loja.** Em Mais › Lojas, cada farmácia, mercado e pet shop tem o botão do clube: o nome do clube quando ele foi conferido (Amigo Giassi, Club Nissei), **Tem clube** quando a busca achou um, ou **Adicionar clube**. Um toque vira **Sou do clube**. A lista separada de clubes no fim saiu (a seção ficou só com os Cupons do app).
