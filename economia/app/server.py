@@ -2137,7 +2137,6 @@ def folhetos_da_pagina(a, url_loja, html_txt):
             fim = next((x.start() for x in achados[i + 1:] if x.group(3) != m.group(3)), min(len(html_txt), m.end() + 3000))
             de, ate = periodo_mes(sem_tags(html_txt[m.start():min(fim, m.end() + 3000)]))
             caminho_f = m.group(1).replace("\\/", "/")
-            caminho_f = caminho_f[caminho_f.index("/vista/"):] if not caminho_f.startswith("http") else caminho_f
             out.append({"url": urllib.parse.urljoin(url_loja, html_mod.unescape(caminho_f)), "id": a["id"] + ":" + m.group(3), "de": de, "ate": ate})
         return out
     if a.get("tipo", a["id"]) == "kimbino":
