@@ -986,6 +986,13 @@ def instrucoes_para(cat_id, cfg):
         extra = ' Em remédios, inclua "receita": "tarja" (venda sob prescrição) ou "mip" (sem receita).'
     if cat_id == "petshops":
         extra = ' Em produtos para animais, use as etiquetas "pet" e "gato" ou "cachorro".'
+    socios = set(cfg.get("clubes") or [])
+    if socios:  # clube marcado em Mais › Lojas: a IA procura o preço de membro dessas lojas
+        of = ler_json(OFERTAS, {}) or {}
+        nomes_c = [r.get("nome") for c in of.get("categorias") or [] if isinstance(c, dict) and c.get("id") == cat_id
+                   for r in c.get("redes") or [] if isinstance(r, dict) and r.get("id") in socios and r.get("nome")]
+        if nomes_c:
+            extra += f' O morador é do clube de {", ".join(nomes_c[:8])}: traga o "preco_clube" dessas lojas sempre que a loja mostrar.'
     return f"""Encontre ofertas e cupons válidos hoje ({hoje_br()}) de {cat['o_que']} perto do CEP {cfg.get('cep')}, num raio de {cfg.get('raio_km') or 2} km, no Brasil.
 
 Use a busca na web agora. Use só o que encontrar nas páginas: não invente lojas, preços nem cupons. Se não conseguir usar a busca na web, responda apenas {{"erro": "sem_busca"}}.
@@ -5061,12 +5068,14 @@ def dados_lista():
         for r in c.get("redes") or []:
             if isinstance(r, dict) and r.get("id"):
                 info[r["id"]] = {"nome": r.get("nome") or r["id"], "tipo": c.get("singular") or c.get("nome") or "",
-                                 "cat": c.get("id"), "dist": dist.get(r["id"])}
+                                 "cat": c.get("id"), "dist": dist.get(r["id"]), "loja": r["id"] in dist}
 
     def acompanha(rid):
         i = info.get(rid)
         if not i or i["cat"] not in ativas or rid in ignorar:
             return False
+        if not i["loja"] and i["cat"] != "online" and rid not in manter:
+            return False  # rede que ficou sem loja (o mapa tirou: de outra categoria ou duplicada)
         return rid in manter or i["dist"] is None or i["dist"] <= raio
 
     precos = {norm(i.get("produto")): i.get("precos") or {} for i in of.get("lista") or [] if isinstance(i, dict)}
@@ -5159,7 +5168,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.16.7"
+    server_version = "EconomIA/0.16.8"
 
     def log_message(self, fmt, *args):
         pass

@@ -502,6 +502,9 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .src.map-a{display:inline-flex;align-items:center;gap:3px;color:var(--accent);border-color:var(--accent);text-decoration:none}
 .src.map-a svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .src.sem{color:var(--muted);border-style:dashed}
+button.src.clube{display:inline-flex;align-items:center;gap:3px;background:none;font-family:inherit;line-height:inherit;cursor:pointer;color:var(--muted);border-style:dashed}
+button.src.clube svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+button.src.clube[aria-pressed="true"]{color:var(--accent);border:1px solid var(--accent);background:var(--accent-soft)}
 .note{font-size:13px;color:var(--muted)}
 
 footer{font-size:12.5px;color:var(--muted)}
@@ -1124,6 +1127,9 @@ html:not(.sem-ia) .so-semia{display:none!important}
         <section class="panel" aria-labelledby="h-lojas">
         <div class="sec-head"><h2 id="h-lojas"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 11v9h14v-9"/><path d="M10 20v-5h4v5"/></svg></span>Lojas perto de casa</h2></div>
         <p class="sec-meta">Desmarque as lojas que não quer ver.</p>
+        <div class="row-form"><button type="button" class="ghost big" id="acharLojas2"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Encontrar lojas</button></div>
+        <p class="hint" id="lojasAcharMsg" aria-live="polite" hidden></p>
+        <p class="hint" id="clubeSemIA" hidden>IA desligada: o preço de clube só chega pela IA (busca, encarte ou print dos cupons).</p>
         <div class="lojas-filtro"><label for="soSemFonte">Só sem fonte de preço <span class="n" id="nSemFonte"></span></label><input type="checkbox" class="switch" id="soSemFonte"></div>
         <div id="lojasCats" class="group"></div>
         <form class="row-form" id="addLoja" novalidate>
@@ -1136,11 +1142,8 @@ html:not(.sem-ia) .so-semia{display:none!important}
       </section>
       </div><div class="col">
         <section class="panel" aria-labelledby="h-contas">
-        <div class="sec-head"><h2 id="h-contas"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M14 7v2M14 11v2M14 15v2"/></svg></span>Clubes e cupons do app</h2></div>
-        <p class="sec-meta">Marque os clubes em que você é cadastrado: o preço de clube passa a valer para você.</p>
-        <ul class="rows" id="contasList"></ul>
+        <div class="sec-head"><h2 id="h-contas"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M14 7v2M14 11v2M14 15v2"/></svg></span>Cupons do app</h2></div>
         <div class="group so-ia" id="cupMeus">
-          <h3>Cupons do app</h3>
           <p class="sec-meta">Print da carteira de cupons do app da loja (Panvel, Raia, Atacadão…).</p>
           <div class="row-form"><label class="ghost big" for="cupArq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Escolher prints</label></div>
           <input type="file" id="cupArq" class="arq" accept="image/*" multiple>
@@ -1333,7 +1336,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.16.7</span></p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.16.8</span></p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -1408,7 +1411,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   function cap(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
 
   // ---------- estado ----------
-  var D, estado, G = {}, LOJA = {}, MODO = 'exemplo', exemplo = true, usuario = null;
+  var D, estado, G = {}, LOJA = {}, GEMEA = {}, MODO = 'exemplo', exemplo = true, usuario = null;
   var CAT, filtro = 'todas', menuAberto = null;
   var KEY = 'ofertas-bairro:v3', KEY_UI = 'ofertas-bairro:ui';
   function lerLocal(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } }
@@ -1437,10 +1440,13 @@ html:not(.sem-ia) .so-semia{display:none!important}
   aplicaCor(ui.cor);
 
   function indexa(){
-    G = {}; LOJA = {};
+    G = {}; LOJA = {}; GEMEA = {};
     D.categorias.forEach(function(c){
       arr(c.redes).forEach(function(r){ G[r.id] = {nome:r.nome, curto:r.curto || r.nome, nota:r.nota, cat:c.id, singular:c.singular || c.nome}; });
       arr(c.lojas).forEach(function(l){ LOJA[l.rede] = l; });
+    });
+    D.categorias.forEach(function(c){
+      arr(c.lojas).forEach(function(l){ if (G[l.rede]) GEMEA[c.id + '|' + chaveLoja(G[l.rede].nome)] = l.rede; });
     });
   }
   function n0(v, d){ v = Number(v); return isFinite(v) && v >= 0 ? Math.min(Math.round(v), 20) : d; }
@@ -1502,6 +1508,10 @@ html:not(.sem-ia) .so-semia{display:none!important}
     if (estado.lojas.ignorar.indexOf(id) >= 0) return false;
     if (estado.lojas.manter.indexOf(id) >= 0) return true;
     var l = LOJA[id];
+    if (!l && G[id] && G[id].cat !== 'online'){  // a rede ficou sem loja (o mapa tirou: de outra categoria ou duplicada)
+      var gm = GEMEA[G[id].cat + '|' + chaveLoja(G[id].nome)];
+      return gm && gm !== id ? acompanha(gm) : false;
+    }
     return l ? (l.distancia_km == null || l.distancia_km <= estado.raio_km) : true;
   }
   function setAcompanha(id, on){
@@ -2697,6 +2707,27 @@ html:not(.sem-ia) .so-semia{display:none!important}
     if (norm(nome) === 'shopee' && (D.relatorio || {}).shopee) return '<span class="chip selo">Preço pela API</span>';
     return iaOn() ? '<span class="chip">Só com IA</span>' : '<span class="chip warn">Sem fonte de preço</span><span>Só com IA</span>';
   }
+  // clubes conferidos: preço de membro na loja, com CPF. Os outros vêm marcados pela busca com IA ("Clube" nas fontes).
+  var CLUBES = [
+    {re:/\bgiassi\b/, nome:'Amigo Giassi'},
+    {re:/\bnissei\b/, nome:'Club Nissei'}
+  ];
+  var SEM_CLUBE = [/\bangeloni\b/];  // clube só de pontos ou cartão: não muda o preço da prateleira
+  function clubeDe(c, l){
+    var n = norm(G[l.rede].nome);
+    for (var i = 0; i < CLUBES.length; i++) if (CLUBES[i].re.test(n)) return CLUBES[i].nome;
+    if (SEM_CLUBE.some(function(re){ return re.test(n); })) return null;
+    return arr(c.contas).some(function(a){ return a.rede === l.rede; }) || arr(l.fontes).indexOf('Clube') >= 0 ? 'tem' : '';
+  }
+  var SVG_CLUBE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/></svg>';
+  function clubeHtml(c, l){
+    if (!/^(farmacias|mercados|petshops)$/.test(c.id)) return '';
+    var k = clubeDe(c, l), socio = estado.clubes.indexOf(l.rede) >= 0;
+    if (k === null && !socio) return '';
+    // clube conferido: o nome; marcado pela busca: "Tem clube"; sem informação: "Adicionar clube"
+    var rot = socio ? (k && k !== 'tem' ? 'Sou do ' + k : 'Sou do clube') : (k === 'tem' ? 'Tem clube' : k || 'Adicionar clube');
+    return '<button type="button" class="src clube" data-clube="' + esc(l.rede) + '" aria-pressed="' + socio + '" aria-label="' + esc((socio ? 'Sair do clube: ' : 'Sou do clube: ') + G[l.rede].nome) + '">' + SVG_CLUBE + esc(rot) + '</button>';
+  }
   // mesma regra do selo: "Sem fonte de preço" (teste sem fonte, ou só com IA e a IA desligada) e "Sem preços"
   var SO_SEM_FONTE = !!ui.soSemFonte;
   function semFonte(c, l, web){
@@ -2750,7 +2781,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
         return '<li class="row has-track' + (on ? '' : ' out') + '">'
           + '<label class="track"><input type="checkbox" data-rede="' + l.rede + '"' + (on ? ' checked' : '') + '><span class="r-name">' + esc(G[l.rede].nome) + '</span></label>'
           + '<span class="r-val num">' + (web ? '' : km(l.distancia_km)) + '</span>'
-          + '<span class="r-sub">' + (txt ? '<span>' + esc(txt) + '</span>' : '') + (l.endereco ? '<span>' + esc(l.endereco) + '</span>' : '') + (web ? '' : mapaChip(l, G[l.rede].nome)) + siteChip(l) + instaChip(l) + arr(l.fontes).filter(function(f){ return f !== 'Mapa' && !(f === 'Site' && siteDe(l)) && !(f === 'Instagram' && instaDe(l)); }).map(function(f){ return '<span class="src">' + esc(f) + '</span>'; }).join('')
+          + '<span class="r-sub">' + (txt ? '<span>' + esc(txt) + '</span>' : '') + (l.endereco ? '<span>' + esc(l.endereco) + '</span>' : '') + (web ? '' : mapaChip(l, G[l.rede].nome)) + siteChip(l) + instaChip(l) + clubeHtml(c, l) + arr(l.fontes).filter(function(f){ return f !== 'Mapa' && f !== 'Clube' && !(f === 'Site' && siteDe(l)) && !(f === 'Instagram' && instaDe(l)); }).map(function(f){ return '<span class="src">' + esc(f) + '</span>'; }).join('')
           + (l.encarte_auto ? '<span>Encarte lido do site ' + esc(host(l.site)) + '</span>' : '') + (l.folheto ? '<span>Folheto da semana' + (l.folheto_ate ? ' até ' + dataBR(l.folheto_ate) : '') + '</span>' : '') + (l.instagram ? '<a class="linkbtn" href="' + esc(l.instagram) + '" target="_blank" rel="noopener">Encarte do Instagram' + (l.instagram_ate ? ' até ' + dataBR(l.instagram_ate) : '') + '</a>' : '') + (l.preco_fonte ? fonteHtml(l, c.id) : web ? fonteOnline(G[l.rede].nome) + botaoTestar(l, c.id) : avisoSemPreco(c, l) + botaoTestar(l, c.id))
           + (mi >= 0 ? '<span>Adicionada por você</span><button type="button" class="rm" data-loja="' + mi + '">remover</button>' : '') + '</span>'
           + (siteAberto === l.rede ? '<form class="site-form" novalidate data-site-form="' + esc(l.rede) + '" data-cat="' + c.id + '"><input class="field" type="url" inputmode="url" value="' + esc(siteDe(l)) + '" placeholder="Site, página de ofertas ou @ do Instagram" aria-label="Site de ofertas de ' + esc(G[l.rede].nome) + '"><button class="btn" type="submit">Salvar</button><button type="button" class="ghost big" data-site-fecha="1">Cancelar</button></form>' : '')
@@ -2788,6 +2819,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       return '<div class="group"><h3>' + esc(c.nome) + '</h3><ul class="rows">' + mk.concat(mktOn, manuais).join('') + '</ul>' + (rg.length ? '' : inativas) + '</div>'
         + (rg.length ? '<div class="group"><h3>Mercados da região que entregam</h3><ul class="rows">' + rg.join('') + '</ul>' + inativas + '</div>' : '');
     }).join('') || (SO_SEM_FONTE ? '<p class="hint">Todas as lojas têm fonte de preço.</p>' : '');
+    $('clubeSemIA').hidden = iaOn() || !estado.clubes.length;
     var nSem = contaSemFonte(ativas);
     $('nSemFonte').textContent = nSem ? '(' + nSem + ')' : '';
     $('soSemFonte').checked = SO_SEM_FONTE;
@@ -2854,6 +2886,13 @@ html:not(.sem-ia) .so-semia{display:none!important}
     return true;
   }
   $('lojasCats').addEventListener('click', function(e){
+    var cb = e.target.closest('[data-clube]');
+    if (cb){
+      var id = cb.dataset.clube, on = estado.clubes.indexOf(id) < 0;
+      if (on) estado.clubes.push(id); else tira(estado.clubes, id);
+      salvar((on ? 'Preço de clube ligado: ' : 'Preço de clube desligado: ') + G[id].nome);
+      tudo(); return;
+    }
     var tl = e.target.closest('[data-testar]');
     if (tl){ if (!TESTANDO) testaLoja(tl.dataset.cat, tl.dataset.testar); return; }
     var b = e.target.closest('[data-site]');
@@ -2899,27 +2938,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     salvar('Loja adicionada'); pintaLojas();
   });
 
-  function pintaContas(){
-    var linhas = [];
-    D.categorias.forEach(function(c){
-      if (estado.categorias.indexOf(c.id) < 0) return;
-      arr(c.contas).forEach(function(a){
-        if (!acompanha(a.rede)) return;
-        var socio = estado.clubes.indexOf(a.rede) >= 0, idc = 'cl-' + a.rede;
-        linhas.push('<li class="row"><label class="r-name" for="' + esc(idc) + '">' + esc(G[a.rede].nome) + '</label><input type="checkbox" class="switch" id="' + esc(idc) + '" data-clube="' + esc(a.rede) + '"' + (socio ? ' checked' : '') + '>'
-          + '<span class="r-sub">' + (socio ? '<span class="chip selo">Sou do clube</span> Preço de clube ligado' : 'Marque se você é do clube') + '</span></li>');
-      });
-    });
-    $('contasList').innerHTML = linhas.join('') || '<li class="empty">Nenhuma loja que você acompanha tem clube.</li>';
-    pintaCupLista();
-  }
-  $('contasList').addEventListener('change', function(e){
-    var c = e.target.closest('input[data-clube]'); if (!c) return;
-    var id = c.dataset.clube;
-    if (c.checked){ if (estado.clubes.indexOf(id) < 0) estado.clubes.push(id); } else tira(estado.clubes, id);
-    salvar((c.checked ? 'Preço de clube ligado: ' : 'Preço de clube desligado: ') + G[id].nome);
-    tudo();
-  });
+  function pintaContas(){ pintaCupLista(); }
 
   // ===== Cupons do app pelo print =====
   var cupFotos = [], cupT = null;
@@ -3130,7 +3149,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   $('usarIA').addEventListener('change', function(){
     estado.usar_ia = this.checked;
     salvar(this.checked ? 'IA ligada' : 'IA desligada');
-    pintaAjustes(); carregaVoz(); pintaLista(); pintaLado();
+    pintaAjustes(); carregaVoz(); pintaLista(); pintaLado(); pintaLojas();
     if (this.checked){ carregaIAs(); carregaUso(); }
   });
   $('sensores').addEventListener('change', function(){
@@ -3546,8 +3565,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   });
 
   // Encontrar lojas: só o mapa, na hora, sem buscar preços
-  $('acharLojas').addEventListener('click', function(){
-    var b = this, msg = $('ondeMsg');
+  function encontrarLojas(b, msg, naLojas){
     if (MODO !== 'addon'){ toast('No Home Assistant, este botão registra as lojas perto de casa pelo mapa.'); return; }
     var cats = Array.prototype.filter.call($('catsCfg').querySelectorAll('input'), function(i){ return i.checked; }).map(function(i){ return i.value; });
     b.disabled = true; msg.className = 'hint'; msg.textContent = 'Procurando as lojas no mapa…';
@@ -3565,14 +3583,17 @@ html:not(.sem-ia) .so-semia{display:none!important}
               setTimeout(acompanha_, 2000); return;
             }
             b.disabled = false; msg.className = 'hint ok';
-            msg.innerHTML = esc(achou + ' ' + (t.resumo || '')) + ' <button type="button" class="linkbtn" data-ir="lojasSec">Ver lojas</button> <button type="button" class="linkbtn" data-buscar-ja="1">Buscar preços agora</button>';
+            msg.innerHTML = esc(achou + ' ' + (t.resumo || '')) + (naLojas ? '' : ' <button type="button" class="linkbtn" data-ir="lojasSec">Ver lojas</button>') + ' <button type="button" class="linkbtn" data-buscar-ja="1">Buscar preços agora</button>';
             recarrega();
           }).catch(function(){ setTimeout(acompanha_, 4000); });
         };
         acompanha_();
       })
       .catch(function(){ b.disabled = false; msg.className = 'hint err'; msg.textContent = 'Sem conexão com o Home Assistant. Tente de novo.'; });
-  });
+  }
+  $('acharLojas').addEventListener('click', function(){ encontrarLojas(this, $('ondeMsg'), false); });
+  $('acharLojas2').addEventListener('click', function(){ $('lojasAcharMsg').hidden = false; encontrarLojas(this, $('lojasAcharMsg'), true); });
+  $('lojasAcharMsg').addEventListener('click', function(e){ if (e.target.closest('[data-buscar-ja]')) $('buscar').click(); });
 
   $('ondeMsg').addEventListener('click', function(e){ if (e.target.closest('[data-buscar-ja]')) $('buscar').click(); });
 
@@ -3623,7 +3644,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.16.7' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.16.8' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

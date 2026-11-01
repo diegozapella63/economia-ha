@@ -1,5 +1,13 @@
 # Mudanças
 
+## 0.16.8
+
+- **Clube em cada loja.** Em Mais › Lojas, cada farmácia, mercado e pet shop tem o botão do clube: o nome do clube quando ele foi conferido (Amigo Giassi, Club Nissei), **Tem clube** quando a busca achou um, ou **Adicionar clube**. Um toque vira **Sou do clube**. A lista separada de clubes no fim saiu (a seção ficou só com os Cupons do app).
+- Clube só de pontos ou cartão, como o Clube Angeloni, não aparece: ele não muda o preço da prateleira.
+- A busca com IA recebe as lojas de que você é sócio e procura o preço de membro delas. Com a IA desligada e algum clube marcado, a tela avisa que o preço de clube só chega pela IA.
+- **Encontrar lojas** também em Mais › Lojas, no alto da lista.
+- **Ofertas:** lojas que o mapa tirou da categoria (pet shop e farmácia veterinária nas farmácias) ou que estavam duplicadas não aparecem mais nos filtros nem nas ofertas; seguem a loja de mesmo nome, se houver, ou ficam de fora.
+
 ## 0.16.7
 
 - Mais › Lojas: no "Loja que não apareceu", o tipo de loja e o botão Adicionar têm a mesma largura, e os dois campos de texto ficam alinhados.

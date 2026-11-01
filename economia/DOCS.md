@@ -22,7 +22,7 @@ O EconomIA usa a IA do próprio Home Assistant (Anthropic Claude, OpenAI, Google
 
 ## Mais, em abas
 
-Como nos outros apps (InventarIA, GerencIA, ResolvIA e CronologIA), **Mais** tem abas presas no alto: **Casa** (CEP, quem mora, rotina, restrições, interesses e o que nunca mostrar), **Lojas** (lojas perto de casa, clubes e cupons do app e compras online), **Integrações** (IA do Home Assistant, Usar IA, Falar, Uso da IA, Lista do Home Assistant e Sensores no Home Assistant), **Dados** (Exportar, Importar, Versões anteriores e onde ficam os dados), **Aparência** (tema e cor do app) e **Opções** (as etapas extras da busca).
+Como nos outros apps (InventarIA, GerencIA, ResolvIA e CronologIA), **Mais** tem abas presas no alto: **Casa** (CEP, quem mora, rotina, restrições, interesses e o que nunca mostrar), **Lojas** (lojas perto de casa, com o clube de cada uma e o Encontrar lojas, cupons do app e compras online), **Integrações** (IA do Home Assistant, Usar IA, Falar, Uso da IA, Lista do Home Assistant e Sensores no Home Assistant), **Dados** (Exportar, Importar, Versões anteriores e onde ficam os dados), **Aparência** (tema e cor do app) e **Opções** (as etapas extras da busca).
 
 ## Falar
 
@@ -66,7 +66,7 @@ Na aba **Roteiro**, ao lado da Minha lista, diga em até quantas lojas você top
 
 Em **Mais › Lojas › Clubes e cupons do app**:
 
-- Marque **Sou do clube** nas lojas em que você é cadastrado (quase sempre é só o CPF no caixa). O preço de clube dessas lojas passa a valer na lista, no roteiro e nas ofertas. Nas outras, o preço de clube aparece marcado e o EconomIA avisa quando valeria a pena entrar no clube.
+- Em Mais › Lojas, cada loja tem o botão do clube: o nome do clube quando o EconomIA conhece (como Amigo Giassi), **Tem clube** quando a busca achou um, ou **Adicionar clube**. Toque nele nas lojas em que você é cadastrado (quase sempre é só o CPF no caixa) e ele vira **Sou do clube**. O preço de clube dessas lojas passa a valer na lista, no roteiro e nas ofertas, e a busca com IA procura o preço de membro delas. Nas outras, o preço de clube aparece marcado e o EconomIA avisa quando valeria a pena entrar no clube. Clube só de pontos ou cartão (como o Clube Angeloni) não muda o preço da prateleira e não aparece. O preço de clube chega pela IA (busca, encarte ou print dos cupons): com a IA desligada, a tela avisa.
 - Em **Cupons do app**, escolha prints da carteira de cupons do app da loja (Bem Panvel, Raia, Meu Atacadão...) e toque em **Digitalizar com IA**. Confira a loja de cada cupom e guarde: eles aparecem em Ofertas como **Seu cupom** e na abertura quando estiverem perto de vencer.
 
 O EconomIA não entra na sua conta das lojas: esses apps não têm acesso aberto e pedem código por SMS.
