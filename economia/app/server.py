@@ -44,6 +44,7 @@ import base64
 import gzip
 import hashlib
 import html as html_mod
+import http.cookiejar
 import io
 import json
 import os
@@ -1239,8 +1240,11 @@ RUIDO_IMG = ("logo", "icon", "favicon", "sprite", "avatar", "whatsapp", "faceboo
 NAVEGADOR = "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Mobile Safari/537.36"
 
 
+ACEITA = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+
+
 def baixar(url, limite, timeout=25):
-    req = urllib.request.Request(url, headers={"User-Agent": NAVEGADOR, "Accept-Language": "pt-BR,pt;q=0.9"})
+    req = urllib.request.Request(url, headers={"User-Agent": NAVEGADOR, "Accept": ACEITA, "Accept-Language": "pt-BR,pt;q=0.9"})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         tipo = (r.headers.get("Content-Type") or "").split(";")[0].strip().lower()
         dado = r.read(limite + 1)
@@ -2096,9 +2100,49 @@ def agreg_base(a):
     return FOLHETOS_TESTE.rstrip("/") + "/" + a["id"] if FOLHETOS_TESTE else a["base"]
 
 
+# páginas guardam os cookies que o próprio site manda (como um navegador comum faz entre um redirecionamento e outro)
+_abridor = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+
+
+def pagina_resp(url, timeout=20):
+    """(texto, código HTTP, endereço final depois dos redirecionamentos, cabeçalhos)."""
+    req = urllib.request.Request(url, headers={"User-Agent": NAVEGADOR, "Accept": ACEITA, "Accept-Language": "pt-BR,pt;q=0.9"})
+    with _abridor.open(req, timeout=timeout) as r:
+        dado = r.read(4 * 1024 * 1024 + 1)
+        return dado.decode("utf-8", "ignore"), getattr(r, "status", 200), r.geturl(), r.headers
+
+
 def pagina_txt(url):
-    dado, _ = baixar(url, 4 * 1024 * 1024, timeout=20)
-    return dado.decode("utf-8", "ignore")
+    return pagina_resp(url)[0]
+
+
+ROBO_FORTE = re.compile(r"(?i)<title>\s*just a moment|cf_chl_opt|attention required! \| cloudflare|captcha-delivery\.com|px-captcha")
+ROBO_FRACO = re.compile(r"(?i)cf-chl|challenge-platform|awswaf|_incapsula_resource|captcha|turnstile|document\.cookie\s*=|verify you are human"
+                        r"|verifique se (?:você|voce) é humano|are you a robot")
+
+
+def pede_robo(txt, cab=None):
+    """A página é uma verificação de robô (Cloudflare, AWS WAF, Imperva, DataDome…)? O add-on não tenta passar por ela."""
+    h = {k.lower(): str(v).lower() for k, v in (cab.items() if cab else [])}
+    if h.get("x-amzn-waf-action") or h.get("cf-mitigated") == "challenge":
+        return True
+    return bool(ROBO_FORTE.search(txt[:60000])) or (len(txt) < 20000 and bool(ROBO_FRACO.search(txt)))
+
+
+def redireciona_para(txt, base):
+    """Página quase vazia que só manda para outro endereço (meta refresh ou location em JS): o endereço."""
+    m = re.search(r"""(?i)<meta[^>]+http-equiv=["']?refresh["']?[^>]*content=["']?\s*\d*\s*;?\s*url\s*=\s*['"]?([^"'>\s]+)""", txt) \
+        or re.search(r"""(?:window|document|top|self)\.location(?:\.href)?\s*=\s*["']([^"']+)["']|location\.(?:replace|assign)\(\s*["']([^"']+)["']""", txt)
+    if not m:
+        return None
+    alvo = next(g for g in m.groups() if g)
+    return urllib.parse.urljoin(base, html_mod.unescape(alvo))
+
+
+def resumo_vazia(txt, cod, cab):
+    """"código 202, 0 bytes, servidor CloudFront": o que dá para saber de uma página que veio vazia."""
+    srv = str((cab.get("Server") if cab else "") or "").strip()[:20]
+    return f"código {cod}, {len(txt.encode())} bytes" + (f", servidor {srv}" if srv else "")
 
 
 def sem_tags(t):
@@ -2197,8 +2241,10 @@ def paginas_folheto(a, f):
     if a["id"] == "catalogosofertas":
         fid = f["id"].split(":", 1)[-1]
         for m in CO_IMG.finditer(html_txt):
-            if m.group(1) == fid:
-                paginas.setdefault(int(m.group(4)), urllib.parse.urljoin(f["url"], m.group(0)))
+            n = int(m.group(4))
+            # a mesma página pode vir em JPEG e em WebP: fica a WebP, que é o formato das pastas grandes
+            if m.group(1) == fid and (n not in paginas or (m.group(7).lower() == "webp" and not paginas[n].lower().endswith(".webp"))):
+                paginas[n] = urllib.parse.urljoin(f["url"], m.group(0))
         grandes = paginas_grandes([paginas[k] for k in sorted(paginas)][:MAX_PAGINAS])
         f["pequeno"] = bool(paginas) and not grandes
         f["paginas"] = grandes
@@ -2381,14 +2427,18 @@ def achar_folhetos(loja, cache):
             continue  # não tem esta loja: só procura de novo daqui a uma semana
         else:
             urls = []
-        urls = urls or list(dict.fromkeys(agreg_base(a) + a["loja"].format(v.format(b)) for b in bases for v in a["variantes"]))
+        # o nome inteiro primeiro ("droga-raia" antes de "droga"): o motivo mostrado é o da página certa
+        urls = urls or list(dict.fromkeys(agreg_base(a) + a["loja"].format(v.format(b)) for b in reversed(bases) for v in a["variantes"]))
         achou, motivo = None, None
         for u in urls:
             if not agreg_permite(u):
                 motivo = _robots_agreg.get("_ultimo")
                 break
             try:
-                html_txt = pagina_txt(u)
+                html_txt, cod, final, cab = pagina_resp(u)
+                ir = redireciona_para(html_txt, final) if len(html_txt) < 3000 and not pede_robo(html_txt, cab) else None
+                if ir and ir != final and urllib.parse.urlsplit(ir).netloc == urllib.parse.urlsplit(final).netloc and agreg_permite(ir):
+                    html_txt, cod, final, cab = pagina_resp(ir)
             except urllib.error.HTTPError as e:
                 if e.code in (401, 403, 429):
                     motivo = f"o site recusou o acesso de programas (erro {e.code})"
@@ -2399,15 +2449,22 @@ def achar_folhetos(loja, cache):
             except Exception as e:  # noqa: BLE001
                 motivo = f"o site não respondeu ({str(getattr(e, 'reason', e))[:60]})"
                 continue
-            if re.search(r"(?i)cf-chl|challenge-platform|just a moment\.\.\.|attention required", html_txt[:30000]):
-                motivo = "o site pediu verificação de robô (Cloudflare)"
+            if pede_robo(html_txt, cab):
+                motivo = "o site pediu verificação de robô"
                 break
-            fs = folhetos_da_pagina(a, u, html_txt)
+            c_u, c_f = urllib.parse.urlsplit(u).path.rstrip("/"), urllib.parse.urlsplit(final).path.rstrip("/")
+            if c_f != c_u and not any(b in c_f for b in bases):
+                continue  # mandou para outra página (a do início, por exemplo): a loja não está neste site
+            fs = folhetos_da_pagina(a, final, html_txt)
             if fs:
-                achou = (u, fs)
+                achou = (final, fs)
                 break
-            if a["id"] == "catalogosofertas" or "/" + bases[-1] in u:
-                motivo = motivo or f"abri a página da loja ({len(html_txt) // 1024} KB), mas não achei folheto nela"
+            if "/" + bases[-1] in u and not motivo:
+                if len(html_txt.strip()) < 2048:
+                    motivo = f"a página da loja veio vazia ({resumo_vazia(html_txt, cod, cab)})"
+                    log(f"{a['nome']} {u}: página vazia, {resumo_vazia(html_txt, cod, cab)}: {html_txt[:300]!r}")
+                else:
+                    motivo = f"abri a página da loja ({len(html_txt) // 1024} KB), mas não achei folheto nela"
         memo[chave] = {"url": achou[0] if achou else None, "em": agora(), "motivo": motivo}
         if motivo and not achou:
             diag[a["nome"]] = motivo
@@ -5003,7 +5060,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.16.3"
+    server_version = "EconomIA/0.16.4"
 
     def log_message(self, fmt, *args):
         pass

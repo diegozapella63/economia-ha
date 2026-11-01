@@ -1,5 +1,13 @@
 # Mudanças
 
+## 0.16.4
+
+- Catálogos Ofertas: o app pede a página como um navegador comum pede (dizendo que aceita HTML) e guarda os cookies que o próprio site manda entre um redirecionamento e outro. Na 0.16.3 a página da Droga Raia chegava vazia ao Home Assistant (0 KB), embora tenha o encarte.
+- O endereço com o nome inteiro da loja é tentado primeiro (`droga-raia` antes de `droga`), e o motivo no "Como foi testado" é sempre o da página certa.
+- Página que chega vazia: o "Como foi testado" mostra o código da resposta, o tamanho e o servidor. Página que só redireciona (meta refresh) é seguida uma vez; a que manda para a página inicial conta como "não tem a loja".
+- Verificação de robô reconhecida também no AWS WAF, Imperva, DataDome e PerimeterX, sem confundir com páginas normais que só carregam o script do Cloudflare. O app não tenta passar por ela.
+- Página do encarte que vem em JPEG e WebP fica com a WebP (o formato das imagens grandes).
+
 ## 0.16.3
 
 - Catálogos Ofertas: o link do folheto é achado em qualquer lugar da página da loja (link com parâmetros, atributos `data-*` ou os dados que a página traz em JSON), não só num `href` simples. O encarte da Droga Raia não era reconhecido na página real.
