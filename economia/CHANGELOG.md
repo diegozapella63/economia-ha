@@ -1,5 +1,9 @@
 # Mudanças
 
+## 0.16.11
+
+- Online: cada marketplace mostra o link do próprio site (amazon.com.br, magazineluiza.com.br, ifood.com.br…) no lugar do selo "Site", como as lojas físicas.
+
 ## 0.16.10
 
 - Mais › Lojas: campo **Procurar loja na lista**. Mostra só as lojas com aquele nome, em todas as categorias e também nas Inativas (que abrem sozinhas), nos marketplaces e nas lojas adicionadas por você. Funciona junto com o Só sem fonte de preço.
