@@ -1319,7 +1319,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.15.5</span></p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.15.6</span></p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -2672,6 +2672,12 @@ html:not(.sem-ia) .so-semia{display:none!important}
       : '<span class="src sem">Sem localização</span>';
   }
   var siteAberto = null, INAT_ABERTO = {};
+  var GENERICAS_LOJA = /^(farmacias?|drogarias?|droga|supermercados?|mercados?|mercearia|minimercado|hipermercado|atacadista|atacado|pet|shop|petshop|lojas?|super|hiper|de|do|da|dos|das|e|ltda|me|filial|unidade)$/;
+  function chaveLoja(nome){
+    var base = String(nome || '').split(/\s+[-–|]\s+/)[0];
+    var w = norm(base).split(' ').filter(function(x){ return x && !GENERICAS_LOJA.test(x); });
+    return w.join(' ') || norm(base);
+  }
   function fonteOnline(nome){
     if (norm(nome) === 'shopee' && (D.relatorio || {}).shopee) return '<span class="chip selo">Preço pela API</span>';
     return iaOn() ? '<span class="chip">Só com IA</span>' : '<span class="chip warn">Sem fonte de preço</span><span>Só com IA</span>';
@@ -2681,6 +2687,11 @@ html:not(.sem-ia) .so-semia{display:none!important}
     $('lojasCats').innerHTML = ativas.map(function(c){
       var dist = function(l){ return l.distancia_km == null ? 99 : l.distancia_km; };
       var ord = arr(c.lojas).slice().sort(function(a, b){ return dist(a) - dist(b); });
+      if (c.id === 'online'){
+        var fisicas = {};
+        D.categorias.forEach(function(k){ if (k.id !== 'online') arr(k.lojas).forEach(function(l){ if (G[l.rede]) fisicas[chaveLoja(G[l.rede].nome)] = 1; }); });
+        ord = ord.filter(function(l){ return !(regional(l.rede) && fisicas[chaveLoja(G[l.rede].nome)]); });
+      }
       var ativa = ord.map(function(l){ return acompanha(l.rede); });
       var usadas = {};
       var manualDe = function(nome){
@@ -3524,7 +3535,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.15.5' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.15.6' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

@@ -1,5 +1,13 @@
 # Mudanças
 
+## 0.15.6
+
+- **Loja repetida.** A mesma loja vinha duas vezes quando o OpenStreetMap e o Google escrevem o nome diferente ("Supermercado Impeatriz", com erro de digitação, e "Supermercado Imperatriz - Joinville"). Agora:
+  - o que vem depois do traço (" - Joinville", " - Glória") não conta na comparação;
+  - duas lojas a até 150 m uma da outra com nomes quase iguais são a mesma;
+  - fica o nome do Google, e as repetidas que já estavam na lista saem no próximo Encontrar lojas ou Buscar.
+- Mercado da região que também está em Mercados (perto de casa), como o Giassi, não aparece de novo em Online.
+
 ## 0.15.5
 
 - **Testar agora**, em cada loja de Mais › Lojas: testa o preço só daquela loja, na hora, sem a busca geral nem o Encontrar lojas. Testa de novo o site, a página de ofertas, o Instagram e os sites de encartes, sem usar o que ficou guardado, e abre o "Como foi testado" com o resultado. Serve para conferir na hora o que mudou numa loja (um site trocado, um @ do Instagram).

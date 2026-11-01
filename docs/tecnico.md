@@ -203,3 +203,7 @@ Encarte vencido: `ler_encarte` recusa quando a validade lida já passou; `le_pag
 ## Testar agora (uma loja)
 
 `POST /api/lojas-mapa/testar-loja {"categoria", "rede"}` começa `sonda_loja` numa thread (409 se já houver teste rodando) e a página acompanha por `GET /api/lojas-mapa/teste` (o mesmo `SONDA` do Encontrar lojas, com `total: 1`). `testa_preco_loja(..., forcar=True)` testa o site de novo (menos as lojas fixas), lê a página de ofertas e o Instagram sem o cache de 12 horas e apaga a memória de "não tem" dos sites de encartes para essa loja; a lista de produtos do site (sitemap) continua com o cache de um dia. O resultado vai para `fontes_preco.json` e para o `ofertas.json` (`marca_fontes`).
+
+## Lojas repetidas
+
+`chave_loja` ignora o que vem depois de " - ", " – " ou " | " (filial, bairro ou cidade), a não ser que antes do traço só haja palavras genéricas. `mesmo_lugar`: até 150 m e `difflib.SequenceMatcher` ≥ 0,8 entre as chaves (erro de digitação). Vale na junção do mapa (OpenStreetMap + Google) e no `aplica_mapa`, que também renomeia a rede para o nome do Google quando o casamento foi por lugar e tira as lojas só do mapa repetidas (fica a de mais fontes). Na página, o Online esconde o mercado regional cuja chave existe numa categoria física.

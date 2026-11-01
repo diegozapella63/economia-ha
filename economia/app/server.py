@@ -3371,14 +3371,28 @@ def km_entre(a, b, c, d):
 
 
 def chave_loja(nome):
-    """"Droga Raia" e "Raia" viram "raia"; "Farmácia Preço Popular" vira "preco popular"."""
-    w = [x for x in norm(nome).split() if x not in PALAVRAS_LOJA]
+    """"Droga Raia" e "Raia" viram "raia"; "Farmácia Preço Popular" vira "preco popular";
+    "Supermercado Imperatriz - Joinville" vira "imperatriz" (o que vem depois do traço é filial, bairro ou cidade)."""
+    base = re.split(r"\s+[-–|]\s+", str(nome or ""), maxsplit=1)[0]
+    w = [x for x in norm(base).split() if x not in PALAVRAS_LOJA]
+    if not w:
+        w = [x for x in norm(nome).split() if x not in PALAVRAS_LOJA]
     return " ".join(w) or norm(nome)
 
 
 def mesma_loja(a, b):
     ka, kb = chave_loja(a), chave_loja(b)
     return ka == kb or ka.startswith(kb + " ") or kb.startswith(ka + " ")
+
+
+def mesmo_lugar(a, b, nome_a, nome_b):
+    """Duas lojas no mesmo lugar (até 150 m) com nomes quase iguais são a mesma ("Impeatriz", erro de digitação no mapa)."""
+    import difflib
+    if a.get("lat") is None or b.get("lat") is None:
+        return False
+    if km_entre(a["lat"], a["lon"], b["lat"], b["lon"]) > 0.15:
+        return False
+    return difflib.SequenceMatcher(None, chave_loja(nome_a), chave_loja(nome_b)).ratio() >= 0.8
 
 
 def google_chave():
@@ -3567,7 +3581,7 @@ def lojas_do_mapa(cfg, cats, forcar=False):
     lojas = {}
     for l in sorted(todas, key=lambda x: (x["fonte"] != "Google", x["distancia_km"])):
         lista = lojas.setdefault(l["categoria"], [])
-        igual = next((x for x in lista if mesma_loja(x["nome"], l["nome"])), None)
+        igual = next((x for x in lista if mesma_loja(x["nome"], l["nome"]) or mesmo_lugar(x, l, x["nome"], l["nome"])), None)
         if igual is None:
             lista.append(l)
         else:
@@ -3632,9 +3646,15 @@ def aplica_mapa(categorias, mapa, cfg, marcar_novas=False):
             continue
         usadas = set()
         for l in cat.get("lojas") or []:
-            m = next((x for x in lojas_m if mesma_loja(x["nome"], nomes.get(l["rede"], ""))), None)
+            m = next((x for x in lojas_m if mesma_loja(x["nome"], nomes.get(l["rede"], ""))
+                      or mesmo_lugar(x, l, x["nome"], nomes.get(l["rede"], ""))), None)
             if m:
                 usadas.add(m["nome"])
+                if m.get("fonte") == "Google" and not mesma_loja(m["nome"], nomes.get(l["rede"], "")):  # nome com erro de digitação no mapa
+                    for r in cat.get("redes") or []:
+                        if r.get("id") == l["rede"]:
+                            r["nome"], r["curto"] = m["nome"], m["nome"][:16]
+                    nomes[l["rede"]] = m["nome"]
                 l["distancia_km"], l["endereco"] = m["distancia_km"], m.get("endereco") or l.get("endereco")
                 l["fontes"] = sorted(set(l.get("fontes") or []) | {"Mapa"})
                 l.update({k: m[k] for k in ("lat", "lon", "place_id", "social") if m.get(k)})
@@ -3656,7 +3676,17 @@ def aplica_mapa(categorias, mapa, cfg, marcar_novas=False):
             if marcar_novas:
                 nova["nova"] = True  # registrada pelo Encontrar lojas: os preços vêm na próxima busca
             cat.setdefault("lojas", []).append(nova)
-        cat["lojas"] = sorted(cat.get("lojas") or [], key=lambda l: l["distancia_km"] if l.get("distancia_km") is not None else 99)
+        # a mesma loja registrada duas vezes (nome com erro de digitação ou com " - Joinville"): fica a que tem mais fontes
+        ficam = []
+        for l in sorted(cat.get("lojas") or [], key=lambda x: (set(x.get("fontes") or []) <= {"Mapa"}, x.get("distancia_km") or 99)):
+            dup = next((f for f in ficam if mesma_loja(nomes.get(f["rede"], ""), nomes.get(l["rede"], "")) and f["rede"] != l["rede"]
+                        and set(l.get("fontes") or []) <= {"Mapa"}
+                        or mesmo_lugar(f, l, nomes.get(f["rede"], ""), nomes.get(l["rede"], ""))), None)
+            if dup is None:
+                ficam.append(l)
+            elif not dup.get("site") and l.get("site"):
+                dup["site"] = l["site"]
+        cat["lojas"] = sorted(ficam, key=lambda l: l["distancia_km"] if l.get("distancia_km") is not None else 99)
 
 
 def atualizar_lojas_mapa(dado):
@@ -4670,7 +4700,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.15.5"
+    server_version = "EconomIA/0.15.6"
 
     def log_message(self, fmt, *args):
         pass
