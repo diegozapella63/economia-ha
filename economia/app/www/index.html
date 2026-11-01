@@ -1319,7 +1319,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.15.7</span></p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.15.8</span></p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -1865,7 +1865,8 @@ html:not(.sem-ia) .so-semia{display:none!important}
       if (!(q > 0 && pr > 0) || !G[t.rede] || !catAtiva(t.rede) || !acompanha(t.rede)) return;
       ops.push({id:t.rede, q:q, total:Math.round((pr + fr) * 100) / 100, preco:pr, frete:fr, carrinho:t.frete === null || !!t.carrinho, online:'frete' in t, prazo:t.prazo_dias == null ? null : Number(t.prazo_dias), emb:t.embalagem || '', link:t.fonte || ''});
     });
-    return ops;
+    var vistos = {};  // a mesma loja, o mesmo tamanho e o mesmo preço contam uma vez só
+    return ops.filter(function(o){ var k = o.id + '|' + o.q + '|' + o.total; if (vistos[k]) return false; vistos[k] = 1; return true; });
   }
   // jeito mais barato de levar a quantidade Q: um pacote de Q ou vários iguais menores, na mesma loja
   function jeitoPara(Q, ops){
@@ -3535,7 +3536,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.15.7' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.15.8' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

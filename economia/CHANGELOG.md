@@ -1,5 +1,9 @@
 # Mudanças
 
+## 0.15.8
+
+- **Comparar tamanhos repetido.** O mesmo produto da mesma loja ("Pilão 500 g · Giassi · R$ 19,98") entrava de novo a cada busca e a lista crescia. Agora cada produto de cada loja aparece uma vez, com o preço mais recente; a tela já esconde os repetidos que estavam guardados, e a próxima busca limpa o arquivo.
+
 ## 0.15.7
 
 - **Testar agora** também nas lojas Inativas, e o resultado do teste aparece nelas. Dá para ver se vale a pena voltar a acompanhar uma loja antes de marcar.

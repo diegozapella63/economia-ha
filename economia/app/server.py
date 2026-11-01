@@ -1446,6 +1446,17 @@ def juntar_categorias(parciais):
     return lista
 
 
+def sem_repetir_tamanhos(tams):
+    """O mesmo produto da mesma loja vinha uma vez por busca: fica o mais recente (o último)."""
+    unicos = {}
+    for t in tams:
+        if isinstance(t, dict) and numero(t.get("preco")) and numero(t.get("quantidade")):
+            k = (t.get("rede"), round(float(t["quantidade"]), 4), norm(t.get("obs") or t.get("nome") or ""))
+            unicos.pop(k, None)
+            unicos[k] = t
+    return list(unicos.values())
+
+
 def item_ofertas(prod, ent):
     out = {"produto": prod, "precos": ent["precos"]}
     links = {r: u for r, u in (ent.get("links") or {}).items() if r in ent["precos"]}
@@ -1458,7 +1469,7 @@ def item_ofertas(prod, ent):
         out["base"] = ent["base"]
         if ent["tamanhos"]:
             por_un = lambda t: (t["preco"] + (t.get("frete") or 0)) / t["quantidade"]  # noqa: E731
-            out["tamanhos"] = sorted(ent["tamanhos"], key=por_un)[:12]
+            out["tamanhos"] = sorted(sem_repetir_tamanhos(ent["tamanhos"]), key=por_un)[:12]
     return out
 
 
@@ -4700,7 +4711,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.15.7"
+    server_version = "EconomIA/0.15.8"
 
     def log_message(self, fmt, *args):
         pass
