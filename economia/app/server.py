@@ -1880,6 +1880,12 @@ def combina(item, produto):
     return casa_lista(item, [produto], traduzir=False)[0]
 
 
+# palavras que mudam o que a pessoa pode comer ou usar: nunca ficam de fora num casamento "parecido"
+RESTRICOES = {"lactose", "gluten", "acucar", "diet", "light", "zero", "integral", "desnatado", "semidesnatado", "vegano", "vegana",
+              "organico", "organica", "sodio", "sal", "infantil", "bebe", "kids", "adulto", "filhote", "senior", "castrado", "castrados",
+              "gato", "gatos", "cachorro", "cachorros", "cao", "caes", "generico", "referencia"}
+
+
 def eh_tipo(w):
     """A palavra costuma abrir o nome do produto (é um tipo: "pão", "limpador", "álcool")? Pelo vocabulário aprendido."""
     v = vocab()
@@ -1919,11 +1925,19 @@ def casa_lista(item, textos, traduzir=True):
         if not c:
             out.append(False)
             continue
-        u, ok = set(pp), 1
+        u, ok, faltam = set(pp), 1, []
         for w in pi[1:]:
             if palavra_bate(w, pp) or (w in traduz and associadas(w) & u):
                 ok += 1
-        out.append(ok == len(pi) if len(pi) <= 3 else ok >= 0.75 * len(pi))
+            else:
+                faltam.append(w)
+        cheio = ok == len(pi) if len(pi) <= 3 else ok >= 0.75 * len(pi)
+        # parecido: só falta uma palavra, que nenhum produto do mesmo tipo usa nesta loja ("de cozinha" no álcool) e que
+        # não é restrição ("sem lactose", "zero açúcar"). Vale só se nenhum produto casar inteiro.
+        parecido = (not cheio and len(pi) >= 3 and len(faltam) == 1 and faltam[0] in traduz and faltam[0] not in RESTRICOES)
+        out.append(True if cheio else "parecido" if parecido else False)
+    if any(o is True for o in out):
+        out = [o is True for o in out]
     return out
 
 
@@ -5439,7 +5453,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.17.5"
+    server_version = "EconomIA/0.17.6"
 
     def log_message(self, fmt, *args):
         pass
