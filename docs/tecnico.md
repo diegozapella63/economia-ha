@@ -11,6 +11,10 @@ Todos os dados ficam no Home Assistant, na pasta `/data` do add-on:
 
 Sem `ofertas.json`, o painel mostra um exemplo embutido.
 
+A fonte da página é `economia/pagina/painel.html` (a mesma da demonstração, com o Google Fonts); `python3 tools/montar_pagina.py`
+gera `economia/app/www/index.html` com as fontes embutidas. Os testes estão em `tests/` (veja `tests/README.md`) e as
+instruções para quem continua o projeto, em `AGENTS.md`.
+
 Tipografia: Barlow (texto) e Barlow Condensed (títulos e números), embutidas em `economia/app/www/fonts` como WOFF (subconjunto latino, licença SIL OFL em `fonts/OFL.txt`), para funcionar sem internet.
 
 ## Busca de ofertas

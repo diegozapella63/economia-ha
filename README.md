@@ -79,3 +79,8 @@ Sem `ofertas.json`, a página mostra um exemplo embutido. `OFERTAS_HA_API` apont
 ## Créditos
 
 Fontes [Barlow](https://fonts.google.com/specimen/Barlow) e [Barlow Condensed](https://fonts.google.com/specimen/Barlow+Condensed) (SIL Open Font License).
+
+## Desenvolvimento
+
+O `AGENTS.md` explica a estrutura, como testar e como lançar uma versão (vale para qualquer pessoa ou assistente de IA).
+Os testes ficam em `tests/` e rodam no GitHub a cada push.
