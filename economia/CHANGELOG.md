@@ -1,5 +1,13 @@
 # Mudanças
 
+## 0.17.3
+
+- **Histórico em Minha lista:** o botão ao lado do Adicionar mostra os itens que já estiveram na lista, do que você mais compra para o que menos compra, com quantas vezes comprou e a última data. Um toque põe o item de volta na lista, com as compras de antes (o app continua sabendo de quanto em quanto tempo ele acaba).
+  - **Filtro:** escrever no campo do Adicionar filtra o histórico.
+  - **Adicionar pelo nome:** adicionar um item que já esteve na lista também traz as compras de antes.
+- **Remover ou limpar não apaga mais as compras:** os itens vão para o Histórico. "Tirar" no histórico apaga de vez.
+- O histórico guarda até 300 itens, em `config.historico`.
+
 ## 0.17.2
 
 - **Atacarejos no mapa:** a busca do Google por mercados também procura "atacadista". Fort, Atacadão, Assaí e Komprão entram mesmo quando o Google os marca só como atacado ("wholesaler" ou "warehouse_store"), sem "supermarket". Atacados de outras coisas (pisos, embalagens, materiais de construção, roupas, bebidas…) ficam de fora.

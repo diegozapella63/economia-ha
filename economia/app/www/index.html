@@ -468,6 +468,19 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .parada li span:last-child{white-space:nowrap;font-weight:600}
 .rot-ops{display:flex;flex-direction:column;gap:6px}
 .r-dica{display:block;color:var(--accent);font-size:12px;font-weight:600}
+#addForm{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px}
+.hist-btn{width:44px;padding:0;justify-content:center;position:relative}
+.hist-btn svg{width:20px;height:20px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hist-btn[aria-expanded="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.hist-btn .n{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:var(--on-accent);font-size:11px;font-weight:700;line-height:18px}
+.hist-box{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px}
+.hist-box h3{margin:0 0 2px;font-size:14px}
+.hist-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.hist-row:first-child{border-top:0}
+.hist-add{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;background:none;border:0;padding:0;text-align:left;color:var(--ink);font:inherit;cursor:pointer}
+.hist-add b{font-weight:600}
+.hist-add small{color:var(--muted);font-size:12.5px}
+.hist-mais{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--accent);background:none;color:var(--accent);font-size:20px;line-height:1;cursor:pointer}
 .foto-box{display:flex;flex-direction:column;gap:10px;border:1px dashed var(--accent);border-radius:12px;padding:12px}
 .arq{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 .fotos{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:10px}
@@ -995,7 +1008,13 @@ html:not(.sem-ia) .so-semia{display:none!important}
       <form class="row-form" id="addForm" novalidate>
         <input class="field" id="novoItem" name="novoItem" placeholder="Ex.: Lysoform, Café 500 g, Atorvastatina 20 mg" aria-label="Produto para acompanhar">
         <button class="btn" type="submit">Adicionar</button>
+        <button type="button" class="ghost big hist-btn" id="histBtn" aria-expanded="false" aria-controls="histBox" aria-label="Histórico: itens que já estiveram na lista" title="Histórico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></svg><span class="n" id="histN" hidden></span></button>
       </form>
+      <div class="hist-box" id="histBox" hidden>
+        <h3>Histórico</h3>
+        <p class="hint" id="histMeta"></p>
+        <ul class="rows" id="histLista"></ul>
+      </div>
       <p class="hint" id="addMsg" aria-live="polite"></p>
       <div class="ler-tiles so-ia"><label class="ler-tile" for="fotoArq" id="fotoBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Escolher fotos</label><button type="button" class="ler-tile" id="textoBtn" aria-controls="fotoBox"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Colar mensagem</button><button type="button" class="ler-tile so-voz" id="falarBtn" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Falar</button></div>
       <input type="file" id="fotoArq" class="arq" accept="image/*" multiple>
@@ -1016,7 +1035,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       </div>
       <div class="confirma" id="limparConf" hidden>
         <p id="limparTxt"></p>
-        <div class="row-form"><button type="button" class="btn perigo" id="limparSim">Apagar tudo</button><button type="button" class="ghost big" id="limparNao">Cancelar</button></div>
+        <div class="row-form"><button type="button" class="btn perigo" id="limparSim">Tirar tudo</button><button type="button" class="ghost big" id="limparNao">Cancelar</button></div>
       </div>
       <p class="sec-meta" id="wishDica">Pode escrever só o produto, como "Lysoform": o app compara os tamanhos pelo preço por quilo ou litro.</p>
       <ul class="wish-grid" id="wish"></ul>
@@ -1338,7 +1357,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.17.2</span></p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.17.3</span></p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -1467,6 +1486,8 @@ html:not(.sem-ia) .so-semia{display:none!important}
       online: {marketplaces: arr(on.marketplaces).length ? arr(on.marketplaces) : ['mercadolivre', 'amazon'], assinaturas: arr(on.assinaturas), mercados_entrega: on.mercados_entrega !== false},
       lojas: {ignorar: arr(l.ignorar), manter: arr(l.manter), adicionar: arr(l.adicionar), folhetos: arr(l.folhetos).filter(function(f){ return f && f.nome; }).map(function(f){ return {nome:String(f.nome), categoria:f.categoria || 'mercados'}; })},
       lista: arr(c.lista).map(function(i){ return typeof i === 'string' ? {produto:i, compras:[]} : {produto:String(i.produto || ''), compras:arr(i.compras), origem:i.origem === 'ha' ? 'ha' : undefined}; }).filter(function(i){ return i.produto; }),
+      // itens que saíram da lista, com as compras, para voltar com um toque
+      historico: arr(c.historico).filter(function(i){ return i && i.produto; }).map(function(i){ return {produto:String(i.produto).slice(0, 120), compras:arr(i.compras).filter(function(d){ return /^\d{4}-\d{2}-\d{2}$/.test(d); }), saiu:String(i.saiu || '')}; }).slice(-300),
       perfil: {adultos:n0(p.adultos, 1), criancas:n0(p.criancas, 0), bebes:n0(p.bebes, 0), pets:petsDe(p.pets), restricoes:arr(p.restricoes), interesses:arr(p.interesses), nunca:arr(p.nunca)},
       cotidiano: {mercado:arr(r.mercado), farmacia:arr(r.farmacia), avisar:r.avisar || 'vespera', estoque:['pouco', 'normal', 'bastante'].indexOf(r.estoque) >= 0 ? r.estoque : 'normal'},
       ia: {busca:String((c.ia || {}).busca || ''), fotos:String((c.ia || {}).fotos || ''), voz:String((c.ia || {}).voz || '')},
@@ -1621,7 +1642,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   }, {passive:true});
   document.addEventListener('touchcancel', function(){ arraste = null; }, {passive:true});
 
-  function tudo(){ pintaOfertasTela(); pintaLista(); pintaLojas(); pintaContas(); pintaPerfil(); pintaLado(); }
+  function tudo(){ pintaOfertasTela(); pintaLista(); pintaLojas(); pintaContas(); pintaPerfil(); pintaLado(); pintaHist(); }
 
   // ===== Ofertas =====
   function pintaOfertasTela(){
@@ -1983,6 +2004,60 @@ html:not(.sem-ia) .so-semia{display:none!important}
   function nomeCurto(prod){ var n = String(prod).split(' · ')[0]; return n.length > 24 ? n.slice(0, 23) + '…' : n; }
 
   function plural(n, cat){ var c = D.categorias.filter(function(x){ return x.id === cat; })[0]; return n + ' ' + (n > 1 ? c.nome : c.singular).toLowerCase(); }
+  // ===== Histórico: o que já esteve na lista (removido ou limpo), do mais comprado para o menos =====
+  function vaiProHistorico(itens){
+    var hoje = hojeSP();
+    itens.forEach(function(it){
+      var k = norm(it.produto), h = estado.historico.filter(function(x){ return norm(x.produto) === k; })[0];
+      if (h){ arr(it.compras).forEach(function(d){ if (h.compras.indexOf(d) < 0) h.compras.push(d); }); h.saiu = hoje; }
+      else estado.historico.push({produto:it.produto, compras:arr(it.compras).slice(), saiu:hoje});
+    });
+    if (estado.historico.length > 300){  // fica o que foi mais comprado e saiu por último
+      estado.historico.sort(function(a, b){ return (a.compras.length - b.compras.length) || String(a.saiu).localeCompare(String(b.saiu)); });
+      estado.historico = estado.historico.slice(-300);
+    }
+  }
+  function entraNaLista(nome){  // item novo ou de volta do histórico, com as compras de antes
+    var k = norm(nome), h = estado.historico.filter(function(x){ return norm(x.produto) === k; })[0];
+    estado.historico = estado.historico.filter(function(x){ return norm(x.produto) !== k; });
+    estado.lista.push({produto:h ? h.produto : nome, compras:h ? h.compras.slice().sort() : []});
+    return !!h;
+  }
+  var HIST_ABERTO = false;
+  function ordemHist(){
+    var ult = function(x){ return x.compras.length ? x.compras.slice().sort().pop() : ''; };
+    return estado.historico.filter(function(x){ return !estado.lista.some(function(i){ return norm(i.produto) === norm(x.produto); }); })
+      .sort(function(a, b){ return (b.compras.length - a.compras.length) || ult(b).localeCompare(ult(a)) || String(b.saiu).localeCompare(String(a.saiu)); });
+  }
+  function pintaHist(){
+    var todos = ordemHist(), q = norm($('novoItem').value || '');
+    $('histN').hidden = !todos.length; $('histN').textContent = todos.length > 99 ? '99+' : String(todos.length);
+    $('histBtn').setAttribute('aria-expanded', String(HIST_ABERTO));
+    $('histBox').hidden = !HIST_ABERTO;
+    if (!HIST_ABERTO) return;
+    var lst = q ? todos.filter(function(x){ return norm(x.produto).indexOf(q) >= 0; }) : todos;
+    $('histMeta').textContent = !todos.length ? 'Os itens que saírem da lista ficam aqui, com as compras, para voltar com um toque.'
+      : q ? (lst.length ? 'Com "' + $('novoItem').value.trim() + '":' : 'Nada com "' + $('novoItem').value.trim() + '" no histórico.') : 'Do que você mais compra para o que menos compra. Toque para pôr na lista.';
+    $('histLista').innerHTML = lst.slice(0, 40).map(function(x){
+      var n = x.compras.length, ult = n ? x.compras.slice().sort().pop() : '';
+      var sub = n ? (n === 1 ? 'Comprou 1 vez' : 'Comprou ' + n + ' vezes') + ', a última em ' + dataBR(ult) : 'Saiu da lista em ' + dataBR(x.saiu);
+      var i = estado.historico.indexOf(x);
+      return '<li class="hist-row"><button type="button" class="hist-add" data-hist="' + i + '"><b>' + esc(x.produto) + '</b><small>' + esc(sub) + '</small></button>'
+        + '<button type="button" class="hist-mais" data-hist="' + i + '" aria-label="Pôr ' + esc(x.produto) + ' na lista">+</button>'
+        + '<button type="button" class="rm" data-hist-rm="' + i + '" aria-label="Tirar ' + esc(x.produto) + ' do histórico">tirar</button></li>';
+    }).join('');
+  }
+  $('histBtn').addEventListener('click', function(){ HIST_ABERTO = !HIST_ABERTO; pintaHist(); });
+  $('novoItem').addEventListener('input', function(){ if (HIST_ABERTO) pintaHist(); });
+  $('histLista').addEventListener('click', function(e){
+    var rm = e.target.closest('[data-hist-rm]');
+    if (rm){ var t = estado.historico[Number(rm.dataset.histRm)]; estado.historico.splice(Number(rm.dataset.histRm), 1); salvar('"' + t.produto + '" saiu do histórico'); pintaHist(); return; }
+    var b = e.target.closest('[data-hist]'); if (!b) return;
+    var h = estado.historico[Number(b.dataset.hist)]; if (!h) return;
+    entraNaLista(h.produto); $('novoItem').value = '';
+    $('addMsg').className = 'hint ok'; $('addMsg').textContent = '"' + h.produto + '" voltou para a lista.';
+    salvar('"' + h.produto + '" voltou para a lista'); pintaLista(); pintaOfertasTela(); pintaHist();
+  });
   function pintaLista(){
     var itens = estado.lista.map(function(it, i){ var r = ritmo(it.compras); return {it:it, i:i, r:r}; })
       .sort(function(a, b){
@@ -2058,19 +2133,19 @@ html:not(.sem-ia) .so-semia{display:none!important}
     }
     if (b.dataset.rm != null){
       var nome = estado.lista[Number(b.dataset.rm)].produto;
-      estado.lista.splice(Number(b.dataset.rm), 1); salvar('"' + nome + '" saiu da lista'); pintaLista(); pintaOfertasTela();
+      vaiProHistorico(estado.lista.splice(Number(b.dataset.rm), 1)); salvar('"' + nome + '" saiu da lista e ficou no histórico'); pintaLista(); pintaOfertasTela(); pintaHist();
     }
   });
   var listaApagada = null;
   $('limpar').addEventListener('click', function(){
     var n = estado.lista.length; if (!n) return;
-    $('limparTxt').textContent = 'Apagar ' + (n === 1 ? 'o item' : 'os ' + n + ' itens') + ' da lista, junto com o histórico de compras?' + (estado.sync.ativo ? ' A lista do Home Assistant não muda.' : '');
+    $('limparTxt').textContent = 'Tirar ' + (n === 1 ? 'o item' : 'os ' + n + ' itens') + ' da lista? ' + (n === 1 ? 'Ele fica' : 'Eles ficam') + ' no Histórico, com as compras.' + (estado.sync.ativo ? ' A lista do Home Assistant não muda.' : '');
     $('limparConf').hidden = false; $('limparSim').focus();
   });
   $('limparNao').addEventListener('click', function(){ $('limparConf').hidden = true; });
   $('limparSim').addEventListener('click', function(){
     guardarVersao('limpar');
-    listaApagada = estado.lista; estado.lista = [];
+    listaApagada = estado.lista; vaiProHistorico(estado.lista); estado.lista = [];
     $('limparConf').hidden = true;
     $('addMsg').className = 'hint ok';
     $('addMsg').innerHTML = 'Lista limpa. <button type="button" class="link" id="desfazer">Desfazer</button>';
@@ -2080,6 +2155,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     if (!e.target.closest('#desfazer') || !listaApagada) return;
     var volta = listaApagada; listaApagada = null;
     estado.lista = volta.concat(estado.lista.filter(function(i){ return !volta.some(function(x){ return norm(x.produto) === norm(i.produto); }); }));
+    estado.historico = estado.historico.filter(function(h){ return !volta.some(function(x){ return norm(x.produto) === norm(h.produto); }); });
     this.className = 'hint ok'; this.textContent = 'Sua lista voltou.';
     salvar('Lista de volta'); pintaLista(); pintaOfertasTela();
   });
@@ -2416,7 +2492,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     [].forEach.call($('fotoItens').querySelectorAll('li'), function(li){
       var c = li.querySelector('input[type=checkbox]'), nome = li.querySelector('input[type=text]').value.trim().slice(0, 120);
       if (!c.checked || c.disabled || nome.length < 2 || estado.lista.some(function(x){ return norm(x.produto) === norm(nome); })) return;
-      estado.lista.push({produto:nome, compras:[]}); novos++;
+      entraNaLista(nome); novos++;
     });
     if (!novos){ $('fotoMsg').className = 'hint err'; $('fotoMsg').textContent = 'Marque pelo menos um item.'; return; }
     abreFoto(false);
@@ -2429,8 +2505,8 @@ html:not(.sem-ia) .so-semia{display:none!important}
     var nome = $('novoItem').value.trim(), msg = $('addMsg');
     if (nome.length < 3){ msg.className = 'hint err'; msg.textContent = 'Escreva o nome do produto, com tamanho ou dosagem se tiver.'; return; }
     if (estado.lista.some(function(i){ return norm(i.produto) === norm(nome); })){ msg.className = 'hint err'; msg.textContent = 'Esse produto já está na lista.'; return; }
-    estado.lista.push({produto:nome, compras:[]}); $('novoItem').value = '';
-    msg.className = 'hint ok'; msg.textContent = '"' + nome + '" entrou na lista.';
+    var voltou = entraNaLista(nome); $('novoItem').value = '';
+    msg.className = 'hint ok'; msg.textContent = '"' + nome + '" ' + (voltou ? 'voltou para a lista, com as compras de antes.' : 'entrou na lista.'); pintaHist();
     salvar('Adicionado à lista'); pintaLista(); pintaOfertasTela();
   });
 
@@ -3664,7 +3740,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.17.2' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.17.3' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;
