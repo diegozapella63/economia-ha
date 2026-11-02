@@ -1785,6 +1785,20 @@ def grava_vocab():
             v.update(mudou=False, assoc={}, stats=None)  # as associações são refeitas com o vocabulário novo
 
 
+def stats_vocab():
+    """Em quantos nomes cada palavra aparece (df) e quantas vezes abre o nome (primeira)."""
+    v = vocab()
+    if v["stats"] is None:
+        df, primeira = {}, {}
+        for n in v["nomes"]:
+            ws = n.split()
+            primeira[ws[0]] = primeira.get(ws[0], 0) + 1
+            for t in set(ws):
+                df[t] = df.get(t, 0) + 1
+        v["stats"] = (df, primeira)
+    return v["stats"]
+
+
 def associadas(w):
     """Palavras que, nos nomes de produto vistos, aparecem bem mais junto de w do que no resto (variantes, não tipos nem marcas)."""
     v = vocab()
@@ -1792,15 +1806,7 @@ def associadas(w):
         return v["assoc"][w]
     nomes, out = v["nomes"], set()
     if len(nomes) >= 200:
-        if v["stats"] is None:
-            df, primeira = {}, {}
-            for n in nomes:
-                ws = n.split()
-                primeira[ws[0]] = primeira.get(ws[0], 0) + 1
-                for t in set(ws):
-                    df[t] = df.get(t, 0) + 1
-            v["stats"] = (df, primeira)
-        df, primeira = v["stats"]
+        df, primeira = stats_vocab()
         raiz, k, com = (w[:-1] if len(w) >= 5 else w), 0, {}
         for n in nomes:
             u = set(n.split())
@@ -1841,6 +1847,29 @@ def combina(item, produto):
     return casa_lista(item, [produto], traduzir=False)[0]
 
 
+def eh_tipo(w):
+    """A palavra costuma abrir o nome do produto (é um tipo: "pão", "limpador", "álcool")? Pelo vocabulário aprendido."""
+    v = vocab()
+    if not v["nomes"] or len(v["nomes"]) < 200:
+        return False
+    df, primeira = stats_vocab()
+    return primeira.get(w, 0) >= 5 and primeira[w] >= 0.5 * df.get(w, 1)
+
+
+def cabeca_bate(cab, pp):
+    """O tipo do item está entre as 3 primeiras palavras do nome do produto (a marca pode vir antes: "JIMO Secante"),
+    sem outro tipo antes dele: "Limpador … Lavanda e Álcool" não é álcool e "Pão … Leite" não é leite."""
+    ws = [w for w in pp if len(w) >= 2 and not any(ch.isdigit() for ch in w) and w not in VAZIAS_BUSCA]
+    if not eh_tipo(cab):  # o item começa pela marca ou por outra coisa ("Churu atum"): basta estar no começo do nome
+        return any(palavra_bate(cab, [w]) for w in ws[:4])
+    for w in ws[:3]:
+        if palavra_bate(cab, [w]):
+            return True
+        if eh_tipo(w):
+            return False
+    return False
+
+
 def casa_lista(item, textos, traduzir=True):
     """combina() para os produtos de uma busca de uma vez. Palavra do item que nenhum produto do mesmo tipo usa
     ("perfumado" entre os "álcool …") é escrita de outro jeito pela loja: vale uma palavra que anda junto com ela nos
@@ -1849,7 +1878,7 @@ def casa_lista(item, textos, traduzir=True):
     if not pi:
         return [False] * len(textos)
     toks = [norm(t).split() for t in textos]
-    cab = [palavra_bate(pi[0], pp) for pp in toks]
+    cab = [cabeca_bate(pi[0], pp) for pp in toks]
     marcas = vocab()["marcas"]
     traduz = {w for w in pi[1:] if w not in marcas and not any(c and palavra_bate(w, pp) for c, pp in zip(cab, toks))} if traduzir else set()
     out = []
@@ -1896,7 +1925,8 @@ def guarda_casados(item, eans):
         gravar_json(CASADOS, c)
 
 
-PACOTE_NOME = re.compile(r"(?:\bc/\s*|\bcom\s+|\bcx\.?\s*(?:com\s*)?|\bpack\s*|\bx\s*)(\d{1,2})\b(?!\s*(?:ml|l|lt|g|gr|kg|m|un|und|unid|unidades?)\b)", re.I)
+# "com 12", "c/ 6", "cx com 4": quantas embalagens. "com 10% de desconto" e "com 20 off" não são pacote.
+PACOTE_NOME = re.compile(r"(?:\bc/\s*|\bcom\s+|\bcx\.?\s*(?:com\s*)?|\bpack\s*|\bx\s*)(\d{1,2})(?![\d,.])(?!\s*(?:%|por\s*cento|(?:ml|l|lt|g|gr|kg|m|un|und|unid|unidades?|reais|off|de\s+desc\w*)\b))", re.I)
 
 
 def tamanho_nome(nome):
@@ -5355,7 +5385,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.17.0"
+    server_version = "EconomIA/0.17.1"
 
     def log_message(self, fmt, *args):
         pass

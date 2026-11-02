@@ -1,5 +1,10 @@
 # Mudanças
 
+## 0.17.1
+
+- **Tamanho errado pelo desconto:** "Limpador VEJA 500ml com 10% de Desconto" virava 5 L, porque o "com 10" era lido como pacote com 10 unidades. "Café 500g com 20% off" virava 10 kg. Agora "com N%", "por cento", "off", "reais" e "de desconto" não contam como pacote. Isso também inflava o "Compensa o maior" e a economia possível.
+- **Tipo do produto:** o tipo do item (a primeira palavra) precisa ser o tipo do produto. Ele tem de estar entre as 3 primeiras palavras do nome (a marca pode vir antes), sem outro tipo antes dele. "Limpador Multiuso VEJA … Lavanda e Álcool" não conta mais como álcool, e "Pão Nino … Leite" não conta como leite. Os tipos são aprendidos do vocabulário: as palavras que costumam abrir o nome dos produtos. Item que começa pela marca, como "Churu atum", só precisa da marca no começo do nome.
+
 ## 0.17.0
 
 - **Casamento do item com o produto pelo padrão de nome do varejo** (tipo + marca + variante + tamanho), sem IA:

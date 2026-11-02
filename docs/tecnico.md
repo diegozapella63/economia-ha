@@ -186,9 +186,11 @@ Para lojas sem busca direta e sem sitemap, `testa_preco_loja` lê a página do s
 
 ## Casamento do item com o produto
 
+`PACOTE_NOME` ("com 12", "c/ 6", "cx com 4") não conta "com 10%", "por cento", "off", "reais" nem "de desconto" como pacote.
+
 Padrão de nome do varejo: tipo + marca + variante + tamanho. `casa_lista(item, textos)` casa o item com os produtos de uma busca de uma vez; `combina(item, produto)` é o mesmo para um produto só, sem tradução.
 
-- **Tipo:** a primeira palavra do item (`palavras_busca`, sem tamanho e sem palavras vazias) precisa estar no texto, pelo nome ou pelas categorias (`palavra_bate`: igual ou prefixo de 4+ letras).
+- **Tipo:** a primeira palavra do item (`palavras_busca`, sem tamanho e sem palavras vazias) tem de ser o tipo do produto (`cabeca_bate`): estar entre as 3 primeiras palavras do nome, sem números, sem outra palavra de tipo antes (`eh_tipo`: abre o nome em pelo menos 5 produtos e em metade das vezes que aparece, pelas contas de `stats_vocab`). Se o tipo do item não for palavra de tipo (item que começa pela marca, "Churu atum"), basta estar nas 4 primeiras. `palavra_bate`: igual ou prefixo de 4+ letras.
 - **Outras palavras:** todas (até 3) ou 75% (mais de 3). Cada uma vale se estiver no texto, se for do vocabulário inicial (`EQUIVALENTES` → `FRAGRANCIAS`) ou, só quando nenhum produto do mesmo tipo na busca usa a palavra (`traduz`) e ela não é marca, se o texto tiver uma das `associadas(palavra)`.
 - **`associadas(w)`:** palavras que, nos nomes de produto vistos (`vocabulario.json`: até 80.000 nomes sem tamanho, mais as marcas da VTEX), aparecem junto de w (ou da raiz, "perfumad") pelo menos 3 vezes, com lift ≥ 4, df ≤ 5% e sem ser marca, tipo (primeira palavra em mais de 30% das vezes) ou palavra de menos de 4 letras. As associações ficam em memória e são refeitas quando o vocabulário muda (`grava_vocab`, no fim de cada busca e teste).
 - **De onde vem o vocabulário:** `aprende_nomes` é chamado com os produtos da busca VTEX (nome e marca), os resultados da busca do site e até 40.000 endereços de cada catálogo (sitemap).
