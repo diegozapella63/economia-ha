@@ -1,5 +1,10 @@
 # Mudanças
 
+## 0.16.12
+
+- Item com "perfumado" (ou "aromatizado", "cheiroso") acha o produto pelo nome da fragrância: "Álcool perfumado" bate com "Álcool Araras Bactericida Eucalipto" e "Álcool … Lavanda". Os sites não escrevem "perfumado" no nome do produto, e o item ficava sem preço.
+- Quando a busca do site não traz nada com todas as palavras, o app busca de novo só pelo principal ("álcool") e fica com os produtos de fragrância. Vale para a busca direta (Giassi, Angeloni…), para a busca do site e para as páginas de produto (Condor).
+
 ## 0.16.11
 
 - Online: cada marketplace mostra o link do próprio site (amazon.com.br, magazineluiza.com.br, ifood.com.br…) no lugar do selo "Site", como as lojas físicas.

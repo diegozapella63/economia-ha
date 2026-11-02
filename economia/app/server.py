@@ -1733,14 +1733,37 @@ def palavras_busca(t):
     return [w for w in norm(re.sub(UNIDADE_NOME, " ", str(t))).split() if w not in VAZIAS_BUSCA and not w.isdigit()]
 
 
+# palavra da lista que o nome do produto no site troca por outra: "álcool perfumado" é o "Álcool Bactericida Eucalipto"
+FRAGRANCIAS = {"perfumado", "perfumada", "perfumados", "perfumadas", "aromatizado", "aromatizada", "fragrancia", "lavanda", "eucalipto",
+               "eucaliptus", "floral", "flores", "citrus", "citrico", "citrica", "campestre", "talco", "pinho", "laranja", "limao", "alecrim",
+               "menta", "hortela", "baunilha", "jasmim", "rosas", "lirio", "violeta", "frutas", "tropical", "coco", "algodao", "brisa",
+               "marine", "primavera", "cereja", "bouquet", "citronela", "capim", "maca", "morango", "erva", "carinho", "aconchego"}
+EQUIVALENTES = {w: FRAGRANCIAS for w in ("perfumado", "perfumada", "perfumados", "perfumadas", "aromatizado", "aromatizada",
+                                         "cheiroso", "cheirosa")}
+
+
+def palavra_bate(w, pp):
+    if w in EQUIVALENTES:
+        return any(x in EQUIVALENTES[w] for x in pp)
+    return any(x == w or (len(w) >= 4 and (x.startswith(w) or (len(x) >= 4 and w.startswith(x)))) for x in pp)
+
+
 def combina(item, produto):
     """O produto do site é o item da lista? Todas as palavras do item (até 3) ou 3 de cada 4 precisam estar no nome
-    ou nas categorias do produto ("JIMO Secante..." está em Limpeza › Lava-Louças)."""
+    ou nas categorias do produto ("JIMO Secante..." está em Limpeza › Lava-Louças). "Perfumado" vale por qualquer
+    fragrância (lavanda, eucalipto…)."""
     pi, pp = palavras_busca(item), norm(produto).split()
     if not pi:
         return False
-    ok = sum(1 for w in pi if any(x == w or (len(w) >= 4 and (x.startswith(w) or (len(x) >= 4 and w.startswith(x)))) for x in pp))
+    ok = sum(1 for w in pi if palavra_bate(w, pp))
     return ok == len(pi) if len(pi) <= 3 else ok >= 0.75 * len(pi)
+
+
+def termo_nucleo(item):
+    """O item sem as palavras que o site escreve de outro jeito ("álcool perfumado" → "álcool"), ou None se não tiver."""
+    pi = palavras_busca(item)
+    nucleo = [w for w in pi if w not in EQUIVALENTES]
+    return " ".join(nucleo) if nucleo and len(nucleo) < len(pi) else None
 
 
 PACOTE_NOME = re.compile(r"(?:\bc/\s*|\bcom\s+|\bcx\.?\s*(?:com\s*)?|\bpack\s*|\bx\s*)(\d{1,2})\b(?!\s*(?:ml|l|lt|g|gr|kg|m|un|und|unid|unidades?)\b)", re.I)
@@ -1761,8 +1784,8 @@ def tamanho_nome(nome):
     return t
 
 
-def busca_vtex(chave, termo, regiao):
-    params = {"query": termo, "count": 12, "locale": "pt-BR"}
+def busca_vtex(chave, termo, regiao, count=12):
+    params = {"query": termo, "count": count, "locale": "pt-BR"}
     if regiao:
         params["regionId"] = regiao
     d = http_json(site_direta(chave) + "/api/io/_v/api/intelligent-search/product_search/?" + urllib.parse.urlencode(params)) or {}
@@ -1824,6 +1847,8 @@ def busca_direta(cfg, itens=None, cats=("mercados",)):
         for nome in nomes:
             try:
                 cand = [c for c in busca_vtex(k, nome, reg) if combina(nome, c["busca_em"])]
+                if not cand and termo_nucleo(nome):  # "álcool perfumado": busca "álcool" e fica com os de fragrância
+                    cand = [c for c in busca_vtex(k, termo_nucleo(nome), reg, 40) if combina(nome, c["busca_em"])]
             except Exception as e:  # noqa: BLE001
                 log(f"busca direta {loja['nome']} '{nome}': {e}")
                 continue
@@ -3452,7 +3477,7 @@ def busca_do_site(origem, info, termo, forcar=False):
         return []
     else:
         tentar = BUSCAS_SITE
-    q = urllib.parse.quote(termo)
+    q, q2 = urllib.parse.quote(termo), termo_nucleo(termo)
     for t in tentar:
         caminho = t.replace("{}", q)
         if not robots_permite(regras, caminho):
@@ -3462,6 +3487,12 @@ def busca_do_site(origem, info, termo, forcar=False):
         except Exception:  # noqa: BLE001
             continue
         ofs = [o for o in ofertas_da_pagina(html_txt) if combina(termo, o["produto"])]
+        if not ofs and q2 and robots_permite(regras, t.replace("{}", urllib.parse.quote(q2))):  # "álcool perfumado" → "álcool"
+            try:
+                html2 = pagina_txt(origem + t.replace("{}", urllib.parse.quote(q2)))
+                ofs = [o for o in ofertas_da_pagina(html2) if combina(termo, o["produto"])]
+            except Exception:  # noqa: BLE001
+                ofs = []
         if ofs:
             info["busca"] = t
             info.pop("sem_busca", None)
@@ -5168,7 +5199,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.16.11"
+    server_version = "EconomIA/0.16.12"
 
     def log_message(self, fmt, *args):
         pass
