@@ -66,6 +66,14 @@ Na aba **Roteiro**, ao lado da Minha lista, diga em até quantas lojas você top
 
 O EconomIA lê o nome dos produtos como o varejo escreve: tipo, marca, variante e tamanho ("Álcool Araras Bactericida Eucalipto 1L"). O tipo (a primeira palavra do item, como "álcool" ou "leite") e a marca precisam estar no nome. Uma palavra que a loja não usa em nenhum produto daquele tipo, como "perfumado" entre os álcoois, vale pelas palavras que andam junto dela nos produtos que as lojas já mostraram (lavanda, eucalipto…); o app aprende isso sozinho, dos catálogos e das buscas. Uma palavra que a loja usa, como "integral" entre os leites, tem de estar no nome. Quando acha o produto com certeza, o app guarda o código de barras e reconhece o mesmo produto em outra loja, mesmo com outro nome. Se um item continuar sem preço, escreva como na embalagem: tipo, marca e tamanho.
 
+Antes de valer, cada produto é conferido. Nas lojas com busca no site, pela seção onde a loja o cadastrou: a carne moída fica no Açougue, e a almôndega em Congelados não entra. Com o Mercado Livre ligado (veja abaixo), também pela categoria que ele daria ao produto: hambúrguer não é carne moída.
+
+Aceita mais de um produto? Escreva com "ou": "Coxinha da asa ou asinha" busca os dois e fica com o mais em conta.
+
+### Similares
+
+Toque em **Similares** no item para ver até 3 produtos parecidos, da mesma seção da loja, que saem mais em conta pelo preço do quilo ou do litro: para "coxinha da asa", sobrecoxa, asa ou frango inteiro. O preço do item continua o mesmo. Se preferir um similar, toque no ✓ dele: vira a sua escolha, também no Roteiro. Os similares vêm das lojas com busca no próprio site (como Giassi e Angeloni) e aparecem na busca seguinte.
+
 ## Clubes e cupons
 
 Em **Mais › Lojas**:
@@ -124,6 +132,17 @@ O OpenStreetMap é gratuito, mas pode não ter as lojas pequenas do bairro. Em *
 ## Lojas inativas
 
 Em **Mais › Lojas**, desmarque a loja que não quer acompanhar: ela vai para **Inativas**, um bloco fechado no fim de cada grupo, e sai das ofertas, do roteiro e da procura de folhetos.
+
+## Mercado Livre: categorias (opcional)
+
+Confere se o produto achado é mesmo o item da lista, pela categoria que o Mercado Livre daria a ele. É grátis e não lê nada da sua conta: o EconomIA só pergunta a categoria de nomes de produto.
+
+1. Em developers.mercadolivre.com.br, entre com sua conta e crie uma aplicação (Minhas aplicações › Criar aplicação).
+2. Em **URI de redirect**, ponha `https://www.google.com`. Se aparecer a permissão **offline_access**, marque: é ela que deixa o EconomIA renovar o acesso sozinho.
+3. Em **Mais › Integrações › Mercado Livre**, cole o App ID e a Chave secreta, com a mesma URL de retorno, e toque em **Salvar**.
+4. Toque em **Autorizar no Mercado Livre** e aceite. A página que abrir tem `code=TG-…` no endereço: copie o endereço inteiro, cole no EconomIA e toque em **Conectar**. O código vale só alguns minutos.
+
+O App ID, a chave e o acesso ficam só no Home Assistant, em `segredos.json`.
 
 ## Shopee Afiliados
 

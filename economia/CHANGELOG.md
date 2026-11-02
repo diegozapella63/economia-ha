@@ -1,5 +1,19 @@
 # Mudanças
 
+## 0.18.0
+
+- **Seção da loja confere o produto.** A busca do site (Giassi, Angeloni, Fort, Sam's Club) já dizia em que seção cada produto está, e o app não usava isso. Agora usa:
+  - Entre os produtos que casam com o item, fica quem está numa seção que fala do item. A almôndega de "Carne moída bovina" em Congelados › Pratos prontos sai, e fica a carne moída do Açougue › Bovinos.
+  - A seção de cada item é aprendida por loja (`casados.json`). Nas buscas seguintes, produto de outra seção só entra se for o mesmo produto, reconhecido pelo código de barras.
+- **Previsor de categorias do Mercado Livre (opcional, grátis):** em Mais › Integrações. Ele classifica o item da lista e cada produto achado, com o mesmo modelo que o Mercado Livre usa nos anúncios; produto de outra categoria sai.
+  - Vale para todas as fontes sem IA: site da loja, busca do site, catálogos, encartes e Shopee.
+  - Só tira produto quando confirma ao menos um na categoria do item; se não confirma nenhum, quem pode estar errado é o palpite para o item, e nada sai.
+  - Precisa de um app de desenvolvedor do Mercado Livre, autorizado uma vez. O EconomIA renova o acesso sozinho. O App ID, a chave e o acesso ficam em `segredos.json`; as respostas, em `categorias_ml.json` por 90 dias, com no máximo 400 consultas novas por hora.
+- **Similares:** botão **Similares** em cada item da lista. Ligado, aparece "Similares mais em conta" com até 3 produtos da mesma seção da loja, mais baratos pelo preço do quilo ou do litro: sobrecoxa, asa ou frango inteiro para quem pediu coxinha da asa. Nunca substituem o preço do item.
+  - O ✓ (Escolher esse) num similar faz dele a sua escolha, também no Roteiro, onde aparece "Similar: …".
+  - Por enquanto vêm das lojas com busca direta no site. Seção de um nível só ("Açougue") não serve: misturaria boi, porco e frango.
+- **"ou" no item:** "Coxinha da asa ou asinha" busca os dois e vale o mais em conta.
+
 ## 0.17.9
 
 - **"Carne moída bovina de primeira" não casa mais com "Hambúrguer Texas Burger Carne de Frango e Bovina".** Três ajustes:

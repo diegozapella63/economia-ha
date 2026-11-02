@@ -423,6 +423,12 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .esc-btn svg{width:15px;height:15px;fill:none;stroke:var(--muted);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 .esc-btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent)}
 .esc-btn[aria-pressed="true"] svg{stroke:var(--on-accent)}
+.sim-btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.sim-vazio{align-self:stretch;border-top:1px dashed var(--line);padding-top:8px}
+.ml-passo2{display:flex;flex-direction:column;gap:8px}
+.ml-como > summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--accent)}
+.ml-como[open] > summary{margin-bottom:8px}
+.sim-list b{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 li.escolhida{border-color:var(--accent) !important}
 .i-esc-nota{font-size:13px;color:var(--muted)}
 
@@ -1221,6 +1227,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
           <li class="so-ia"><b>Encarte do site.</b> Sites de ofertas que você cadastrou.</li>
           <li class="so-ia"><b>Itens sem preço.</b> Uma última pergunta só sobre eles.</li>
         </ol>
+        <p class="hint">Cada produto achado é conferido antes de valer: pela seção onde a loja o cadastrou e, com o Mercado Livre ligado em Integrações, pela categoria dele. Hambúrguer não entra como carne moída.</p>
         <p class="hint so-ia">Preço do site e do folheto vale mais que o da busca na web.</p>
         <p class="hint so-semia">Com a IA desligada, só as etapas acima.</p>
       </section>
@@ -1270,6 +1277,29 @@ html:not(.sem-ia) .so-semia{display:none!important}
       <div class="sh-row"><label for="bKey"><span>Chave <span class="chip selo" id="bKeyOk" hidden>Guardada</span></span><input class="field" id="bKey" type="password" autocomplete="off" spellcheck="false"></label></div>
       <div class="row-form"><button type="button" class="btn" id="bSalvar">Salvar e testar</button><button type="button" class="ghost big" id="bTestar">Testar</button><button type="button" class="ghost big" id="bApagar" hidden>Apagar</button></div>
       <p class="ia-st" id="bSt"></p>
+    </section>
+    <section class="panel settings" aria-labelledby="h-ml">
+      <div class="set-head"><h2 id="h-ml"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 12.5l8-8h7v7l-8 8z"/><circle cx="15" cy="9" r="1.4"/></svg></span>Mercado Livre: categorias (opcional)</h2><p class="sec-meta">Confere se o produto achado é mesmo o item da lista pela categoria que o Mercado Livre daria a ele: carne moída não é hambúrguer. Grátis, com um app seu de desenvolvedor.</p></div>
+      <div class="sh-row">
+        <label for="mlApp">App ID<input class="field" id="mlApp" inputmode="numeric" autocomplete="off" spellcheck="false"></label>
+        <label for="mlSenha"><span>Chave secreta <span class="chip selo" id="mlSenhaOk" hidden>Guardada</span></span><input class="field" id="mlSenha" type="password" autocomplete="new-password" spellcheck="false"></label>
+      </div>
+      <div class="sh-row"><label for="mlUrl">URL de retorno (a mesma do app)<input class="field" id="mlUrl" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://www.google.com"></label></div>
+      <div class="row-form"><button type="button" class="btn" id="mlSalvar">Salvar</button><a class="ghost big" id="mlAutorizar" href="#" target="_blank" rel="noopener" hidden>Autorizar no Mercado Livre</a><button type="button" class="ghost big" id="mlTestar">Testar</button><button type="button" class="ghost big" id="mlApagar" hidden>Apagar</button></div>
+      <div class="ml-passo2" id="mlPasso2" hidden>
+        <div class="sh-row"><label for="mlCodigo">Endereço que abriu depois de autorizar<input class="field" id="mlCodigo" autocomplete="off" spellcheck="false" placeholder="https://www.google.com/?code=TG-…"></label></div>
+        <div class="row-form"><button type="button" class="btn" id="mlConectar">Conectar</button></div>
+      </div>
+      <p class="ia-st" id="mlSt"></p>
+      <details class="ml-como"><summary>Como configurar</summary>
+        <ol class="passos">
+          <li>Em <b>developers.mercadolivre.com.br</b>, entre com sua conta e crie uma aplicação (Minhas aplicações › Criar aplicação). Nome e descrição podem ser "EconomIA".</li>
+          <li>Em <b>URI de redirect</b>, ponha <b>https://www.google.com</b>. Nas permissões, leitura basta; se aparecer <b>offline_access</b> (acesso offline), marque: é ela que deixa o EconomIA renovar o acesso sozinho.</li>
+          <li>Copie o <b>App ID</b> e a <b>Chave secreta</b> (Secret Key) para cá, com a mesma URL de retorno, e toque em Salvar.</li>
+          <li>Toque em <b>Autorizar no Mercado Livre</b> e aceite. A página que abrir (o Google) tem no endereço <b>code=TG-…</b>: copie o endereço inteiro, cole aqui e toque em Conectar. O código vale só alguns minutos.</li>
+        </ol>
+        <p class="hint">A chave e o acesso ficam só no Home Assistant. O EconomIA só pergunta a categoria de nomes de produto; não lê nada da sua conta.</p>
+      </details>
     </section>
     <section class="panel settings" aria-labelledby="h-insta">
       <div class="set-head"><h2 id="h-insta"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="0.9"/></svg></span>Instagram (opcional)</h2><p class="sec-meta">Lê os encartes que as lojas postam. Precisa de conta profissional do Instagram ligada a uma página do Facebook; a loja precisa ter conta comercial.</p></div>
@@ -1373,7 +1403,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.17.9</span></p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.18.0</span></p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -1502,7 +1532,8 @@ html:not(.sem-ia) .so-semia{display:none!important}
       online: {marketplaces: arr(on.marketplaces).length ? arr(on.marketplaces) : ['mercadolivre', 'amazon'], assinaturas: arr(on.assinaturas), mercados_entrega: on.mercados_entrega !== false},
       lojas: {ignorar: arr(l.ignorar), manter: arr(l.manter), adicionar: arr(l.adicionar), folhetos: arr(l.folhetos).filter(function(f){ return f && f.nome; }).map(function(f){ return {nome:String(f.nome), categoria:f.categoria || 'mercados'}; })},
       lista: arr(c.lista).map(function(i){ return typeof i === 'string' ? {produto:i, compras:[]} : {produto:String(i.produto || ''), compras:arr(i.compras), origem:i.origem === 'ha' ? 'ha' : undefined,
-        escolha:i.escolha && i.escolha.rede ? {rede:String(i.escolha.rede), q:Number(i.escolha.q) || null, obs:String(i.escolha.obs || '').slice(0, 120)} : undefined}; }).filter(function(i){ return i.produto; }),
+        similares:i.similares ? true : undefined,
+        escolha:i.escolha && i.escolha.rede ? {rede:String(i.escolha.rede), q:Number(i.escolha.q) || null, obs:String(i.escolha.obs || '').slice(0, 120), sim:i.escolha.sim ? true : undefined} : undefined}; }).filter(function(i){ return i.produto; }),
       // itens que saíram da lista, com as compras, para voltar com um toque
       historico: arr(c.historico).filter(function(i){ return i && i.produto; }).map(function(i){ return {produto:String(i.produto).slice(0, 120), compras:arr(i.compras).filter(function(d){ return /^\d{4}-\d{2}-\d{2}$/.test(d); }), saiu:String(i.saiu || '')}; }).slice(-300),
       perfil: {adultos:n0(p.adultos, 1), criancas:n0(p.criancas, 0), bebes:n0(p.bebes, 0), pets:petsDe(p.pets), restricoes:arr(p.restricoes), interesses:arr(p.interesses), nunca:arr(p.nunca)},
@@ -1925,7 +1956,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   var SVG_ESC = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   function ehEscolha(it, id, q, obs){
     var e = it.escolha, info = itemDe(it.produto), q0 = info && info.base ? Number(info.base.quantidade) : null;
-    if (!e || e.rede !== id) return false;
+    if (!e || e.rede !== id || e.sim) return false;
     var qq = q && q0 && !igualQ(q, q0) ? q : null;
     return (e.q || null) === null ? qq === null : !!(qq && igualQ(qq, e.q) && (!e.obs || !obs || norm(e.obs) === norm(obs)));
   }
@@ -1935,11 +1966,46 @@ html:not(.sem-ia) .so-semia{display:none!important}
   }
   function escolhaDe(it, p){  // a escolha guardada, com o preço da última busca (null se a loja não trouxe)
     var e = it.escolha; if (!e || !G[e.rede] || !acompanha(e.rede)) return null;
+    if (e.sim){  // um similar da mesma seção da loja ("sobrecoxa" no lugar da "coxinha da asa")
+      var s = similaresDe(it).filter(function(z){ return ehSim(it, z); })[0];
+      return s ? {y:{id:s.rede, v:Number(s.preco), preco:Number(s.preco), frete:0, online:false, obs:s.nome, link:s.fonte || ''}, emb:s.nome, total:Number(s.preco), q:Number(s.quantidade), sim:true} : null;
+    }
     if (!e.q){ var y = p.filter(function(z){ return z.id === e.rede; })[0]; return y ? {y:y, emb:'', total:y.v} : null; }
     var info = itemDe(it.produto); if (!info || !info.base) return null;
     var ops = opcoesTamanho(info, p).filter(function(o){ return o.id === e.rede && igualQ(o.q, e.q); });
     var o = ops.filter(function(o){ return !e.obs || norm(o.obs || o.emb) === norm(e.obs); })[0] || ops[0];
     return o ? {y:{id:o.id, v:o.total, preco:o.preco, frete:o.frete, carrinho:o.carrinho, online:o.online, obs:o.obs || o.emb, link:o.link}, emb:o.emb || medidaTxt(o.q, info.base), total:o.total, q:o.q} : null;
+  }
+  // Similares: produtos da mesma seção da loja (Açougue › Aves) mais em conta pelo preço do quilo ou litro, só para o item que pediu
+  var SVG_SIM = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="7" width="10" height="10" rx="2"/><path d="M10.5 4h8a2 2 0 0 1 2 2v8"/><path d="M6.5 12h4"/></svg>';
+  function similaresDe(it){
+    var info = itemDe(it.produto);
+    return arr(info && info.similares).filter(function(s){ return s && G[s.rede] && catAtiva(s.rede) && acompanha(s.rede) && Number(s.preco) > 0 && Number(s.quantidade) > 0 && s.nome; });
+  }
+  function ehSim(it, s){ var e = it.escolha; return !!(e && e.sim && e.rede === s.rede && norm(e.obs) === norm(s.nome)); }
+  function botaoSim(it, s){
+    var on = ehSim(it, s), i = estado.lista.indexOf(it);
+    return '<button type="button" class="esc-btn" data-esc-sim="' + i + '" data-esc-rede="' + esc(s.rede) + '" data-esc-q="' + Number(s.quantidade) + '" data-esc-obs="' + esc(s.nome) + '" aria-pressed="' + on + '" aria-label="' + esc((on ? 'Escolhido: ' : 'Escolher: ') + s.nome + ' no ' + G[s.rede].nome + ' por ' + brl.format(Number(s.preco))) + '" title="' + (on ? 'Sua escolha' : 'Escolher esse') + '">' + SVG_ESC + '</button>';
+  }
+  function blocoSimilares(x, p){
+    if (!x.it.similares) return '';
+    var info = itemDe(x.it.produto), b = info && info.base, best = p[0], k = 'sim|' + norm(x.it.produto);
+    var todos = similaresDe(x.it);
+    if (!todos.length) return '<p class="i-sub sim-vazio">Similares ligados: eles aparecem na próxima busca, vindos da mesma seção das lojas com busca no próprio site. '
+      + '<button type="button" class="link" data-buscaitem="' + x.i + '"' + (buscaItem === x.it.produto ? ' disabled' : '') + '>' + (buscaItem === x.it.produto ? 'Buscando…' : 'Buscar agora') + '</button></p>';
+    var ref = best && b ? best.v / Number(b.quantidade) : null;
+    var pu = function(s){ return Number(s.preco) / Number(s.quantidade); };
+    var ss = todos.filter(function(s){ return !ref || !b || s.unidade !== b.unidade || pu(s) < ref * 0.98 || ehSim(x.it, s); }).sort(function(a, c){ return pu(a) - pu(c); }).slice(0, 3);
+    if (!ss.length) return '<p class="i-sub sim-vazio">Nenhum similar sai mais em conta que o item agora.</p>';
+    var un = ss[0].unidade === 'L' ? 'litro' : ss[0].unidade === 'kg' ? 'quilo' : ss[0].unidade === 'm' ? 'metro' : 'unidade';
+    var lis = ss.map(function(s){
+      var q = Number(s.quantidade), pr = Number(s.preco), bu = {unidade:s.unidade};
+      return '<li' + (ehSim(x.it, s) ? ' class="escolhida"' : '') + '>' + abreLink(linkCompra(s.rede, s.nome, s.fonte), 'tam-a', '<b>' + esc(s.nome) + '</b><span>' + esc(G[s.rede].curto) + ' · ' + esc(medidaTxt(q, bu)) + '</span><span>' + brl.format(pr) + '</span><span class="pu">' + esc(porUn(pr, q, bu)) + '</span>')
+        + botaoSim(x.it, s) + '</li>';
+    }).join('');
+    var nota = ref && b && ss[0].unidade === b.unidade ? 'O item pedido sai ' + porUn(best.v, Number(b.quantidade), b) + ' (' + G[best.id].nome + ').' : '';
+    return '<details class="i-det" data-det="' + esc(k) + '"' + (DET_ABERTO[k] === false ? '' : ' open') + '><summary>' + SVG_SIM.replace('<svg ', '<svg class="det-ic" ') + 'Similares mais em conta (' + ss.length + ')</summary>'
+      + '<div class="i-tam"><p class="i-sub">Mesma seção da loja, do mais barato por ' + un + ' para o mais caro. ' + esc(nota) + '</p><ul class="tam-list sim-list num">' + lis + '</ul></div></details>';
   }
   function opcoesTamanho(info, p){
     var q0 = Number(info.base.quantidade), ops = [];
@@ -2137,11 +2203,12 @@ html:not(.sem-ia) .so-semia{display:none!important}
     var semPreco = itens.filter(function(x){ return !precosDe(x.it.produto).length; });
     var naoAchou = semPreco.some(function(x){ return arr((D.relatorio || {}).sem_preco).map(norm).indexOf(norm(x.it.produto)) >= 0; });
     $('wishDica').textContent = 'Pode escrever só o produto, como "Lysoform": o app compara os tamanhos pelo preço por quilo ou litro.'
+      + ' Aceita mais de um? Escreva "coxinha da asa ou asinha".'
       + (semCompra ? ' Toque em "Comprei hoje" quando comprar.' : '')
       + (naoAchou ? ' Item que a busca não acha: escreva com marca e tamanho, como "Detergente Ypê 500 ml".' : '');
     $('wish').innerHTML = itens.map(function(x){
       var p = precosDe(x.it.produto), soon = x.r.dias != null && x.r.dias <= 3;
-      var acoes = '<div class="i-actions"><button type="button" class="ghost ic-btn" data-comprei="' + x.i + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.3 14.2l2 2 3.6-3.7"/></svg>Comprei hoje</button><button type="button" class="rm" data-rm="' + x.i + '">remover</button>' + (x.it.origem === 'ha' ? '<span class="chip">Veio do Home Assistant</span>' : '');
+      var acoes = '<div class="i-actions"><button type="button" class="ghost ic-btn" data-comprei="' + x.i + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.3 14.2l2 2 3.6-3.7"/></svg>Comprei hoje</button><button type="button" class="ghost ic-btn sim-btn" data-sim="' + x.i + '" aria-pressed="' + !!x.it.similares + '" title="Mostrar produtos parecidos, da mesma seção da loja, que saem mais em conta">' + SVG_SIM + 'Similares</button><button type="button" class="rm" data-rm="' + x.i + '">remover</button>' + (x.it.origem === 'ha' ? '<span class="chip">Veio do Home Assistant</span>' : '');
       if (!p.length){
         var procurou = arr((D.relatorio || {}).sem_preco).map(norm).indexOf(norm(x.it.produto)) >= 0;
         var buscando = buscaItem === x.it.produto;
@@ -2169,6 +2236,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
         + (p.length > 1 ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li' + (ehEscolha(x.it, y.id, null, y.obs) ? ' class="escolhida"' : '') + '>' + abreLink(linkCompra(y.id, y.obs || x.it.produto, y.link), 'i-chip', '<span class="ic-n">' + esc(G[y.id].curto) + '</span><b>' + brl.format(y.v) + '</b>' + (y.online && y.carrinho ? '<small>+ frete</small>' : y.online && y.frete ? '<small>c/ frete</small>' : '') + (y.clube ? '<small>clube</small>' : '')) + '' + botaoEscolher(x.it, y.id, null, y.obs, G[y.id].nome + ' por ' + brl.format(y.v)) + '</li>'; }).join('') + '</ul>' : '')
         + dicaClube(p, best)
         + detalhesCompra(x, p, dc, mt)
+        + blocoSimilares(x, p)
         + acoes + '<span class="i-foot">Em ' + onde + quandoPrecos(p) + '</span></div></li>';
     }).join('');
   }
@@ -2176,7 +2244,8 @@ html:not(.sem-ia) .so-semia{display:none!important}
     var y = es.y, l = linkCompra(y.id, y.obs || x.it.produto, y.link);
     var barato = dc && dc.total < es.total - 0.004 && dc.porBase < best.v ? ('A melhor compra é ' + dc.como + ' por ' + brl.format(dc.total) + ' no ' + G[dc.id].nome + '.')
       : y.id === best.id && !es.q ? 'É também o mais barato.' : 'O mais barato é ' + brl.format(best.v) + ' no ' + G[best.id].nome + '.';
-    return abreLink(l, 'i-best i-link', '<span class="lbl">Sua escolha</span><span class="por num">' + brl.format(es.total) + '</span><span class="i-store">' + (es.emb ? esc(es.emb) + ' · ' : '') + esc(G[y.id].nome) + ' <span class="chip">' + esc(G[y.id].singular) + '</span>' + (y.online ? '<small>' + esc(freteTxt(y, true)) + '</small>' : '') + '</span>' + setaLink(l))
+    if (es.sim) barato = 'Similar no lugar do item. O item pedido sai ' + brl.format(best.v) + ' no ' + G[best.id].nome + '.';
+    return abreLink(l, 'i-best i-link', '<span class="lbl">' + (es.sim ? 'Sua escolha · similar' : 'Sua escolha') + '</span><span class="por num">' + brl.format(es.total) + '</span><span class="i-store">' + (es.emb ? esc(es.emb) + ' · ' : '') + esc(G[y.id].nome) + ' <span class="chip">' + esc(G[y.id].singular) + '</span>' + (y.online ? '<small>' + esc(freteTxt(y, true)) + '</small>' : '') + '</span>' + setaLink(l))
       + (y.obs && !y.online && !es.emb ? '<p class="i-avulso">Produto: ' + esc(y.obs) + '</p>' : '')
       + '<p class="i-esc-nota num">' + esc(barato) + ' <button type="button" class="link" data-desescolher="' + x.i + '">Desfazer escolha</button></p>';
   }
@@ -2209,6 +2278,21 @@ html:not(.sem-ia) .so-semia{display:none!important}
       if (ehEscolha(ie, b.dataset.escRede, q, b.dataset.escObs)) delete ie.escolha;
       else ie.escolha = {rede:b.dataset.escRede, q:q, obs:q ? b.dataset.escObs : ''};
       salvar(ie.escolha ? 'Escolhido: ' + G[ie.escolha.rede].nome + ' para ' + ie.produto : 'Escolha desfeita');
+      tudo(); return;
+    }
+    if (b.dataset.sim != null){
+      var isim = estado.lista[Number(b.dataset.sim)]; if (!isim) return;
+      if (isim.similares){ delete isim.similares; if (isim.escolha && isim.escolha.sim) delete isim.escolha; }
+      else isim.similares = true;
+      salvar(isim.similares ? 'Similares ligados para ' + isim.produto : 'Similares desligados para ' + isim.produto);
+      tudo(); return;
+    }
+    if (b.dataset.escSim != null){
+      var ies = estado.lista[Number(b.dataset.escSim)]; if (!ies) return;
+      var alvo = {rede:b.dataset.escRede, nome:b.dataset.escObs};
+      if (ehSim(ies, alvo)) delete ies.escolha;
+      else ies.escolha = {rede:b.dataset.escRede, q:Number(b.dataset.escQ) || null, obs:b.dataset.escObs, sim:true};
+      salvar(ies.escolha ? 'Escolhido o similar ' + ies.escolha.obs : 'Escolha desfeita');
       tudo(); return;
     }
     if (b.dataset.desescolher != null){
@@ -2710,7 +2794,8 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var its = pl.lojas[id], sub = its.reduce(function(s, z){ return s + z.y.v; }, 0), l = LOJA[id];
       return '<li class="parada"><div class="parada-h"><span class="parada-n">' + (i + 1) + '</span><b>' + esc(G[id].nome) + '</b><span class="chip">' + esc(G[id].singular) + '</span><span class="sub num">' + (l && l.distancia_km != null ? km(l.distancia_km) + ' · ' : '') + brl.format(sub) + '</span></div>'
         + '<ul>' + its.map(function(z){
-          var mt = melhorTamanho(z.x.it, z.x.r, z.x.p), dica = mt && mt.dica && mt.dica.id === id ? '<small class="r-dica">Compensa levar ' + esc(mt.dica.txt) + '</small>' : '';
+          var e = z.x.it.escolha, mt = e && e.sim ? null : melhorTamanho(z.x.it, z.x.r, z.x.p);
+          var dica = e && e.sim && e.rede === id ? '<small class="r-dica">Similar: ' + esc(e.obs) + '</small>' : mt && mt.dica && mt.dica.id === id ? '<small class="r-dica">Compensa levar ' + esc(mt.dica.txt) + '</small>' : '';
           return '<li><span>' + esc(z.x.it.produto) + dica + '</span><span class="num">' + brl.format(z.y.v) + (z.y.clube ? ' <small>clube</small>' : '') + '</span></li>';
         }).join('') + '</ul></li>';
     });
@@ -3376,16 +3461,17 @@ html:not(.sem-ia) .so-semia{display:none!important}
     var el = $(id); el.value = sim ? OCULTO : ''; el.placeholder = sim ? '' : 'Cole aqui';
     $(id + 'Ok').hidden = !sim;
   }
-  ['shSenha', 'gKey', 'iKey', 'bKey'].forEach(function(id){
+  ['shSenha', 'gKey', 'iKey', 'bKey', 'mlSenha'].forEach(function(id){
     $(id).addEventListener('focus', function(){ if (this.value === OCULTO) this.value = ''; });
     $(id).addEventListener('blur', function(){ if (!this.value && !$(id + 'Ok').hidden) this.value = OCULTO; });
   });
   // ----- Shopee Afiliados: o App ID aparece; a senha fica só no Home Assistant -----
   function shSt(msg, ok){ var el = $('shSt'); el.className = 'ia-st' + (ok === true ? ' ok' : ok === false ? ' erro' : ''); el.textContent = msg; }
   function carregaShopee(){
-    if (MODO !== 'addon'){ shSt('No Home Assistant, aqui você liga a Shopee com o App ID e a senha.'); gSt('No Home Assistant, aqui você liga o Google Maps com a chave.'); iSt('No Home Assistant, aqui você liga o Instagram com a chave da Meta.'); bSt('No Home Assistant, aqui você liga o Brave com a chave.'); return; }
+    if (MODO !== 'addon'){ shSt('No Home Assistant, aqui você liga a Shopee com o App ID e a senha.'); gSt('No Home Assistant, aqui você liga o Google Maps com a chave.'); iSt('No Home Assistant, aqui você liga o Instagram com a chave da Meta.'); bSt('No Home Assistant, aqui você liga o Brave com a chave.'); mlSt('No Home Assistant, aqui você liga o Mercado Livre com o seu app.'); return; }
     fetch('api/integracoes', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
       var sh = j.shopee || {}, g = j.google || {}, ig = j.instagram || {}, br = j.brave || {};
+      pintaMl(j.ml);
       guardado('bKey', br.tem_chave);
       $('bApagar').hidden = !br.tem_chave;
       bSt(br.tem_chave ? 'Ligado.' : 'Desligado.', br.tem_chave ? true : null);
@@ -3439,6 +3525,52 @@ html:not(.sem-ia) .so-semia{display:none!important}
   $('bApagar').addEventListener('click', function(){
     fetch('api/integracoes', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({brave:null})})
       .then(function(){ toast('Chave do Brave apagada'); carregaShopee(); }).catch(function(){ toast('Sem conexão com o Home Assistant.'); });
+  });
+  // ----- Mercado Livre: previsor de categorias, com o app de desenvolvedor da pessoa -----
+  function mlSt(msg, ok){ var el = $('mlSt'); el.className = 'ia-st' + (ok === true ? ' ok' : ok === false ? ' erro' : ''); el.textContent = msg; }
+  function pintaMl(ml, msg){
+    ml = ml || {};
+    $('mlApp').value = ml.app_id || ''; guardado('mlSenha', !!ml.tem_senha); $('mlUrl').value = ml.url_retorno || '';
+    $('mlApagar').hidden = !ml.app_id;
+    var a = $('mlAutorizar'); a.hidden = !ml.autorizar; a.href = ml.autorizar || '#'; a.textContent = ml.conectado ? 'Autorizar de novo' : 'Autorizar no Mercado Livre';
+    $('mlPasso2').hidden = !ml.autorizar || !!ml.conectado;
+    if (msg) mlSt(msg[0], msg[1]);
+    else mlSt(ml.conectado ? (ml.erro ? ml.erro : 'Conectado: a categoria confere os produtos achados.') : ml.app_id && ml.tem_senha ? 'Falta autorizar: toque em Autorizar no Mercado Livre.' : 'Desligado.', ml.conectado ? !ml.erro : ml.app_id ? false : null);
+  }
+  function testaMl(){
+    mlSt('Testando com o Mercado Livre…');
+    fetch('api/integracoes/testar', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({servico:'ml'})})
+      .then(function(r){ return r.json(); }).then(function(j){ mlSt(j.msg || 'Sem resposta.', !!j.ok); }).catch(function(){ mlSt('Sem conexão com o Home Assistant.', false); });
+  }
+  $('mlSalvar').addEventListener('click', function(){
+    if (MODO !== 'addon'){ toast('Só no Home Assistant'); return; }
+    var app = $('mlApp').value.replace(/\D/g, ''), senha = $('mlSenha').value === OCULTO ? '' : $('mlSenha').value.replace(/\s/g, ''), url = $('mlUrl').value.trim();
+    if (!app){ mlSt('Escreva o App ID.', false); return; }
+    if (!/^https:\/\//.test(url)){ mlSt('A URL de retorno começa com https:// e é a mesma do app no Mercado Livre.', false); return; }
+    fetch('api/integracoes', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ml:{app_id:app, secret:senha, url_retorno:url}})})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+      .then(function(x){
+        if (!x.ok){ mlSt(x.j.erro || 'Não deu para salvar.', false); return; }
+        var ml = x.j.ml || {};
+        pintaMl(ml, !ml.tem_senha ? ['Falta a chave secreta.', false] : ml.conectado ? ['Salvo. Continua conectado.', true] : ['Salvo. Agora toque em Autorizar no Mercado Livre.', null]);
+      }).catch(function(){ mlSt('Sem conexão com o Home Assistant.', false); });
+  });
+  $('mlAutorizar').addEventListener('click', function(){ $('mlPasso2').hidden = false; mlSt('Depois de aceitar, copie o endereço da página que abrir e cole abaixo.'); });
+  $('mlConectar').addEventListener('click', function(){
+    var t = $('mlCodigo').value.trim();
+    if (!t){ mlSt('Cole o endereço que abriu depois de autorizar.', false); return; }
+    mlSt('Conectando…');
+    fetch('api/integracoes/ml/conectar', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({codigo:t})})
+      .then(function(r){ return r.json(); }).then(function(j){
+        $('mlCodigo').value = '';
+        if (!j.ok){ mlSt(j.msg || 'Não deu para conectar.', false); return; }
+        $('mlPasso2').hidden = true; $('mlAutorizar').textContent = 'Autorizar de novo'; mlSt(j.msg, true);
+      }).catch(function(){ mlSt('Sem conexão com o Home Assistant.', false); });
+  });
+  $('mlTestar').addEventListener('click', function(){ if (MODO === 'addon') testaMl(); else toast('Só no Home Assistant'); });
+  $('mlApagar').addEventListener('click', function(){
+    fetch('api/integracoes', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ml:null})})
+      .then(function(){ toast('Mercado Livre desligado'); carregaShopee(); }).catch(function(){ toast('Sem conexão com o Home Assistant.'); });
   });
   // ----- Instagram: chave da Meta para ler os encartes que as lojas postam -----
   function iSt(msg, ok){ var el = $('iSt'); el.className = 'ia-st' + (ok === true ? ' ok' : ok === false ? ' erro' : ''); el.textContent = msg; }
@@ -3853,7 +3985,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.17.9' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.18.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

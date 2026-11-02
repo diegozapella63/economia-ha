@@ -226,6 +226,50 @@ Padrão de nome do varejo: tipo + marca + variante + tamanho. `casa_lista(item, 
 - **Busca de novo:** `termo_nucleo` (tipo + marcas do item, com o acento que a pessoa escreveu) refaz a busca quando o item inteiro não casa nada, em `busca_vtex` (40 resultados) e `busca_do_site`. `procura_catalogo` filtra antes os endereços com o tipo.
 - **EAN:** `busca_vtex` devolve `ean`. O candidato que casa firme (`combina`, sem tradução) guarda o EAN em `casados.json` (`guarda_casados`, até 20 por item). Em qualquer loja VTEX, produto com um desses EANs entra como candidato mesmo com outro nome.
 
+## Seção da loja
+
+`busca_vtex` devolve `secao` (o caminho mais fundo de `categories`, normalizado: "acougue/aves") e `secao_nome` (o último nível, como a loja escreve). `mesma_secao(a, b)`: igual, ou uma dentro da outra.
+
+- **`filtra_secao(item, loja, cand, eans)`**, na busca direta, depois do casamento:
+  1. Entre os casados firmes (`combina`), se algum está numa seção afim do item (`secao_afim`: o começo de uma palavra do item, `w[:max(4, len-2)]`, abre uma palavra da seção, para "bovina" × "Bovinos"), saem os firmes de seções que não são afins nem aprendidas (menos o EAN conhecido).
+  2. As seções dos firmes que ficaram, mais as aprendidas daquela loja (`casados.json` › `secoes[loja]`, até 4), filtram os outros candidatos (parecido, associação). Candidato sem seção passa.
+- **`guarda_casados(item, eans, loja, secoes)`** guarda o EAN e a seção só dos firmes que sobraram.
+
+## Similares
+
+O item com `similares: true` (na lista da config) ganha, na busca direta, `similares_vtex`:
+
+1. A seção mais comum entre os candidatos que casaram, com pelo menos 2 níveis, e a unidade mais comum.
+2. A busca por facetas da VTEX (`product_search/category-1/<slug>/category-2/<slug>`, slug como o da loja: minúsculas, sem acento, hífens). Se nenhum produto vier daquela seção, busca pelo nome dela (`secao_nome`).
+3. Ficam os produtos da seção (ou de dentro dela), na mesma unidade, que não são candidatos e saem pelo menos 2% mais baratos por unidade que o melhor candidato. Os 3 mais baratos por unidade.
+
+`montar_item(…, similares={rede: [produtos]})` põe `similares` na entrada: rede, nome, preço, quantidade, unidade, fonte. O campo passa por `normalizar` (rede vira id), `juntar_item` (soma), `mesclar_resultado` (guarda os de antes e tira os da loja que acabou de ser consultada) e `item_ofertas` (um por loja e nome, o mais recente; os 6 mais baratos por unidade).
+
+Página: o botão `data-sim` liga `estado.lista[i].similares`. `blocoSimilares` mostra até 3 mais baratos por unidade que o melhor preço do item (na mesma unidade da base). A escolha de um similar é `{rede, q, obs: nome, sim: true}`; `ehEscolha` ignora essas escolhas, e `escolhaDe` resolve o similar por loja e nome (`ehSim`).
+
+## "ou" no item
+
+`alternativas(item)` divide em " ou ". `casa_lista` casa com cada lado e junta (True > parecido > False); `combina` herda. A busca direta e a busca do site buscam cada lado (`unicos` tira os repetidos pelo link). `procura_catalogo` aceita o tipo de qualquer lado. "ou" entrou em `VAZIAS_BUSCA`.
+
+## Previsor de categorias do Mercado Livre
+
+`GET /sites/MLB/domain_discovery/search?limit=3&q=` com `Authorization: Bearer`. O token vem do OAuth do app da pessoa:
+
+- **Autorização:** `ML_AUTH` (`auth.mercadolivre.com.br/authorization?response_type=code&client_id&redirect_uri`).
+- **Código:** a pessoa cola o endereço de volta. `ml_conectar` tira o `code=` e troca em `POST /oauth/token` (`authorization_code`).
+- **Renovação:** `ml_token` renova com `refresh_token`, que o Mercado Livre troca a cada uso. Com `invalid_grant` ou `invalid_client`, apaga o acesso e pede para autorizar de novo.
+- **Cache:** `ml_prever(titulo)` guarda `[{d, c, n}]` (domínio, categoria, nome) em `categorias_ml.json` por 90 dias, até 8.000 nomes. Grava junto com o vocabulário (`grava_ml` em `grava_vocab`).
+- **Limites:** no máximo `ML_POR_HORA` (400) consultas novas por hora. Com 429, pausa de 10 minutos.
+
+`confere_ml(item, nomes)`: o alvo são o domínio e a categoria das 3 previsões de cada lado do item. Cada produto vale True se a 1ª previsão dele está no alvo, False se não está, None sem resposta. `filtra_ml` (no começo de `montar_item`, então vale para todas as fontes sem IA) só tira os False quando há pelo menos um True, e nunca tira o EAN conhecido do item.
+
+Rotas:
+
+- `GET /api/integracoes` › `ml`: `app_id`, `tem_senha`, `url_retorno`, `conectado`, `autorizar`, `erro`.
+- `PUT {"ml": {app_id, secret, url_retorno}}` (`null` apaga). Mudar a URL ou a chave pede nova autorização.
+- `POST /api/integracoes/ml/conectar {"codigo"}`.
+- `POST /api/integracoes/testar {"servico": "ml"}`: classifica uma carne moída e um hambúrguer.
+
 ## Clube em cada loja
 
 A seção "Clubes e cupons do app" virou só "Cupons do app"; o clube fica na linha de cada loja física (`clubeHtml`). `clubeDe` decide o rótulo: o nome do clube conferido (`CLUBES`, por expressão no nome da rede) — preço de membro: Amigo Giassi, Club Nissei, Bem Panvel, Clube DC, Clube PP, Mais Saúde (Raia/Drogasil), Clube Mais (Fort); ofertas ativadas no app: Clube Bistek, Super Clube (Imperatriz), Clube K (Komprão/Koch), Meu Atacadão, Sempre Bem (Pague Menos), Amigo Cobasi, Clubz (Petz), `null` para clube só de pontos ou cartão (`SEM_CLUBE`, como o Clube Angeloni: sem botão, a não ser que já esteja marcado), "Tem clube" quando a busca com IA marcou a loja (`contas` da categoria ou "Clube" nas fontes) e "Adicionar clube" nas outras. O toque liga e desliga a rede em `config.clubes` (o mesmo campo de antes). Com a IA desligada e algum clube marcado, `#clubeSemIA` avisa que o preço de clube só chega pela IA. `instrucoes_para` diz à IA de quais lojas daquela categoria o morador é sócio, para ela trazer o `preco_clube`.

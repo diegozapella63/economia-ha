@@ -22,7 +22,8 @@ Rotas:
 - GET  /api/lojas-diretas   lojas com busca direta no site (Giassi, Angeloni) e se atendem o CEP
 - GET  /api/integracoes   Shopee Afiliados: App ID e se a senha está guardada (a senha nunca sai daqui)
 - PUT  /api/integracoes   {"shopee": {"app_id", "secret"}}, {"google": {"key"}}, {"instagram": {"token"}} guardam em segredos.json; null apaga
-- POST /api/integracoes/testar   {"servico": "shopee" | "google" | "instagram"} faz uma consulta de teste
+- POST /api/integracoes/testar   {"servico": "shopee" | "google" | "instagram" | "brave" | "ml"} faz uma consulta de teste
+- POST /api/integracoes/ml/conectar   {"codigo"}: o endereço que abriu depois de autorizar no Mercado Livre (ou só o code=TG-…)
 - GET  /api/folhetos   lojas com folheto lido no Kimbino ou no Seus Folhetos e como foi a última leitura
 - GET  /api/lojas-mapa   lojas do raio pelo mapa (OpenStreetMap e, com chave, Google Places)
 - POST /api/lojas-mapa/atualizar   {"raio_km", "categorias"}: lê o mapa agora, registra as lojas e começa o teste de preço de cada uma
@@ -1212,6 +1213,12 @@ def normalizar(cat_id, bruto, cfg):
                 ent["vistos"][rid] = visto
                 if fonte_ok(p.get("fonte")):
                     ent["links"][rid] = fonte_ok(p.get("fonte"))
+        for x in it.get("similares") or []:  # mais em conta na mesma seção da loja (busca direta)
+            m, preco, nome_s = (medida(x.get("quantidade"), x.get("unidade")), numero(x.get("preco")), texto(x.get("nome"), 80)) if isinstance(x, dict) else (None, None, None)
+            rid = rede_id(x.get("rede")) if m and preco and nome_s else None
+            if rid:
+                ent.setdefault("similares", []).append(dict({"rede": rid, "nome": nome_s, "preco": preco, "quantidade": m[0], "unidade": m[1]},
+                                                            **({"fonte": fonte_ok(x.get("fonte"))} if fonte_ok(x.get("fonte")) else {})))
         b = it.get("base") if isinstance(it.get("base"), dict) else {}
         base = medida(b.get("quantidade"), b.get("unidade"))
         if not base:
@@ -1254,7 +1261,7 @@ def normalizar(cat_id, bruto, cfg):
 
     # só as redes que ficaram com loja, cupom, oferta ou preço; cada uma precisa de uma loja
     usadas = set(lojas) | {c["rede"] for c in cupons} | {o["rede"] for o in ofertas}
-    usadas |= {r for v in lista.values() for r in list(v["precos"]) + [t["rede"] for t in v["tamanhos"]]}
+    usadas |= {r for v in lista.values() for r in list(v["precos"]) + [t["rede"] for t in v["tamanhos"]] + [x["rede"] for x in v.get("similares") or []]}
     redes = {k: v for k, v in redes.items() if k in usadas}
     online = cat_id == "online"
     for rid in redes:
@@ -1440,6 +1447,8 @@ def juntar_categoria(dest, cat):
 
 def juntar_item(dest, ent):
     """Junta o que uma categoria achou para um item da lista ao que as outras já acharam."""
+    if ent.get("similares"):
+        dest.setdefault("similares", []).extend(ent["similares"])
     b, nb = dest.get("base"), ent.get("base")
     links, dlinks = ent.get("links") or {}, dest.setdefault("links", {})
     vistos, dvistos = ent.get("vistos") or {}, dest.setdefault("vistos", {})
@@ -1521,6 +1530,13 @@ def item_ofertas(prod, ent):
         if ent["tamanhos"]:
             por_un = lambda t: (t["preco"] + (t.get("frete") or 0)) / t["quantidade"]  # noqa: E731
             out["tamanhos"] = sorted(sem_repetir_tamanhos(ent["tamanhos"]), key=por_un)[:12]
+    if ent.get("similares"):
+        unicos_s = {}
+        for x in ent["similares"]:  # o mesmo produto da mesma loja: fica o mais recente
+            if isinstance(x, dict) and numero(x.get("preco")) and numero(x.get("quantidade")):
+                unicos_s.pop((x.get("rede"), norm(x.get("nome") or "")), None)
+                unicos_s[(x.get("rede"), norm(x.get("nome") or ""))] = x
+        out["similares"] = sorted(unicos_s.values(), key=lambda x: x["preco"] / x["quantidade"])[:6]
     return out
 
 
@@ -1533,7 +1549,7 @@ LOJAS_DIRETAS = {
 }
 VTEX_TESTE = os.environ.get("OFERTAS_VTEX_TESTE")  # só para testes: um servidor falso no lugar dos sites
 _regioes = {}
-VAZIAS_BUSCA = {"de", "da", "do", "das", "dos", "para", "com", "em", "e", "a", "o", "p", "c", "sem", "tipo"}
+VAZIAS_BUSCA = {"de", "da", "do", "das", "dos", "para", "com", "em", "e", "a", "o", "p", "c", "sem", "tipo", "ou"}
 UNIDADE_NOME = re.compile(r"(\d+(?:[.,]\d+)?)\s*(ml|l|lt|litros?|kg|g|gr|un|und|unid|unidades?|m|metros?)\b", re.I)
 
 
@@ -1762,6 +1778,13 @@ def palavras_busca(t):
     return [w for w in norm(re.sub(UNIDADE_NOME, " ", str(t))).split() if w not in VAZIAS_BUSCA and not w.isdigit()]
 
 
+def alternativas(item):
+    """"Coxinha da asa ou asinha": cada lado é um item e vale o que achar (o mais em conta ganha na comparação)."""
+    partes = [x.strip(" ,;") for x in re.split(r"\s+ou\s+", str(item or ""), flags=re.I)]
+    partes = [x for x in partes if palavras_busca(x)]
+    return partes if len(partes) > 1 else [str(item or "")]
+
+
 # ---------- casamento do item com o produto, pelo padrão de nome do varejo ----------
 # Nome de produto no varejo: tipo + marca + variante + tamanho ("Álcool Araras Bactericida Eucalipto 1L"). O item da lista
 # segue o mesmo padrão ("álcool perfumado"): o tipo (a primeira palavra) e a marca precisam estar no nome; cada outra
@@ -1812,6 +1835,7 @@ def grava_vocab():
         if v["mudou"]:
             gravar_json(VOCAB, {"nomes": v["nomes"], "marcas": sorted(v["marcas"]), "em": agora()})
             v.update(mudou=False, assoc={}, stats=None)  # as associações são refeitas com o vocabulário novo
+    grava_ml()
 
 
 def stats_vocab():
@@ -1911,6 +1935,11 @@ def casa_lista(item, textos, traduzir=True):
     """combina() para os produtos de uma busca de uma vez. Palavra do item que nenhum produto do mesmo tipo usa
     ("perfumado" entre os "álcool …") é escrita de outro jeito pela loja: vale uma palavra que anda junto com ela nos
     produtos vistos ("eucalipto", "lavanda"). Palavra que a loja usa ("integral" entre os "leite …") tem de estar no nome."""
+    alts = alternativas(item)
+    if len(alts) > 1:  # "coxinha da asa ou asinha": casa com qualquer um dos lados
+        res = [casa_lista(a, textos, traduzir) for a in alts]
+        out = [True if True in v else "parecido" if "parecido" in v else False for v in zip(*res)]
+        return [o is True for o in out] if True in out else out
     pi = palavras_busca(item)
     if not pi:
         return [False] * len(textos)
@@ -1958,17 +1987,98 @@ def casados():
     return ler_json(CASADOS, {}) or {}
 
 
-def guarda_casados(item, eans):
+def guarda_casados(item, eans, loja=None, secoes=()):
+    """Guarda o código de barras dos produtos casados com certeza e, por loja, a seção onde eles ficam."""
     eans = [e for e in eans if re.fullmatch(r"\d{8,14}", str(e or ""))]
-    if not eans:
+    secoes = [s for s in secoes if s]
+    if not eans and not (loja and secoes):
         return
     c = casados()
     k = norm(item)
-    atual = (c.get(k) or {}).get("eans") or []
-    novo = list(dict.fromkeys(atual + eans))[-20:]
-    if novo != atual:
-        c[k] = {"eans": novo, "em": agora()}
+    atual = c.get(k) or {}
+    novo = list(dict.fromkeys((atual.get("eans") or []) + eans))[-20:]
+    secs = dict(atual.get("secoes") or {})
+    if loja and secoes:
+        secs[loja] = list(dict.fromkeys((secs.get(loja) or []) + secoes))[-4:]
+    if novo != (atual.get("eans") or []) or secs != (atual.get("secoes") or {}):
+        c[k] = dict({"eans": novo, "em": agora()}, **({"secoes": secs} if secs else {}))
         gravar_json(CASADOS, c)
+
+
+def secoes_do_item(item, loja, firmes):
+    """As seções da loja onde o item fica: as dos produtos casados com certeza agora e as aprendidas antes."""
+    secs = {c["secao"] for c in firmes if c.get("secao")}
+    return secs | set((((casados().get(norm(item)) or {}).get("secoes") or {}).get(loja)) or [])
+
+
+def secao_afim(item, sec):
+    """A seção fala do item? ("carne moída bovina" e "Açougue › Bovinos": "bovin…"). Compara o começo das palavras,
+    porque a seção vem no plural ou no masculino ("Carnes", "Bovinos")."""
+    ws = [w for parte in sec.split("/") for w in parte.split() if len(w) >= 4]
+    for a in alternativas(item):
+        for w in palavras_busca(a):
+            if len(w) >= 4 and any(x.startswith(w[:max(4, len(w) - 2)]) for x in ws):
+                return True
+    return False
+
+
+def filtra_secao(item, loja, cand, eans):
+    """Produto de outra seção da loja não é o item, mesmo com nome parecido: "Carne moída" fica em Açougue › Bovinos e
+    o hambúrguer em Congelados. É o mesmo sinal que o app da loja usa. Sem seção conhecida, não filtra."""
+    firmes = [c for c in cand if combina(item, c["nome"])]
+    afins = {c["secao"] for c in firmes if c.get("secao") and secao_afim(item, c["secao"])}
+    if afins:  # entre os casados com certeza, fica quem está numa seção que fala do item: a almôndega de "carne moída" em Congelados › Pratos sai
+        antes = set(secoes_do_item(item, loja, [])) | afins
+        fora = [c for c in firmes if c.get("secao") and not any(mesma_secao(c["secao"], s) for s in antes) and c.get("ean") not in eans]
+        firmes = [c for c in firmes if c not in fora]
+        cand = [c for c in cand if c not in fora]
+        if fora:
+            log(f"seção da loja: fora de '{item}' por estar em outra seção: " + "; ".join(f"{c['nome'][:40]} ({c['secao']})" for c in fora[:3]))
+    secs = secoes_do_item(item, loja, firmes)
+    if not secs:
+        return cand, firmes
+    ok = [c for c in cand if c in firmes or c.get("ean") in eans or not c.get("secao") or any(mesma_secao(c["secao"], s) for s in secs)]
+    if len(ok) < len(cand):
+        log(f"seção da loja: {len(cand) - len(ok)} produto(s) de outra seção fora de '{item}' ({', '.join(sorted({c['secao'] for c in cand if c not in ok})[:3])})")
+    return ok, firmes
+
+
+def similares_vtex(chave, regiao, item, cand, n=3):
+    """Mais em conta na mesma seção da loja ("sobrecoxa" e "asa" para quem pediu "coxinha da asa"), comparando pelo
+    preço do quilo (ou litro). Só com seção de 2 níveis ou mais: "Açougue" sozinho junta boi, porco e frango."""
+    conta = {}
+    for c in cand:
+        if c.get("secao") and "/" in c["secao"]:
+            conta[c["secao"]] = conta.get(c["secao"], 0) + 1
+    if not conta:
+        return []
+    sec = max(conta, key=conta.get)
+    unid = {}
+    for c in cand:
+        if c.get("tam"):
+            unid[c["tam"][1]] = unid.get(c["tam"][1], 0) + 1
+    if not unid:
+        return []
+    un = max(unid, key=unid.get)
+    melhor = min(c["preco"] / c["tam"][0] for c in cand if c.get("tam") and c["tam"][1] == un)
+    rotulo = next((c["secao_nome"] for c in cand if c.get("secao") == sec and c.get("secao_nome")), "")
+    facetas = "/".join(f"category-{i}/{re.sub(r'[^a-z0-9]+', '-', parte).strip('-')}" for i, parte in enumerate(sec.split("/"), 1))
+    achados = busca_vtex(chave, "", regiao, 40, facetas=facetas)
+    if not any(p.get("secao", "").startswith(sec) for p in achados) and rotulo:  # a loja não abriu a seção pelo caminho: busca pelo nome dela
+        achados = busca_vtex(chave, rotulo, regiao, 40)
+    vistos, out = {c["link"] for c in cand}, {}
+    for p in achados:
+        if p["link"] in vistos or not p.get("tam") or p["tam"][1] != un or not p.get("secao"):
+            continue
+        if not (p["secao"] == sec or p["secao"].startswith(sec + "/")):
+            continue
+        if p["preco"] / p["tam"][0] < melhor * 0.98:
+            out.setdefault(p["link"], p)
+    return sorted(out.values(), key=lambda p: p["preco"] / p["tam"][0])[:n]
+
+
+def quer_similares(cfg):
+    return {norm(nome_item(i)) for i in (cfg.get("lista") or []) if isinstance(i, dict) and i.get("similares") and nome_item(i)}
 
 
 # "com 12", "c/ 6", "cx com 4": quantas embalagens. "com 10% de desconto" e "com 20 off" não são pacote.
@@ -1990,11 +2100,26 @@ def tamanho_nome(nome):
     return t
 
 
-def busca_vtex(chave, termo, regiao, count=12):
+def secao_vtex(prod):
+    """A seção onde a loja cadastrou o produto, do nível mais fundo: ("acougue/aves/frango", "Frango"), ou ("", "")."""
+    cats = [str(c) for c in (prod.get("categories") or []) if str(c).strip("/ ")]
+    if not cats:
+        return "", ""
+    fundo = [x.strip() for x in max(cats, key=lambda c: c.strip("/").count("/")).strip("/").split("/") if x.strip()]
+    return "/".join(norm(x) for x in fundo), fundo[-1]
+
+
+def mesma_secao(a, b):
+    """Uma seção dentro da outra (Açougue ⊃ Açougue › Aves) conta como a mesma; seções irmãs não."""
+    return a == b or a.startswith(b + "/") or b.startswith(a + "/")
+
+
+def busca_vtex(chave, termo, regiao, count=12, facetas=None):
     params = {"query": termo, "count": count, "locale": "pt-BR"}
     if regiao:
         params["regionId"] = regiao
-    d = http_json(site_direta(chave) + "/api/io/_v/api/intelligent-search/product_search/?" + urllib.parse.urlencode(params)) or {}
+    caminho = (facetas.strip("/") + "/") if facetas else ""
+    d = http_json(site_direta(chave) + "/api/io/_v/api/intelligent-search/product_search/" + caminho + "?" + urllib.parse.urlencode(params)) or {}
     out = []
     for prod in d.get("products") or []:
         nome = str(prod.get("productName") or "").strip()
@@ -2021,8 +2146,9 @@ def busca_vtex(chave, termo, regiao, count=12):
                 tam = medida(1, un)
             marca = texto(prod.get("brand"), 30) or ""
             curto = (marca + " " + fmt_base({"quantidade": tam[0], "unidade": tam[1]})) if marca and tam else nome[:60]
+            sec, sec_nome = secao_vtex(prod)
             out.append({"nome": nome, "curto": curto, "busca_em": busca_em, "preco": preco, "de": de if de and de > preco + 0.004 else None, "tam": tam,
-                        "ean": str(it.get("ean") or ""),
+                        "ean": str(it.get("ean") or ""), "secao": sec, "secao_nome": sec_nome,
                         "link": str((todas_diretas().get(chave) or {}).get("site") or "") + str(prod.get("link") or "")})
     return out
 
@@ -2047,7 +2173,8 @@ def busca_direta(cfg, itens=None, cats=("mercados",)):
         return []
     perto = lojas_perto_cat(cfg)
     todas = {k: v for k, v in todas_diretas().items() if (v.get("categoria") or "mercados") in cats or not v.get("fixa")}
-    achados, lojas = {}, {}  # categoria -> item -> loja -> [candidatos]; categoria -> lojas
+    achados, lojas, sims = {}, {}, {}  # categoria -> item -> loja -> [candidatos]; categoria -> lojas; similares do mesmo jeito
+    com_sim = quer_similares(cfg)
     pode = set(cats) | ({"online"} if entrega_ligada(cfg) and "online" in (cfg.get("categorias") or list(CATEGORIAS)) else set())
     for k, loja in todas.items():
         cat_id = (loja.get("categoria") or "mercados") if loja.get("fixa") else categoria_da_loja(loja["nome"], perto)
@@ -2065,14 +2192,22 @@ def busca_direta(cfg, itens=None, cats=("mercados",)):
         n = 0
         for nome in nomes:
             try:
-                res = busca_vtex(k, nome, reg)
+                alts = alternativas(nome)  # "coxinha da asa ou asinha": busca cada lado
+                res = unicos([c for a in alts for c in busca_vtex(k, a, reg)])
                 cand = [c for c, ok in zip(res, casa_lista(nome, [c["busca_em"] for c in res])) if ok]
-                if not cand and termo_nucleo(nome):  # "álcool perfumado": busca "álcool" e fica com os que combinam
-                    res += busca_vtex(k, termo_nucleo(nome), reg, 40)
+                nucleos = [t for t in (termo_nucleo(a) for a in alts) if t]
+                if not cand and nucleos:  # "álcool perfumado": busca "álcool" e fica com os que combinam
+                    res = unicos(res + [c for t in nucleos for c in busca_vtex(k, t, reg, 40)])
                     cand = [c for c, ok in zip(res, casa_lista(nome, [c["busca_em"] for c in res])) if ok]
                 eans = set((casados().get(norm(nome)) or {}).get("eans") or [])
                 cand += [c for c in res if c.get("ean") in eans and c not in cand]  # o mesmo produto achado antes, por código de barras
-                guarda_casados(nome, [c.get("ean") for c in cand if combina(nome, c["nome"])])  # só o casamento firme (nome ou vocabulário inicial)
+                cand, firmes = filtra_secao(nome, k, cand, eans)
+                # só o casamento firme (nome ou vocabulário inicial) ensina o código de barras e a seção
+                guarda_casados(nome, [c.get("ean") for c in firmes], k, [c.get("secao") for c in firmes])
+                if cand and norm(nome) in com_sim:
+                    s = similares_vtex(k, reg, nome, cand)
+                    if s:
+                        sims.setdefault(cat_id, {}).setdefault(nome, {})[k] = s
             except Exception as e:  # noqa: BLE001
                 log(f"busca direta {loja['nome']} '{nome}': {e}")
                 continue
@@ -2086,16 +2221,28 @@ def busca_direta(cfg, itens=None, cats=("mercados",)):
     for cat_id, ls in lojas.items():
         lista_bruta, ofertas = [], []
         for nome, por_loja in (achados.get(cat_id) or {}).items():
-            ent, ofs = montar_item(nome, {todas[k]["nome"]: cands for k, cands in por_loja.items()})
+            s = {todas[k]["nome"]: v for k, v in ((sims.get(cat_id) or {}).get(nome) or {}).items()}
+            ent, ofs = montar_item(nome, {todas[k]["nome"]: cands for k, cands in por_loja.items()}, similares=s)
             lista_bruta.append(ent)
             ofertas += ofs
         out.append(normalizar(cat_id, {"lojas": ls, "cupons": [], "ofertas": ofertas, "lista": lista_bruta, "_via": "site"}, cfg_itens))
     return out
 
 
-def montar_item(nome, por_rede, frete=None):
+def unicos(cands):
+    """Os mesmos produtos de duas buscas (um lado e o outro do "ou"): cada link uma vez."""
+    vistos, out = set(), []
+    for c in cands:
+        if c.get("link") not in vistos:
+            vistos.add(c.get("link"))
+            out.append(c)
+    return out
+
+
+def montar_item(nome, por_rede, frete=None, similares=None):
     """Os produtos achados para um item da lista, de uma ou mais lojas, no formato da busca: o preço no tamanho de
     sempre, os outros tamanhos e as promoções. frete="carrinho" para loja online que só mostra o frete no carrinho."""
+    por_rede = {r: cs for r, cs in ((r, filtra_ml(nome, cs)) for r, cs in por_rede.items()) if cs}
     # tamanho de sempre: o do nome do item ou o mais comum entre os produtos achados
     base = tamanho_nome(nome)
     if not base:
@@ -2122,9 +2269,229 @@ def montar_item(nome, por_rede, frete=None):
                 ofertas.append(dict({"rede": rede, "produto": c["nome"], "preco_normal": c["de"], "preco_oferta": c["preco"], "tipo": "promo",
                                      "fonte": c["link"], "tamanho": {"quantidade": c["tam"][0], "unidade": c["tam"][1]} if c["tam"] else None}, **extra))
     ent = {"produto": nome, "precos": precos, "tamanhos": tamanhos}
+    sim = [dict({"rede": rede, "nome": c["nome"][:80], "preco": c["preco"], "quantidade": c["tam"][0], "unidade": c["tam"][1], "fonte": c["link"]}, **extra)
+           for rede, cs in (similares or {}).items() for c in cs if c.get("tam")]
+    if sim:
+        ent["similares"] = sim
     if base:
         ent["base"] = {"quantidade": base[0], "unidade": base[1]}
     return ent, ofertas
+
+
+# ---------- Mercado Livre: o previsor de categorias diz de que tipo é cada produto, pelo nome ----------
+# O mesmo modelo que o Mercado Livre usa para classificar os anúncios (português do Brasil). O item da lista e cada
+# produto achado ganham uma categoria; produto de outra categoria (hambúrguer para "carne moída") sai. Precisa de um
+# app de desenvolvedor do Mercado Livre, autorizado uma vez; o EconomIA renova o acesso sozinho. Tudo fica em
+# segredos.json e as respostas em categorias_ml.json (90 dias).
+ML_API = os.environ.get("OFERTAS_ML_API", "https://api.mercadolibre.com")
+ML_AUTH = os.environ.get("OFERTAS_ML_AUTH", "https://auth.mercadolivre.com.br/authorization")
+CATEGORIAS_ML = os.path.join(DATA, "categorias_ml.json")
+ML_POR_HORA = 400  # consultas novas por hora, no máximo (o resto fica para a próxima busca)
+_ml_trava = threading.Lock()
+_ml = {"cache": None, "mudou": False, "horas": [], "pausa": 0.0, "erro": None}
+
+
+def ml_conf():
+    c = segredos().get("ml")
+    return c if isinstance(c, dict) else {}
+
+
+def ml_ligado():
+    c = ml_conf()
+    return bool(c.get("app_id") and c.get("secret") and c.get("refresh_token"))
+
+
+def ml_autorizar_url(c=None):
+    c = c or ml_conf()
+    if not (c.get("app_id") and c.get("url_retorno")):
+        return None
+    return ML_AUTH + "?" + urllib.parse.urlencode({"response_type": "code", "client_id": c["app_id"], "redirect_uri": c["url_retorno"]})
+
+
+def ml_pede(caminho, dados=None, token=None):
+    """Chamada à API do Mercado Livre: POST de formulário (dados) ou GET; devolve o JSON ou levanta ErroBusca."""
+    h = {"Accept": "application/json", "User-Agent": "EconomIA (Home Assistant)"}
+    if token:
+        h["Authorization"] = "Bearer " + token
+    corpo = urllib.parse.urlencode(dados).encode() if dados is not None else None
+    if corpo is not None:
+        h["Content-Type"] = "application/x-www-form-urlencoded"
+    req = urllib.request.Request(ML_API + caminho, data=corpo, headers=h, method="POST" if corpo is not None else "GET")
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            return json.loads(r.read(2_000_000).decode("utf-8") or "null")
+    except urllib.error.HTTPError as e:
+        try:
+            j = json.loads(e.read(20000).decode("utf-8") or "{}")
+        except Exception:  # noqa: BLE001
+            j = {}
+        motivo = str((j or {}).get("error") or "")
+        msg = str((j or {}).get("message") or (j or {}).get("error_description") or motivo or "")[:160]
+        if e.code == 429:
+            _ml["pausa"] = time.time() + 600
+            raise ErroBusca("O Mercado Livre pediu para esperar (consultas demais). Tento de novo em 10 minutos.") from e
+        if motivo == "invalid_grant":
+            raise ErroBusca("O Mercado Livre não aceitou a autorização (código usado, vencido ou revogado). Autorize de novo em Mais › Integrações.") from e
+        if motivo == "invalid_client":
+            raise ErroBusca("O Mercado Livre recusou o App ID ou a chave secreta. Confira em Mais › Integrações.") from e
+        raise ErroBusca(f"O Mercado Livre respondeu com erro {e.code}" + (f": {msg}" if msg else "") + ".") from e
+
+
+def ml_guarda_token(d):
+    if not isinstance(d, dict) or not d.get("access_token"):
+        raise ErroBusca("O Mercado Livre não devolveu o acesso.")
+    seg = segredos()
+    c = dict(seg.get("ml") or {})
+    c.update({"access_token": str(d["access_token"]), "refresh_token": str(d.get("refresh_token") or c.get("refresh_token") or ""),
+              "expira": time.time() + max(600, int(d.get("expires_in") or 10800)) - 300})
+    seg["ml"] = c
+    grava_segredos(seg)
+
+
+def ml_conectar(texto_colado):
+    """Troca o código da autorização (o endereço inteiro que abriu, ou só o código TG-...) pelo acesso."""
+    c = ml_conf()
+    if not (c.get("app_id") and c.get("secret") and c.get("url_retorno")):
+        raise ErroBusca("Salve antes o App ID, a chave secreta e a URL de retorno.")
+    t = str(texto_colado or "").strip()
+    m = re.search(r"[?&#]code=([^&#\s]+)", t)
+    cod = urllib.parse.unquote(m.group(1)) if m else t
+    if not re.fullmatch(r"[\w.\-]{6,300}", cod):
+        raise ErroBusca("Cole o endereço que abriu depois de autorizar (ele tem code=TG-…).")
+    with _ml_trava:
+        ml_guarda_token(ml_pede("/oauth/token", {"grant_type": "authorization_code", "client_id": c["app_id"], "client_secret": c["secret"],
+                                                 "code": cod, "redirect_uri": c["url_retorno"]}))
+
+
+def ml_token():
+    """O acesso válido, renovado pelo refresh_token quando vence (o Mercado Livre troca o refresh_token a cada uso)."""
+    with _ml_trava:
+        c = ml_conf()
+        if c.get("access_token") and float(c.get("expira") or 0) > time.time():
+            return c["access_token"]
+        if not (c.get("refresh_token") and c.get("app_id") and c.get("secret")):
+            return None
+        try:
+            d = ml_pede("/oauth/token", {"grant_type": "refresh_token", "client_id": c["app_id"], "client_secret": c["secret"],
+                                        "refresh_token": c["refresh_token"]})
+        except ErroBusca as e:
+            if "autorização" in str(e) or "recusou" in str(e):  # sem volta: precisa autorizar de novo
+                seg = segredos()
+                x = dict(seg.get("ml") or {})
+                for k in ("access_token", "refresh_token", "expira"):
+                    x.pop(k, None)
+                seg["ml"] = x
+                grava_segredos(seg)
+            raise
+        ml_guarda_token(d)
+        return d["access_token"]
+
+
+def cache_ml():
+    if _ml["cache"] is None:
+        d = ler_json(CATEGORIAS_ML, {}) or {}
+        _ml["cache"] = d if isinstance(d, dict) else {}
+    return _ml["cache"]
+
+
+def grava_ml():
+    with _ml_trava:
+        if _ml["mudou"] and _ml["cache"] is not None:
+            c = _ml["cache"]
+            if len(c) > 8000:  # ficam os mais recentes
+                for k in sorted(c, key=lambda k: c[k].get("em", ""))[:len(c) - 8000]:
+                    c.pop(k, None)
+            gravar_json(CATEGORIAS_ML, c)
+            _ml["mudou"] = False
+
+
+def ml_prever(titulo):
+    """[{"d": domínio, "c": categoria, "n": nome da categoria}] para o nome, do mais provável para o menos;
+    [] se o Mercado Livre não soube; None se não deu para perguntar agora (sem conexão, limite da hora)."""
+    k = norm(titulo)[:120]
+    if not k:
+        return []
+    cache = cache_ml()
+    noventa = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat(timespec="seconds")
+    if k in cache and cache[k].get("em", "") >= noventa:
+        return cache[k].get("p") or []
+    agora_s = time.time()
+    _ml["horas"] = [t for t in _ml["horas"] if t > agora_s - 3600]
+    if agora_s < _ml["pausa"] or len(_ml["horas"]) >= ML_POR_HORA:
+        return None
+    tok = ml_token()
+    if not tok:
+        return None
+    _ml["horas"].append(agora_s)
+    d = ml_pede("/sites/MLB/domain_discovery/search?" + urllib.parse.urlencode({"limit": 3, "q": str(titulo)[:150]}), token=tok)
+    p = [{"d": str(x.get("domain_id") or ""), "c": str(x.get("category_id") or ""), "n": texto(x.get("category_name"), 60) or ""}
+         for x in (d if isinstance(d, list) else []) if isinstance(x, dict) and (x.get("domain_id") or x.get("category_id"))]
+    with _ml_trava:
+        cache[k] = {"p": p, "em": agora()}
+        _ml["mudou"] = True
+    return p
+
+
+def confere_ml(item, nomes):
+    """Para cada nome de produto: True se o Mercado Livre põe o produto numa das categorias do item, False se põe em
+    outra (hambúrguer para "carne moída"), None se não dá para saber (sem conexão, sem resposta)."""
+    if not nomes or not ml_ligado():
+        return [None] * len(nomes)
+    try:
+        alvo = set()
+        for a in alternativas(item):
+            for x in ml_prever(a) or []:
+                alvo |= {x["d"], x["c"]} - {""}
+        if not alvo:
+            return [None] * len(nomes)
+        out = []
+        for n in nomes:
+            p = ml_prever(n)
+            out.append(None if not p else bool({p[0]["d"], p[0]["c"]} & alvo))
+        _ml["erro"] = None
+        return out
+    except ErroBusca as e:
+        _ml["erro"] = str(e)
+        log(f"Mercado Livre (categorias): {e}")
+    except Exception as e:  # noqa: BLE001
+        log(f"Mercado Livre (categorias): {e}")
+    return [None] * len(nomes)
+
+
+def filtra_ml(item, cands):
+    """Tira os produtos que o Mercado Livre põe em outra categoria, mas só quando ele confirma pelo menos um produto
+    na categoria do item: se não confirma nenhum, quem pode estar errado é o palpite para o item, e nada sai.
+    O produto achado antes pelo código de barras (o mesmo produto) nunca sai."""
+    if not cands or not ml_ligado():
+        return cands
+    ok = confere_ml(item, [c.get("nome") or "" for c in cands])
+    if True not in ok:
+        return cands
+    eans = set((casados().get(norm(item)) or {}).get("eans") or [])
+    fica = [c for c, o in zip(cands, ok) if o is not False or (c.get("ean") and c.get("ean") in eans)]
+    if len(fica) < len(cands):
+        log(f"Mercado Livre (categorias): {len(cands) - len(fica)} produto(s) de outra categoria fora de '{item}' "
+            f"({'; '.join(c.get('nome', '')[:40] for c in cands if c not in fica)[:200]})")
+    return fica
+
+
+def testar_ml():
+    c = ml_conf()
+    if not (c.get("app_id") and c.get("secret")):
+        return {"ok": False, "msg": "Falta o App ID ou a chave secreta."}
+    if not c.get("refresh_token"):
+        return {"ok": False, "msg": "Falta autorizar: toque em Autorizar no Mercado Livre e cole aqui o endereço que abrir."}
+    try:
+        _ml["pausa"] = 0.0
+        a = ml_pede("/sites/MLB/domain_discovery/search?" + urllib.parse.urlencode({"limit": 1, "q": "Carne moída bovina de primeira 500 g"}), token=ml_token())
+        b = ml_pede("/sites/MLB/domain_discovery/search?" + urllib.parse.urlencode({"limit": 1, "q": "Hambúrguer bovino congelado 672 g"}), token=ml_token())
+    except ErroBusca as e:
+        return {"ok": False, "msg": str(e)}
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "msg": f"Não consegui testar ({e})."}
+    na = (a[0].get("category_name") if isinstance(a, list) and a else None) or "?"
+    nb = (b[0].get("category_name") if isinstance(b, list) and b else None) or "?"
+    return {"ok": True, "msg": f"Conectado. Teste: carne moída → {na}; hambúrguer → {nb}."}
 
 
 # ---------- Shopee Afiliados: a Open API devolve produto, preço e link, sem IA ----------
@@ -3332,8 +3699,8 @@ def texto_url(u):
 
 def procura_catalogo(urls, nome, n=PAGINAS_ITEM):
     """As páginas de produto cujo endereço tem as palavras do item, das mais justas para as mais longas."""
-    cab = (palavras_busca(nome) or [""])[0]
-    tipo = [(u, t) for u in urls for t in [texto_url(u)] if cab and cab[:4] in norm(t)]  # só os do mesmo tipo passam pelo casamento
+    cabs = [p[0] for p in (palavras_busca(a) for a in alternativas(nome)) if p]
+    tipo = [(u, t) for u in urls for t in [texto_url(u)] if any(c[:4] in norm(t) for c in cabs)]  # só os do mesmo tipo passam pelo casamento
     achadas = [(len(t), u) for (u, t), ok in zip(tipo, casa_lista(nome, [t for _, t in tipo])) if ok]
     return [u for _, u in sorted(achadas)[:n]]
 
@@ -3739,13 +4106,13 @@ def busca_sites(cfg, itens=None, cats=None):
         lista_bruta = []
         for nome in nomes:
             try:
-                ofs = busca_do_site(origem, m, nome)
+                ofs = [dict(o, _q=a) for a in alternativas(nome) for o in busca_do_site(origem, m, a)]  # "asa ou sobrecoxa": cada lado
             except Exception as e:  # noqa: BLE001
                 log(f"busca do site de {m['nome']}: {e}")
                 break
             time.sleep(0.4)  # devagar, para não pesar no site da loja
             cands = [{"nome": o["produto"], "preco": o["preco"], "de": o.get("preco_normal"), "tam": tamanho_nome(o["produto"]),
-                      "link": origem + m["busca"].replace("{}", urllib.parse.quote(nome))} for o in ofs[:8]]
+                      "link": origem + (m.get("busca") or "").replace("{}", urllib.parse.quote(o["_q"]))} for o in ofs[:8]]
             if cands:
                 ent, _ = montar_item(nome, {m["nome"]: cands}, frete="carrinho" if cat_id == "online" else None)
                 lista_bruta.append(ent)
@@ -5105,7 +5472,8 @@ def mesclar_resultado(resultado, cfg, extra=None, mapa=None, completa=False, nov
         for i in anterior.get("lista") or []:
             if isinstance(i, dict) and i.get("produto"):
                 base[i["produto"]] = {"precos": dict(i.get("precos") or {}), "base": i.get("base"), "vistos": dict(i.get("vistos") or {}),
-                                      "tamanhos": list(i.get("tamanhos") or []), "links": dict(i.get("links") or {})}
+                                      "tamanhos": list(i.get("tamanhos") or []), "links": dict(i.get("links") or {}),
+                                      "similares": list(i.get("similares") or [])}
         # a loja que acabou de ser consultada pelo site manda: o preço antigo dela para o item sai (mesmo se agora não achou nada).
         # Assim um produto casado errado numa busca antiga ("Limpador … e Álcool" no álcool perfumado) não fica para sempre.
         for cat, _ in resultado:
@@ -5122,6 +5490,7 @@ def mesclar_resultado(resultado, cfg, extra=None, mapa=None, completa=False, nov
                     ent["links"].pop(rid, None)
                     ent["vistos"].pop(rid, None)
                 ent["tamanhos"] = [t for t in ent["tamanhos"] if not (isinstance(t, dict) and t.get("rede") in redes_b)]
+                ent["similares"] = [x for x in ent.get("similares") or [] if not (isinstance(x, dict) and x.get("rede") in redes_b)]
         parciais = [base]
         juntar_focada(novas, parciais, resultado)
         if completa:  # busca feita: nenhuma loja está mais "esperando a próxima busca"
@@ -5529,7 +5898,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.17.9"
+    server_version = "EconomIA/0.18.0"
 
     def log_message(self, fmt, *args):
         pass
@@ -5612,8 +5981,11 @@ class Painel(BaseHTTPRequestHandler):
         elif rota == "/api/integracoes":
             ch = segredos().get("shopee") or {}
             ig = segredos().get("instagram") or {}
+            ml = ml_conf()
             self._json(200, {"shopee": {"app_id": str(ch.get("app_id") or ""), "tem_senha": bool(ch.get("secret"))}, "google": {"tem_chave": bool(google_chave())},
-                             "instagram": {"tem_chave": bool(ig.get("token")), "usuario": ig.get("usuario")}, "brave": {"tem_chave": bool(brave_chave())}})
+                             "instagram": {"tem_chave": bool(ig.get("token")), "usuario": ig.get("usuario")}, "brave": {"tem_chave": bool(brave_chave())},
+                             "ml": {"app_id": str(ml.get("app_id") or ""), "tem_senha": bool(ml.get("secret")), "url_retorno": str(ml.get("url_retorno") or ""),
+                                    "conectado": ml_ligado(), "autorizar": ml_autorizar_url(ml), "erro": _ml["erro"]}})
         elif rota == "/api/lojas-mapa/teste":
             self._json(200, SONDA)
         elif rota == "/api/lojas-mapa":
@@ -5720,6 +6092,29 @@ class Painel(BaseHTTPRequestHandler):
                     seg["brave"] = {"key": chave}
                 elif not novo:
                     seg.pop("brave", None)
+            if "ml" in dado:
+                novo = dado.get("ml")
+                if not novo:
+                    seg.pop("ml", None)
+                else:
+                    atual = seg.get("ml") or {}
+                    app = re.sub(r"\D", "", str(novo.get("app_id") or ""))[:30]
+                    senha = re.sub(r"\s", "", str(novo.get("secret") or ""))[:200]
+                    volta = str(novo.get("url_retorno") or "").strip()[:300]
+                    if not app:
+                        return self._json(400, {"erro": "Falta o App ID do Mercado Livre."})
+                    if not re.match(r"https://[^\s/]+\.[^\s]+", volta):
+                        return self._json(400, {"erro": "A URL de retorno precisa ser a mesma do app no Mercado Livre e começar com https://."})
+                    mesmo = atual.get("app_id") == app
+                    x = {"app_id": app, "secret": senha or (atual.get("secret") if mesmo else ""), "url_retorno": volta}
+                    if mesmo and atual.get("url_retorno") == volta and not senha:  # a autorização continua valendo
+                        x.update({k: atual[k] for k in ("access_token", "refresh_token", "expira") if k in atual})
+                    seg["ml"] = x
+                grava_segredos(seg)
+                ml = seg.get("ml") or {}
+                return self._json(200, {"ok": True, "ml": {"app_id": str(ml.get("app_id") or ""), "tem_senha": bool(ml.get("secret")),
+                                                           "url_retorno": str(ml.get("url_retorno") or ""), "conectado": ml_ligado(),
+                                                           "autorizar": ml_autorizar_url(ml)}})
             if "instagram" in dado:
                 novo = dado.get("instagram")
                 chave = re.sub(r"\s", "", str((novo or {}).get("token") or ""))[:600]
@@ -5790,7 +6185,18 @@ class Painel(BaseHTTPRequestHandler):
                 dado = {}
             serv = dado.get("servico") if isinstance(dado, dict) else None
             return self._json(200, testar_google() if serv == "google" else testar_instagram() if serv == "instagram"
-                              else testar_brave() if serv == "brave" else testar_shopee())
+                              else testar_brave() if serv == "brave" else testar_ml() if serv == "ml" else testar_shopee())
+        if urllib.parse.urlsplit(self.path).path == "/api/integracoes/ml/conectar":
+            dado = self._corpo()
+            if dado is None:
+                return
+            try:
+                ml_conectar((dado or {}).get("codigo"))
+            except ErroBusca as e:
+                return self._json(400, {"ok": False, "msg": str(e)})
+            except Exception as e:  # noqa: BLE001
+                return self._json(400, {"ok": False, "msg": f"Não consegui conectar ({e})."})
+            return self._json(200, testar_ml())
         if urllib.parse.urlsplit(self.path).path == "/api/ler-encarte":
             dado = self._corpo(MAX_FOTOS_BODY)
             if dado is None:
