@@ -1,5 +1,10 @@
 # Mudanças
 
+## 0.17.7
+
+- **Sem localização = online.** Loja sem endereço no mapa, cadastrada à mão ou que veio só de um site (como a Cobasi), sai da aba dela em Mais › Lojas. Ela aparece em Online, no grupo "Pet shops sem localização" (ou farmácias, mercados). Os preços dela também contam como online, que entrega.
+- **Encontrar lojas procura onde fica a loja sem localização:** com a chave do Google, pelo nome e pela cidade, a filial mais perto até 20 km. Achada, ganha endereço, distância e o botão Mapa, e volta para a aba dela; se ficar mais longe que o seu raio, vai para as Inativas. A resposta fica guardada por 30 dias (`locais.json`), também o "não achei".
+
 ## 0.17.6
 
 - **Item com uma palavra que a loja não usa, como "Álcool perfumado de cozinha":** nenhum álcool tem "cozinha" no nome, e item de até 3 palavras precisava de todas. Agora, quando nenhum produto casa inteiro, vale o **parecido**: só falta uma palavra, e nenhum produto daquele tipo na loja a usa. Assim o "Álcool Araras Bactericida Eucalipto" entra para o álcool perfumado de cozinha, e o nome do produto aparece no item para você conferir.

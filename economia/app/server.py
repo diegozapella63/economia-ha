@@ -918,8 +918,7 @@ def lojas_perto(cfg):
 
 
 def lojas_perto_cat(cfg):
-    """{nome normalizado: categoria} de todas as lojas físicas do raio (sem o limite de 20 do texto para a IA) e das
-    que o morador cadastrou."""
+    """{nome normalizado: categoria} de todas as lojas físicas do raio, com distância (sem o limite de 20 do texto para a IA)."""
     of = ler_json(OFERTAS, {}) or {}
     try:
         raio = float(cfg.get("raio_km") or 2)
@@ -934,10 +933,7 @@ def lojas_perto_cat(cfg):
             d = l.get("distancia_km") if isinstance(l, dict) else None
             if isinstance(d, (int, float)) and d <= raio and nomes.get(l.get("rede")):
                 out.setdefault(norm(nomes[l["rede"]]), c["id"])
-    for a in ((cfg.get("lojas") or {}).get("adicionar") or []):
-        if isinstance(a, dict) and texto(a.get("nome"), 60) and a.get("categoria") in ("mercados", "farmacias", "petshops"):
-            out.setdefault(norm(texto(a["nome"], 60).split(",")[0]), a["categoria"])
-    return out
+    return out  # loja sem localização (cadastrada à mão e não achada no mapa) conta como online
 
 
 def categoria_da_loja(nome, perto):
@@ -4204,6 +4200,10 @@ def atualizar_lojas_mapa(dado):
     if not any(mapa.values()):
         return {"ok": False, "msg": "O mapa não respondeu agora ou não achou lojas nessa distância. Tente de novo em alguns minutos ou aumente a distância."}
     mesclar_resultado([], cfg, mapa=mapa, novas_lojas=True)
+    try:
+        localiza_sem_local(cfg)
+    except Exception as e:  # noqa: BLE001
+        log(f"lojas sem localização: {e}")
     if not SONDA["rodando"]:
         threading.Thread(target=sonda_lojas, args=(cfg,), daemon=True).start()
     partes = [f"{len(v)} {CATEGORIAS[c]['nome'].lower()}" for c, v in mapa.items() if v]
@@ -4212,6 +4212,72 @@ def atualizar_lojas_mapa(dado):
     raio = str(cfg.get("raio_km") or 2).replace(".0", "")
     return {"ok": True, "msg": f"Achei {txt} até {raio} km ({' e '.join(fontes)}).",
             "lojas": {c: len(v) for c, v in mapa.items()}, "teste": True}
+
+
+LOCAIS = os.path.join(DATA, "locais.json")
+
+
+def localiza_sem_local(cfg, maximo=10):
+    """Loja física sem localização (cadastrada à mão, ou que veio de um site): o Google diz onde fica a filial mais perto
+    (nome parecido, até 20 km). Achada, ganha endereço e distância; senão continua sem localização, e conta como online.
+    A resposta fica guardada por 30 dias, também o "não achei"."""
+    chave = google_chave()
+    if not chave:
+        return 0
+    try:
+        lat, lon = casa(cfg)
+    except Exception:  # noqa: BLE001
+        return 0
+    cache = ler_json(LOCAIS, {}) or {}
+    mes = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat(timespec="seconds")
+    cidade = ((ler_json(FOLHETOS, {}) or {}).get("_cep") or {}).get("cidade") or ""
+    achadas, consultas = 0, 0
+    with _mescla_trava:
+        of = ler_json(OFERTAS, {}) or {}
+        for c in of.get("categorias") or []:
+            if not isinstance(c, dict) or c.get("id") not in ("mercados", "farmacias", "petshops"):
+                continue
+            nomes = {r.get("id"): r.get("nome") for r in c.get("redes") or [] if isinstance(r, dict)}
+            for l in c.get("lojas") or []:
+                if not isinstance(l, dict) or l.get("distancia_km") is not None or l.get("lat") is not None or l.get("place_id") or not nomes.get(l.get("rede")):
+                    continue
+                nome = nomes[l["rede"]]
+                g = cache.get(norm(nome))
+                if not g or g.get("em", "") < mes:
+                    if consultas >= maximo:
+                        continue
+                    consultas += 1
+                    g = {"em": agora()}
+                    try:
+                        corpo = {"textQuery": f"{nome} {cidade}".strip(), "maxResultCount": 5, "languageCode": "pt-BR", "regionCode": "BR",
+                                 "locationBias": {"circle": {"center": {"latitude": lat, "longitude": lon}, "radius": 20000.0}}}
+                        d = google_post(GOOGLE_TEXTO, corpo, chave, "places.id,places.displayName,places.shortFormattedAddress,places.location,places.businessStatus")
+                    except Exception as e:  # noqa: BLE001
+                        log(f"onde fica {nome}: {e}")
+                        continue
+                    melhor = None
+                    for pl in d.get("places") or []:
+                        loc = pl.get("location") or {}
+                        if loc.get("latitude") is None or pl.get("businessStatus") == "CLOSED_PERMANENTLY" \
+                                or not mesma_loja(nome, (pl.get("displayName") or {}).get("text") or ""):
+                            continue
+                        km = km_entre(lat, lon, loc["latitude"], loc["longitude"])
+                        if km <= 20 and (not melhor or km < melhor["distancia_km"]):
+                            melhor = {"distancia_km": km, "lat": round(float(loc["latitude"]), 6), "lon": round(float(loc["longitude"]), 6),
+                                      "endereco": texto(pl.get("shortFormattedAddress"), 90), "place_id": texto(pl.get("id"), 200)}
+                    g.update(melhor or {"nada": True})
+                    cache[norm(nome)] = g
+                if g.get("nada") or g.get("lat") is None:
+                    continue
+                l.update({k: g[k] for k in ("distancia_km", "lat", "lon", "endereco", "place_id") if g.get(k) is not None})
+                l["fontes"] = sorted(set(l.get("fontes") or []) | {"Mapa"})
+                achadas += 1
+        if achadas:
+            gravar_json(OFERTAS, of)
+    gravar_json(LOCAIS, cache)
+    if consultas or achadas:
+        log(f"lojas sem localização: {achadas} achada(s) no Google, {consultas} consulta(s)")
+    return achadas
 
 
 # ---------- teste de preço de cada loja (no Encontrar lojas): o que funciona sem IA e o que não ----------
@@ -5453,7 +5519,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.17.6"
+    server_version = "EconomIA/0.17.7"
 
     def log_message(self, fmt, *args):
         pass

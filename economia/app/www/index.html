@@ -1373,7 +1373,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.17.6</span></p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.17.7</span></p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -2947,9 +2947,13 @@ html:not(.sem-ia) .so-semia{display:none!important}
     var todasAtivas = ativas;
     if (!TERMO_LOJA) ativas = ativas.filter(function(c){ return c.id === aba; });
     $('lojasCats').classList.toggle('com-abas', !TERMO_LOJA && todasAtivas.length > 1);  // a aba já diz o tipo
-    $('lojasCats').innerHTML = ativas.map(function(c){
+    // loja sem localização conta como online: sai da aba dela e aparece em Online
+    var semLocal = function(l){ return l.distancia_km == null && !mapaUrl(l, G[l.rede] ? G[l.rede].nome : ''); };
+    var grupo = function(c, modo){
+      var fis = c.id !== 'online';
       var dist = function(l){ return l.distancia_km == null ? 99 : l.distancia_km; };
       var ord = arr(c.lojas).slice().sort(function(a, b){ return dist(a) - dist(b); });
+      if (fis) ord = ord.filter(function(l){ return modo === 'semLocal' ? semLocal(l) : !semLocal(l); });
       if (c.id === 'online'){
         var fisicas = {};
         D.categorias.forEach(function(k){ if (k.id !== 'online') arr(k.lojas).forEach(function(l){ if (G[l.rede]) fisicas[chaveLoja(G[l.rede].nome)] = 1; }); });
@@ -2980,12 +2984,13 @@ html:not(.sem-ia) .so-semia{display:none!important}
           + '</li>';
       });
       var manuais = [];
-      estado.lojas.adicionar.forEach(function(a, i){
-        if (a.categoria !== c.id || usadas[i] || (TERMO_LOJA && norm(a.nome).indexOf(TERMO_LOJA) < 0)) return;
+      arr(c.lojas).forEach(function(l){ if (G[l.rede]){ var m2 = manualDe(G[l.rede].nome); if (m2 >= 0) usadas[m2] = true; } });  // já aparece como loja
+      estado.lojas.adicionar.forEach(function(a, i){  // cadastrada e ainda sem dados: também sem localização
+        if (a.categoria !== c.id || usadas[i] || modo !== 'semLocal' && fis || (TERMO_LOJA && norm(a.nome).indexOf(TERMO_LOJA) < 0)) return;
         manuais.push('<li class="row"><span class="r-name">' + esc(a.nome) + '</span><button type="button" class="rm" data-loja="' + i + '">remover</button><span class="r-sub"><span>Adicionada por você · ' + (a.site ? 'o encarte de ' + esc(host(a.site)) + ' é lido a cada busca' : 'entra na próxima busca') + '</span></span></li>');
       });
       var mktOn = [], mktOff = [];
-      if (c.id === 'online'){
+      if (c.id === 'online' && modo !== 'semLocal'){
         // marketplaces escolhidos que a última busca ainda não trouxe: mesma linha do Mercado Livre (Site, App, Testar agora)
         var tem = ord.map(function(l){ return norm(G[l.rede].nome); });
         MKT.forEach(function(m){
@@ -3004,13 +3009,18 @@ html:not(.sem-ia) .so-semia{display:none!important}
         ord = ord.filter(function(_, i){ return fica[i]; }); if (SO_SEM_FONTE) manuais = [];
       }
       var inat = rows.filter(function(_, i){ return !ativa[i]; }).concat(mktOff);
-      var inativas = inat.length ? '<details class="inativas" data-inat="' + c.id + '"' + (INAT_ABERTO[c.id] || TERMO_LOJA ? ' open' : '') + '><summary>Inativas (' + inat.length + ')</summary><ul class="rows">' + inat.join('') + '</ul></details>' : '';
+      var kInat = c.id + (modo === 'semLocal' ? '-sl' : '');
+      var inativas = inat.length ? '<details class="inativas" data-inat="' + kInat + '"' + (INAT_ABERTO[kInat] || TERMO_LOJA ? ' open' : '') + '><summary>Inativas (' + inat.length + ')</summary><ul class="rows">' + inat.join('') + '</ul></details>' : '';
       var reg = ord.map(function(l){ return c.id === 'online' && regional(l.rede); });
       var mk = rows.filter(function(_, i){ return ativa[i] && !reg[i]; }), rg = rows.filter(function(_, i){ return ativa[i] && reg[i]; });
-      if ((SO_SEM_FONTE || TERMO_LOJA) && !mk.length && !mktOn.length && !manuais.length && !rg.length && !inat.length) return '';
-      return '<div class="group"><h3>' + esc(c.nome) + '</h3><ul class="rows">' + mk.concat(mktOn, manuais).join('') + '</ul>' + (rg.length ? '' : inativas) + '</div>'
+      if ((SO_SEM_FONTE || TERMO_LOJA || modo === 'semLocal') && !mk.length && !mktOn.length && !manuais.length && !rg.length && !inat.length) return '';
+      return '<div class="group"><h3>' + esc(modo === 'semLocal' ? c.nome + ' sem localização' : c.nome) + '</h3>' + (modo === 'semLocal' ? '<p class="hint">Sem endereço no mapa: contam como online, que entregam.</p>' : '')
+        + '<ul class="rows">' + mk.concat(mktOn, manuais).join('') + '</ul>' + (rg.length ? '' : inativas) + '</div>'
         + (rg.length ? '<div class="group"><h3>Mercados da região que entregam</h3><ul class="rows">' + rg.join('') + '</ul>' + inativas + '</div>' : '');
-    }).join('') || (TERMO_LOJA ? '<p class="hint">Nenhuma loja com esse nome.</p>' : SO_SEM_FONTE ? '<p class="hint">Todas as lojas têm fonte de preço.</p>' : '');
+    };
+    var html = ativas.map(function(c){ return grupo(c, 'local'); }).join('');
+    if (TERMO_LOJA || aba === 'online') html += todasAtivas.filter(function(c){ return c.id !== 'online'; }).map(function(c){ return grupo(c, 'semLocal'); }).join('');
+    $('lojasCats').innerHTML = html || (TERMO_LOJA ? '<p class="hint">Nenhuma loja com esse nome.</p>' : SO_SEM_FONTE ? '<p class="hint">Todas as lojas têm fonte de preço.</p>' : '');
     $('clubeSemIA').hidden = iaOn() || !estado.clubes.length;
     var nSem = contaSemFonte(todasAtivas);
     $('nSemFonte').textContent = nSem ? '(' + nSem + ')' : '';
@@ -3843,7 +3853,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.17.6' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.17.7' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

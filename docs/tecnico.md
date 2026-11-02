@@ -199,6 +199,10 @@ Para lojas sem busca direta e sem sitemap, `testa_preco_loja` lê a página do s
 
 `lojas_perto_cat(cfg)` dá `{nome normalizado: categoria}` de todas as lojas físicas do raio (sem o limite de 20 de `lojas_perto`, que é só para o texto da IA) e das cadastradas pelo morador. `categoria_da_loja(nome, perto)` usa esse mapa (também por `mesma_loja`) e devolve "online" para quem não está nele. `busca_catalogos`, `busca_sites` (marketplace é sempre online) e `busca_direta` (só as VTEX achadas; Giassi e Angeloni continuam fixos) usam isso no lugar da categoria guardada em `lojas_site.json`. Na troca do preço antigo, `mesclar_resultado` também tira o id da mesma loja nas outras categorias (`merc-`, `farm-`, `pets-`, `onli-` + o mesmo slug).
 
+## Loja sem localização
+
+Na página, `semLocal(l)` (sem `distancia_km` e sem `mapaUrl`) tira a loja da aba física em `pintaLojas` (`grupo(c, 'local')`). Na aba Online (e na procura pelo nome), as lojas físicas sem localização aparecem em `grupo(c, 'semLocal')`, "<Categoria> sem localização", junto com as cadastradas que ainda não têm dados. No servidor, `lojas_perto_cat` só conta loja com distância dentro do raio (a cadastrada sem localização não entra), então `categoria_da_loja` a manda para online. `localiza_sem_local(cfg)`, chamado no Encontrar lojas, pergunta ao Google Text Search por "nome cidade" (viés de 20 km na Casa, até 10 consultas), fica com a mais perto de nome parecido (`mesma_loja`) e grava `distancia_km`, `lat`, `lon`, `endereco` e `place_id` na loja; o resultado fica em `locais.json` por 30 dias.
+
 ## Atacarejos no mapa
 
 `GOOGLE_BUSCA["mercados"]` inclui "atacadista". Em `google_varredura`, lugar sem tipo de mercado (`GOOGLE_TIPOS`) ainda entra se o nome bater com `ATACAREJO` (atacad…, atacarejo, Assaí, Makro, Komprão), não bater com `ATACADO_FORA` (pisos, embalagens, construção, roupas, bebidas…) e tiver um tipo de `TIPOS_ATACADO` (wholesaler, warehouse_store, food_store, discount_store). Loja de site com preço que não está entre as lojas perto (`lojas_perto`) continua indo para Online como mercado que entrega.
