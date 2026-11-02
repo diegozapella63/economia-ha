@@ -62,9 +62,13 @@ Na aba **Roteiro**, ao lado da Minha lista, diga em até quantas lojas você top
 - o que compensa pedir online (pode desligar);
 - quanto uma parada a mais economizaria. Se for pouco, ele recomenda menos paradas, e dá para comparar as opções com um toque.
 
-## Clubes e cupons do app
+## Como o item da lista acha o produto
 
-Em **Mais › Lojas › Clubes e cupons do app**:
+O EconomIA lê o nome dos produtos como o varejo escreve: tipo, marca, variante e tamanho ("Álcool Araras Bactericida Eucalipto 1L"). O tipo (a primeira palavra do item, como "álcool" ou "leite") e a marca precisam estar no nome. Uma palavra que a loja não usa em nenhum produto daquele tipo, como "perfumado" entre os álcoois, vale pelas palavras que andam junto dela nos produtos que as lojas já mostraram (lavanda, eucalipto…); o app aprende isso sozinho, dos catálogos e das buscas. Uma palavra que a loja usa, como "integral" entre os leites, tem de estar no nome. Quando acha o produto com certeza, o app guarda o código de barras e reconhece o mesmo produto em outra loja, mesmo com outro nome. Se um item continuar sem preço, escreva como na embalagem: tipo, marca e tamanho.
+
+## Clubes e cupons
+
+Em **Mais › Lojas**:
 
 - Em Mais › Lojas, cada loja tem o botão do clube: o nome do clube quando o EconomIA conhece (como Amigo Giassi), **Tem clube** quando a busca achou um, ou **Adicionar clube**. Toque nele nas lojas em que você é cadastrado (quase sempre é só o CPF no caixa) e ele vira **Sou do clube**. O preço de clube dessas lojas passa a valer na lista, no roteiro e nas ofertas, e a busca com IA procura o preço de membro delas. Nas outras, o preço de clube aparece marcado e o EconomIA avisa quando valeria a pena entrar no clube. Clube só de pontos ou cartão (como o Clube Angeloni) não muda o preço da prateleira e não aparece. O preço de clube chega pela IA (busca, encarte ou print dos cupons): com a IA desligada, a tela avisa.
 - Em **Cupons do app**, escolha prints da carteira de cupons do app da loja (Bem Panvel, Raia, Meu Atacadão...) e toque em **Digitalizar com IA**. Confira a loja de cada cupom e guarde: eles aparecem em Ofertas como **Seu cupom** e na abertura quando estiverem perto de vencer.

@@ -1733,7 +1733,94 @@ def palavras_busca(t):
     return [w for w in norm(re.sub(UNIDADE_NOME, " ", str(t))).split() if w not in VAZIAS_BUSCA and not w.isdigit()]
 
 
-# palavra da lista que o nome do produto no site troca por outra: "álcool perfumado" é o "Álcool Bactericida Eucalipto"
+# ---------- casamento do item com o produto, pelo padrão de nome do varejo ----------
+# Nome de produto no varejo: tipo + marca + variante + tamanho ("Álcool Araras Bactericida Eucalipto 1L"). O item da lista
+# segue o mesmo padrão ("álcool perfumado"): o tipo (a primeira palavra) e a marca precisam estar no nome; cada outra
+# palavra vale se estiver no nome ou nas categorias, ou se o nome tiver uma palavra que, nos produtos que as lojas já
+# mostraram (catálogos, buscas), anda junto com ela ("perfumado" anda com "lavanda", "eucalipto"…). O vocabulário é
+# aprendido sozinho e fica em vocabulario.json; o produto achado com certeza guarda o EAN (código de barras), que acha o
+# mesmo produto em outra loja mesmo com outro nome.
+VOCAB = os.path.join(DATA, "vocabulario.json")
+CASADOS = os.path.join(DATA, "casados.json")
+MAX_NOMES_VOCAB = 80000
+_vocab = {"nomes": None}
+_vocab_trava = threading.Lock()
+
+
+def vocab():
+    if _vocab["nomes"] is None:
+        d = ler_json(VOCAB, {}) or {}
+        _vocab.update(nomes=list(dict.fromkeys(d.get("nomes") or [])), marcas=set(d.get("marcas") or []), mudou=False, assoc={}, stats=None)
+        _vocab["set"] = set(_vocab["nomes"])
+    return _vocab
+
+
+def aprende_nomes(nomes, marcas=()):
+    """Guarda nomes de produto que as lojas mostraram (sem o tamanho) e as marcas."""
+    v = vocab()
+    with _vocab_trava:
+        for n in nomes:
+            t = " ".join(w for w in norm(re.sub(UNIDADE_NOME, " ", str(n or ""))).split() if not w.isdigit())
+            if len(t.split()) >= 2 and t not in v["set"]:
+                v["set"].add(t)
+                v["nomes"].append(t)
+                v["mudou"] = True
+        for m in marcas:
+            m = norm(m)
+            if len(m) >= 2 and len(m.split()) == 1 and m not in v["marcas"]:
+                v["marcas"].add(m)
+                v["mudou"] = True
+        if len(v["nomes"]) > MAX_NOMES_VOCAB:
+            corte = len(v["nomes"]) - MAX_NOMES_VOCAB
+            for x in v["nomes"][:corte]:
+                v["set"].discard(x)
+            v["nomes"] = v["nomes"][corte:]
+
+
+def grava_vocab():
+    v = vocab()
+    with _vocab_trava:
+        if v["mudou"]:
+            gravar_json(VOCAB, {"nomes": v["nomes"], "marcas": sorted(v["marcas"]), "em": agora()})
+            v.update(mudou=False, assoc={}, stats=None)  # as associações são refeitas com o vocabulário novo
+
+
+def associadas(w):
+    """Palavras que, nos nomes de produto vistos, aparecem bem mais junto de w do que no resto (variantes, não tipos nem marcas)."""
+    v = vocab()
+    if w in v["assoc"]:
+        return v["assoc"][w]
+    nomes, out = v["nomes"], set()
+    if len(nomes) >= 200:
+        if v["stats"] is None:
+            df, primeira = {}, {}
+            for n in nomes:
+                ws = n.split()
+                primeira[ws[0]] = primeira.get(ws[0], 0) + 1
+                for t in set(ws):
+                    df[t] = df.get(t, 0) + 1
+            v["stats"] = (df, primeira)
+        df, primeira = v["stats"]
+        raiz, k, com = (w[:-1] if len(w) >= 5 else w), 0, {}
+        for n in nomes:
+            u = set(n.split())
+            if w in u or (len(w) >= 5 and any(x.startswith(raiz) and len(x) <= len(w) + 1 for x in u)):
+                k += 1
+                for t in u:
+                    com[t] = com.get(t, 0) + 1
+        total = len(nomes)
+        if k >= 3:
+            for t, c in com.items():
+                if (c < 3 or t.startswith(raiz) or t in VAZIAS_BUSCA or t in v["marcas"] or len(t) < 4
+                        or primeira.get(t, 0) > 0.3 * df[t] or df[t] > 0.05 * total):
+                    continue  # tipo de produto (limpador, papel), marca ou palavra comum demais
+                if (c / k) / (df[t] / total) >= 4:
+                    out.add(t)
+    v["assoc"][w] = out
+    return out
+
+
+# vocabulário inicial do varejo (o aprendido soma a ele): "perfumado" é o nome da fragrância
 FRAGRANCIAS = {"perfumado", "perfumada", "perfumados", "perfumadas", "aromatizado", "aromatizada", "fragrancia", "lavanda", "eucalipto",
                "eucaliptus", "floral", "flores", "citrus", "citrico", "citrica", "campestre", "talco", "pinho", "laranja", "limao", "alecrim",
                "menta", "hortela", "baunilha", "jasmim", "rosas", "lirio", "violeta", "frutas", "tropical", "coco", "algodao", "brisa",
@@ -1749,21 +1836,64 @@ def palavra_bate(w, pp):
 
 
 def combina(item, produto):
-    """O produto do site é o item da lista? Todas as palavras do item (até 3) ou 3 de cada 4 precisam estar no nome
-    ou nas categorias do produto ("JIMO Secante..." está em Limpeza › Lava-Louças). "Perfumado" vale por qualquer
-    fragrância (lavanda, eucalipto…)."""
-    pi, pp = palavras_busca(item), norm(produto).split()
+    """O produto do site é o item da lista? O tipo (primeira palavra) precisa estar no nome ou nas categorias
+    ("JIMO Secante..." está em Limpeza › Lava-Louças); das outras palavras, todas (até 3) ou 3 de cada 4."""
+    return casa_lista(item, [produto], traduzir=False)[0]
+
+
+def casa_lista(item, textos, traduzir=True):
+    """combina() para os produtos de uma busca de uma vez. Palavra do item que nenhum produto do mesmo tipo usa
+    ("perfumado" entre os "álcool …") é escrita de outro jeito pela loja: vale uma palavra que anda junto com ela nos
+    produtos vistos ("eucalipto", "lavanda"). Palavra que a loja usa ("integral" entre os "leite …") tem de estar no nome."""
+    pi = palavras_busca(item)
     if not pi:
-        return False
-    ok = sum(1 for w in pi if palavra_bate(w, pp))
-    return ok == len(pi) if len(pi) <= 3 else ok >= 0.75 * len(pi)
+        return [False] * len(textos)
+    toks = [norm(t).split() for t in textos]
+    cab = [palavra_bate(pi[0], pp) for pp in toks]
+    marcas = vocab()["marcas"]
+    traduz = {w for w in pi[1:] if w not in marcas and not any(c and palavra_bate(w, pp) for c, pp in zip(cab, toks))} if traduzir else set()
+    out = []
+    for c, pp in zip(cab, toks):
+        if not c:
+            out.append(False)
+            continue
+        u, ok = set(pp), 1
+        for w in pi[1:]:
+            if palavra_bate(w, pp) or (w in traduz and associadas(w) & u):
+                ok += 1
+        out.append(ok == len(pi) if len(pi) <= 3 else ok >= 0.75 * len(pi))
+    return out
 
 
 def termo_nucleo(item):
-    """O item sem as palavras que o site escreve de outro jeito ("álcool perfumado" → "álcool"), ou None se não tiver."""
+    """Tipo + marca do item, para buscar de novo quando o item inteiro não acha nada ("álcool perfumado" → "alcool"),
+    ou None se já for só isso."""
     pi = palavras_busca(item)
-    nucleo = [w for w in pi if w not in EQUIVALENTES]
-    return " ".join(nucleo) if nucleo and len(nucleo) < len(pi) else None
+    if len(pi) < 2:
+        return None
+    marcas = vocab()["marcas"]
+    nucleo = [pi[0]] + [w for w in pi[1:] if w in marcas]
+    if len(nucleo) == len(pi):
+        return None
+    originais = [w for w in re.split(r"[\s,;/]+", str(item)) if w]  # com acento, como a pessoa escreveu ("álcool")
+    return " ".join(next((o for o in originais if norm(o) == w), w) for w in nucleo)
+
+
+def casados():
+    return ler_json(CASADOS, {}) or {}
+
+
+def guarda_casados(item, eans):
+    eans = [e for e in eans if re.fullmatch(r"\d{8,14}", str(e or ""))]
+    if not eans:
+        return
+    c = casados()
+    k = norm(item)
+    atual = (c.get(k) or {}).get("eans") or []
+    novo = list(dict.fromkeys(atual + eans))[-20:]
+    if novo != atual:
+        c[k] = {"eans": novo, "em": agora()}
+        gravar_json(CASADOS, c)
 
 
 PACOTE_NOME = re.compile(r"(?:\bc/\s*|\bcom\s+|\bcx\.?\s*(?:com\s*)?|\bpack\s*|\bx\s*)(\d{1,2})\b(?!\s*(?:ml|l|lt|g|gr|kg|m|un|und|unid|unidades?)\b)", re.I)
@@ -1795,6 +1925,7 @@ def busca_vtex(chave, termo, regiao, count=12):
         if not nome or "+" in nome or norm(nome).startswith("kit "):
             continue
         busca_em = " ".join([nome, str(prod.get("brand") or "")] + [str(c) for c in (prod.get("categories") or [])][:4])
+        aprende_nomes([nome], [prod.get("brand") or ""])
         for it in (prod.get("items") or [])[:1]:
             ofs = [x.get("commertialOffer") or {} for x in it.get("sellers") or []]
             ofs = [o for o in ofs if numero(o.get("Price")) and (o.get("AvailableQuantity") or 0) > 0]
@@ -1808,6 +1939,7 @@ def busca_vtex(chave, termo, regiao, count=12):
             marca = texto(prod.get("brand"), 30) or ""
             curto = (marca + " " + fmt_base({"quantidade": tam[0], "unidade": tam[1]})) if marca and tam else nome[:60]
             out.append({"nome": nome, "curto": curto, "busca_em": busca_em, "preco": preco, "de": de if de and de > preco + 0.004 else None, "tam": tam,
+                        "ean": str(it.get("ean") or ""),
                         "link": str((todas_diretas().get(chave) or {}).get("site") or "") + str(prod.get("link") or "")})
     return out
 
@@ -1846,9 +1978,14 @@ def busca_direta(cfg, itens=None, cats=("mercados",)):
         n = 0
         for nome in nomes:
             try:
-                cand = [c for c in busca_vtex(k, nome, reg) if combina(nome, c["busca_em"])]
-                if not cand and termo_nucleo(nome):  # "álcool perfumado": busca "álcool" e fica com os de fragrância
-                    cand = [c for c in busca_vtex(k, termo_nucleo(nome), reg, 40) if combina(nome, c["busca_em"])]
+                res = busca_vtex(k, nome, reg)
+                cand = [c for c, ok in zip(res, casa_lista(nome, [c["busca_em"] for c in res])) if ok]
+                if not cand and termo_nucleo(nome):  # "álcool perfumado": busca "álcool" e fica com os que combinam
+                    res += busca_vtex(k, termo_nucleo(nome), reg, 40)
+                    cand = [c for c, ok in zip(res, casa_lista(nome, [c["busca_em"] for c in res])) if ok]
+                eans = set((casados().get(norm(nome)) or {}).get("eans") or [])
+                cand += [c for c in res if c.get("ean") in eans and c not in cand]  # o mesmo produto achado antes, por código de barras
+                guarda_casados(nome, [c.get("ean") for c in cand if combina(nome, c["nome"])])  # só o casamento firme (nome ou vocabulário inicial)
             except Exception as e:  # noqa: BLE001
                 log(f"busca direta {loja['nome']} '{nome}': {e}")
                 continue
@@ -3092,6 +3229,7 @@ def baixa_catalogo(origem, info):
             outros = bool(re.search(r"categor|brand|marca|institucional|blog|image|bulario|receita|loja", sm, re.I))
             urls += [u for u in locs if re.search(r"/p/?$", u) or not outros]
     c = {"em": agora(), "urls": list(dict.fromkeys(urls))[:200_000], "precos": c.get("precos") or {}}
+    aprende_nomes(texto_url(u) for u in c["urls"][:40_000])  # os nomes do catálogo ensinam como o varejo chama cada coisa
     os.makedirs(CATALOGOS, exist_ok=True)
     gravar_json(arq, c)
     log(f"lista de produtos de {origem}: {len(c['urls'])} produto(s)")
@@ -3107,11 +3245,9 @@ def texto_url(u):
 
 def procura_catalogo(urls, nome, n=PAGINAS_ITEM):
     """As páginas de produto cujo endereço tem as palavras do item, das mais justas para as mais longas."""
-    achadas = []
-    for u in urls:
-        t = texto_url(u)
-        if combina(nome, t):
-            achadas.append((len(t), u))
+    cab = (palavras_busca(nome) or [""])[0]
+    tipo = [(u, t) for u in urls for t in [texto_url(u)] if cab and cab[:4] in norm(t)]  # só os do mesmo tipo passam pelo casamento
+    achadas = [(len(t), u) for (u, t), ok in zip(tipo, casa_lista(nome, [t for _, t in tipo])) if ok]
     return [u for _, u in sorted(achadas)[:n]]
 
 
@@ -3486,11 +3622,15 @@ def busca_do_site(origem, info, termo, forcar=False):
             html_txt = pagina_txt(origem + caminho)
         except Exception:  # noqa: BLE001
             continue
-        ofs = [o for o in ofertas_da_pagina(html_txt) if combina(termo, o["produto"])]
+        todos = ofertas_da_pagina(html_txt)
+        aprende_nomes([o["produto"] for o in todos])
+        ofs = [o for o, ok in zip(todos, casa_lista(termo, [o["produto"] for o in todos])) if ok]
         if not ofs and q2 and robots_permite(regras, t.replace("{}", urllib.parse.quote(q2))):  # "álcool perfumado" → "álcool"
             try:
                 html2 = pagina_txt(origem + t.replace("{}", urllib.parse.quote(q2)))
-                ofs = [o for o in ofertas_da_pagina(html2) if combina(termo, o["produto"])]
+                todos2 = ofertas_da_pagina(html2)
+                aprende_nomes([o["produto"] for o in todos2])
+                ofs = [o for o, ok in zip(todos2, casa_lista(termo, [o["produto"] for o in todos2])) if ok]
             except Exception:  # noqa: BLE001
                 ofs = []
         if ofs:
@@ -4400,6 +4540,10 @@ def sonda_lojas(cfg):
         log(SONDA["resumo"])
     finally:
         SONDA.update({"rodando": False, "loja": None, "terminou_em": agora()})
+        try:
+            grava_vocab()
+        except OSError:
+            pass
 
 
 TERMO_ONLINE = "café"
@@ -4497,6 +4641,10 @@ def sonda_loja(cfg, cat_id, rid):
         log(SONDA["resumo"])
     finally:
         SONDA.update({"rodando": False, "loja": None, "terminou_em": agora()})
+        try:
+            grava_vocab()
+        except OSError:
+            pass
 
 
 def testar_google():
@@ -4781,6 +4929,10 @@ def buscar():
         log(BUSCA["erro"])
     finally:
         BUSCA.update({"rodando": False, "etapa": None, "terminou_em": agora()})
+        try:
+            grava_vocab()
+        except OSError:
+            pass
 
 
 _mescla_trava = threading.Lock()
@@ -4849,6 +5001,10 @@ def buscar_itens(itens):
         log(BUSCA["erro"])
     finally:
         BUSCA.update({"rodando": False, "etapa": None, "terminou_em": agora()})
+        try:
+            grava_vocab()
+        except OSError:
+            pass
 
 
 # ---------- ler a lista de fotos ou texto ----------
@@ -5199,7 +5355,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.16.12"
+    server_version = "EconomIA/0.17.0"
 
     def log_message(self, fmt, *args):
         pass

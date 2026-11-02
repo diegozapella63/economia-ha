@@ -184,9 +184,16 @@ O servidor só aceita conexões do ingress (`172.30.32.2`). Para testar fora do 
 
 Para lojas sem busca direta e sem sitemap, `testa_preco_loja` lê a página do site (a de `lojas.adicionar` com o mesmo nome vale mais que a do mapa; sem caminho, a inicial) com `ofertas_do_site`: `le_pagina_ofertas` respeita o `robots.txt` (`robots_permite` com o caminho), guarda o resultado em `paginas_ofertas.json` por 12 horas e devolve até 3 links do mesmo site com "oferta" ou "promo" no caminho; o primeiro também é lido se a página trouxe menos de 60 produtos. `ofertas_da_pagina` tenta, nesta ordem: `Product` do schema.org (também dentro de `ItemList`/`@graph`, sem os fora de estoque, via `produto_ld`); dados em `<script>` (`NOME_JSON` + `PRECO_JSON` vizinhos, na ordem em que aparecem; `sellingPrice`/`bestPrice` inteiros em centavos); e o texto (`blocos_da_pagina` junta "R$" + "159" + ",90" e marca `<del>/<s>` como riscado; `ofertas_texto` fecha um cartão a cada nome de produto novo, descarta parcelas e frete, e o riscado ou "De R$" vira `preco_normal`). Achou: `como: "ofertas_site"`, com `url` e `nome`. Na busca, `busca_paginas_ofertas` (até 8 lojas, logo depois das páginas de produto) passa as ofertas por `precos_por_oferta` e devolve a categoria com `_via: "site"` e até 20 ofertas.
 
-## Palavras equivalentes
+## Casamento do item com o produto
 
-`combina` aceita equivalentes por palavra (`EQUIVALENTES`): "perfumado/a", "aromatizado/a" e "cheiroso/a" batem com qualquer palavra de `FRAGRANCIAS` (lavanda, eucalipto, floral, citrus…). `termo_nucleo` tira essas palavras do item ("álcool perfumado" → "alcool"); quando a busca com o item inteiro não traz candidato, `busca_vtex` (com até 40 resultados) e `busca_do_site` buscam de novo pelo núcleo e filtram com `combina` do item inteiro. `procura_catalogo` já usa `combina`, então as páginas de produto do sitemap também valem.
+Padrão de nome do varejo: tipo + marca + variante + tamanho. `casa_lista(item, textos)` casa o item com os produtos de uma busca de uma vez; `combina(item, produto)` é o mesmo para um produto só, sem tradução.
+
+- **Tipo:** a primeira palavra do item (`palavras_busca`, sem tamanho e sem palavras vazias) precisa estar no texto, pelo nome ou pelas categorias (`palavra_bate`: igual ou prefixo de 4+ letras).
+- **Outras palavras:** todas (até 3) ou 75% (mais de 3). Cada uma vale se estiver no texto, se for do vocabulário inicial (`EQUIVALENTES` → `FRAGRANCIAS`) ou, só quando nenhum produto do mesmo tipo na busca usa a palavra (`traduz`) e ela não é marca, se o texto tiver uma das `associadas(palavra)`.
+- **`associadas(w)`:** palavras que, nos nomes de produto vistos (`vocabulario.json`: até 80.000 nomes sem tamanho, mais as marcas da VTEX), aparecem junto de w (ou da raiz, "perfumad") pelo menos 3 vezes, com lift ≥ 4, df ≤ 5% e sem ser marca, tipo (primeira palavra em mais de 30% das vezes) ou palavra de menos de 4 letras. As associações ficam em memória e são refeitas quando o vocabulário muda (`grava_vocab`, no fim de cada busca e teste).
+- **De onde vem o vocabulário:** `aprende_nomes` é chamado com os produtos da busca VTEX (nome e marca), os resultados da busca do site e até 40.000 endereços de cada catálogo (sitemap).
+- **Busca de novo:** `termo_nucleo` (tipo + marcas do item, com o acento que a pessoa escreveu) refaz a busca quando o item inteiro não casa nada, em `busca_vtex` (40 resultados) e `busca_do_site`. `procura_catalogo` filtra antes os endereços com o tipo.
+- **EAN:** `busca_vtex` devolve `ean`. O candidato que casa firme (`combina`, sem tradução) guarda o EAN em `casados.json` (`guarda_casados`, até 20 por item). Em qualquer loja VTEX, produto com um desses EANs entra como candidato mesmo com outro nome.
 
 ## Clube em cada loja
 

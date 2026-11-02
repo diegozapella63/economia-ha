@@ -1,5 +1,15 @@
 # Mudanças
 
+## 0.17.0
+
+- **Casamento do item com o produto pelo padrão de nome do varejo** (tipo + marca + variante + tamanho), sem IA:
+  - **Tipo e marca:** o tipo, que é a primeira palavra do item ("álcool", "leite"), e a marca precisam estar no nome do produto.
+  - **Palavra que a loja não usa:** se nenhum produto do mesmo tipo usa uma palavra do item (como "perfumado" entre os álcoois), ela vale pelas palavras que andam junto dela nos produtos que as lojas já mostraram, como lavanda e eucalipto. Essas palavras são aprendidas sozinhas, dos catálogos e das buscas, e ficam em `vocabulario.json`.
+  - **Palavra que a loja usa:** se os produtos do mesmo tipo usam a palavra (como "integral" entre os leites), ela tem de estar no nome.
+- **Mesmo produto em outra loja pelo código de barras (EAN):** o produto achado com certeza numa loja guarda o EAN (em `casados.json`). Assim ele é reconhecido em outra loja com outro nome, como "Alcool Liquido 46 Araras Euca 1L" no Angeloni, igual ao "Álcool Araras Bactericida Eucalipto" do Giassi.
+- **Segunda busca pelo tipo e pela marca:** quando a busca com o item inteiro não traz nada, o app busca de novo só pelo tipo e pela marca e casa o resultado pelas regras acima. Vale na busca direta, na busca do site e nas páginas de produto.
+- A lista de fragrâncias da 0.16.12 fica como vocabulário inicial; o aprendido soma a ela.
+
 ## 0.16.12
 
 - Item com "perfumado" (ou "aromatizado", "cheiroso") acha o produto pelo nome da fragrância: "Álcool perfumado" bate com "Álcool Araras Bactericida Eucalipto" e "Álcool … Lavanda". Os sites não escrevem "perfumado" no nome do produto, e o item ficava sem preço.
