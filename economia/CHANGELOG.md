@@ -1,5 +1,9 @@
 # Mudanças
 
+## 0.17.8
+
+- **Produto vendido por peso na busca direta (VTEX):** a loja dá o preço por kg (ou por litro), e o `unitMultiplier` diz quanto vem na embalagem. O app usava o preço do kg como se fosse o da bandeja. A sobrecoxa Member's Mark de 2,3 kg do Sam's Club aparecia por R$ 14,98, ou R$ 6,51 o kg, quando a bandeja custa R$ 34,45 (R$ 14,98 o kg). Agora o preço é o do kg vezes o peso da embalagem. A "Melhor compra" e a economia erradas desse item somem na próxima busca.
+
 ## 0.17.7
 
 - **Sem localização = online.** Loja sem endereço no mapa, cadastrada à mão ou que veio só de um site (como a Cobasi), sai da aba dela em Mais › Lojas. Ela aparece em Online, no grupo "Pet shops sem localização" (ou farmácias, mercados). Os preços dela também contam como online, que entrega.

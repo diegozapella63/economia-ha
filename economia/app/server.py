@@ -2007,8 +2007,15 @@ def busca_vtex(chave, termo, regiao, count=12):
             o = min(ofs, key=lambda x: numero(x.get("Price")))
             preco, de = numero(o.get("Price")), numero(o.get("ListPrice"))
             tam = tamanho_nome(nome)
-            if not tam and str(it.get("measurementUnit") or "").lower() == "kg":
-                tam = medida(it.get("unitMultiplier") or 1, "kg")
+            # produto vendido por peso ou volume: a VTEX dá o preço por kg (ou litro) e o unitMultiplier diz quanto vem
+            # na embalagem ("Sobrecoxa 2,3 kg": R$ 14,98/kg × 2,3 = R$ 34,45 a bandeja)
+            un, mult = str(it.get("measurementUnit") or "").strip().lower(), numero(it.get("unitMultiplier")) or 1
+            if un in UNIDADES and UNIDADES[un][0] in ("kg", "L") and mult and abs(mult - 1) > 0.001:
+                preco = round(preco * mult, 2)
+                de = round(de * mult, 2) if de else de
+                tam = medida(mult, un) or tam
+            elif not tam and un in UNIDADES and UNIDADES[un][0] in ("kg", "L"):
+                tam = medida(1, un)
             marca = texto(prod.get("brand"), 30) or ""
             curto = (marca + " " + fmt_base({"quantidade": tam[0], "unidade": tam[1]})) if marca and tam else nome[:60]
             out.append({"nome": nome, "curto": curto, "busca_em": busca_em, "preco": preco, "de": de if de and de > preco + 0.004 else None, "tam": tam,
@@ -5519,7 +5526,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.17.7"
+    server_version = "EconomIA/0.17.8"
 
     def log_message(self, fmt, *args):
         pass

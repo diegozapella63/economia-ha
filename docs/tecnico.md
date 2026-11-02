@@ -207,6 +207,10 @@ Na página, `semLocal(l)` (sem `distancia_km` e sem `mapaUrl`) tira a loja da ab
 
 `GOOGLE_BUSCA["mercados"]` inclui "atacadista". Em `google_varredura`, lugar sem tipo de mercado (`GOOGLE_TIPOS`) ainda entra se o nome bater com `ATACAREJO` (atacad…, atacarejo, Assaí, Makro, Komprão), não bater com `ATACADO_FORA` (pisos, embalagens, construção, roupas, bebidas…) e tiver um tipo de `TIPOS_ATACADO` (wholesaler, warehouse_store, food_store, discount_store). Loja de site com preço que não está entre as lojas perto (`lojas_perto`) continua indo para Online como mercado que entrega.
 
+## Peso e volume na VTEX
+
+Em `busca_vtex`, item com `measurementUnit` de peso ou volume (kg, g, L, ml) e `unitMultiplier` diferente de 1: `Price` e `ListPrice` são por unidade de medida; o preço da embalagem é `Price × unitMultiplier` e o tamanho é o `unitMultiplier` nessa unidade. Com multiplicador 1 e sem tamanho no nome, o tamanho é 1 kg (ou 1 L).
+
 ## Casamento do item com o produto
 
 `PACOTE_NOME` ("com 12", "c/ 6", "cx com 4") não conta "com 10%", "por cento", "off", "reais" nem "de desconto" como pacote.
