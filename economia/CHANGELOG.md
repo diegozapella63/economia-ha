@@ -1,5 +1,13 @@
 # Mudanças
 
+## 0.17.4
+
+- **Escolher esse:** cada loja nos preços do item e cada linha do Comparar tamanhos têm um botão ✓. A opção escolhida, mesmo que não seja a mais barata, vira **Sua escolha** no alto do item, com o aviso de qual é a mais barata e o **Desfazer escolha**. Ela também vale no Roteiro: o item vai para a loja escolhida. Se a loja não trouxer a opção na busca seguinte, o item avisa.
+- **Economia comparada à segunda opção:** a "economia de" de cada item agora é o que você deixa de pagar em relação à segunda loja mais barata, e não à mais cara. No café em grãos ficava R$ 70 só por causa de um 1 kg de R$ 151,90 no Angeloni. A soma no cupom de economia segue a mesma regra. Com o tamanho que compensa, a comparação é com o avulso mais barato.
+- **Ícone em cada item da lista** (café, leite, papel, limpeza, ração, remédio…), para achar o item rolando. Sem um tipo conhecido, o ícone é o do tipo de loja. O **Comparar tamanhos** também ganhou um ícone.
+- **Abas em Mais › Lojas:** Farmácias, Mercados, Pet shops e Online, uma de cada vez. A procura pelo nome continua olhando a lista inteira, e o tipo do "Loja que não apareceu" acompanha a aba.
+- **Preço antigo trocado pelo novo:** sem IA, a busca juntava o resultado novo ao anterior e nunca tirava o preço de uma loja. Um produto casado errado numa busca antiga (o "Limpador VEJA … e Álcool" no álcool perfumado) ficava para sempre. Agora a loja consultada de novo pelo site troca o preço antigo do item pelo novo, ou tira o preço quando não acha nada.
+
 ## 0.17.3
 
 - **Histórico em Minha lista:** o botão ao lado do Adicionar mostra os itens que já estiveram na lista, do que você mais compra para o que menos compra, com quantas vezes comprou e a última data. Um toque põe o item de volta na lista, com as compras de antes (o app continua sabendo de quanto em quanto tempo ele acaba).

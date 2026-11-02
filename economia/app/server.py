@@ -1249,6 +1249,9 @@ def normalizar(cat_id, bruto, cfg):
         "ofertas": ofertas,
         "contas": [{"rede": l["rede"], "libera": "Preços e cupons do clube da loja", "status": "pendente"}
                    for l in lojas.values() if "Clube" in l["fontes"]],
+        # busca pelo site: o que foi procurado em quais lojas (o preço antigo dessas lojas para esses itens é trocado pelo novo)
+        **({"_buscados": [norm(nome_item(i)) for i in (cfg.get("lista") or []) if nome_item(i)], "_redes_buscadas": sorted(redes)}
+           if bruto.get("_via") == "site" else {}),
     }, lista
 
 
@@ -4786,6 +4789,8 @@ def busca_focada(cfg, itens, cats):
 
 def juntar_focada(novas, parciais, resultado):
     for cat, parcial in resultado:
+        cat.pop("_buscados", None)
+        cat.pop("_redes_buscadas", None)
         alvo = next((c for c in novas if c.get("id") == cat["id"]), None)
         if alvo is None:
             novas.append(cat)
@@ -4985,6 +4990,20 @@ def mesclar_resultado(resultado, cfg, extra=None, mapa=None, completa=False, nov
             if isinstance(i, dict) and i.get("produto"):
                 base[i["produto"]] = {"precos": dict(i.get("precos") or {}), "base": i.get("base"), "vistos": dict(i.get("vistos") or {}),
                                       "tamanhos": list(i.get("tamanhos") or []), "links": dict(i.get("links") or {})}
+        # a loja que acabou de ser consultada pelo site manda: o preço antigo dela para o item sai (mesmo se agora não achou nada).
+        # Assim um produto casado errado numa busca antiga ("Limpador … e Álcool" no álcool perfumado) não fica para sempre.
+        for cat, _ in resultado:
+            buscados, redes_b = set(cat.get("_buscados") or []), set(cat.get("_redes_buscadas") or [])
+            if not buscados or not redes_b:
+                continue
+            for prod, ent in base.items():
+                if norm(prod) not in buscados:
+                    continue
+                for rid in redes_b:
+                    ent["precos"].pop(rid, None)
+                    ent["links"].pop(rid, None)
+                    ent["vistos"].pop(rid, None)
+                ent["tamanhos"] = [t for t in ent["tamanhos"] if not (isinstance(t, dict) and t.get("rede") in redes_b)]
         parciais = [base]
         juntar_focada(novas, parciais, resultado)
         if completa:  # busca feita: nenhuma loja está mais "esperando a próxima busca"
@@ -5392,7 +5411,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.17.3"
+    server_version = "EconomIA/0.17.4"
 
     def log_message(self, fmt, *args):
         pass
