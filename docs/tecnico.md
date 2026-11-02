@@ -184,6 +184,10 @@ O servidor só aceita conexões do ingress (`172.30.32.2`). Para testar fora do 
 
 Para lojas sem busca direta e sem sitemap, `testa_preco_loja` lê a página do site (a de `lojas.adicionar` com o mesmo nome vale mais que a do mapa; sem caminho, a inicial) com `ofertas_do_site`: `le_pagina_ofertas` respeita o `robots.txt` (`robots_permite` com o caminho), guarda o resultado em `paginas_ofertas.json` por 12 horas e devolve até 3 links do mesmo site com "oferta" ou "promo" no caminho; o primeiro também é lido se a página trouxe menos de 60 produtos. `ofertas_da_pagina` tenta, nesta ordem: `Product` do schema.org (também dentro de `ItemList`/`@graph`, sem os fora de estoque, via `produto_ld`); dados em `<script>` (`NOME_JSON` + `PRECO_JSON` vizinhos, na ordem em que aparecem; `sellingPrice`/`bestPrice` inteiros em centavos); e o texto (`blocos_da_pagina` junta "R$" + "159" + ",90" e marca `<del>/<s>` como riscado; `ofertas_texto` fecha um cartão a cada nome de produto novo, descarta parcelas e frete, e o riscado ou "De R$" vira `preco_normal`). Achou: `como: "ofertas_site"`, com `url` e `nome`. Na busca, `busca_paginas_ofertas` (até 8 lojas, logo depois das páginas de produto) passa as ofertas por `precos_por_oferta` e devolve a categoria com `_via: "site"` e até 20 ofertas.
 
+## Atacarejos no mapa
+
+`GOOGLE_BUSCA["mercados"]` inclui "atacadista". Em `google_varredura`, lugar sem tipo de mercado (`GOOGLE_TIPOS`) ainda entra se o nome bater com `ATACAREJO` (atacad…, atacarejo, Assaí, Makro, Komprão), não bater com `ATACADO_FORA` (pisos, embalagens, construção, roupas, bebidas…) e tiver um tipo de `TIPOS_ATACADO` (wholesaler, warehouse_store, food_store, discount_store). Loja de site com preço que não está entre as lojas perto (`lojas_perto`) continua indo para Online como mercado que entrega.
+
 ## Casamento do item com o produto
 
 `PACOTE_NOME` ("com 12", "c/ 6", "cx com 4") não conta "com 10%", "por cento", "off", "reais" nem "de desconto" como pacote.

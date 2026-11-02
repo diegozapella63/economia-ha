@@ -3912,8 +3912,13 @@ def nome_bonito(n):
     return " ".join(w.lower() if i and w.lower() in pequenas else w.capitalize() for i, w in enumerate(n.split()))
 
 
-GOOGLE_BUSCA = {"farmacias": ["farmácia", "drogaria"], "mercados": ["supermercado", "mercado"], "petshops": ["pet shop", "agropecuária"]}
+GOOGLE_BUSCA = {"farmacias": ["farmácia", "drogaria"], "mercados": ["supermercado", "mercado", "atacadista"], "petshops": ["pet shop", "agropecuária"]}
 AGRO = re.compile(r"\bagro|\bra[cç](?:ao|ão|oes|ões)\b", re.I)
+# atacarejo (Fort, Atacadão, Assaí, Komprão) às vezes é só "wholesaler"/"warehouse_store" no Google, sem "supermarket"
+ATACAREJO = re.compile(r"\batacad\w*|\batacarejo|\bassai\b|\bmakro\b|\bkomprao\b")
+ATACADO_FORA = re.compile(r"\b(materia\w*|constru\w*|tintas?|embalage\w*|pisos?|ferrage\w*|roupas?|confec\w*|moda|calcados?|autope\w*|pecas|eletro\w*|"
+                          r"moveis|papelaria|bebidas|aviamentos|tecidos|brinquedos|cosmeticos|utilidades)\b")
+TIPOS_ATACADO = {"wholesaler", "warehouse_store", "food_store", "discount_store"}
 
 
 def google_post(url, corpo, chave, campos, timeout=25):
@@ -3954,7 +3959,9 @@ def google_varredura(lat, lon, raio_m, cats, chave, paginas=3):
                         continue
                     km = km_entre(lat, lon, loc["latitude"], loc["longitude"])
                     agro = cat == "petshops" and AGRO.search(norm(nome))
-                    if km * 1000 > raio_m or (tipos and not tipos & set(pl.get("types") or []) and not agro) or not da_categoria(cat, nome, pl.get("primaryType")):
+                    atac = (cat == "mercados" and ATACAREJO.search(norm(nome)) and not ATACADO_FORA.search(norm(nome))
+                            and TIPOS_ATACADO & set(pl.get("types") or []))
+                    if km * 1000 > raio_m or (tipos and not tipos & set(pl.get("types") or []) and not agro and not atac) or not da_categoria(cat, nome, pl.get("primaryType")):
                         continue
                     dentro += 1
                     out.append({"nome": nome, "categoria": cat, "endereco": texto(pl.get("shortFormattedAddress") or pl.get("formattedAddress"), 90),
@@ -5385,7 +5392,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.17.1"
+    server_version = "EconomIA/0.17.2"
 
     def log_message(self, fmt, *args):
         pass

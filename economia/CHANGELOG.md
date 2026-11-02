@@ -1,5 +1,10 @@
 # Mudanças
 
+## 0.17.2
+
+- **Atacarejos no mapa:** a busca do Google por mercados também procura "atacadista". Fort, Atacadão, Assaí e Komprão entram mesmo quando o Google os marca só como atacado ("wholesaler" ou "warehouse_store"), sem "supermarket". Atacados de outras coisas (pisos, embalagens, materiais de construção, roupas, bebidas…) ficam de fora.
+- Antes disso, o Fort do Bucarein não aparecia entre as lojas perto de casa. Como o site dele tinha preço, ele ia para Online como "mercado da região que entrega", com "frete no carrinho".
+
 ## 0.17.1
 
 - **Tamanho errado pelo desconto:** "Limpador VEJA 500ml com 10% de Desconto" virava 5 L, porque o "com 10" era lido como pacote com 10 unidades. "Café 500g com 20% off" virava 10 kg. Agora "com N%", "por cento", "off", "reais" e "de desconto" não contam como pacote. Isso também inflava o "Compensa o maior" e a economia possível.
