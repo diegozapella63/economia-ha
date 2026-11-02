@@ -1891,11 +1891,13 @@ def eh_tipo(w):
     return primeira.get(w, 0) >= 5 and primeira[w] >= 0.5 * df.get(w, 1)
 
 
-def cabeca_bate(cab, pp):
+def cabeca_bate(cab, pp, itens_do_tipo=None):
     """O tipo do item está entre as 3 primeiras palavras do nome do produto (a marca pode vir antes: "JIMO Secante"),
     sem outro tipo antes dele: "Limpador … Lavanda e Álcool" não é álcool e "Pão … Leite" não é leite."""
     ws = [w for w in pp if len(w) >= 2 and not any(ch.isdigit() for ch in w) and w not in VAZIAS_BUSCA]
     if not eh_tipo(cab):  # o item começa pela marca ou por outra coisa ("Churu atum"): basta estar no começo do nome
+        if ws and eh_tipo(ws[0]) and not palavra_bate(cab, [ws[0]]) and cab not in vocab()["marcas"] and ws[0] not in (itens_do_tipo or ()):
+            return False  # o produto é de outro tipo, que o item nem cita
         return any(palavra_bate(cab, [w]) for w in ws[:4])
     for w in ws[:3]:
         if palavra_bate(cab, [w]):
@@ -1913,7 +1915,7 @@ def casa_lista(item, textos, traduzir=True):
     if not pi:
         return [False] * len(textos)
     toks = [norm(t).split() for t in textos]
-    cab = [cabeca_bate(pi[0], pp) for pp in toks]
+    cab = [cabeca_bate(pi[0], pp, set(pi)) for pp in toks]
     marcas = vocab()["marcas"]
     traduz = {w for w in pi[1:] if w not in marcas and not any(c and palavra_bate(w, pp) for c, pp in zip(cab, toks))} if traduzir else set()
     out = []
@@ -1921,13 +1923,14 @@ def casa_lista(item, textos, traduzir=True):
         if not c:
             out.append(False)
             continue
-        u, ok, faltam = set(pp), 1, []
+        u, ok, faltam = set(pp) - set(pi), 1, []  # a palavra associada tem de ser outra, não uma do próprio item
         for w in pi[1:]:
             if palavra_bate(w, pp) or (w in traduz and associadas(w) & u):
                 ok += 1
             else:
                 faltam.append(w)
-        cheio = ok == len(pi) if len(pi) <= 3 else ok >= 0.75 * len(pi)
+        # com 4 palavras ou mais, pode faltar 1 em 4, mas nunca a que vem logo depois do tipo ("carne moída", "papel higiênico")
+        cheio = ok == len(pi) if len(pi) <= 3 else (ok >= 0.75 * len(pi) and pi[1] not in faltam)
         # parecido: só falta uma palavra, que nenhum produto do mesmo tipo usa nesta loja ("de cozinha" no álcool) e que
         # não é restrição ("sem lactose", "zero açúcar"). Vale só se nenhum produto casar inteiro.
         parecido = (not cheio and len(pi) >= 3 and len(faltam) == 1 and faltam[0] in traduz and faltam[0] not in RESTRICOES)
@@ -5526,7 +5529,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.17.8"
+    server_version = "EconomIA/0.17.9"
 
     def log_message(self, fmt, *args):
         pass

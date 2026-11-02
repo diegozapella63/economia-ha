@@ -1,5 +1,12 @@
 # Mudanças
 
+## 0.17.9
+
+- **"Carne moída bovina de primeira" não casa mais com "Hambúrguer Texas Burger Carne de Frango e Bovina".** Três ajustes:
+  - **Outro tipo:** produto que começa por outro tipo (hambúrguer), que o item nem cita, não é o item.
+  - **Palavra logo depois do tipo:** com 4 palavras ou mais, ela é obrigatória ("carne **moída**", "papel **higiênico**"). Pode faltar uma das outras.
+  - **Palavra associada:** só vale se for outra palavra, e não uma que o próprio item já tem. "Primeira" não podia mais ser cumprida por "bovina".
+
 ## 0.17.8
 
 - **Produto vendido por peso na busca direta (VTEX):** a loja dá o preço por kg (ou por litro), e o `unitMultiplier` diz quanto vem na embalagem. O app usava o preço do kg como se fosse o da bandeja. A sobrecoxa Member's Mark de 2,3 kg do Sam's Club aparecia por R$ 14,98, ou R$ 6,51 o kg, quando a bandeja custa R$ 34,45 (R$ 14,98 o kg). Agora o preço é o do kg vezes o peso da embalagem. A "Melhor compra" e a economia erradas desse item somem na próxima busca.
