@@ -486,7 +486,14 @@ li.escolhida{border-color:var(--accent) !important}
 .parada li span:last-child{white-space:nowrap;font-weight:600}
 .rot-ops{display:flex;flex-direction:column;gap:6px}
 .r-dica{display:block;color:var(--accent);font-size:12px;font-weight:600}
-#addForm{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px}
+#addForm{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:8px}
+.cod-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;margin-top:8px}
+.cod-foto{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.cod-foto svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cod-res{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end;margin-top:4px}
+.cod-res label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
+.corr-btn{font:inherit;font-weight:700}
+@media (max-width:480px){.cod-row{grid-template-columns:1fr 1fr}.cod-row .field{grid-column:1/-1;grid-row:1}.cod-res{grid-template-columns:1fr}}
 .hist-btn{width:44px;padding:0;justify-content:center;position:relative}
 .hist-btn svg{width:20px;height:20px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .hist-btn[aria-expanded="true"]{border-color:var(--accent);background:var(--accent-soft)}
@@ -1030,11 +1037,27 @@ html:not(.sem-ia) .so-semia{display:none!important}
         <input class="field" id="novoItem" name="novoItem" placeholder="Ex.: Lysoform, Café 500 g, Atorvastatina 20 mg" aria-label="Produto para acompanhar">
         <button class="btn" type="submit">Adicionar</button>
         <button type="button" class="ghost big hist-btn" id="histBtn" aria-expanded="false" aria-controls="histBox" aria-label="Histórico: itens que já estiveram na lista" title="Histórico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></svg><span class="n" id="histN" hidden></span></button>
+        <button type="button" class="ghost big hist-btn" id="codBtn" aria-expanded="false" aria-controls="codBox" aria-label="Pôr na lista pelo código de barras" title="Código de barras"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8v8M10 8v8M13 8v8M16.5 8v8"/></svg></button>
       </form>
       <div class="hist-box" id="histBox" hidden>
         <h3>Histórico</h3>
         <p class="hint" id="histMeta"></p>
         <ul class="rows" id="histLista"></ul>
+      </div>
+      <div class="hist-box cod-box" id="codBox" hidden>
+        <h3>Código de barras</h3>
+        <p class="hint">Tire uma foto do código, de perto e reto, ou digite os números que ficam embaixo dele.</p>
+        <div class="cod-row">
+          <label class="btn cod-foto" for="codArq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Tirar foto</label>
+          <input class="field" id="codNum" inputmode="numeric" autocomplete="off" placeholder="Ex.: 7891000100103" aria-label="Números do código de barras">
+          <button type="button" class="ghost big" id="codProcura">Procurar</button>
+        </div>
+        <input type="file" id="codArq" class="arq" accept="image/*" capture="environment">
+        <p class="hint" id="codMsg" aria-live="polite"></p>
+        <div class="cod-res" id="codRes" hidden>
+          <label for="codNome">Nome do item na lista<input class="field" id="codNome" autocomplete="off"></label>
+          <button type="button" class="btn" id="codPor">Pôr na lista</button>
+        </div>
       </div>
       <p class="hint" id="addMsg" aria-live="polite"></p>
       <div class="ler-tiles so-ia"><label class="ler-tile" for="fotoArq" id="fotoBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Escolher fotos</label><button type="button" class="ler-tile" id="textoBtn" aria-controls="fotoBox"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Colar mensagem</button><button type="button" class="ler-tile so-voz" id="falarBtn" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Falar</button></div>
@@ -1403,7 +1426,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.18.0</span></p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.19.0</span></p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -1532,10 +1555,10 @@ html:not(.sem-ia) .so-semia{display:none!important}
       online: {marketplaces: arr(on.marketplaces).length ? arr(on.marketplaces) : ['mercadolivre', 'amazon'], assinaturas: arr(on.assinaturas), mercados_entrega: on.mercados_entrega !== false},
       lojas: {ignorar: arr(l.ignorar), manter: arr(l.manter), adicionar: arr(l.adicionar), folhetos: arr(l.folhetos).filter(function(f){ return f && f.nome; }).map(function(f){ return {nome:String(f.nome), categoria:f.categoria || 'mercados'}; })},
       lista: arr(c.lista).map(function(i){ return typeof i === 'string' ? {produto:i, compras:[]} : {produto:String(i.produto || ''), compras:arr(i.compras), origem:i.origem === 'ha' ? 'ha' : undefined,
-        similares:i.similares ? true : undefined,
+        similares:i.similares ? true : undefined, ean:/^\d{8,14}$/.test(String(i.ean || '')) ? String(i.ean) : undefined,
         escolha:i.escolha && i.escolha.rede ? {rede:String(i.escolha.rede), q:Number(i.escolha.q) || null, obs:String(i.escolha.obs || '').slice(0, 120), sim:i.escolha.sim ? true : undefined} : undefined}; }).filter(function(i){ return i.produto; }),
       // itens que saíram da lista, com as compras, para voltar com um toque
-      historico: arr(c.historico).filter(function(i){ return i && i.produto; }).map(function(i){ return {produto:String(i.produto).slice(0, 120), compras:arr(i.compras).filter(function(d){ return /^\d{4}-\d{2}-\d{2}$/.test(d); }), saiu:String(i.saiu || '')}; }).slice(-300),
+      historico: arr(c.historico).filter(function(i){ return i && i.produto; }).map(function(i){ return {produto:String(i.produto).slice(0, 120), compras:arr(i.compras).filter(function(d){ return /^\d{4}-\d{2}-\d{2}$/.test(d); }), saiu:String(i.saiu || ''), ean:/^\d{8,14}$/.test(String(i.ean || '')) ? String(i.ean) : undefined}; }).slice(-300),
       perfil: {adultos:n0(p.adultos, 1), criancas:n0(p.criancas, 0), bebes:n0(p.bebes, 0), pets:petsDe(p.pets), restricoes:arr(p.restricoes), interesses:arr(p.interesses), nunca:arr(p.nunca)},
       cotidiano: {mercado:arr(r.mercado), farmacia:arr(r.farmacia), avisar:r.avisar || 'vespera', estoque:['pouco', 'normal', 'bastante'].indexOf(r.estoque) >= 0 ? r.estoque : 'normal'},
       ia: {busca:String((c.ia || {}).busca || ''), fotos:String((c.ia || {}).fotos || ''), voz:String((c.ia || {}).voz || '')},
@@ -2114,8 +2137,8 @@ html:not(.sem-ia) .so-semia{display:none!important}
     var hoje = hojeSP();
     itens.forEach(function(it){
       var k = norm(it.produto), h = estado.historico.filter(function(x){ return norm(x.produto) === k; })[0];
-      if (h){ arr(it.compras).forEach(function(d){ if (h.compras.indexOf(d) < 0) h.compras.push(d); }); h.saiu = hoje; }
-      else estado.historico.push({produto:it.produto, compras:arr(it.compras).slice(), saiu:hoje});
+      if (h){ arr(it.compras).forEach(function(d){ if (h.compras.indexOf(d) < 0) h.compras.push(d); }); h.saiu = hoje; if (it.ean) h.ean = it.ean; }
+      else estado.historico.push({produto:it.produto, compras:arr(it.compras).slice(), saiu:hoje, ean:it.ean});
     });
     if (estado.historico.length > 300){  // fica o que foi mais comprado e saiu por último
       estado.historico.sort(function(a, b){ return (a.compras.length - b.compras.length) || String(a.saiu).localeCompare(String(b.saiu)); });
@@ -2125,7 +2148,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   function entraNaLista(nome){  // item novo ou de volta do histórico, com as compras de antes
     var k = norm(nome), h = estado.historico.filter(function(x){ return norm(x.produto) === k; })[0];
     estado.historico = estado.historico.filter(function(x){ return norm(x.produto) !== k; });
-    estado.lista.push({produto:h ? h.produto : nome, compras:h ? h.compras.slice().sort() : []});
+    estado.lista.push({produto:h ? h.produto : nome, compras:h ? h.compras.slice().sort() : [], ean:h && h.ean ? h.ean : undefined});
     return !!h;
   }
   var HIST_ABERTO = false;
@@ -2215,7 +2238,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
         return '<li class="item wait"><div class="i-head">' + iconeItem(x.it.produto) + '<p class="i-prod">' + esc(x.it.produto) + '</p></div>'
           + (x.r.txt ? '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>' : '')
           + '<div class="i-best"><span class="lbl">Sem preço ainda</span>'
-          + (procurou ? '<span class="i-wait">A última busca não achou.</span>' : '')
+          + (procurou ? '<span class="i-wait">A última busca não achou.' + (((D.relatorio || {}).sugestoes || {})[x.it.produto] ? ' Quis dizer <button type="button" class="link corr-btn" data-de="' + esc(x.it.produto) + '" data-para="' + esc(D.relatorio.sugestoes[x.it.produto]) + '">' + esc(D.relatorio.sugestoes[x.it.produto]) + '</button>?' : '') + '</span>' : '')
           + '<button type="button" class="ghost ic-btn i-busca" data-buscaitem="' + x.i + '"' + (buscando ? ' disabled' : '') + '><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>' + (buscando ? 'Buscando…' : 'Buscar este item') + '</button></div>'
           + acoes + '</div></li>';
       }
@@ -2280,6 +2303,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       salvar(ie.escolha ? 'Escolhido: ' + G[ie.escolha.rede].nome + ' para ' + ie.produto : 'Escolha desfeita');
       tudo(); return;
     }
+    if (b.classList.contains('corr-btn')){ trocaNome(b.dataset.de, b.dataset.para); return; }
     if (b.dataset.sim != null){
       var isim = estado.lista[Number(b.dataset.sim)]; if (!isim) return;
       if (isim.similares){ delete isim.similares; if (isim.escolha && isim.escolha.sim) delete isim.escolha; }
@@ -2682,7 +2706,185 @@ html:not(.sem-ia) .so-semia{display:none!important}
     var voltou = entraNaLista(nome); $('novoItem').value = '';
     msg.className = 'hint ok'; msg.textContent = '"' + nome + '" ' + (voltou ? 'voltou para a lista, com as compras de antes.' : 'entrou na lista.'); pintaHist();
     salvar('Adicionado à lista'); pintaLista(); pintaOfertasTela();
+    if (!voltou) perguntaCorrecao(nome);
   });
+  // ===== "Quis dizer…?": palavra que nenhum produto das lojas usa, trocada pela mais parecida do vocabulário aprendido =====
+  function perguntaCorrecao(nome){
+    if (MODO !== 'addon') return;
+    fetch('api/corrigir?texto=' + encodeURIComponent(nome), {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
+      if (!j || !j.texto || norm(j.texto) === norm(nome) || !estado.lista.some(function(i){ return i.produto === nome; })) return;
+      var msg = $('addMsg');
+      msg.className = 'hint';
+      msg.innerHTML = '"' + esc(nome) + '" entrou na lista. Quis dizer <button type="button" class="link corr-btn" data-de="' + esc(nome) + '" data-para="' + esc(j.texto) + '">' + esc(j.texto) + '</button>?';
+    }).catch(function(){});
+  }
+  function trocaNome(de, para){
+    var it = estado.lista.filter(function(i){ return i.produto === de; })[0];
+    if (!it) return false;
+    if (estado.lista.some(function(i){ return i !== it && norm(i.produto) === norm(para); })){ toast('"' + para + '" já está na lista'); return false; }
+    it.produto = para;
+    salvar('Trocado para "' + para + '"'); pintaLista(); pintaOfertasTela();
+    return true;
+  }
+  $('addMsg').addEventListener('click', function(e){
+    var b = e.target.closest('.corr-btn'); if (!b) return;
+    if (trocaNome(b.dataset.de, b.dataset.para)){ $('addMsg').className = 'hint ok'; $('addMsg').textContent = 'Trocado para "' + b.dataset.para + '".'; }
+  });
+
+  // ===== Código de barras: foto (ou os números) → produto, pelas lojas com busca no site e pelo Open Food Facts =====
+  var COD = {aberto:false, ean:null};
+  function codMsg(t, cls){ var m = $('codMsg'); m.className = 'hint' + (cls ? ' ' + cls : ''); m.textContent = t; }
+  function abreCod(sim){
+    COD.aberto = sim; $('codBox').hidden = !sim; $('codBtn').setAttribute('aria-expanded', String(sim));
+    if (sim && HIST_ABERTO){ HIST_ABERTO = false; pintaHist(); }
+  }
+  $('codBtn').addEventListener('click', function(){ abreCod(!COD.aberto); });
+  $('histBtn').addEventListener('click', function(){ if (HIST_ABERTO && COD.aberto) abreCod(false); });
+  $('codArq').addEventListener('change', function(){
+    var f = this.files && this.files[0]; this.value = '';
+    if (!f) return;
+    $('codRes').hidden = true; codMsg('Lendo o código na foto…');
+    lerCodigoFoto(f).then(function(ean){
+      if (!ean){ codMsg('Não consegui ler o código nessa foto. Tente de mais perto, com o código reto e com luz, ou digite os números.', 'err'); return; }
+      $('codNum').value = ean; procuraCodigo(ean);
+    });
+  });
+  $('codProcura').addEventListener('click', function(){ procuraCodigo($('codNum').value); });
+  $('codNum').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); procuraCodigo(this.value); } });
+  function procuraCodigo(txt){
+    var ean = String(txt || '').replace(/\D/g, '');
+    if (ean.length === 12) ean = '0' + ean;
+    if (!eanValido(ean)){ codMsg('Esse número não é um código de barras válido. Confira os dígitos (8 ou 13 números).', 'err'); $('codRes').hidden = true; return; }
+    var ja = estado.lista.filter(function(i){ return i.ean === ean; })[0];
+    if (ja){ codMsg('Já está na lista: "' + ja.produto + '".', 'ok'); $('codRes').hidden = true; return; }
+    COD.ean = ean;
+    if (MODO !== 'addon'){ codMsg('Código ' + ean + '. No Home Assistant, o EconomIA procura o nome do produto; aqui, escreva o nome.'); $('codNome').value = ''; $('codRes').hidden = false; return; }
+    codMsg('Procurando o produto ' + ean + '…'); $('codRes').hidden = true;
+    fetch('api/produto-por-codigo?ean=' + ean, {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
+      if (COD.ean !== ean) return;
+      var antes = arr(j.na_lista).length ? ' Esse código já foi achado para "' + j.na_lista[0] + '".' : '';
+      if (j.ok){
+        codMsg('Achei ' + (j.fonte === 'Open Food Facts' ? 'no Open Food Facts' : 'no ' + j.fonte + (j.preco ? ', por ' + brl.format(j.preco) : '')) + '. Confira o nome e ponha na lista.' + antes, 'ok');
+        $('codNome').value = j.nome || '';
+      } else {
+        codMsg((j.msg || 'Não achei esse código.') + antes, j.ean ? '' : 'err');
+        $('codNome').value = '';
+        if (!j.ean){ return; }
+      }
+      $('codRes').hidden = false;
+      if (!j.ok) $('codNome').focus();
+    }).catch(function(){ codMsg('Sem conexão com o Home Assistant.', 'err'); });
+  }
+  $('codPor').addEventListener('click', function(){
+    var nome = $('codNome').value.trim(), ean = COD.ean;
+    if (nome.length < 3){ codMsg('Escreva o nome do produto.', 'err'); $('codNome').focus(); return; }
+    var igual = estado.lista.filter(function(i){ return norm(i.produto) === norm(nome); })[0];
+    if (igual){ igual.ean = ean; salvar('Código guardado em "' + igual.produto + '"'); }
+    else { entraNaLista(nome); estado.lista[estado.lista.length - 1].ean = ean; salvar('Adicionado à lista'); }
+    $('addMsg').className = 'hint ok'; $('addMsg').textContent = igual ? 'O código ficou guardado em "' + igual.produto + '".' : '"' + nome + '" entrou na lista com o código de barras: com ele, o mesmo produto é achado nas lojas com busca no site.';
+    $('codNum').value = ''; $('codRes').hidden = true; codMsg(''); abreCod(false);
+    pintaHist(); pintaLista(); pintaOfertasTela();
+  });
+  function eanValido(e){
+    if (!/^(\d{8}|\d{13}|\d{14})$/.test(e)) return false;
+    var d = e.split('').map(Number), s = 0;
+    for (var i = d.length - 2, k = 0; i >= 0; i--, k++) s += d[i] * (k % 2 === 0 ? 3 : 1);
+    return (10 - s % 10) % 10 === d[d.length - 1];
+  }
+  // ---- leitor de EAN (início) ----
+  // Lê EAN-13 (e UPC-A) e EAN-8 numa foto: o leitor do próprio navegador quando existe (Chrome no Android) e, sem ele,
+  // linhas que atravessam a foto (deitadas e em pé, nos dois sentidos), larguras das barras e o dígito verificador.
+  var EAN_L = ['3211', '2221', '2122', '1411', '1132', '1231', '1114', '1312', '1213', '3112'].map(function(x){ return x.split('').map(Number); });
+  var EAN_G = EAN_L.map(function(p){ return p.slice().reverse(); });
+  var EAN_PRIMEIRO = ['LLLLLL', 'LLGLGG', 'LLGGLG', 'LLGGGL', 'LGLLGG', 'LGGLLG', 'LGGGLL', 'LGLGLG', 'LGLGGL', 'LGGLGL'];
+  function lerCodigoFoto(arq){
+    return new Promise(function(ok){
+      var url = URL.createObjectURL(arq), img = new Image();
+      img.onload = function(){
+        var fim = function(r){ URL.revokeObjectURL(url); ok(r); };
+        if ('BarcodeDetector' in window){
+          try {
+            new window.BarcodeDetector({formats:['ean_13', 'ean_8', 'upc_a']}).detect(img).then(function(rs){
+              var v = (rs || []).map(function(x){ var c = String(x.rawValue || ''); return c.length === 12 ? '0' + c : c; }).filter(eanValido)[0];
+              fim(v || decodificaEAN(img));
+            }).catch(function(){ fim(decodificaEAN(img)); });
+            return;
+          } catch (e) { /* formato sem suporte: vai pelo leitor próprio */ }
+        }
+        fim(decodificaEAN(img));
+      };
+      img.onerror = function(){ URL.revokeObjectURL(url); ok(null); };
+      img.src = url;
+    });
+  }
+  function decodificaEAN(img){
+    var votos = {}, lido = null;
+    [1100, 640, 2200].forEach(function(lado){  // tamanho médio primeiro; o grande pega código pequeno na foto
+      if (lido) return;
+      var fat = Math.min(1, lado / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
+      var W = Math.max(1, Math.round((img.naturalWidth || img.width) * fat)), H = Math.max(1, Math.round((img.naturalHeight || img.height) * fat));
+      var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+      var cx = cv.getContext('2d'); cx.drawImage(img, 0, 0, W, H);
+      var px = cx.getImageData(0, 0, W, H).data, cinza = new Float32Array(W * H);
+      for (var i = 0, j = 0; i < cinza.length; i++, j += 4) cinza[i] = 0.299 * px[j] + 0.587 * px[j + 1] + 0.114 * px[j + 2];
+      for (var f = 0.2; f <= 0.81; f += 0.04){
+        var y = Math.round(H * f), x = Math.round(W * f), lin = new Float32Array(W), col = new Float32Array(H), k;
+        for (k = 0; k < W; k++) lin[k] = (cinza[Math.max(0, y - 1) * W + k] + cinza[y * W + k] + cinza[Math.min(H - 1, y + 1) * W + k]) / 3;
+        for (k = 0; k < H; k++) col[k] = (cinza[k * W + Math.max(0, x - 1)] + cinza[k * W + x] + cinza[k * W + Math.min(W - 1, x + 1)]) / 3;
+        [lin, col].forEach(function(v){
+          var c = linhaEAN(v) || linhaEAN(Array.prototype.slice.call(v).reverse());
+          if (c) votos[c] = (votos[c] || 0) + 1;
+        });
+      }
+      lido = Object.keys(votos).filter(function(c){ return votos[c] >= 2; })[0] || null;
+    });
+    var cods = Object.keys(votos).sort(function(a, b){ return votos[b] - votos[a]; });
+    if (!cods.length) return null;
+    // uma linha só pode ser acaso do dígito verificador: vale se nenhuma outra leitura discorda
+    return votos[cods[0]] >= 2 || cods.length === 1 ? cods[0] : null;
+  }
+  function linhaEAN(v){
+    var n = v.length, w = Math.max(8, Math.round(n / 14)), sv = new Float32Array(n), i, j;
+    for (i = 0; i < n; i++) sv[i] = (v[Math.max(0, i - 1)] + v[i] + v[Math.min(n - 1, i + 1)]) / 3;
+    var bar = new Uint8Array(n);
+    for (i = 0; i < n; i++){  // limiar local: o meio entre o mais claro e o mais escuro em volta
+      var mn = 255, mx = 0;
+      for (j = Math.max(0, i - w); j <= Math.min(n - 1, i + w); j += 2){ if (sv[j] < mn) mn = sv[j]; if (sv[j] > mx) mx = sv[j]; }
+      bar[i] = mx - mn > 35 && sv[i] < (mn + mx) / 2 ? 1 : 0;
+    }
+    var r = [], cor = [], ini = 0;
+    for (i = 1; i <= n; i++) if (i === n || bar[i] !== bar[i - 1]){ r.push(i - ini); cor.push(bar[ini]); ini = i; }
+    for (var s = 1; s < r.length; s++){
+      if (!cor[s]) continue;
+      var c = (s + 59 <= r.length && eanCorridas(r, s, 13)) || (s + 43 <= r.length && eanCorridas(r, s, 8));
+      if (c) return c;
+    }
+    return null;
+  }
+  function eanCorridas(r, s, tipo){
+    var m = (r[s] + r[s + 1] + r[s + 2]) / 3;
+    var guarda = function(i, k){ for (var q = 0; q < k; q++){ var x = r[i + q] / m; if (x < 0.4 || x > 2.2) return false; } return true; };
+    if (!guarda(s, 3) || r[s - 1] < 2.5 * m) return null;
+    var dig = '', par = '', i = s + 3, metade = tipo === 13 ? 6 : 4;
+    var digito = function(tabs){
+      var t = r[i] + r[i + 1] + r[i + 2] + r[i + 3], melhor = null;
+      if (t < 4.5 * m || t > 10.5 * m) return null;
+      for (var k = 0; k < tabs.length; k++) for (var d = 0; d < 10; d++){
+        var e = 0;
+        for (var q = 0; q < 4; q++) e += Math.abs(r[i + q] * 7 / t - tabs[k][d][q]);
+        if (!melhor || e < melhor[2]) melhor = [d, k, e];
+      }
+      return melhor && melhor[2] <= 1.6 ? melhor : null;
+    };
+    for (var k = 0; k < metade; k++, i += 4){ var a = digito(tipo === 13 ? [EAN_L, EAN_G] : [EAN_L]); if (!a) return null; dig += a[0]; par += a[1] ? 'G' : 'L'; }
+    if (!guarda(i, 5)) return null;
+    i += 5;
+    for (k = 0; k < metade; k++, i += 4){ var b = digito([EAN_L]); if (!b) return null; dig += b[0]; }
+    if (!guarda(i, 3)) return null;
+    if (tipo === 13){ var p0 = EAN_PRIMEIRO.indexOf(par); if (p0 < 0) return null; dig = p0 + dig; }
+    return eanValido(dig) ? dig : null;
+  }
+  // ---- leitor de EAN (fim) ----
 
   // ===== Roteiro de compras: em até N lojas, onde comprar cada item =====
   var rotVer = null;  // plano que a pessoa tocou para ver (null = o recomendado)
@@ -3985,7 +4187,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.18.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.19.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

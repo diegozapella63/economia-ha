@@ -1,5 +1,16 @@
 # Mudanças
 
+## 0.19.0
+
+- **Código de barras:** botão ao lado do Adicionar, na Minha lista.
+  - **Como ler:** tire uma foto do código, ou digite os números de baixo. No Chrome do Android, o próprio navegador lê a foto; nos outros, o EconomIA lê pelas larguras das barras (EAN-13, UPC-A e EAN-8, com o código deitado, em pé ou de ponta-cabeça) e confere pelo dígito verificador. A foto funciona também com o Home Assistant sem https, ao contrário da câmera ao vivo.
+  - **Onde procura o produto:** primeiro nas lojas com busca no site (nome, preço e link da loja do seu CEP), depois no Open Food Facts (base aberta).
+  - **Na lista:** o item entra com o código. Na busca direta, o mesmo produto é achado pelo código mesmo quando o nome da loja é outro. O código também fica no histórico.
+  - **Código de balança ou da loja** (começa com 2): o EconomIA avisa que só vale naquela loja.
+- **"Quis dizer…?":** ao adicionar "Álcool de lompeza", o EconomIA sugere "Álcool de limpeza". A correção usa as palavras dos produtos que as lojas já mostraram: uma palavra que nenhum produto usa vira a mais parecida, com o acento das lojas.
+  - O item sem preço também mostra a sugestão, que troca o nome com um toque.
+  - Se o nome escrito não acha nada, a busca direta e a busca do site tentam o nome corrigido sozinhas.
+
 ## 0.18.0
 
 - **Seção da loja confere o produto.** A busca do site (Giassi, Angeloni, Fort, Sam's Club) já dizia em que seção cada produto está, e o app não usava isso. Agora usa:

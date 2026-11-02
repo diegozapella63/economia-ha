@@ -70,6 +70,14 @@ Antes de valer, cada produto é conferido. Nas lojas com busca no site, pela se�
 
 Aceita mais de um produto? Escreva com "ou": "Coxinha da asa ou asinha" busca os dois e fica com o mais em conta.
 
+### Código de barras
+
+Toque no botão de código de barras, ao lado do Adicionar, e tire uma foto do código, de perto e reto, ou digite os números que ficam embaixo dele. O EconomIA procura o produto nas lojas com busca no site e, se não achar, no Open Food Facts. Confira o nome e toque em **Pôr na lista**. O item fica com o código, o que ajuda a achar exatamente o mesmo produto nas lojas, mesmo com outro nome. Código de balança ou da própria loja (os que começam com 2) só vale naquela loja.
+
+### Quis dizer…?
+
+Se uma palavra do item não aparece em nenhum produto que as lojas já mostraram, o EconomIA sugere a mais parecida ("Álcool de lompeza" → "Álcool de limpeza"). Toque na sugestão para trocar. Se você não trocar, a busca tenta o nome corrigido sozinha quando o escrito não acha nada.
+
 ### Similares
 
 Toque em **Similares** no item para ver até 3 produtos parecidos, da mesma seção da loja, que saem mais em conta pelo preço do quilo ou do litro: para "coxinha da asa", sobrecoxa, asa ou frango inteiro. O preço do item continua o mesmo. Se preferir um similar, toque no ✓ dele: vira a sua escolha, também no Roteiro. Os similares vêm das lojas com busca no próprio site (como Giassi e Angeloni) e aparecem na busca seguinte.

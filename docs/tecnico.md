@@ -251,6 +251,32 @@ Página: o botão `data-sim` liga `estado.lista[i].similares`. `blocoSimilares` 
 
 `alternativas(item)` divide em " ou ". `casa_lista` casa com cada lado e junta (True > parecido > False); `combina` herda. A busca direta e a busca do site buscam cada lado (`unicos` tira os repetidos pelo link). `procura_catalogo` aceita o tipo de qualquer lado. "ou" entrou em `VAZIAS_BUSCA`.
 
+## Correção de digitação
+
+`corrige_palavra(w)`, no jeito do SymSpell:
+
+- **Quando corrige:** com 150 nomes ou mais no vocabulário, palavra de 4 letras ou mais, só letras, que nenhum nome visto usa (`df`) e que não é marca.
+- **Índice:** cada palavra com `df ≥ 2` e cada versão dela sem uma letra (`_apagas1`), refeito quando o vocabulário muda (`corr_de` é o `stats`).
+- **Escolha:** os candidatos são os que dividem alguma versão sem uma letra com a palavra digitada. Vale a de menor distância Damerau-Levenshtein (`_distancia`, até 1 com até 5 letras, até 2 acima), desempatando pela mais usada.
+
+`corrige_texto(t)` corrige cada palavra (menos `VAZIAS_BUSCA` e unidades) e escreve com o acento das lojas (`vocab()["formas"]`, aprendido em `aprende_nomes` e guardado em `vocabulario.json`) e com a maiúscula de quem escreveu.
+
+Onde é usado:
+
+- `GET /api/corrigir?texto=`: o "Quis dizer…?" da página ao adicionar.
+- `relatorio.sugestoes`: os itens sem preço, em `mesclar_resultado` e na busca completa.
+- `busca_direta` e `busca_sites`: tentam o nome corrigido quando o escrito não casa nada.
+
+## Código de barras
+
+- **Leitura na página:** `lerCodigoFoto` usa o `BarcodeDetector` do navegador quando existe. Sem ele, `decodificaEAN`:
+  - **Linhas:** a foto em 1100, 640 e 2200 px no lado maior, com 16 linhas deitadas e 16 em pé (média de 3 pixels), nos dois sentidos.
+  - **Barras:** limiar local (meio entre o mínimo e o máximo numa janela de 1/14 da linha), depois as larguras das corridas.
+  - **Leitura:** em `eanCorridas`, guarda de 3 com zona clara antes, 6 dígitos L/G (a paridade dá o 1º dígito), guarda central de 5, 6 dígitos R, guarda final. O EAN-8 tem 4 dígitos de cada lado.
+  - **Aceite:** o dígito é o padrão de menor distância nas larguras normalizadas para 7 módulos (até 1,6). O código vale com dígito verificador certo e com 2 linhas concordando, ou se for a única leitura.
+- **Produto:** `GET /api/produto-por-codigo?ean=` (`produto_por_ean`) valida o dígito, transforma UPC-A em EAN-13 e recusa código de circulação restrita (13 dígitos começando com 2). Procura primeiro em `busca_vtex(loja, ean)` nas lojas diretas (fixas primeiro), aceitando só o produto com `ean` igual. Depois tenta o Open Food Facts (`OFERTAS_OFF`, `/api/v2/product/{ean}.json`, User-Agent do projeto). `na_lista` diz se o código já é de um item (`ean` na config ou `casados.json`).
+- **Item:** o item da lista ganha `ean`, também no histórico. `eans_da_lista` guarda esse código em `casados.json` no começo da busca direta. Se a busca pelo nome não traz um produto com esse código, `busca_vtex(loja, ean, 5)` traz.
+
 ## Previsor de categorias do Mercado Livre
 
 `GET /sites/MLB/domain_discovery/search?limit=3&q=` com `Authorization: Bearer`. O token vem do OAuth do app da pessoa:

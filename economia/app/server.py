@@ -1802,7 +1802,8 @@ _vocab_trava = threading.Lock()
 def vocab():
     if _vocab["nomes"] is None:
         d = ler_json(VOCAB, {}) or {}
-        _vocab.update(nomes=list(dict.fromkeys(d.get("nomes") or [])), marcas=set(d.get("marcas") or []), mudou=False, assoc={}, stats=None)
+        _vocab.update(nomes=list(dict.fromkeys(d.get("nomes") or [])), marcas=set(d.get("marcas") or []), mudou=False, assoc={}, stats=None,
+                      formas=dict(d.get("formas") or {}) if isinstance(d.get("formas"), dict) else {})
         _vocab["set"] = set(_vocab["nomes"])
     return _vocab
 
@@ -1812,6 +1813,11 @@ def aprende_nomes(nomes, marcas=()):
     v = vocab()
     with _vocab_trava:
         for n in nomes:
+            for w in re.findall(r"[^\W\d_]{4,}", str(n or "").lower()):  # "álcool": a correção mostra com acento
+                k = norm(w)
+                if k != w and v["formas"].get(k) != w and len(v["formas"]) < 30000:
+                    v["formas"][k] = w
+                    v["mudou"] = True
             t = " ".join(w for w in norm(re.sub(UNIDADE_NOME, " ", str(n or ""))).split() if not w.isdigit())
             if len(t.split()) >= 2 and t not in v["set"]:
                 v["set"].add(t)
@@ -1833,7 +1839,7 @@ def grava_vocab():
     v = vocab()
     with _vocab_trava:
         if v["mudou"]:
-            gravar_json(VOCAB, {"nomes": v["nomes"], "marcas": sorted(v["marcas"]), "em": agora()})
+            gravar_json(VOCAB, {"nomes": v["nomes"], "marcas": sorted(v["marcas"]), "formas": v.get("formas") or {}, "em": agora()})
             v.update(mudou=False, assoc={}, stats=None)  # as associações são refeitas com o vocabulário novo
     grava_ml()
 
@@ -1850,6 +1856,77 @@ def stats_vocab():
                 df[t] = df.get(t, 0) + 1
         v["stats"] = (df, primeira)
     return v["stats"]
+
+
+def _apagas1(w):
+    return {w[:i] + w[i + 1:] for i in range(len(w))}
+
+
+def _distancia(a, b, limite=2):
+    """Damerau-Levenshtein (troca de vizinhas conta 1), parando quando passa do limite."""
+    if abs(len(a) - len(b)) > limite:
+        return limite + 1
+    ant2, ant = None, list(range(len(b) + 1))
+    for i in range(1, len(a) + 1):
+        cur = [i] + [0] * len(b)
+        for j in range(1, len(b) + 1):
+            cur[j] = min(ant[j] + 1, cur[j - 1] + 1, ant[j - 1] + (a[i - 1] != b[j - 1]))
+            if ant2 is not None and i > 1 and j > 1 and a[i - 1] == b[j - 2] and a[i - 2] == b[j - 1]:
+                cur[j] = min(cur[j], ant2[j - 2] + 1)
+        if min(cur) > limite:
+            return limite + 1
+        ant2, ant = ant, cur
+    return ant[-1]
+
+
+def corrige_palavra(w):
+    """A palavra do vocabulário que a pessoa quis escrever ("lompeza" → "limpeza"), ou None. Só para palavra de 4 letras
+    ou mais que nenhum produto visto usa. Pelo jeito do SymSpell: as palavras que, tirando uma letra, ficam iguais."""
+    v = vocab()
+    if len(v["nomes"]) < 150 or len(w) < 4 or not w.isalpha() or w in v["marcas"]:
+        return None
+    df, _ = stats_vocab()
+    if df.get(w):
+        return None
+    if v.get("corr_de") is not v["stats"]:  # índice refeito quando o vocabulário muda
+        idx = {}
+        for x, n in df.items():
+            if n >= 2 and len(x) >= 3 and x.isalpha():
+                for d in _apagas1(x) | {x}:
+                    idx.setdefault(d, set()).add(x)
+        v.update(corr_idx=idx, corr_de=v["stats"])
+    idx = v["corr_idx"]
+    cands = set()
+    for d in _apagas1(w) | {w}:
+        cands |= idx.get(d, set())
+    limite = 1 if len(w) <= 5 else 2
+    melhor = None
+    for x in cands:
+        dist = _distancia(w, x, limite)
+        if dist <= limite and (melhor is None or (dist, -df[x]) < (melhor[0], -df[melhor[1]])):
+            melhor = (dist, x)
+    return melhor[1] if melhor else None
+
+
+def corrige_texto(t):
+    """O item com as palavras corrigidas, escrito como a pessoa escreveu (maiúscula, acento das lojas), ou None."""
+    v = vocab()
+    mudou = False
+
+    def troca(m):
+        nonlocal mudou
+        orig = m.group(0)
+        k = norm(orig)
+        if k in VAZIAS_BUSCA or k in UNIDADES:
+            return orig
+        c = corrige_palavra(k)
+        if not c:
+            return orig
+        mudou = True
+        novo = v.get("formas", {}).get(c) or c
+        return novo[:1].upper() + novo[1:] if orig[:1].isupper() else novo
+    out = re.sub(r"[^\W\d_]+", troca, str(t or ""))
+    return out if mudou and norm(out) != norm(t) else None
 
 
 def associadas(w):
@@ -2077,6 +2154,80 @@ def similares_vtex(chave, regiao, item, cand, n=3):
     return sorted(out.values(), key=lambda p: p["preco"] / p["tam"][0])[:n]
 
 
+def eans_da_lista(cfg):
+    """{item normalizado: código de barras} dos itens postos na lista pelo código de barras."""
+    return {norm(nome_item(i)): str(i["ean"]) for i in (cfg.get("lista") or [])
+            if isinstance(i, dict) and nome_item(i) and ean_valido(str(i.get("ean") or ""))}
+
+
+def ean_valido(e):
+    """EAN-8, UPC-A (12), EAN-13 ou GTIN-14 com o dígito verificador certo."""
+    if not re.fullmatch(r"\d{8}|\d{12,14}", e or ""):
+        return False
+    d = [int(x) for x in e]
+    soma = sum(x * (3 if i % 2 == 0 else 1) for i, x in enumerate(reversed(d[:-1])))
+    return (10 - soma % 10) % 10 == d[-1]
+
+
+def sugestoes_para(nomes):
+    """{item: item corrigido} dos itens sem preço que parecem digitados errado."""
+    out = {}
+    for n in nomes[:40]:
+        try:
+            c = corrige_texto(n)
+        except Exception:  # noqa: BLE001
+            c = None
+        if c:
+            out[n] = c
+    return out
+
+
+OFF_API = os.environ.get("OFERTAS_OFF", "https://world.openfoodfacts.org")
+
+
+def produto_por_ean(ean, cfg):
+    """O produto de um código de barras: primeiro nas lojas com busca direta (nome, preço e link da loja do CEP), depois
+    no Open Food Facts (base aberta, só o nome). Diz também se o código já é de um item da lista."""
+    ean = re.sub(r"\D", "", str(ean or ""))
+    if len(ean) == 12:
+        ean = "0" + ean  # UPC-A é um EAN-13 que começa com 0
+    if not ean_valido(ean):
+        return {"ok": False, "msg": "Esse número não é um código de barras válido. Confira os dígitos."}
+    if len(ean) == 13 and ean[0] == "2":
+        return {"ok": False, "ean": ean, "msg": "É um código de balança ou da própria loja: só vale lá. Escreva o nome do produto."}
+    na_lista = [nome_item(i) for i in (cfg.get("lista") or []) if isinstance(i, dict) and str(i.get("ean") or "") == ean]
+    na_lista += [k for k, v in casados().items() if ean in (v.get("eans") or []) and k not in map(norm, na_lista)]
+    for k, loja in sorted(todas_diretas().items(), key=lambda kv: not kv[1].get("fixa")):
+        try:
+            reg = regiao_direta(k, cfg.get("cep"))[0] if cfg.get("cep") else None
+            achou = [c for c in busca_vtex(k, ean, reg, 5) if c.get("ean") == ean]
+        except Exception:  # noqa: BLE001
+            continue
+        if achou:
+            c = achou[0]
+            return {"ok": True, "ean": ean, "nome": c["nome"], "fonte": loja["nome"], "preco": c["preco"], "link": c["link"], "na_lista": na_lista[:1]}
+    try:
+        req = urllib.request.Request(f"{OFF_API}/api/v2/product/{ean}.json?fields=product_name,product_name_pt,brands,quantity",
+                                     headers={"User-Agent": "EconomIA (Home Assistant; +https://github.com/diegozapella63/economia-ha)", "Accept": "application/json"})
+        with urllib.request.urlopen(req, timeout=12) as r:
+            d = json.loads(r.read(500_000).decode("utf-8") or "{}")
+    except Exception:  # noqa: BLE001
+        d = {}
+    p = d.get("product") if isinstance(d, dict) and d.get("status") == 1 else None
+    if isinstance(p, dict):
+        nome = texto(p.get("product_name_pt") or p.get("product_name"), 80) or ""
+        marca = texto(str(p.get("brands") or "").split(",")[0], 30) or ""
+        qtd = texto(p.get("quantity"), 20) or ""
+        if marca and norm(marca) not in norm(nome):
+            nome = (nome + " " + marca).strip()
+        if qtd and not tamanho_nome(nome):
+            nome = (nome + " " + qtd).strip()
+        if nome:
+            return {"ok": True, "ean": ean, "nome": nome, "fonte": "Open Food Facts", "na_lista": na_lista[:1]}
+    return {"ok": False, "ean": ean, "na_lista": na_lista[:1],
+            "msg": "Não achei esse código nas lojas nem no Open Food Facts. Escreva o nome como está na embalagem: o código fica guardado no item."}
+
+
 def quer_similares(cfg):
     return {norm(nome_item(i)) for i in (cfg.get("lista") or []) if isinstance(i, dict) and i.get("similares") and nome_item(i)}
 
@@ -2175,6 +2326,9 @@ def busca_direta(cfg, itens=None, cats=("mercados",)):
     todas = {k: v for k, v in todas_diretas().items() if (v.get("categoria") or "mercados") in cats or not v.get("fixa")}
     achados, lojas, sims = {}, {}, {}  # categoria -> item -> loja -> [candidatos]; categoria -> lojas; similares do mesmo jeito
     com_sim = quer_similares(cfg)
+    ean_item = eans_da_lista(cfg)  # o código de barras lido na hora de pôr na lista
+    for nome, e in ean_item.items():
+        guarda_casados(nome, [e])
     pode = set(cats) | ({"online"} if entrega_ligada(cfg) and "online" in (cfg.get("categorias") or list(CATEGORIAS)) else set())
     for k, loja in todas.items():
         cat_id = (loja.get("categoria") or "mercados") if loja.get("fixa") else categoria_da_loja(loja["nome"], perto)
@@ -2199,7 +2353,15 @@ def busca_direta(cfg, itens=None, cats=("mercados",)):
                 if not cand and nucleos:  # "álcool perfumado": busca "álcool" e fica com os que combinam
                     res = unicos(res + [c for t in nucleos for c in busca_vtex(k, t, reg, 40)])
                     cand = [c for c, ok in zip(res, casa_lista(nome, [c["busca_em"] for c in res])) if ok]
+                if not cand and corrige_texto(nome):  # "Álcool de lompeza": busca como "Álcool de limpeza"
+                    corr = corrige_texto(nome)
+                    res2 = busca_vtex(k, corr, reg)
+                    cand = [c for c, ok in zip(res2, casa_lista(corr, [c["busca_em"] for c in res2])) if ok]
+                    res = unicos(res + res2)
                 eans = set((casados().get(norm(nome)) or {}).get("eans") or [])
+                e_item = ean_item.get(norm(nome))
+                if e_item and not any(c.get("ean") == e_item for c in res):  # o produto do código de barras, pelo próprio código
+                    res = unicos(res + [c for c in busca_vtex(k, e_item, reg, 5) if c.get("ean") == e_item])
                 cand += [c for c in res if c.get("ean") in eans and c not in cand]  # o mesmo produto achado antes, por código de barras
                 cand, firmes = filtra_secao(nome, k, cand, eans)
                 # só o casamento firme (nome ou vocabulário inicial) ensina o código de barras e a seção
@@ -4107,6 +4269,8 @@ def busca_sites(cfg, itens=None, cats=None):
         for nome in nomes:
             try:
                 ofs = [dict(o, _q=a) for a in alternativas(nome) for o in busca_do_site(origem, m, a)]  # "asa ou sobrecoxa": cada lado
+                if not ofs and corrige_texto(nome):  # digitado errado: tenta como deve ser
+                    ofs = [dict(o, _q=corrige_texto(nome)) for o in busca_do_site(origem, m, corrige_texto(nome))]
             except Exception as e:  # noqa: BLE001
                 log(f"busca do site de {m['nome']}: {e}")
                 break
@@ -5433,6 +5597,7 @@ def buscar():
             except ErroBusca as e:
                 log(f"busca dos itens sem preço: {e}")
         relatorio["sem_preco"] = [n for n in nomes_da_lista(cfg) if n not in lista]
+        relatorio["sugestoes"] = sugestoes_para(relatorio["sem_preco"])
         relatorio["falhas"] = falhas
         relatorio["chamadas_ia"] = _uso_local.chamadas
         BUSCA["chamadas_ia"] = _uso_local.chamadas
@@ -5503,6 +5668,7 @@ def mesclar_resultado(resultado, cfg, extra=None, mapa=None, completa=False, nov
         lista = juntar_categorias(parciais)
         relatorio = anterior.get("relatorio") if isinstance(anterior.get("relatorio"), dict) else {}
         relatorio["sem_preco"] = [n for n in nomes_da_lista(cfg) if n not in lista]
+        relatorio["sugestoes"] = sugestoes_para(relatorio["sem_preco"])
         for k, v in (extra or {}).items():
             if k in ("diretas", "shopee", "folhetos"):
                 relatorio[k] = v
@@ -5898,7 +6064,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.18.0"
+    server_version = "EconomIA/0.19.0"
 
     def log_message(self, fmt, *args):
         pass
@@ -5986,6 +6152,15 @@ class Painel(BaseHTTPRequestHandler):
                              "instagram": {"tem_chave": bool(ig.get("token")), "usuario": ig.get("usuario")}, "brave": {"tem_chave": bool(brave_chave())},
                              "ml": {"app_id": str(ml.get("app_id") or ""), "tem_senha": bool(ml.get("secret")), "url_retorno": str(ml.get("url_retorno") or ""),
                                     "conectado": ml_ligado(), "autorizar": ml_autorizar_url(ml), "erro": _ml["erro"]}})
+        elif rota == "/api/corrigir":
+            t = (urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("texto") or [""])[0][:120]
+            self._json(200, {"texto": corrige_texto(t)})
+        elif rota == "/api/produto-por-codigo":
+            ean = (urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("ean") or [""])[0]
+            try:
+                self._json(200, produto_por_ean(ean, ler_config()))
+            except Exception as e:  # noqa: BLE001
+                self._json(200, {"ok": False, "msg": f"Não consegui procurar agora ({e})."})
         elif rota == "/api/lojas-mapa/teste":
             self._json(200, SONDA)
         elif rota == "/api/lojas-mapa":
