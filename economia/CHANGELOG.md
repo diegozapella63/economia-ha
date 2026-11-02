@@ -1,5 +1,14 @@
 # Mudanças
 
+## 0.17.5
+
+- **Fort (e outras lojas do bairro) nos preços como loja física, não online.** Duas coisas mandavam o preço para Online:
+  - **Categoria guardada:** o teste do site guardava a categoria com que a loja foi vista primeiro. O Fort tinha aparecido antes como "mercado da região que entrega" e continuava online.
+  - **Limite de 20 lojas:** a lista de lojas do bairro usada nessa decisão parava nas 20 primeiras em ordem alfabética.
+  
+  Agora a categoria vem das lojas do raio na hora da busca, todas elas, e das que você cadastrou. Só fica online quem não está entre elas. Vale para as páginas de produto, a busca do site e a busca direta.
+- O preço antigo da mesma loja em outra categoria também sai quando ela é consultada de novo: o "Fort Atacadista · Online" de R$ 4,59 no papel toalha some depois da próxima busca.
+
 ## 0.17.4
 
 - **Escolher esse:** cada loja nos preços do item e cada linha do Comparar tamanhos têm um botão ✓. A opção escolhida, mesmo que não seja a mais barata, vira **Sua escolha** no alto do item, com o aviso de qual é a mais barata e o **Desfazer escolha**. Ela também vale no Roteiro: o item vai para a loja escolhida. Se a loja não trouxer a opção na busca seguinte, o item avisa.

@@ -917,6 +917,36 @@ def lojas_perto(cfg):
     return sorted(set(out))[:20]
 
 
+def lojas_perto_cat(cfg):
+    """{nome normalizado: categoria} de todas as lojas físicas do raio (sem o limite de 20 do texto para a IA) e das
+    que o morador cadastrou."""
+    of = ler_json(OFERTAS, {}) or {}
+    try:
+        raio = float(cfg.get("raio_km") or 2)
+    except (TypeError, ValueError):
+        raio = 2.0
+    out = {}
+    for c in of.get("categorias") or []:
+        if not isinstance(c, dict) or c.get("id") in (None, "online"):
+            continue
+        nomes = {r.get("id"): r.get("nome") for r in c.get("redes") or [] if isinstance(r, dict)}
+        for l in c.get("lojas") or []:
+            d = l.get("distancia_km") if isinstance(l, dict) else None
+            if isinstance(d, (int, float)) and d <= raio and nomes.get(l.get("rede")):
+                out.setdefault(norm(nomes[l["rede"]]), c["id"])
+    for a in ((cfg.get("lojas") or {}).get("adicionar") or []):
+        if isinstance(a, dict) and texto(a.get("nome"), 60) and a.get("categoria") in ("mercados", "farmacias", "petshops"):
+            out.setdefault(norm(texto(a["nome"], 60).split(",")[0]), a["categoria"])
+    return out
+
+
+def categoria_da_loja(nome, perto):
+    """Loja que está entre as do bairro fica na categoria dela (mesmo que antes tenha sido vista só como "mercado que
+    entrega"); a que não está é online, porque entrega."""
+    k = norm(nome)
+    return perto.get(k) or next((c for n, c in perto.items() if mesma_loja(n, nome)), None) or "online"
+
+
 def entrega_txt(cfg):
     if not entrega_ligada(cfg):
         return ""
@@ -1995,9 +2025,14 @@ def busca_direta(cfg, itens=None, cats=("mercados",)):
     nomes = itens or nomes_da_lista(cfg)
     if not nomes or not cfg.get("cep"):
         return []
-    todas = {k: v for k, v in todas_diretas().items() if (v.get("categoria") or "mercados") in cats}
+    perto = lojas_perto_cat(cfg)
+    todas = {k: v for k, v in todas_diretas().items() if (v.get("categoria") or "mercados") in cats or not v.get("fixa")}
     achados, lojas = {}, {}  # categoria -> item -> loja -> [candidatos]; categoria -> lojas
+    pode = set(cats) | ({"online"} if entrega_ligada(cfg) and "online" in (cfg.get("categorias") or list(CATEGORIAS)) else set())
     for k, loja in todas.items():
+        cat_id = (loja.get("categoria") or "mercados") if loja.get("fixa") else categoria_da_loja(loja["nome"], perto)
+        if cat_id not in pode:
+            continue
         try:
             reg, unidade = regiao_direta(k, cfg.get("cep"))
         except Exception as e:  # noqa: BLE001
@@ -2006,7 +2041,6 @@ def busca_direta(cfg, itens=None, cats=("mercados",)):
         if not reg:
             log(f"busca direta {loja['nome']}: não atende o CEP {cfg.get('cep')}")
             continue
-        cat_id = loja.get("categoria") or "mercados"
         BUSCA["etapa"] = "preços no site · " + loja["nome"]
         n = 0
         for nome in nomes:
@@ -3392,16 +3426,12 @@ def busca_catalogos(cfg, itens=None, cats=None):
     """Preço dos itens da lista nas lojas que só deixam abrir as páginas de produto. Devolve [(categoria, parcial)]."""
     nomes = (itens or nomes_da_lista(cfg))[:40]
     memo = ler_json(LOJAS_SITE, {}) or {}
-    perto = {norm(n) for n in lojas_perto(cfg)}
-    perto |= {norm(texto(a["nome"], 60).split(",")[0]) for a in ((cfg.get("lojas") or {}).get("adicionar") or [])
-              if isinstance(a, dict) and texto(a.get("nome"), 60)}  # loja que o morador cadastrou: é do bairro
+    perto = lojas_perto_cat(cfg)
     lojas = [(o, m) for o, m in memo.items() if m.get("nome") and m.get("paginas") and not (m.get("vtex") and m.get("permite"))
              and not m.get("marketplace") and not e_marketplace(m["nome"])]  # o sitemap de marketplace tem milhões de páginas
     out = []
     for origem, m in lojas[:MAX_CATALOGOS]:
-        cat_id = m.get("categoria") or "mercados"
-        if cat_id != "online" and norm(m["nome"]) not in perto:
-            cat_id = "online"  # fora do raio: mercado que entrega
+        cat_id = categoria_da_loja(m["nome"], perto)  # fora do raio: mercado que entrega
         if cats and cat_id not in cats:
             continue
         BUSCA["etapa"] = "lista de produtos · " + m["nome"]
@@ -3679,14 +3709,10 @@ def busca_sites(cfg, itens=None, cats=None):
     """Itens da lista pela busca do próprio site das lojas onde ela funcionou no teste. Devolve [(categoria, parcial)]."""
     nomes = (itens or nomes_da_lista(cfg))[:ITENS_BUSCA_SITE]
     memo = ler_json(LOJAS_SITE, {}) or {}
-    perto = {norm(n) for n in lojas_perto(cfg)}
-    perto |= {norm(texto(a["nome"], 60).split(",")[0]) for a in ((cfg.get("lojas") or {}).get("adicionar") or [])
-              if isinstance(a, dict) and texto(a.get("nome"), 60)}
+    perto = lojas_perto_cat(cfg)
     out = []
     for origem, m in [(o, m) for o, m in memo.items() if m.get("busca") and m.get("nome")][:MAX_SITES_BUSCA]:
-        cat_id = m.get("categoria") or "mercados"
-        if cat_id != "online" and norm(m["nome"]) not in perto:
-            cat_id = "online"  # fora do raio: loja que entrega
+        cat_id = "online" if m.get("marketplace") else categoria_da_loja(m["nome"], perto)  # fora do raio: loja que entrega
         if cats and cat_id not in cats:
             continue
         BUSCA["etapa"] = "busca do site · " + m["nome"]
@@ -4996,6 +5022,8 @@ def mesclar_resultado(resultado, cfg, extra=None, mapa=None, completa=False, nov
             buscados, redes_b = set(cat.get("_buscados") or []), set(cat.get("_redes_buscadas") or [])
             if not buscados or not redes_b:
                 continue
+            # a mesma loja em outra categoria também sai: o Fort que era "mercado que entrega" e agora é loja do bairro
+            redes_b |= {pre + rid[5:] for rid in list(redes_b) for pre in ("merc-", "farm-", "pets-", "onli-") if len(rid) > 5}
             for prod, ent in base.items():
                 if norm(prod) not in buscados:
                     continue
@@ -5411,7 +5439,7 @@ def exportar(formato):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.17.4"
+    server_version = "EconomIA/0.17.5"
 
     def log_message(self, fmt, *args):
         pass

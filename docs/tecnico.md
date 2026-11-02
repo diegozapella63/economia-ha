@@ -195,6 +195,10 @@ Para lojas sem busca direta e sem sitemap, `testa_preco_loja` lê a página do s
 
 `config.historico` (até 300): `{produto, compras, saiu}`. `vaiProHistorico` recebe o que sai da lista (remover, Limpar lista) e junta as compras se o item já estava lá; com mais de 300, ficam os mais comprados e os que saíram por último. `entraNaLista(nome)` é usado pelo Adicionar, pelos itens das fotos e pelo toque no histórico: tira do histórico e devolve as compras. O Desfazer do Limpar tira do histórico o que voltou. `pintaHist` ordena pelos mais comprados (depois a última compra e a saída), esconde o que já está na lista e filtra pelo que está escrito em `#novoItem`; o número no botão é o total.
 
+## Categoria da loja nos preços sem IA
+
+`lojas_perto_cat(cfg)` dá `{nome normalizado: categoria}` de todas as lojas físicas do raio (sem o limite de 20 de `lojas_perto`, que é só para o texto da IA) e das cadastradas pelo morador. `categoria_da_loja(nome, perto)` usa esse mapa (também por `mesma_loja`) e devolve "online" para quem não está nele. `busca_catalogos`, `busca_sites` (marketplace é sempre online) e `busca_direta` (só as VTEX achadas; Giassi e Angeloni continuam fixos) usam isso no lugar da categoria guardada em `lojas_site.json`. Na troca do preço antigo, `mesclar_resultado` também tira o id da mesma loja nas outras categorias (`merc-`, `farm-`, `pets-`, `onli-` + o mesmo slug).
+
 ## Atacarejos no mapa
 
 `GOOGLE_BUSCA["mercados"]` inclui "atacadista". Em `google_varredura`, lugar sem tipo de mercado (`GOOGLE_TIPOS`) ainda entra se o nome bater com `ATACAREJO` (atacad…, atacarejo, Assaí, Makro, Komprão), não bater com `ATACADO_FORA` (pisos, embalagens, construção, roupas, bebidas…) e tiver um tipo de `TIPOS_ATACADO` (wholesaler, warehouse_store, food_store, discount_store). Loja de site com preço que não está entre as lojas perto (`lojas_perto`) continua indo para Online como mercado que entrega.
