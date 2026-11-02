@@ -1,5 +1,11 @@
 # Mudanças
 
+## 0.17.6
+
+- **Item com uma palavra que a loja não usa, como "Álcool perfumado de cozinha":** nenhum álcool tem "cozinha" no nome, e item de até 3 palavras precisava de todas. Agora, quando nenhum produto casa inteiro, vale o **parecido**: só falta uma palavra, e nenhum produto daquele tipo na loja a usa. Assim o "Álcool Araras Bactericida Eucalipto" entra para o álcool perfumado de cozinha, e o nome do produto aparece no item para você conferir.
+- Palavras de restrição nunca ficam de fora: lactose, glúten, açúcar, diet, light, zero, integral, desnatado, orgânico, sódio, filhote, castrado, gato e cachorro, entre outras. "Leite sem lactose" continua sem casar com leite comum.
+- O parecido não guarda o código de barras: ele não é usado para reconhecer o produto em outra loja.
+
 ## 0.17.5
 
 - **Fort (e outras lojas do bairro) nos preços como loja física, não online.** Duas coisas mandavam o preço para Online:
