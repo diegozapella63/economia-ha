@@ -1,5 +1,13 @@
 # Mudanças
 
+## 0.20.0
+
+- **Conversa com a IA:** um balão ao lado do microfone, no alto da tela. Pergunte sobre a tela aberta ou sobre qualquer assunto, a qualquer momento.
+  - A IA vê a sua lista com os preços, o que você mais compra, as ofertas e os cupons das lojas que você acompanha, e quem mora na casa.
+  - Ela só sugere: **Pôr na lista**, **Tirar da lista**, **Comprei hoje**, **Buscar o preço** ou **Abrir** uma tela viram botões, e nada muda sem o seu toque.
+  - Tem sugestões de pergunta para cada tela e microfone próprio (o que você fala vai para a caixa, para conferir antes de enviar).
+  - Usa uma tarefa de IA do Home Assistant, nunca um assistente de conversa, que poderia mexer na casa. Some com **Usar IA** desligado. Conta em **Uso da IA** como "Conversa".
+
 ## 0.19.0
 
 - **Código de barras:** botão ao lado do Adicionar, na Minha lista.

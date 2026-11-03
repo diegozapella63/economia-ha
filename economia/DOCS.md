@@ -30,13 +30,21 @@ O microfone fica no alto da tela, à direita (e em **Minha lista › Falar**). F
 
 Em **Mais › Integrações › IA do Home Assistant**, a linha **Falar** mostra se está pronto e com qual fala para texto. O microfone some com **Usar IA** desligado. No app do celular, permita o microfone para o app Home Assistant; no navegador, o Home Assistant precisa estar num endereço com https.
 
+## Conversa com a IA
+
+O balão ao lado do microfone abre a **Conversa**: pergunte sobre a tela aberta ("onde a compra fica mais barata?", "tem cupom bom agora?") ou sobre qualquer assunto. A IA recebe a data, a tela, quem mora na casa, a sua lista com os preços da última busca, o que você mais compra, as ofertas e os cupons das lojas que você acompanha. Ela responde em texto.
+
+A IA não muda nada sozinha. Quando ajuda, ela sugere ações em botões: **Pôr na lista**, **Tirar da lista**, **Comprei hoje**, **Buscar o preço** e **Abrir** uma tela. Só acontece quando você toca, e o botão fica marcado. O microfone da conversa põe o que você falou na caixa, para conferir antes de enviar.
+
+A conversa usa a tarefa de IA de "Para ler fotos" (ou a de buscar ofertas, ou a preferida do Home Assistant), nunca um assistente de conversa, que poderia mexer na casa. Fica guardada neste aparelho até você tocar em **Nova conversa**. No celular ela sobe de baixo; no computador, abre numa janela no canto. Com **Usar IA** desligado, o balão some.
+
 ## No celular
 
 Arraste para o lado para trocar de aba: Minha lista ⇄ Roteiro ⇄ Ofertas ⇄ Mais. Começando na borda da tela vale o Voltar do celular.
 
 ## No computador
 
-Com a tela de 1000 pixels ou mais, as abas de baixo viram uma **barra lateral** com Minha lista (com o número de itens acabando), Roteiro, Ofertas, Mais, o botão **Buscar ofertas** e as ofertas por tipo de loja. No alto à direita ficam **Falar**, **Ler com IA** e **Adicionar item**. As seções ficam direto na página, com título grande e ícone, e o cupom de economia fica ao lado das oportunidades. No celular e no tablet nada muda.
+Com a tela de 1000 pixels ou mais, as abas de baixo viram uma **barra lateral** com Minha lista (com o número de itens acabando), Roteiro, Ofertas, Mais, o botão **Buscar ofertas** e as ofertas por tipo de loja. No alto à direita ficam **Conversa**, **Falar**, **Ler com IA** e **Adicionar item**. As seções ficam direto na página, com título grande e ícone, e o cupom de economia fica ao lado das oportunidades. No celular e no tablet nada muda.
 
 ## Itens por foto ou mensagem
 
@@ -181,7 +189,7 @@ Também dá para usar uma lista do **Google Tasks** conectada ao Home Assistant 
 
 ## Uso da IA e sensores
 
-Em **Mais › Integrações › Uso da IA**: as chamadas de hoje, dos últimos 7 dias e do mês, o gráfico por dia, o tipo de uso (busca, itens sem preço, encartes, fotos, cupons, Falar e testes), erros e cota excedida, e as últimas chamadas. Para economizar a cota, desligue em **Mais › Opções** a busca extra dos itens sem preço e a leitura automática de encartes.
+Em **Mais › Integrações › Uso da IA**: as chamadas de hoje, dos últimos 7 dias e do mês, o gráfico por dia, o tipo de uso (busca, itens sem preço, encartes, fotos, cupons, Falar, Conversa e testes), erros e cota excedida, e as últimas chamadas. Para economizar a cota, desligue em **Mais › Opções** a busca extra dos itens sem preço e a leitura automática de encartes.
 
 **Sensores no Home Assistant** vem desligado. Ligado, o app cria o `sensor.economia_ia_hoje`, com as chamadas de hoje e os detalhes nos atributos; desligado, apaga o sensor.
 
