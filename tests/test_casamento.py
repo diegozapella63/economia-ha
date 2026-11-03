@@ -144,6 +144,34 @@ class TipoAprendido(Base):
         self.assertEqual(len(S.vocab()["nomes"]), n)
 
 
+class VocabularioBordas(Base):
+    """O vocabulário fica com os nomes mais recentes e as palavras associadas (variantes que andam junto de uma palavra)."""
+
+    def test_vocabulario_fica_com_os_mais_recentes(self):
+        S = self.S
+        S.MAX_NOMES_VOCAB = 5
+        S.aprende_nomes([f"Produto {chr(97 + i)}{chr(97 + i)}{chr(97 + i)} Bom" for i in range(8)])
+        v = S.vocab()
+        self.assertEqual(v["nomes"], [f"produto {chr(97 + i) * 3} bom" for i in range(3, 8)])
+        self.assertNotIn("produto aaa bom", v["set"])
+
+    def test_palavras_associadas(self):
+        S = self.S
+        letras = lambda i: chr(97 + i // 26) + chr(97 + i % 26)  # noqa: E731
+        nomes = [f"biscoito sabor{letras(i)}" for i in range(200)]
+        nomes += [f"pacote extra{letras(i)}" for i in range(20)]
+        nomes += ["amaciante concentrado brisa", "amaciante concentrado lavanda pacote", "amaciante diluido brisa",
+                  "amaciante concentrado talco pacote", "amaciante comfort concentrado pacote", "amaciante ype concentrado"]
+        v = S.vocab()
+        v.update(nomes=nomes, set=set(nomes), stats=None, assoc={})
+        v["marcas"].update({"ype", "comfort"})
+        self.assertEqual(S.associadas("amaciante"), {"concentrado"}, "brisa aparece pouco; pacote é comum demais; marca não conta")
+        self.assertIs(S.associadas("amaciante"), v["assoc"]["amaciante"], "fica guardado")
+        self.assertEqual(S.associadas("talco"), set(), "palavra que aparece em menos de 3 nomes")
+        v.update(nomes=nomes[:50], assoc={}, stats=None)
+        self.assertEqual(S.associadas("amaciante"), set(), "vocabulário pequeno: nada")
+
+
 class Correcao(Base):
     def test_corrige_com_acento_e_maiuscula(self):
         S = self.S

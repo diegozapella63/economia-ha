@@ -1461,7 +1461,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       </div>
     </section>
     </div>
-    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.20.0</span></p>
+    <p class="foot"><b>EconomIA</b><br><span id="versaoTxt">v0.20.1</span></p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -3548,6 +3548,8 @@ html:not(.sem-ia) .so-semia{display:none!important}
     };
     var html = ativas.map(function(c){ return grupo(c, 'local'); }).join('');
     if (TERMO_LOJA || aba === 'online') html += todasAtivas.filter(function(c){ return c.id !== 'online'; }).map(function(c){ return grupo(c, 'semLocal'); }).join('');
+    // sem a aba Online (a busca ainda não trouxe nada online), as lojas sem localização ficam na aba delas
+    else if (!todasAtivas.some(function(c){ return c.id === 'online'; })) html += ativas.map(function(c){ return grupo(c, 'semLocal'); }).join('');
     $('lojasCats').innerHTML = html || (TERMO_LOJA ? '<p class="hint">Nenhuma loja com esse nome.</p>' : SO_SEM_FONTE ? '<p class="hint">Todas as lojas têm fonte de preço.</p>' : '');
     $('clubeSemIA').hidden = iaOn() || !estado.clubes.length;
     var nSem = contaSemFonte(todasAtivas);
@@ -4429,7 +4431,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 0.20.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 0.20.1' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

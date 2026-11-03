@@ -23,8 +23,9 @@ ResolvIA (tarefas), CronologIA (agenda), GerencIA (finanças), InventarIA (cômo
 ## Rodar e testar
 
 ```bash
-python3 -m unittest discover -s tests -p "test_*.py"     # unitários e integração (~30 s, só Python)
-tests/e2e/run.sh                                          # visuais (pip install playwright; python3 -m playwright install chromium)
+python3 -m unittest discover -s tests -p "test_*.py"     # unitários e integração (511, ~1 min, só Python)
+tests/e2e/run.sh                                          # visuais (15 telas; pip install playwright; python3 -m playwright install chromium)
+python3 tools/cobertura.py --linhas                       # cobertura de linhas (99%; o GitHub exige 97%)
 python3 tools/montar_pagina.py --conferir                 # a página do add-on está em dia com a fonte?
 ```
 
@@ -37,7 +38,8 @@ OFERTAS_DATA=/tmp/economia OFERTAS_PORT=8099 OFERTAS_ALLOW_ALL=1 python3 economi
 Variáveis só para testes: `OFERTAS_VTEX_TESTE` (lojas VTEX falsas), `OFERTAS_ML_API`/`OFERTAS_ML_AUTH` (Mercado Livre),
 `OFERTAS_OFF` (Open Food Facts), `OFERTAS_SHOPEE_API`, `OFERTAS_OVERPASS`, `OFERTAS_GOOGLE_PLACES`, `OFERTAS_BRAVE`,
 `OFERTAS_GRAPH`, `OFERTAS_HA_API`/`OFERTAS_HA_WS`, `OFERTAS_CASA`, `OFERTAS_VOZ_SIMULADA`. O `tests/apoio.py` tem as
-lojas falsas (`LojasFalsas`) e carrega o servidor numa pasta de dados temporária (`servidor()`).
+lojas falsas (`LojasFalsas`) e carrega o servidor numa pasta de dados temporária (`servidor()`); o `tests/ha_falso.py`
+é o Home Assistant falso (IA, listas, fala para texto). Veja `tests/README.md`.
 
 Toda mudança de comportamento vem com teste. Bug corrigido ganha o teste que o pegaria.
 

@@ -23,7 +23,7 @@ class LerLista(Cenario):
         return self.espera(lambda: self.S.LEITURAS[job] if self.S.LEITURAS[job]["status"] != "lendo" else None, msg="a leitura não terminou")
 
     def test_mensagem_colada(self):
-        S, ha = self.S, self.ha
+        ha = self.ha
         self.config(lista=[{"produto": "Leite integral 1 L"}, {"produto": "Café Pilão 500 g"}])
         ha.responde_ia("ler lista", {"itens": [{"produto": "leite integral 1 l", "quantidade": "2"}, {"produto": "Detergente Ypê", "obs": "neutro"},
                                                {"produto": "Detergente Ypê"}, {"produto": "x"}, "lixo", {"quantidade": "3"}]})
@@ -90,6 +90,58 @@ class LerLista(Cenario):
         r = self.ler({"texto": "nada"})
         self.assertEqual(r["itens"], [])
         self.assertLessEqual(len(S.LEITURAS), 21)
+
+
+class LeituraBordas(Cenario):
+    """A pasta de mídia que não dá para usar, o erro inesperado ao ler (lista e encarte) e fotos que não são base64."""
+
+    def espera_job(self, job):
+        return self.espera(lambda: self.S.LEITURAS[job] if self.S.LEITURAS[job]["status"] != "lendo" else None, msg="a leitura não terminou")
+
+    def test_pasta_de_midia_que_nao_da_para_usar(self):
+        S = self.S
+        self.config()
+        arq = os.path.join(S.DATA, "nao-e-pasta")
+        open(arq, "w").close()
+        S.MEDIA = arq
+        r = self.espera_job(S.comeca_leitura({"imagens": [data_url(PNG)]}))
+        self.assertEqual((r["status"], r["erro"]), ("erro", "O add-on não consegue usar a pasta de mídia do Home Assistant. Reinstale a versão mais nova."))
+        self.assertEqual(self.ha.chamadas_ia, [], "nem chega à IA")
+
+    def test_erro_inesperado_ao_ler(self):
+        S, ha = self.S, self.ha
+        self.config()
+        ha.responde_ia("ler lista", {"itens": [{"produto": "Leite integral"}]})
+        S.texto = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("texto quebrou"))
+        r = self.espera_job(S.comeca_leitura({"texto": "leite"}))
+        self.assertEqual((r["status"], r["erro"]), ("erro", "Erro inesperado ao ler: texto quebrou"))
+        self.assertIn("Erro inesperado ao ler: texto quebrou", self.log)
+
+    def test_erro_inesperado_no_encarte(self):
+        S, ha = self.S, self.ha
+        self.config()
+        ha.responde_ia("encarte", {"ofertas": [{"produto": "Café", "preco": 9}]})
+        S.mesclar_resultado = lambda *a, **k: (_ for _ in ()).throw(KeyError("lista"))
+        r = self.espera_job(S.comeca_encarte({"imagens": [data_url(JPG, "image/jpeg")], "loja": "Giassi"}))
+        self.assertEqual((r["status"], r["erro"]), ("erro", "Erro inesperado ao ler: 'lista'"))
+        self.assertEqual(os.listdir(os.path.join(S.MEDIA, "economia")), [], "a foto é apagada mesmo assim")
+
+    def test_guarda_so_os_ultimos_encartes(self):
+        S, ha = self.S, self.ha
+        self.config()
+        ha.responde_ia("encarte", {"ofertas": []})
+        for i in range(25):
+            S.LEITURAS[f"0000{i:02d}-x"] = {"status": "pronto", "itens": [], "erro": None}
+        self.espera_job(S.comeca_encarte({"imagens": [data_url(JPG, "image/jpeg")], "loja": "Giassi"}))
+        self.assertLessEqual(len(S.LEITURAS), 21)
+        self.assertNotIn("000000-x", S.LEITURAS, "as mais antigas saem")
+
+    def test_fotos_que_nao_sao_base64(self):
+        S = self.S
+        self.config()
+        ruins = ["data:image/png;base64,abc", "data:image/gif;base64," + base64.b64encode(PNG).decode(), "http://x/foto.png"]
+        self.assertIsNone(S.comeca_leitura({"imagens": ruins}))
+        self.assertIsNone(S.comeca_encarte({"imagens": ruins, "loja": "Giassi"}))
 
 
 class Cupons(Cenario):
@@ -209,6 +261,26 @@ class EncarteDoSite(Cenario):
         ha.responde_ia("encarte", {"validade": "2020-01-01", "ofertas": [{"produto": "Café", "preco": 9}]})
         with self.assertRaisesRegex(S.ErroBusca, "o encarte do site é antigo: venceu em 01/01/2020"):
             S.ler_encarte(self.loja("/mb/encarte"), {})
+
+    def test_limites_de_arquivos_e_tamanho(self):
+        S, ha, lj = self.S, self.ha, self.lojas
+        self.config()
+        ha.responde_ia("encarte", {"ofertas": []})
+        grande = b"\xff\xd8" + b"\1" * 50000
+        imgs = "".join(f'<img src="/mb/p{i}.jpg">' for i in range(8))
+        pdfs = "".join(f'<a href="/mb/e{i}.pdf">PDF</a>' for i in range(3))
+        lj.paginas["/mb/muitas"] = (200, f"<html><body>{pdfs}{imgs}<img src='/mb/enorme.jpg'></body></html>", "text/html")
+        for i in range(8):
+            lj.paginas[f"/mb/p{i}.jpg"] = (200, grande, "image/jpeg")
+        for i in range(3):
+            lj.paginas[f"/mb/e{i}.pdf"] = (200, b"%PDF-1.4 " + bytes([48 + i]), "application/pdf")
+        S.ler_encarte(self.loja("/mb/muitas"), {})
+        tipos = [a["media_content_type"] for a in ha.chamadas_ia[-1]["attachments"]]
+        self.assertEqual(tipos, ["application/pdf", "application/pdf", "image/jpeg", "image/jpeg", "image/jpeg", "image/jpeg"],
+                         "até 2 PDFs e 6 arquivos por encarte")
+        lj.paginas["/mb/gigante.pdf"] = (200, b"%PDF-1.4 " + b"0" * (3 * 1024 * 1024), "application/pdf")
+        with self.assertRaisesRegex(S.ErroBusca, r"não consegui abrir o site \(arquivo grande demais\)"):
+            S.ler_encarte(self.loja("/mb/gigante.pdf"), {})
 
     def test_juntar_encarte_a_categoria(self):
         S = self.S

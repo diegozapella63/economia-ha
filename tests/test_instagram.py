@@ -188,3 +188,55 @@ class Posts(Base):
         self.assertEqual(S.busca_instagram(self.config(opcoes={"folhetos": False}), ["mercados"], {}), [])
         self.assertEqual(S.busca_instagram(self.config(usar_ia=False, lojas=cfg["lojas"]), ["mercados"], {}), [])
         self.assertEqual(len(ha.chamadas_ia), 1)
+
+
+class Bordas(Base):
+    """Erro sem JSON da Graph API, validade que não dá para saber, teste que quebra, raio inválido, nada para ler,
+    imagens que não baixam e a IA que falha no meio."""
+
+    def test_erro_sem_json_e_validade_desconhecida(self):
+        S = self.S
+        self.chave()
+        self.lojas.rotas["/graph/" + IG] = lambda p: (502, "<html>Bad Gateway</html>", "text/html")
+        with self.assertRaisesRegex(S.ErroBusca, r"^O Instagram recusou o pedido \(502: \)\.$"):
+            S.graph_get(IG, {"fields": "x"}, TOKEN)
+        self.erro = {"code": 190}
+        self.assertEqual(S.insta_validade(TOKEN), "", "a validade não dá para saber: não diz nada")
+
+    def test_teste_que_quebra(self):
+        S = self.S
+        self.chave()
+        S.graph_get = lambda *a, **k: (_ for _ in ()).throw(ValueError("resposta estranha"))
+        self.assertEqual(S.testar_instagram(), {"ok": False, "msg": "Não consegui testar (resposta estranha)."})
+
+    def test_lojas_com_raio_invalido(self):
+        S = self.S
+        cats = [categoria("mercados", [("merc-boi", "Boi", 1.5, {"social": "https://www.instagram.com/boi/"}),
+                                       ("merc-longe", "Longe", 2.5, {"social": "https://www.instagram.com/longe/"})])]
+        self.assertEqual([x["handle"] for x in S.lojas_instagram({"raio_km": "x"}, None, cats)], ["boi"], "raio inválido: 2 km")
+
+    def test_nenhuma_loja_com_instagram(self):
+        S = self.S
+        self.chave()
+        self.assertEqual(S.busca_instagram(self.config(), ["mercados"], {}), [])
+        self.assertFalse(self.lojas.pedidos_de("/graph/"))
+
+    def test_conta_com_erro_e_imagens_que_nao_baixam(self):
+        S, ha = self.S, self.ha
+        self.chave()
+        self.contas["kuntze_oficial"] = [dict(p, media_url=self.lojas.base + "/sumiu.jpg") for p in self.posts()[:1]]
+        lojas = {"adicionar": [{"nome": "Sem Conta", "categoria": "mercados", "site": "@nao_existe"},
+                               {"nome": "Kuntze", "categoria": "mercados", "site": "@kuntze_oficial"}]}
+        self.assertEqual(S.busca_instagram(self.config(lojas=lojas), ["mercados"], {}), [])
+        self.assertEqual(ha.chamadas_ia, [], "a imagem não baixou: nada para a IA")
+        self.assertTrue(any("Instagram de Sem Conta (@nao_existe): conta não encontrada" in str(m) for m in self.log))
+
+    def test_ia_que_falha_para_a_loja(self):
+        S, ha = self.S, self.ha
+        self.chave()
+        ha.responde_ia("Instagram Kuntze", __import__("ha_falso").Erro(500, "falhou"))
+        cfg = self.config(lojas={"adicionar": [{"nome": "Kuntze", "categoria": "mercados", "site": "@kuntze_oficial"}]})
+        self.assertEqual(S.busca_instagram(cfg, ["mercados"], {}), [])
+        self.assertEqual(len(ha.chamadas_ia), 1, "a IA falhou: não tenta o outro post da mesma loja")
+        self.assertTrue(any("Instagram de Kuntze: A IA do Home Assistant recusou o pedido (500)" in str(m) for m in self.log))
+        self.assertEqual(S.ler_json(S.INSTAGRAM).get("lidos"), {}, "nada fica como lido")

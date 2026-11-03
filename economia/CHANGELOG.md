@@ -1,5 +1,15 @@
 # Mudanças
 
+## 0.20.1
+
+- **Remédio pela dose:** "Dipirona 500 mg" e "Dipirona 500mg" agora são o mesmo item, e 500 mg continua sem casar com 1000 mg.
+- **Frete escrito como texto** ("R$ 9,90", "Grátis") agora conta. Antes, a oferta online com frete assim ficava de fora.
+- **Telas:**
+  - O selo do cupom que vence logo não fica mais esticado.
+  - O ícone de "pronto" do Falar e o círculo girando do Buscar voltaram a aparecer.
+  - Em Mais › Lojas, a loja adicionada à mão sem endereço aparece também antes da primeira busca online.
+- **Por dentro:** 511 testes automáticos e 15 telas testadas no navegador, cobrindo 99% do código do servidor. O GitHub roda tudo a cada mudança.
+
 ## 0.20.0
 
 - **Conversa com a IA:** um balão ao lado do microfone, no alto da tela. Pergunte sobre a tela aberta ou sobre qualquer assunto, a qualquer momento.

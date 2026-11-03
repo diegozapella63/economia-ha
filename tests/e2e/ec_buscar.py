@@ -69,8 +69,16 @@ async def main():
             await pg.wait_for_timeout(800)
             det = pg.locator("#wish > li.item", has_text="Detergente Ypê neutro")
             check("SEM PREÇO AINDA" in (await det.inner_text()).upper(), "item novo sem preço")
+            # cada texto do aviso fica anotado: a busca de um item é rápida e o aviso seguinte pode chegar logo
+            await pg.evaluate("""() => { window._avisos = []; const t = document.getElementById('toast');
+                new MutationObserver(() => window._avisos.push(t.textContent)).observe(t, {childList: true, characterData: true, subtree: true}); }""")
             await det.locator(".i-busca").click()
-            check("Procurando o preço de Detergente Ypê neutro" in await pg.text_content("#toast"), "avisa que está procurando")
+            try:
+                await espera(pg, "() => window._avisos.some(a => a.includes('Procurando o preço de Detergente Ypê neutro'))", 5000)
+                avisou = True
+            except Exception:  # noqa: BLE001
+                avisou = False
+            check(avisou, f"avisa que está procurando ({await pg.evaluate('window._avisos')})")
             await espera(pg, "() => /R\\$\\s2,49/.test((document.querySelector('#wish') || {}).textContent || '')", 20000)
             check("Bistek" in await item(pg, "Detergente Ypê neutro"), "o item ganhou preço sem uma busca completa")
             pedido = ha.chamadas_ia[-1]["instructions"]

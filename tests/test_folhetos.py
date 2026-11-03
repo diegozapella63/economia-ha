@@ -299,3 +299,160 @@ class LerFolhetos(Base):
         rel = {"folhetos": [{"loja": "A", "ofertas": 1}]}
         S.juntar_folheto_status(rel, {"b": {"loja": "B"}, "a": {"loja": "A", "ofertas": 3}})
         self.assertEqual(rel["folhetos"], [{"loja": "A", "ofertas": 3}, {"loja": "B"}])
+
+
+class Bordas(Base):
+    """O que dá errado no caminho: o site de encartes que recusa, quebra, fecha a conexão ou manda página vazia, o
+    folheto que não abre ou cujas imagens o robots.txt proíbe, as capas que não baixam e a IA que falha nelas, as
+    páginas que não baixam, lojas demais numa busca e o erro inesperado."""
+
+    def test_site_de_encartes_que_recusa_ou_quebra(self):
+        S, lj = self.S, self.lojas
+        from apoio import FECHA
+        lj.paginas["/kimbino/zeta/"] = (403, "Forbidden", "text/html")
+        lj.paginas["/seusfolhetos/zeta-ofertas"] = (500, "erro", "text/html")
+        lj.paginas["/portafolhetos/zeta/"] = FECHA
+        loja = {"nome": "Zeta"}
+        self.assertEqual(S.achar_folhetos(loja, {}), (None, None, []))
+        self.assertEqual(loja["_diag"]["Kimbino"], "o site recusou o acesso de programas (erro 403)")
+        self.assertEqual(len(lj.pedidos_de("/kimbino/zeta")), 1, "recusou: não tenta as outras variantes")
+        self.assertEqual(loja["_diag"]["Seus Folhetos"], "o site respondeu com erro 500")
+        self.assertTrue(loja["_diag"]["Portafolhetos"].startswith("o site não respondeu ("), loja["_diag"])
+        self.assertTrue(any("folheto de Zeta no Kimbino: o site recusou" in str(m) for m in self.log))
+
+    def test_pagina_da_loja_vazia_ou_sem_folheto(self):
+        S, lj = self.S, self.lojas
+        lj.paginas["/kimbino/zeta/"] = (200, "<html></html>", "text/html")
+        lj.paginas["/seusfolhetos/zeta-ofertas"] = (200, "<html>" + "<p>Bem-vindo à Zeta</p>" * 200 + "</html>", "text/html")
+        loja = {"nome": "Zeta"}
+        S.achar_folhetos(loja, {})
+        self.assertTrue(loja["_diag"]["Kimbino"].startswith("a página da loja veio vazia (código 200, 13 bytes, servidor "), loja["_diag"])
+        self.assertEqual(loja["_diag"]["Seus Folhetos"], "abri a página da loja (4 KB), mas não achei folheto nela")
+
+    def test_so_folheto_vencido(self):
+        S = self.S
+        self.kimbino("zeta", [(7654321, -10, -1)])
+        loja = {"nome": "Zeta"}
+        self.assertEqual(S.achar_folhetos(loja, {}), (None, None, []))
+        self.assertEqual(loja["_diag"]["Kimbino"], "só tem folheto vencido")
+
+    def test_folheto_que_nao_abre_ou_proibido(self):
+        S, b, lj = self.S, self.lojas.base, self.lojas
+        a = S.AGREGADORES[0]
+        lj.paginas["/kimbino/robots.txt"] = (200, "User-agent: *\nDisallow: /zeta/ofertas-2\n", "text/plain")
+        f = {"url": b + "/kimbino/zeta/ofertas-1/", "id": "kimbino:1"}
+        self.assertEqual(S.paginas_folheto(a, f), [])
+        self.assertTrue(any(f"folheto {b}/kimbino/zeta/ofertas-1/:" in str(m) for m in self.log))
+        self.assertEqual(S.paginas_folheto(a, f), [], "guardado: não abre de novo")
+        self.assertEqual(len(lj.pedidos_de("/kimbino/zeta/ofertas-1/")), 1)
+        self.assertEqual(S.paginas_folheto(a, {"url": b + "/kimbino/zeta/ofertas-2/", "id": "kimbino:2"}), [])
+        self.assertFalse(lj.pedidos_de("/kimbino/zeta/ofertas-2/"), "o robots.txt não deixa: nem abre")
+
+    def test_imagens_proibidas_no_servidor_de_imagens(self):
+        S, b, lj = self.S, self.lojas.base, self.lojas
+        self.kimbino("zeta", [(1234567, -3, 4)])
+        lj.paginas["/kimbicdn.com/robots.txt"] = (200, "User-agent: *\nDisallow: /\n", "text/plain")
+        f = {"url": b + "/kimbino/zeta/ofertas-1234567/", "id": "kimbino:1234567", "ate": self.iso(4)}
+        self.assertEqual(S.paginas_folheto(S.AGREGADORES[0], f), [])
+
+    def test_tamanhos_guardados(self):
+        S, b = self.S, self.lojas.base
+        self.assertEqual(S.paginas_grandes([]), [])
+        S.gravar_json(S.CO_TAMANHO_ARQ, {"nenhum": True, "em": S.agora()})
+        n = len(self.lojas.pedidos)
+        self.assertEqual(S.paginas_grandes([b + "/assets/uploads/flyers/1/260x270WebP/a-1-1-abc.webp"]), [], "nenhum maior, guardado por uma semana")
+        self.assertEqual(len(self.lojas.pedidos), n)
+
+    def test_capas_que_nao_baixam_e_ia_que_falha(self):
+        S, ha, lj = self.S, self.ha, self.lojas
+        self.kimbino("rede", [(3000001, -1, 5), (3000002, -2, 5), (3000003, -3, 5)])
+        lj.paginas.pop("/kimbicdn.com/0x0/data/3000001/9/1.jpg")
+        lj.paginas["/kimbino/rede/ofertas-3000003/"] = (404, "", "text/html")
+        ha.responde_ia("capas de Rede", __import__("ha_falso").Erro(500, "falhou"))
+        cfg = self.config(lista=[{"produto": "Café"}])
+        cache = S.ler_json(S.FOLHETOS)
+        cache["itens"] = {}
+        a, _, cands = S.achar_folhetos({"nome": "Rede"}, cache)
+        self.assertEqual(S.escolhe_folhetos({"nome": "Rede"}, a, cands, cache, cfg), [], "ninguém sabe se vale: nenhum")
+        self.assertEqual(len(ha.chamadas_ia), 1)
+        self.assertEqual(len(ha.chamadas_ia[0]["attachments"]), 1, "só a capa que baixou")
+        self.assertTrue(any("capas de Rede: A IA do Home Assistant recusou o pedido (500)" in str(m) for m in self.log))
+
+    def test_paginas_que_nao_baixam(self):
+        S = self.S
+        with self.assertRaisesRegex(S.ErroBusca, "não consegui baixar as páginas do folheto"):
+            S.ler_folheto({"nome": "Zeta"}, {"ate": None}, [self.lojas.base + "/nada.jpg"], self.config())
+
+    def test_folheto_sem_paginas_e_erro_inesperado(self):
+        S, lj = self.S, self.lojas
+        self.kimbino("zeta", [(1234567, -3, 4)])
+        lj.paginas["/kimbino/zeta/ofertas-1234567/"] = (200, "<html>sem imagens</html>", "text/html")
+        cfg = self.config(lista=[{"produto": "Café"}])
+        res, st = S.busca_folhetos(cfg, [{"nome": "Zeta", "categoria": "mercados"}])
+        self.assertEqual((res, st["zeta"]["erro"], st["zeta"]["fonte"]), ([], "Achei o folheto, mas não as páginas dele.", "Kimbino"))
+        S.achar_folhetos = lambda loja, cache: (_ for _ in ()).throw(KeyError("url"))
+        res, st = S.busca_folhetos(cfg, [{"nome": "Zeta", "categoria": "mercados"}])
+        self.assertEqual(st["zeta"]["erro"], None, "sem fonte nem ofertas: fica como sem folheto")
+        self.assertTrue(any("folheto de Zeta: 'url'" in str(m) for m in self.log))
+
+    def test_capas_dizem_que_nenhum_vale(self):
+        S, ha = self.S, self.ha
+        self.kimbino("rede", [(3000001, -1, 5), (3000002, -2, 5), (3000003, -3, 5)])
+        ha.responde_ia("capas de Rede", {"encartes": [{"n": 1, "vale": "nao"}, {"n": 2, "vale": "nao"}, {"n": 3, "vale": "nao"}]})
+        res, st = S.busca_folhetos(self.config(lista=[{"produto": "Café"}]), [{"nome": "Rede", "categoria": "mercados"}])
+        self.assertEqual(st["rede"]["erro"], "Os folhetos desta semana não valem para a sua cidade.")
+
+    def test_lojas_novas_demais_numa_busca(self):
+        S = self.S
+        lojas = [{"nome": f"Loja Nova {i}", "categoria": "mercados"} for i in range(10)]
+        res, st = S.busca_folhetos(self.config(), lojas)
+        self.assertEqual(len(st), 8, "até 8 lojas novas nos sites de encartes por busca")
+        self.assertNotIn("loja nova 9", st)
+
+    def test_lojas_com_raio_invalido_e_dados_estranhos(self):
+        S = self.S
+        cats = ["x", {"id": "mercados", "redes": [{"id": "m-a", "nome": "Perto"}, "y"], "lojas": ["z", {"rede": "m-a", "distancia_km": 1.5}]}]
+        self.assertEqual(S.lojas_folheto({"raio_km": "dois"}, categorias=cats), [{"nome": "Perto", "categoria": "mercados"}])
+
+    def test_site_de_encartes_fora_do_ar(self):
+        S = self.S
+        self.assertFalse(S.agreg_permite("http://127.0.0.1:9/zeta/"), "sem resposta do robots.txt: não abre nada")
+        self.assertTrue(S._robots_agreg["_ultimo"].startswith("o site não respondeu ("), S._robots_agreg["_ultimo"])
+
+    def test_link_repetido_validade_por_mes_e_nome_generico(self):
+        S, b, lj = self.S, self.lojas.base, self.lojas
+        html = '<a href="/kimbino/zeta/ofertas-1234567/">capa</a><a href="/kimbino/zeta/ofertas-1234567/">ver</a>'
+        self.assertEqual(len(S.folhetos_da_pagina(S.AGREGADORES[0], b + "/kimbino/zeta/", html)), 1, "o mesmo folheto uma vez")
+        ano = int(S.hoje_br()[:4])
+        lj.paginas["/catalogosofertas/vista/ofertas/zeta-semana-1"] = (200, "<p>Ofertas válidas de 30 out. até 10 nov.</p>", "text/html")
+        f = {"url": b + "/catalogosofertas/vista/ofertas/zeta-semana-1", "id": "catalogosofertas:1", "de": None, "ate": None}
+        S.paginas_folheto(S.AGREGADORES[3], f)
+        self.assertEqual((f["de"], f["ate"]), (f"{ano}-10-30", f"{ano}-11-10"), "sem dd-mm-aaaa: o período escrito por mês")
+        self.assertEqual(S.bases_loja("Supermercado Joinville", S.ler_json(S.FOLHETOS)), ["supermercado"], "só palavras genéricas: a primeira")
+
+    def test_capa_vencida_sai_e_limite_de_folhetos_novos(self):
+        S, lj = self.S, self.lojas
+        S.gravar_json(S.FOLHETOS, dict(S.ler_json(S.FOLHETOS), _vale={"kimbino:1": {"v": "sim", "ate": "2020-01-01"}, "kimbino:2": {"v": "sim", "ate": "2099-01-01"}}))
+        res, st = S.busca_folhetos(self.config(), [{"nome": "Zeta", "categoria": "mercados"}], max_novas=0)
+        self.assertEqual(st, {}, "sem folheto guardado e no limite de folhetos novos: fica para a próxima busca")
+        self.assertFalse(lj.pedidos_de("/kimbino/zeta"))
+        self.assertEqual(list(S.ler_json(S.FOLHETOS)["_vale"]), ["kimbino:2"], "a escolha da capa vencida sai")
+
+    def test_paginas_que_nao_baixam_viram_erro_da_loja(self):
+        S, lj = self.S, self.lojas
+        self.kimbino("zeta", [(1234567, -3, 4)])
+        for n in (1, 2):
+            lj.paginas.pop(f"/kimbicdn.com/0x0/data/1234567/9/{n}.jpg")
+        res, st = S.busca_folhetos(self.config(lista=[{"produto": "Café"}]), [{"nome": "Zeta", "categoria": "mercados"}])
+        self.assertEqual((res, st["zeta"]["erro"], st["zeta"]["fonte"]), ([], "não consegui baixar as páginas do folheto", "Kimbino"))
+        self.assertEqual(self.ha.chamadas_ia, [])
+
+    def test_tamanho_que_o_robots_nao_deixa(self):
+        S, b, lj = self.S, self.lojas.base, self.lojas
+        lj.paginas["/assets/robots.txt"] = (200, "User-agent: *\nDisallow: /uploads/flyers/123456/1040x1080WebP\n", "text/plain")
+        lj.paginas["/assets/uploads/flyers/123456/1040x1080WebP/z-1-1-abc.webp"] = (200, webp_vp8x(1040, 1080), "image/webp")
+        lj.paginas["/assets/uploads/flyers/123456/780x810WebP/z-1-1-abc.webp"] = (200, webp_vp8(780, 810), "image/webp")
+        mini = b + "/assets/uploads/flyers/123456/260x270WebP/z-1-1-abc.webp"
+        self.assertEqual(S.paginas_grandes([mini]), [b + "/assets/uploads/flyers/123456/780x810WebP/z-1-1-abc.webp"],
+                         "a maior que o robots.txt deixa abrir")
+        self.assertFalse(lj.pedidos_de("/1040x1080WebP/"), "a proibida nem é pedida")
