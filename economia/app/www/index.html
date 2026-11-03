@@ -2610,7 +2610,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   function pintaGrav(){
     var on = vozRec === 'on', box = $('vozBox'), ocupado = vozRec === 'starting' || vozRec === 'enviando' || vozRec === 'lendo';
     box.classList.toggle('on', on);
-    box.querySelector('.vz-mic').hidden = on; box.querySelector('.vz-ok').hidden = !on;
+    box.querySelector('.vz-mic').toggleAttribute('hidden', on); box.querySelector('.vz-ok').toggleAttribute('hidden', !on);  // svg: sem a propriedade hidden
     $('vozMic').setAttribute('aria-label', on ? 'Pronto: enviar o que falei' : 'Começar a falar');
     $('vozMic').disabled = ocupado;
     $('vozEstado').innerHTML = on ? '<b>Ouvindo…</b> <span class="voz-tempo" id="vozTempo">0:00</span>'
@@ -4214,7 +4214,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   function botaoBusca(rodando, txt){
     var b = $('buscar');
     b.disabled = rodando; b.classList.toggle('girando', rodando);
-    b.querySelector('.ic-busca').hidden = rodando; b.querySelector('.ic-gira').hidden = !rodando;
+    b.querySelector('.ic-busca').toggleAttribute('hidden', rodando); b.querySelector('.ic-gira').toggleAttribute('hidden', !rodando);  // svg: sem a propriedade hidden
     $('buscarTxt').textContent = txt;
     if (BUSCANDO !== rodando){ BUSCANDO = rodando; pintaLado(); }
   }

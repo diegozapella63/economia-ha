@@ -17,8 +17,8 @@ jobs:
           python-version: "3.12"
       - name: Página montada a partir da fonte
         run: python3 tools/montar_pagina.py --conferir
-      - name: Testes
-        run: TZ=America/Sao_Paulo python3 -m unittest discover -s tests -p "test_*.py" -v
+      - name: Testes e cobertura de linhas (mínimo 80%)
+        run: TZ=America/Sao_Paulo python3 tools/cobertura.py --minimo 80 --linhas --resumo "$GITHUB_STEP_SUMMARY"
 
   visual:
     name: Visuais (Playwright)
