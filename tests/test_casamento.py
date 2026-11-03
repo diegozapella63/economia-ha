@@ -92,6 +92,14 @@ class CasaLista(Base):
         self.assertTrue(S.combina("Leite integral", "Leite Integral Tirol 1L"))
         self.assertFalse(S.combina("Álcool limpeza cozinha", "Álcool Líquido 46 INPM Limpeza Araras 1L"), "sem parecido no casamento firme")
 
+    def test_dose_com_ou_sem_espaco(self):
+        S = self.S
+        self.assertTrue(S.combina("Dipirona 500 mg", "Dipirona Monoidratada 500mg 10 Comprimidos"), "500 mg = 500mg")
+        self.assertTrue(S.combina("Dipirona 500mg", "Dipirona Sódica 500 mg Gotas"))
+        self.assertTrue(S.combina("Vitamina D 2000 UI", "Vitamina D 2000UI 30 Cápsulas"))
+        self.assertFalse(S.combina("Dipirona 500 mg", "Dipirona Monoidratada 1000 mg 10 Comprimidos"), "outra dose não é o mesmo remédio")
+        self.assertEqual(S.palavras_busca("Paracetamol 750 mg"), ["paracetamol", "750mg"])
+
     def test_item_vazio_nao_casa_nada(self):
         self.assertEqual(self.casa("", "Leite Integral Tirol 1L"), [False])
         self.assertEqual(self.casa("500 ml", "Leite Integral Tirol 1L"), [False])

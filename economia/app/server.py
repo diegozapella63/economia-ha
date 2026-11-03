@@ -1774,8 +1774,11 @@ def regiao_direta(chave, cep):
     return val
 
 
+DOSE = re.compile(r"(\d+)\s*(mg|mcg|ui)\b", re.I)  # "500 mg" e "500mg" são a mesma dose (e 500 mg não é 1000 mg)
+
+
 def palavras_busca(t):
-    return [w for w in norm(re.sub(UNIDADE_NOME, " ", str(t))).split() if w not in VAZIAS_BUSCA and not w.isdigit()]
+    return [w for w in norm(re.sub(UNIDADE_NOME, " ", DOSE.sub(r"\1\2", str(t)))).split() if w not in VAZIAS_BUSCA and not w.isdigit()]
 
 
 def alternativas(item):
@@ -2020,7 +2023,7 @@ def casa_lista(item, textos, traduzir=True):
     pi = palavras_busca(item)
     if not pi:
         return [False] * len(textos)
-    toks = [norm(t).split() for t in textos]
+    toks = [norm(DOSE.sub(r"\1\2", str(t))).split() for t in textos]
     cab = [cabeca_bate(pi[0], pp, set(pi)) for pp in toks]
     marcas = vocab()["marcas"]
     traduz = {w for w in pi[1:] if w not in marcas and not any(c and palavra_bate(w, pp) for c, pp in zip(cab, toks))} if traduzir else set()

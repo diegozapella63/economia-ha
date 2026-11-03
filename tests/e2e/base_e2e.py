@@ -18,7 +18,8 @@ import zlib
 AQUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(AQUI))  # tests/, para o apoio.py
 
-from apoio import APP, CEP, LojasFalsas, ean13, porta_livre, prod, servidor  # noqa: E402,F401
+from apoio import APP, CEP, LojasFalsas, categoria, ean13, porta_livre, prod, servidor  # noqa: E402,F401
+from ha_falso import Erro, HAFalso, estado  # noqa: E402,F401
 
 TMP = os.environ.get("E2E_TMP") or tempfile.mkdtemp(prefix="economia-e2e-")
 SHOTS = os.path.join(TMP, "shots")
@@ -45,13 +46,18 @@ def shot(pg, nome, **kw):
 
 
 class App:
-    """Lojas falsas + dados + servidor do add-on. Use com `with App(...) as app:`; app.url é o endereço da página."""
+    """Lojas falsas + dados + servidor do add-on. Use com `with App(...) as app:`; app.url é o endereço da página.
+    ha=HAFalso() liga o Home Assistant falso (IA, listas, fala para texto); servicos=True aponta o mapa, o Brave, o
+    Instagram, a Shopee e os sites de encartes para as lojas falsas; env: variáveis a mais para o servidor."""
 
-    def __init__(self, config, buscar=True, preparar=None, antes=None):
+    def __init__(self, config, buscar=True, preparar=None, antes=None, ha=None, servicos=False, env=None):
         self.config, self.buscar, self.preparar, self.antes = config, buscar, preparar, antes
+        self.ha, self.servicos, self.env_extra = ha, servicos, env or {}
 
     def __enter__(self):
         self.lojas = LojasFalsas().__enter__()
+        if self.ha:
+            self.ha.__enter__()
         if self.preparar:
             self.preparar(self.lojas)
         S, self.pasta, self.log = servidor(self.lojas.env())
@@ -65,7 +71,11 @@ class App:
         self.porta = porta_livre()
         env = dict(os.environ, OFERTAS_DATA=self.pasta, OFERTAS_PORT=str(self.porta), OFERTAS_ALLOW_ALL="1",
                    OFERTAS_MEDIA=os.path.join(self.pasta, "media"), OFERTAS_HA_API="http://127.0.0.1:9/api",
-                   OFERTAS_HA_WS="ws://127.0.0.1:9/websocket", SUPERVISOR_TOKEN="", **self.lojas.env())
+                   OFERTAS_HA_WS="ws://127.0.0.1:9/websocket", SUPERVISOR_TOKEN="", OFERTAS_ESPERA_COTA="0", OFERTAS_SYNC_SEG="3600")
+        env.update(self.lojas.env_servicos() if self.servicos else self.lojas.env())
+        if self.ha:
+            env.update(self.ha.env())
+        env.update(self.env_extra)
         self.saida = open(os.path.join(TMP, f"servidor-{self.porta}.log"), "w")
         self.proc = subprocess.Popen([sys.executable, os.path.join(APP, "server.py")], env=env, stdout=self.saida, stderr=subprocess.STDOUT)
         for _ in range(100):
@@ -81,16 +91,36 @@ class App:
         self.proc.terminate()
         self.proc.wait(10)
         self.saida.close()
+        if self.ha:
+            self.ha.__exit__()
         self.lojas.__exit__()
 
     def config_salva(self):
         return self.S.ler_json(os.path.join(self.pasta, "config.json"), {})
 
+    def ofertas_salvas(self):
+        return self.S.ler_json(os.path.join(self.pasta, "ofertas.json"), {})
 
-async def pagina(p, largura=412, altura=892, escuro=True):
-    b = await p.chromium.launch()
+    def api(self, metodo, caminho, corpo=None):
+        """Um pedido direto à API do servidor (para preparar o cenário ou conferir)."""
+        import json
+        import urllib.request
+        req = urllib.request.Request(self.url + caminho.lstrip("/"), method=metodo, data=json.dumps(corpo).encode() if corpo is not None else None,
+                                     headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            return json.loads(r.read() or b"null")
+
+
+async def espera(pg, js, ms=15000):
+    """Espera uma condição na página (sem sleep fixo)."""
+    await pg.wait_for_function(js, timeout=ms)
+
+
+async def pagina(p, largura=412, altura=892, escuro=True, args=None, permissoes=None, toque=True):
+    b = await p.chromium.launch(args=args or [])
     ctx = await b.new_context(viewport={"width": largura, "height": altura}, device_scale_factor=2,
-                              color_scheme="dark" if escuro else "light", has_touch=True)
+                              color_scheme="dark" if escuro else "light", has_touch=toque, permissions=permissoes or [],
+                              accept_downloads=True)
     pg = await ctx.new_page()
     pg.erros = []
     pg.on("pageerror", lambda e: pg.erros.append(str(e)))
