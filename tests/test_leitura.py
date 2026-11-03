@@ -92,6 +92,48 @@ class LerLista(Cenario):
         self.assertLessEqual(len(S.LEITURAS), 21)
 
 
+class LeituraBordas(Cenario):
+    """A pasta de mídia que não dá para usar, o erro inesperado ao ler (lista e encarte) e fotos que não são base64."""
+
+    def espera_job(self, job):
+        return self.espera(lambda: self.S.LEITURAS[job] if self.S.LEITURAS[job]["status"] != "lendo" else None, msg="a leitura não terminou")
+
+    def test_pasta_de_midia_que_nao_da_para_usar(self):
+        S = self.S
+        self.config()
+        arq = os.path.join(S.DATA, "nao-e-pasta")
+        open(arq, "w").close()
+        S.MEDIA = arq
+        r = self.espera_job(S.comeca_leitura({"imagens": [data_url(PNG)]}))
+        self.assertEqual((r["status"], r["erro"]), ("erro", "O add-on não consegue usar a pasta de mídia do Home Assistant. Reinstale a versão mais nova."))
+        self.assertEqual(self.ha.chamadas_ia, [], "nem chega à IA")
+
+    def test_erro_inesperado_ao_ler(self):
+        S, ha = self.S, self.ha
+        self.config()
+        ha.responde_ia("ler lista", {"itens": [{"produto": "Leite integral"}]})
+        S.texto = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("texto quebrou"))
+        r = self.espera_job(S.comeca_leitura({"texto": "leite"}))
+        self.assertEqual((r["status"], r["erro"]), ("erro", "Erro inesperado ao ler: texto quebrou"))
+        self.assertIn("Erro inesperado ao ler: texto quebrou", self.log)
+
+    def test_erro_inesperado_no_encarte(self):
+        S, ha = self.S, self.ha
+        self.config()
+        ha.responde_ia("encarte", {"ofertas": [{"produto": "Café", "preco": 9}]})
+        S.mesclar_resultado = lambda *a, **k: (_ for _ in ()).throw(KeyError("lista"))
+        r = self.espera_job(S.comeca_encarte({"imagens": [data_url(JPG, "image/jpeg")], "loja": "Giassi"}))
+        self.assertEqual((r["status"], r["erro"]), ("erro", "Erro inesperado ao ler: 'lista'"))
+        self.assertEqual(os.listdir(os.path.join(S.MEDIA, "economia")), [], "a foto é apagada mesmo assim")
+
+    def test_fotos_que_nao_sao_base64(self):
+        S = self.S
+        self.config()
+        ruins = ["data:image/png;base64,abc", "data:image/gif;base64," + base64.b64encode(PNG).decode(), "http://x/foto.png"]
+        self.assertIsNone(S.comeca_leitura({"imagens": ruins}))
+        self.assertIsNone(S.comeca_encarte({"imagens": ruins, "loja": "Giassi"}))
+
+
 class Cupons(Cenario):
     def test_cupons_do_app(self):
         S, ha = self.S, self.ha

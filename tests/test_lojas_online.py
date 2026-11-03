@@ -245,6 +245,31 @@ class Shopee(Base):
         self.assertTrue(any("Areia" in c for c in consultas))
         self.assertFalse(any("Depois do limite" in c for c in consultas), "limite (10030): para as consultas seguintes")
 
+    def test_erros_de_conexao_e_codigo_desconhecido(self):
+        S = self.S
+        S.grava_segredos({"shopee": {"app_id": "18300000001", "secret": "segredo"}})
+        S.SHOPEE_API = "http://127.0.0.1:9/graphql"
+        with self.assertRaisesRegex(S.ErroShopee, r"^Não consegui falar com a Shopee \("):
+            S.shopee_consulta("{x}")
+        S.SHOPEE_API = self.lojas.base + "/shopee"
+        self.lojas.rotas["/shopee"] = lambda p: (400, {"errors": [{"message": "Campo desconhecido", "extensions": {"code": "abc"}}]})
+        with self.assertRaisesRegex(S.ErroShopee, "^A Shopee recusou a consulta: Campo desconhecido$"):
+            S.shopee_consulta("{x}")
+        self.lojas.rotas["/shopee"] = lambda p: {"errors": ["texto solto"]}
+        with self.assertRaisesRegex(S.ErroShopee, "^A Shopee recusou a consulta: None$"):
+            S.shopee_consulta("{x}")
+        self.lojas.rotas["/shopee"] = lambda p: {"data": None}
+        self.assertEqual(S.shopee_consulta("{x}"), {})
+
+    def test_nada_achado_e_chaves_incompletas(self):
+        S = self.S
+        S.grava_segredos({"shopee": {"app_id": " 1 ", "secret": "  "}})
+        self.assertFalse(S.shopee_pronta(), "senha em branco")
+        S.grava_segredos({"shopee": {"app_id": "18300000001", "secret": "segredo"}})
+        cfg = self.config(categorias=["online"], lista=[{"produto": "Vela aromática"}])
+        self.assertEqual(S.busca_shopee(cfg), [])
+        self.assertTrue(any("shopee: 0 de 1 item(ns) com preço" in str(m) for m in self.log))
+
 
 class SitesDasLojas(Base):
     def setUp(self):
@@ -422,3 +447,31 @@ class OrdemDosScripts(Base):
         self.config(categorias=["mercados"], lista=cfg["lista"], opcoes={"lojas_diretas": False})
         res, rel, ja = S.busca_scripts(S.ler_config(), ["mercados"])
         self.assertNotIn("diretas", rel, "lojas diretas desligado: sem sites")
+
+    def test_uma_fonte_que_quebra_nao_para_as_outras(self):
+        S = self.S
+        cfg = self.config(categorias=["mercados", "online"], lista=[{"produto": "Leite integral"}])
+        S.grava_segredos({"shopee": {"app_id": "1", "secret": "s"}})
+        quebra = lambda nome: (lambda *a, **k: (_ for _ in ()).throw(RuntimeError(nome)))  # noqa: E731
+        for f in ("busca_direta", "busca_catalogos", "busca_sites", "busca_paginas_ofertas", "busca_shopee", "busca_folhetos", "busca_instagram"):
+            setattr(S, f, quebra(f))
+        res, rel, ja = S.busca_scripts(cfg, cfg["categorias"])
+        self.assertEqual((res, rel, ja), ([], {}, {}))
+        for msg in ("busca direta: busca_direta", "páginas de produto: busca_catalogos", "busca do site: busca_sites",
+                    "ofertas do site: busca_paginas_ofertas", "shopee: busca_shopee", "folhetos: busca_folhetos", "Instagram: busca_instagram"):
+            self.assertTrue(any(msg == str(m) for m in self.log), msg)
+
+    def test_o_que_cada_fonte_achou_vai_no_relatorio(self):
+        S = self.S
+        cfg = self.config(categorias=["mercados", "farmacias"], lista=[{"produto": "Leite integral"}])
+        S.busca_direta = lambda *a, **k: []
+        par = lambda cid, nome: (categoria(cid, [(cid[:4] + "-" + S.slug(nome, 30), nome, 1.0)]), {})  # noqa: E731
+        S.busca_catalogos = lambda *a, **k: [par("mercados", "Catálogo")]
+        S.busca_sites = lambda *a, **k: [par("mercados", "Busca")]
+        S.busca_paginas_ofertas = lambda cfg, cats, ja, itens: [par("farmacias", "Página")] if ja == {"mercados": ["Busca", "Catálogo"]} else []
+        S.busca_instagram = lambda *a, **k: [par("mercados", "Boi")]
+        res, rel, ja = S.busca_scripts(cfg, cfg["categorias"])
+        self.assertEqual(len(res), 4)
+        self.assertEqual(rel["diretas"], ["Busca", "Catálogo", "Página"])
+        self.assertEqual(rel["instagram"], ["Boi"])
+        self.assertEqual(ja, {"mercados": ["Busca", "Catálogo"], "farmacias": ["Página"]}, "a página de ofertas sabe quem já tem preço")

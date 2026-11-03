@@ -249,6 +249,101 @@ class SemLocalizacao(BaseMapa):
         self.assertEqual(len(self.textos), 2, "a resposta (também o 'não achei') fica guardada 30 dias")
 
 
+class Bordas(BaseMapa):
+    """O nome da rede, o Google que falha sem dizer o motivo, a varredura ou o site que falham no meio, lugares sem nome
+    ou fechados, raio inválido, nome com erro de digitação no mapa, e as lojas sem localização com erros e limite."""
+
+    def test_nome_da_rede(self):
+        S = self.S
+        self.assertEqual([S.chave_loja(n) for n in ("Supermercado Imperatriz - Joinville", "Droga Raia", "Farmácia", "Farmácia Preço Popular | Centro")],
+                         ["imperatriz", "raia", "farmacia", "preco popular"], "só palavras de loja: fica o nome inteiro")
+        self.assertEqual([S.nome_direta(n) for n in ("Giassi Supermercados", "Angeloni Joinville", "Mercado Novo")], ["Giassi", "Angeloni", "Mercado Novo"],
+                         "a loja com busca direta escrita do jeito dela")
+
+    def test_google_sem_motivo(self):
+        S = self.S
+        self.lojas.rotas["/google/nearby"] = lambda p: (500, "<html>erro</html>", "text/html")
+        with self.assertRaisesRegex(S.ErroBusca, r"^O Google recusou a chave \(500\)\.$"):
+            S.google_lojas(LAT, LON, 1000, ["online", "farmacias"], "k")
+        self.assertEqual(len(self.lojas.pedidos_de("/google/nearby")), 1, "online não tem tipo no Google: nem pergunta")
+        self.lojas.rotas["/google/texto"] = lambda p: (502, "", "text/html")
+        with self.assertRaisesRegex(S.ErroBusca, r"^O Google recusou o pedido \(502\)\.$"):
+            S.google_post(S.GOOGLE_TEXTO, {}, "k", "places.id")
+
+    def test_google_que_falha_no_meio(self):
+        S = self.S
+        self.com_google()
+        cfg = self.config(raio_km="perto", categorias=["mercados"])
+        S.google_lojas = lambda *a, **k: (_ for _ in ()).throw(S.ErroBusca("O Google recusou a chave (403)."))
+        S.google_varredura = lambda *a, **k: (_ for _ in ()).throw(OSError("caiu"))
+        S.google_site = lambda *a, **k: (_ for _ in ()).throw(OSError("sem rede"))
+        m = S.lojas_do_mapa(cfg, ["mercados"])
+        self.assertEqual([l["nome"] for l in m["mercados"]], ["Supermercado Kuntze"], "fica o OpenStreetMap")
+        self.assertEqual(S.ler_json(S.LOJAS_MAPA)["fontes"], ["OpenStreetMap"])
+        self.assertIn(",2000,", S.ler_json(S.LOJAS_MAPA)["chave"], "raio inválido: 2 km")
+        for msg in ("mapa: O Google recusou a chave (403).", "mapa: busca por texto no Google: caiu", "mapa: site de Supermercado Kuntze no Google: sem rede"):
+            self.assertTrue(any(msg == str(x) for x in self.log), msg)
+
+    def test_varredura_ignora_lugar_sem_nome_ou_fechado(self):
+        S = self.S
+        sem_nome = dict(lugar("x", 0.2, ("supermarket",)), displayName={"text": ""})
+        sem_local = dict(lugar("Mercado Sem Local", 0.2, ("supermarket",)), location={})
+        self.lojas.rotas["/google/texto"] = lambda p: {"places": [sem_nome, sem_local, lugar("Mercado Fechado", 0.2, ("supermarket",), status="CLOSED_PERMANENTLY"),
+                                                                  lugar("Mercado Aberto", 0.2, ("supermarket",))]}
+        out = S.google_varredura(LAT, LON, 1000, ["mercados"], "k", paginas=1)
+        self.assertEqual({l["nome"] for l in out}, {"Mercado Aberto"})
+
+    def test_site_pelo_google_so_bem_perto(self):
+        S = self.S
+        self.lojas.rotas["/google/texto"] = lambda p: {"places": [lugar("Mercadinho", 1.0, site="https://longe.com.br"), dict(lugar("Mercadinho", 0.1), location={}),
+                                                                  lugar("Outro Nome", 0.1, site="https://outro.com.br"),
+                                                                  lugar("Mercadinho", 0.2, site="https://www.instagram.com/mercadinho/")]}
+        self.assertEqual(S.google_site("Mercadinho", LAT, LON, "k"),
+                         {"site": None, "social": "https://www.instagram.com/mercadinho/", "place_id": "pl-mercadinho"},
+                         "a 1 km não é a mesma loja; o Instagram vai como rede social")
+        self.lojas.rotas["/google/texto"] = lambda p: {"places": []}
+        self.assertEqual(S.google_site("Mercadinho", LAT, LON, "k"), {})
+
+    def test_nome_com_erro_no_mapa_e_site_da_rede_social(self):
+        S = self.S
+        cats = [categoria("farmacias", [("farm-drogaria-catarinna", "Drogaria Catarinna", None, {"fontes": ["Site"], "site": "https://www.instagram.com/catarina/"})])]
+        mapa = {"farmacias": [{"nome": "Drogaria Catarina", "categoria": "farmacias", "distancia_km": 0.8, "fonte": "Google", "lat": LAT, "lon": LON,
+                               "site": "https://catarina.com.br", "endereco": "Rua XV, 10"}]}
+        S.mesma_loja = (lambda orig: (lambda a, b: orig(a, b) and "catarinna" not in S.norm(a + b)))(S.mesma_loja)
+        S.mesmo_lugar = lambda *a: True
+        S.aplica_mapa(cats, mapa, self.config())
+        r, l = cats[0]["redes"][0], cats[0]["lojas"][0]
+        self.assertEqual((r["nome"], r["curto"]), ("Drogaria Catarina", "Drogaria Catarin"), "o nome do Google corrige o digitado")
+        self.assertEqual((l["social"], l["site"], l["distancia_km"]), ("https://www.instagram.com/catarina/", "https://catarina.com.br", 0.8),
+                         "a rede social sai do site; o site do mapa entra")
+
+    def test_encontrar_lojas_com_raio_invalido_e_erro_ao_localizar(self):
+        S = self.S
+        self.config(raio_km=1, categorias=["farmacias"], usar_ia=False)
+        S.localiza_sem_local = lambda cfg: (_ for _ in ()).throw(RuntimeError("quebrou"))
+        S.sonda_lojas = lambda cfg: None
+        r = S.atualizar_lojas_mapa({"raio_km": "um"})
+        self.assertTrue(r["msg"].endswith("até 1 km (OpenStreetMap)."), r["msg"])
+        self.assertTrue(any("lojas sem localização: quebrou" == str(x) for x in self.log))
+
+    def test_sem_localizacao_com_erros_e_limite(self):
+        S = self.S
+        self.com_google()
+        self.config()
+        self.ofertas({"categorias": [categoria("mercados", [(f"merc-{i}", f"Mercado Sem Lugar {i}", None) for i in range(3)])]})
+        self.lojas.rotas["/google/texto"] = lambda p: (500, {"error": {"message": "interno"}})
+        self.assertEqual(S.localiza_sem_local(S.ler_config(), maximo=2), 0)
+        self.assertEqual(len(self.lojas.pedidos_de("/google/texto")), 2, "até o máximo de consultas por vez")
+        self.assertTrue(any(str(x).startswith("onde fica Mercado Sem Lugar 0: O Google recusou o pedido (500: interno)") for x in self.log))
+        self.assertEqual(S.ler_json(S.LOCAIS), {}, "o erro não fica guardado como \"não achei\"")
+        self.lojas.rotas["/google/texto"] = lambda p: {"places": [lugar("Mercado Sem Lugar 0", 1.0, status="CLOSED_PERMANENTLY"), lugar("Outra Loja", 1.0)]}
+        S.localiza_sem_local(S.ler_config(), maximo=1)
+        self.assertTrue(S.ler_json(S.LOCAIS)["mercado sem lugar 0"]["nada"], "fechada ou de outro nome: não achou")
+        S.CASA_TESTE = None
+        self.ha.estados.pop("zone.home")
+        self.assertEqual(S.localiza_sem_local(S.ler_config()), 0, "sem a casa: nada")
+
+
 class CidadeDoCep(Cenario):
     def test_cidade(self):
         S = self.S

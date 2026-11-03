@@ -186,3 +186,63 @@ class Filtro(Base):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Erros(Base):
+    """O que o Mercado Livre pode responder de estranho: erro sem JSON, erro com mensagem, acesso sem token, item sem
+    categoria conhecida, falha qualquer no meio do filtro e o teste que quebra."""
+    CAMINHO = "/ml/sites/MLB/domain_discovery/search"
+
+    def test_erro_com_e_sem_mensagem(self):
+        S = self.S
+        self.conecta()
+        self.lojas.paginas[self.CAMINHO] = (500, "<html>fora do ar</html>", "text/html")
+        self.assertEqual(S.testar_ml(), {"ok": False, "msg": "O Mercado Livre respondeu com erro 500."})
+        self.lojas.paginas[self.CAMINHO] = (503, '{"message": "Serviço em manutenção"}', "application/json")
+        self.assertEqual(S.testar_ml(), {"ok": False, "msg": "O Mercado Livre respondeu com erro 503: Serviço em manutenção."})
+        self.lojas.paginas[self.CAMINHO] = (200, "[]", "application/json")
+        self.assertEqual(S.testar_ml(), {"ok": True, "msg": "Conectado. Teste: carne moída → ?; hambúrguer → ?."}, "sem resposta: ?")
+
+    def test_teste_que_quebra(self):
+        S = self.S
+        self.conecta()
+        S.ml_token = lambda: (_ for _ in ()).throw(RuntimeError("disco cheio"))
+        self.assertEqual(S.testar_ml(), {"ok": False, "msg": "Não consegui testar (disco cheio)."})
+
+    def test_acesso_sem_token(self):
+        S = self.S
+        self.configura()
+        for d in (None, [], {"refresh_token": "r"}):
+            with self.assertRaisesRegex(S.ErroBusca, "não devolveu o acesso"):
+                S.ml_guarda_token(d)
+        S.ml_guarda_token({"access_token": "a", "expires_in": 60})
+        c = S.segredos()["ml"]
+        self.assertEqual(c["access_token"], "a")
+        self.assertGreater(c["expira"], time.time() + 290, "no mínimo 10 minutos, menos a margem de 5")
+
+    def test_item_sem_categoria_conhecida_nao_filtra(self):
+        S = self.S
+        self.conecta()
+        self.assertEqual(S.ml_prever("   "), [], "nome vazio: nada a perguntar")
+        self.assertEqual(S.confere_ml("Vela aromática", ["Vela Lavanda", "Hambúrguer"]), [None, None], "o item não tem categoria: não dá para saber")
+        self.assertEqual(S.confere_ml("Carne", []), [])
+
+    def test_falha_qualquer_no_filtro(self):
+        S = self.S
+        self.conecta()
+        S.ml_prever = lambda t: (_ for _ in ()).throw(KeyError("d"))
+        c = [{"nome": "Hambúrguer"}]
+        self.assertEqual(S.filtra_ml("Carne moída", c), c)
+        self.assertTrue(any("Mercado Livre (categorias): 'd'" in m for m in self.log))
+
+    def test_cache_com_mais_de_8000_fica_com_os_recentes(self):
+        S = self.S
+        c = S.cache_ml()
+        for i in range(8003):
+            c[f"k{i}"] = {"p": [], "em": f"2026-01-01T{i:06d}"}
+        S._ml["mudou"] = True
+        S.grava_ml()
+        d = S.ler_json(S.CATEGORIAS_ML)
+        self.assertEqual(len(d), 8000)
+        self.assertFalse({"k0", "k1", "k2"} & set(d), "os 3 mais antigos saem")
+        self.assertFalse(S._ml["mudou"])

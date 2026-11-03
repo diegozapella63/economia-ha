@@ -340,3 +340,110 @@ class BuscarItens(Cenario):
         self.config(cep="", lista=[])
         S.buscar_itens(["x"])
         self.assertEqual(S.BUSCA["erro"], "Salve o CEP em Mais antes de buscar.")
+
+
+class BuscaBordas(Cenario):
+    """O que não pode derrubar a busca: o mapa que quebra, o folheto das lojas novas que falha (ou que traz preço),
+    o encarte automático que falha ou vem vazio, a busca dos itens sem preço que falha, a resposta estranha da busca
+    focada, o online só pela Shopee e o erro inesperado."""
+
+    def setUp(self):
+        super().setUp()
+        self.config(raio_km=5, categorias=["mercados"], lista=LISTA[:2], opcoes={"itens_sem_preco": False})
+
+    def test_mapa_que_quebra(self):
+        S, ha = self.S, self.ha
+        ha.responde_ia("EconomIA: mercados", pagina_mercados)
+        S.lojas_do_mapa = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("overpass fora"))
+        S.buscar()
+        self.assertIsNone(S.BUSCA["erro"])
+        self.assertIn("mapa: overpass fora", self.log)
+        self.assertEqual(S.ler_json(S.OFERTAS)["categorias"][0]["id"], "mercados")
+
+    def test_folheto_das_lojas_novas(self):
+        S, ha = self.S, self.ha
+        ha.responde_ia("EconomIA: mercados", pagina_mercados)
+        S.busca_folhetos = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("kimbino fora"))
+        S.buscar()
+        self.assertIsNone(S.BUSCA["erro"])
+        self.assertEqual(self.log.count("folhetos: kimbino fora"), 2, "o dos sites e o das lojas que a busca achou")
+        resultado = S.resultado_folheto
+
+        def folhetos(cfg, lojas, so_guardados=False):
+            if not any(l["nome"] == "Bistek" for l in lojas):
+                return [], {}
+            r = resultado({"nome": "Bistek", "categoria": "mercados"}, {"url": "https://f/1", "ate": "2099-01-01"},
+                          {"ofertas": [{"produto": "Café Pilão Tradicional 500 g", "preco": 14.5}], "lista": []}, cfg)
+            return [r], {"bistek": {"loja": "Bistek", "fonte": "Kimbino", "ofertas": 1}}
+        S.busca_folhetos = folhetos
+        S.buscar()
+        of = S.ler_json(S.OFERTAS)
+        cafe = next(i for i in of["lista"] if i["produto"] == "Café Pilão 500 g")
+        self.assertEqual(S.valor_total(cafe["precos"]["merc-bistek"]), 14.5, "o folheto da loja que a busca achou vale mais que a busca na web")
+        self.assertEqual([x["loja"] for x in of["relatorio"]["folhetos"]], ["Bistek"])
+
+    def test_encarte_automatico_que_falha_ou_vem_vazio(self):
+        S, ha = self.S, self.ha
+        resp = pagina_mercados(None)
+        resp["lojas"] += [{"rede": "Loja Erro", "distancia_km": 1.0, "site": "https://erro.com.br/ofertas"},
+                          {"rede": "Loja Vazia", "distancia_km": 1.5, "site": "https://vazia.com.br/"}]
+        ha.responde_ia("EconomIA: mercados", resp)
+
+        def encarte(loja, cfg):
+            if loja["nome"] == "Loja Erro":
+                raise S.ErroBusca("não achei o encarte no site")
+            return categoria("mercados", [("merc-loja-vazia", "Loja Vazia", 1.5)]), {}
+        S.ler_encarte = encarte
+        S.buscar()
+        self.assertIsNone(S.BUSCA["erro"])
+        merc = S.ler_json(S.OFERTAS)["categorias"][0]
+        nomes = {r["id"]: r["nome"] for r in merc["redes"]}
+        sem = sorted(nomes[l["rede"]] for l in merc["lojas"] if l.get("site_sem_encarte"))
+        self.assertEqual(sem, ["Loja Erro", "Loja Vazia"], "não tenta de novo como se tivesse encarte")
+        self.assertIn("encarte automático de Loja Erro: não achei o encarte no site", self.log)
+
+    def test_itens_sem_preco_que_falham(self):
+        S, ha = self.S, self.ha
+        self.config(categorias=["mercados"], lista=LISTA)
+        ha.responde_ia("EconomIA: mercados", pagina_mercados)
+        ha.responde_ia("itens sem preço", Erro(500, "falhou"))
+        S.buscar()
+        self.assertIsNone(S.BUSCA["erro"])
+        self.assertIn("Dipirona 500 mg", S.ler_json(S.OFERTAS)["relatorio"]["sem_preco"])
+        self.assertTrue(any(m.startswith("busca dos itens sem preço: A IA do Home Assistant recusou o pedido (500)") for m in self.log))
+
+    def test_resposta_estranha_da_busca_focada(self):
+        S, ha = self.S, self.ha
+        ha.responde_ia("itens sem preço", {"lista": ["x", {"item": 1, "precos": ["y", {"rede": "Mercado X", "preco": 5}, {"rede": "Amazon", "preco": 6, "frete": 0}]}]})
+        out = S.busca_focada(self.config(categorias=["online"]), ["Leite"], ["online"])
+        self.assertEqual([c["id"] for c, _ in out], ["online"], "o preço de loja física fica de fora quando só tem online")
+        self.assertEqual(list(out[0][1]["Leite"]["precos"]), ["onli-amazon"])
+
+    def test_online_so_pela_shopee(self):
+        S, ha = self.S, self.ha
+        S.grava_segredos({"shopee": {"app_id": "1", "secret": "s"}})
+        self.lojas.rotas["/shopee"] = lambda p: {"data": {"productOfferV2": {"nodes": [
+            {"productName": "Café Pilão Tradicional 500g", "priceMin": "17.9", "ratingStar": "4.9", "productLink": "https://shopee.com.br/cafe"}]}}}
+        self.config(categorias=["online"], lista=LISTA[1:2], opcoes={"itens_sem_preco": False},
+                    online={"marketplaces": ["shopee"], "mercados_entrega": False})
+        S.buscar()
+        self.assertIsNone(S.BUSCA["erro"])
+        self.assertEqual(ha.chamadas_ia, [], "só a Shopee, que já veio pela API")
+        cafe = S.ler_json(S.OFERTAS)["lista"][0]
+        self.assertEqual(list(cafe["precos"]), ["onli-shopee"])
+
+    def test_erro_inesperado(self):
+        S, ha = self.S, self.ha
+        ha.responde_ia("EconomIA: mercados", pagina_mercados)
+        S.juntar_categorias = lambda *a: (_ for _ in ()).throw(RuntimeError("juntar quebrou"))
+        S.grava_vocab = lambda: (_ for _ in ()).throw(OSError("disco cheio"))
+        S.buscar()
+        self.assertEqual((S.BUSCA["erro"], S.BUSCA["rodando"], S.BUSCA["etapa"]), ("Erro inesperado na busca: juntar quebrou", False, None))
+        self.assertIn("Erro inesperado na busca: juntar quebrou", self.log)
+
+    def test_erro_inesperado_na_busca_de_itens(self):
+        S = self.S
+        S.busca_scripts = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("sites quebrou"))
+        S.grava_vocab = lambda: (_ for _ in ()).throw(OSError("disco cheio"))
+        S.buscar_itens(["Leite"])
+        self.assertEqual((S.BUSCA["erro"], S.BUSCA["rodando"]), ("Erro inesperado na busca: sites quebrou", False))

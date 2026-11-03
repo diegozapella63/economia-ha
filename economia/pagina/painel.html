@@ -3296,6 +3296,8 @@ html:not(.sem-ia) .so-semia{display:none!important}
     };
     var html = ativas.map(function(c){ return grupo(c, 'local'); }).join('');
     if (TERMO_LOJA || aba === 'online') html += todasAtivas.filter(function(c){ return c.id !== 'online'; }).map(function(c){ return grupo(c, 'semLocal'); }).join('');
+    // sem a aba Online (a busca ainda não trouxe nada online), as lojas sem localização ficam na aba delas
+    else if (!todasAtivas.some(function(c){ return c.id === 'online'; })) html += ativas.map(function(c){ return grupo(c, 'semLocal'); }).join('');
     $('lojasCats').innerHTML = html || (TERMO_LOJA ? '<p class="hint">Nenhuma loja com esse nome.</p>' : SO_SEM_FONTE ? '<p class="hint">Todas as lojas têm fonte de preço.</p>' : '');
     $('clubeSemIA').hidden = iaOn() || !estado.clubes.length;
     var nSem = contaSemFonte(todasAtivas);
