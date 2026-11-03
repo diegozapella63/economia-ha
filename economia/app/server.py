@@ -6275,7 +6275,7 @@ def conversar(dado):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.19.0"
+    server_version = "EconomIA/0.20.0"
 
     def log_message(self, fmt, *args):
         pass

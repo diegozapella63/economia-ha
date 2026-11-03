@@ -1,4 +1,4 @@
-# EconomIA: a Conversa com a IA, com o Home Assistant falso. O balão ao lado do microfone abre a conversa (de baixo no
+# EconomIA 0.20.0: a Conversa com a IA, com o Home Assistant falso. O balão ao lado do microfone abre a conversa (de baixo no
 # celular, numa janela no canto de baixo à direita no computador); sugestões da tela; a resposta da IA com as ações para confirmar (pôr na lista,
 # comprei hoje, tirar da lista, abrir uma tela); o que foi feito fica marcado e vai junto na próxima pergunta; a tela
 # aberta vai para a IA; erro com Tentar de novo; a conversa continua depois de recarregar; Nova conversa; Enter envia e

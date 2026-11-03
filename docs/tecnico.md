@@ -29,6 +29,7 @@ O botão **Buscar** chama `ai_task.generate_data` pela API do Home Assistant (`h
 | GET | `/api/estado` | `{config, ofertas, usuario}`. `usuario` vem do cabeçalho `X-Remote-User-Display-Name` do ingress. |
 | PUT | `/api/config` | Grava `config.json`. |
 | PUT | `/api/ofertas` | Grava `ofertas.json` (precisa ter `categorias`). |
+| POST | `/api/chat` | Conversa: `{mensagens: [{de: "eu" ou "ia", texto}], tela}` → `{resposta, acoes}`. Ver "Conversa com a IA". |
 | POST | `/api/buscar` | Começa a busca agora, uma categoria por vez, pela ação `ai_task.generate_data` do HA. No fim, faz uma pergunta só sobre os itens que ficaram sem preço. |
 | POST | `/api/buscar-itens` | `{itens: ["Pó lava louça"]}` (até 8 itens da lista): busca só esses itens e junta ao `ofertas.json` atual. |
 | GET | `/api/busca` | Andamento: `{rodando, etapa, atual, total, erro, avisos, terminou_em}`. |
@@ -101,6 +102,19 @@ Preço online: `{preco, frete, prazo_dias, obs}`; `frete: null` com `carrinho: t
 As ações `ai_task.generate_data` e `conversation.process` não devolvem tokens nem custo. O add-on conta cada chamada em `uso_ia.json` (por dia, até 120 dias): tipo (`busca`, `itens`, `encarte`, `fotos`, `cupons`, `teste`), entidade, resultado (`ok`, `cota`, `formato`, `erro`), segundos, imagens e tokens estimados (caracteres do pedido e da resposta ÷ 4).
 Com `config.sensores` ligado (vem desligado), a cada chamada e na virada do dia publica `sensor.economia_ia_hoje` pela API de estados do HA: o estado é o número de chamadas de hoje (`state_class: total_increasing`) e os atributos trazem `erros`, `cota_excedida`, `tokens_texto_estimados`, `imagens`, `por_tipo`, `ultimos_7_dias`, `este_mes` e `ultima_chamada`. O sensor some se o HA reiniciar e volta no minuto seguinte. Desligado, o add-on apaga o sensor (`DELETE /api/states/...`) ao iniciar e quando a opção muda.
 Com `config.usar_ia` em `false`, nenhuma chamada de IA sai: `/api/buscar`, `/api/ler-lista` e `/api/voz` respondem 400.
+
+### Conversa com a IA
+
+`conversar` no `server.py`. A página manda as últimas 12 mensagens (até 2000 letras cada; a mensagem da IA leva junto
+"(Sugeri: …, feito)" com as ações e o que a pessoa fez) e a tela aberta. `contexto_chat` monta o que a IA vê: data e dia
+da semana, tela, casa (`descreve_casa`), clubes, a lista com o mais barato e as compras (`dados_lista`, até 80 itens), o
+histórico mais comprado fora da lista (15), as ofertas de maior desconto das lojas acompanhadas (`redes_acompanhadas`;
+15, ou 40 na tela Ofertas; sem as escondidas) e os cupons válidos (confirmados e os do usuário). A IA é sempre uma tarefa
+de IA (`ia_da_conversa`: a de fotos, a de busca ou a opção do add-on, só `ai_task.*`; sem nenhuma, a preferida do HA),
+nunca `conversation.*`. A resposta pedida é `{"resposta", "acoes"}`; texto solto também vale como resposta. As ações
+(`por_na_lista`, `tirar_da_lista`, `comprei`, `buscar`, `abrir`) passam por `acoes_validas`: item da lista pelo nome
+normalizado (ou o único que contém o nome), produto novo só se não estiver na lista, tela que existe, sem repetidas, até 6.
+Uso contado como `conversa`. A página guarda a conversa no `localStorage` do aparelho (`ofertas-bairro:chat`, 40 mensagens).
 
 ### Leitura de fotos
 
