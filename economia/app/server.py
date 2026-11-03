@@ -548,8 +548,21 @@ SEM_BUSCA = "A IA escolhida não usou a busca na web. " + COMO_BUSCA
 
 def ia_escolhida(uso):
     """Entidade escolhida em Mais (busca ou fotos); em branco, a opção antiga do add-on ou a preferida do HA."""
+    if uso == "conversa":
+        return ia_da_conversa()
     ent = str(((ler_config().get("ia") or {}).get(uso)) or "").strip()
     return ent or str(opcoes().get("ai_task_entity") or "").strip()
+
+
+def ia_da_conversa():
+    """A conversa usa só uma tarefa de IA (gera texto e não mexe na casa), nunca um assistente de conversa:
+    a escolhida para fotos, a de buscar ofertas ou a do add-on; sem nenhuma, a tarefa de IA preferida do HA."""
+    escolhas = ler_config().get("ia") or {}
+    for ent in (escolhas.get("fotos"), escolhas.get("busca"), opcoes().get("ai_task_entity")):
+        ent = str(ent or "").strip()
+        if ent.startswith("ai_task."):
+            return ent
+    return ""
 
 
 def _json_ou_none(t):
@@ -628,6 +641,8 @@ def tipo_uso(nome):
         return "fotos"
     if n == "falar":
         return "fala"
+    if n == "conversa":
+        return "conversa"
     return "busca"
 
 
@@ -780,6 +795,13 @@ def _chamar_ai_task(nome, instrucoes, anexos=None, uso="busca"):
     except urllib.error.URLError as e:
         raise ErroBusca("Não consegui falar com o Home Assistant. Tente de novo em instantes.") from e
     dado = (resp.get("service_response") or {}).get("data") if isinstance(resp, dict) else None
+    if uso == "conversa" and isinstance(dado, str) and dado.strip():  # na conversa, texto solto também é resposta
+        if "{" not in dado:
+            return {"resposta": dado.strip()}
+        try:
+            return extrai_json(dado)
+        except ErroFormato:
+            return {"resposta": dado.strip()}
     return extrai_json(dado)
 
 
@@ -5948,9 +5970,8 @@ def voz_texto(pcm):
 
 
 # ---------- exportar a lista ----------
-def dados_lista():
-    cfg = ler_json(CONFIG, {}) or {}
-    of = ler_json(OFERTAS, {}) or {}
+def redes_acompanhadas(cfg, of):
+    """Nome, tipo e categoria de cada rede das ofertas e quais o usuário acompanha (categoria ligada, perto ou mantida)."""
     lojas_cfg = cfg.get("lojas") or {}
     ignorar, manter = set(lojas_cfg.get("ignorar") or []), set(lojas_cfg.get("manter") or [])
     try:
@@ -5976,7 +5997,13 @@ def dados_lista():
         if not i["loja"] and i["cat"] != "online" and rid not in manter:
             return False  # rede que ficou sem loja (o mapa tirou: de outra categoria ou duplicada)
         return rid in manter or i["dist"] is None or i["dist"] <= raio
+    return info, acompanha
 
+
+def dados_lista(cfg=None, of=None):
+    cfg = (ler_json(CONFIG, {}) or {}) if cfg is None else cfg
+    of = (ler_json(OFERTAS, {}) or {}) if of is None else of
+    info, acompanha = redes_acompanhadas(cfg, of)
     precos = {norm(i.get("produto")): i.get("precos") or {} for i in of.get("lista") or [] if isinstance(i, dict)}
     socios = set(cfg.get("clubes") or [])
     itens = []
@@ -6063,6 +6090,187 @@ def exportar(formato):
         ])
     return xlsx(linhas, [42, 22, 14, 12, 12, 48, 12, 14, 36], {3, 4}), \
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
+# ---------- Conversa: o balão ao lado do microfone. A IA responde e sugere ações; quem faz é a pessoa, com um toque ----------
+TELAS_CHAT = {"lista": "Minha lista", "roteiro": "Roteiro", "ofertas": "Ofertas", "mais": "Mais"}
+NOMES_TELA = {"lista": "lista", "minha lista": "lista", "roteiro": "roteiro", "ofertas": "ofertas", "oferta": "ofertas", "mais": "mais"}
+ACOES_ITEM = ("por_na_lista", "tirar_da_lista", "comprei", "buscar")
+DIAS_SEMANA = ("segunda", "terça", "quarta", "quinta", "sexta", "sábado", "domingo")
+MAX_TURNOS_CHAT, MAX_TEXTO_CHAT, MAX_ACOES_CHAT = 12, 2000, 6
+MAX_ITENS_CHAT, MAX_HIST_CHAT, MAX_CUPONS_CHAT = 80, 15, 10
+
+
+def _pct(o):
+    de, por = numero(o.get("preco_normal")), numero(o.get("preco_oferta"))
+    return round(100 * (de - por) / de) if de and por and de > por else 0
+
+
+def contexto_chat(tela, cfg=None, of=None):
+    """O que a IA sabe do app: a data, a tela aberta, a casa, a lista com os preços, o que mais se compra, ofertas e cupons."""
+    cfg = ler_config() if cfg is None else cfg
+    of = (ler_json(OFERTAS, {}) or {}) if of is None else of
+    itens, gerado = dados_lista(cfg, of)
+    info, acompanha = redes_acompanhadas(cfg, of)
+    hoje = hoje_br()
+    linhas = [f"Hoje é {DIAS_SEMANA[datetime.strptime(hoje, '%Y-%m-%d').weekday()]}, {br_data(hoje)}.",
+              f"Tela aberta no app: {TELAS_CHAT.get(tela, TELAS_CHAT['lista'])}."]
+    if data_ok(str(gerado or "")[:10]):
+        linhas.append(f"Preços da última busca, de {br_data(gerado[:10])}.")
+    casa, _, restr, interesses = descreve_casa(cfg)
+    linhas.append("Casa: " + casa + (f"; restrições: {', '.join(restr)}" if restr else "")
+                  + (f"; interesses: {', '.join(interesses)}" if interesses else "") + ".")
+    clubes = [info[r]["nome"] for r in cfg.get("clubes") or [] if r in info]
+    if clubes:
+        linhas.append("Participa dos clubes de desconto: " + ", ".join(clubes) + ".")
+    if itens:
+        linhas.append(f"\nLista de compras ({len(itens)} itens):")
+        for i in itens[:MAX_ITENS_CHAT]:
+            partes = [i["produto"]]
+            if i["mais_barato"]:
+                outros = ", ".join(f'{p["loja"]} {br_preco(p["preco"])}' for p in i["precos"][1:3])
+                partes.append(f'mais barato no {i["mais_barato"]["loja"]} por {br_preco(i["mais_barato"]["preco"])}'
+                              + (f" (também {outros})" if outros else ""))
+            else:
+                partes.append("sem preço na última busca")
+            if i["compras"]:
+                n = len(i["compras"])
+                partes.append(("comprado 1 vez" if n == 1 else f"comprado {n} vezes") + f', a última em {br_data(i["compras"][-1])}'
+                              + (f', costuma comprar a cada {i["compra_a_cada_dias"]} dias' if i["compra_a_cada_dias"] else ""))
+            linhas.append("- " + "; ".join(partes))
+        if len(itens) > MAX_ITENS_CHAT:
+            linhas.append(f"- e mais {len(itens) - MAX_ITENS_CHAT} itens")
+    else:
+        linhas.append("\nA lista de compras está vazia.")
+    na_lista = {norm(i["produto"]) for i in itens}
+    hist = sorted((h for h in cfg.get("historico") or [] if isinstance(h, dict) and h.get("produto")
+                   and norm(h["produto"]) not in na_lista and h.get("compras")),
+                  key=lambda h: (-len(h.get("compras") or []), str(h.get("saiu") or "")))
+    if hist:
+        linhas.append("\nJá comprou e não está na lista: " + "; ".join(
+            f'{h["produto"]} ({len(h["compras"])}x, a última em {br_data(max(d for d in h["compras"] if data_ok(d)))})'
+            if any(data_ok(d) for d in h["compras"]) else h["produto"] for h in hist[:MAX_HIST_CHAT]) + ".")
+    ocultas = set(cfg.get("ocultas") or [])
+    ofertas, cupons = [], []
+    for c in of.get("categorias") or []:
+        if not isinstance(c, dict):
+            continue
+        for o in c.get("ofertas") or []:
+            if isinstance(o, dict) and acompanha(o.get("rede")) and numero(o.get("preco_oferta")) and o.get("produto") \
+                    and (o.get("id") or f'{o.get("rede")}|{o.get("produto")}') not in ocultas:
+                ofertas.append(o)
+        for k in c.get("cupons") or []:
+            if isinstance(k, dict) and acompanha(k.get("rede")) and k.get("status") == "confirmado" and k.get("beneficio") \
+                    and (not data_ok(k.get("valido_ate")) or k["valido_ate"] >= hoje):
+                cupons.append(k)
+    for k in cfg.get("cupons_meus") or []:
+        if isinstance(k, dict) and k.get("beneficio") and (not data_ok(k.get("valido_ate")) or k["valido_ate"] >= hoje):
+            cupons.append(dict(k, meu=True))
+    if ofertas:
+        n = 40 if tela == "ofertas" else 15
+        ofertas.sort(key=lambda o: -_pct(o))
+        linhas.append(f"\nOfertas das lojas acompanhadas ({len(ofertas)}; as de maior desconto):")
+        for o in ofertas[:n]:
+            loja = (info.get(o.get("rede")) or {}).get("nome") or o.get("rede")
+            de = numero(o.get("preco_normal"))
+            linhas.append(f'- {o["produto"]}, no {loja}: {br_preco(numero(o["preco_oferta"]))}'
+                          + (f" (era {br_preco(de)}, {_pct(o)}% menos)" if _pct(o) else "")
+                          + (" com o clube da loja" if o.get("tipo") == "clube" else ""))
+    if cupons:
+        linhas.append("\nCupons válidos:")
+        for k in cupons[:MAX_CUPONS_CHAT]:
+            loja = (info.get(k.get("rede")) or {}).get("nome") or k.get("rede")
+            linhas.append(f'- {loja}: {k["beneficio"]}' + (f' (código {k["codigo"]})' if k.get("codigo") else "")
+                          + (f' ({k["condicao"]})' if k.get("condicao") else "")
+                          + (f' até {br_data(k["valido_ate"])}' if data_ok(k.get("valido_ate")) else "")
+                          + (", guardado pela pessoa" if k.get("meu") else ""))
+    return "\n".join(linhas)
+
+
+def instrucoes_chat(contexto, mensagens):
+    conversa = "\n".join(("Pessoa: " if de == "eu" else "EconomIA: ") + t for de, t in mensagens)
+    return (
+        "Você é a IA do EconomIA, um app do Home Assistant que compara os preços de mercados, farmácias e pet shops do bairro "
+        "e cuida da lista de compras da casa. Converse em português do Brasil, com respostas curtas e diretas (poucas frases ou "
+        "uma lista curta). Use os dados do app abaixo e não invente preços, lojas nem cupons: se não souber, diga. "
+        "Também pode conversar sobre outros assuntos.\n"
+        "Escreva texto simples, sem Markdown (sem asteriscos nem #); para listas, comece cada linha com \"• \".\n\n"
+        "Você não muda nada sozinho. Quando ajudar, sugira ações, e a pessoa confirma com um toque:\n"
+        "- por_na_lista (produto): pôr um produto na lista, com o tamanho quando fizer sentido, como \"Café 500 g\".\n"
+        "- tirar_da_lista (produto): tirar da lista um item que está nela, com o nome igual ao da lista.\n"
+        "- comprei (produto): registrar que comprou hoje um item da lista, com o nome igual ao da lista.\n"
+        "- buscar (produto): procurar agora o preço de um item da lista, com o nome igual ao da lista.\n"
+        "- abrir (tela): abrir uma tela do app: lista, roteiro, ofertas ou mais.\n"
+        f"No máximo {MAX_ACOES_CHAT - 2} ações, só as que a pessoa pediu ou que ajudam de verdade; para uma pergunta, nenhuma.\n\n"
+        "Responda só com um objeto JSON, sem texto fora dele:\n"
+        '{"resposta": "o texto para a pessoa", "acoes": [{"tipo": "por_na_lista", "produto": "Café 500 g"}, {"tipo": "abrir", "tela": "ofertas"}]}\n'
+        'Sem ações: "acoes": [].\n\n'
+        f"Dados do app:\n{contexto}\n\nConversa (responda à última mensagem da pessoa):\n{conversa}"
+    )
+
+
+def acoes_validas(acoes, cfg):
+    """Só as ações que dá para fazer: item da lista com o nome dela (ou o único que bate), produto novo que não está na lista, tela que existe."""
+    lista = {}
+    for i in cfg.get("lista") or []:
+        if nome_item(i):
+            lista.setdefault(norm(nome_item(i)), nome_item(i))
+    out, vistas = [], set()
+    for a in acoes if isinstance(acoes, list) else []:
+        if not isinstance(a, dict):
+            continue
+        tipo = norm(a.get("tipo") or "").replace(" ", "_")
+        if tipo == "abrir":
+            tela = NOMES_TELA.get(norm(a.get("tela") or a.get("produto") or ""))
+            if not tela:
+                continue
+            acao = {"tipo": "abrir", "tela": tela}
+        elif tipo in ACOES_ITEM:
+            prod = " ".join(str(a.get("produto") or "").split())[:120]
+            k = norm(prod)
+            if len(k) < 2:
+                continue
+            if tipo == "por_na_lista":
+                if k in lista:
+                    continue
+            else:
+                if k not in lista:
+                    parecidos = [n for kk, n in lista.items() if f" {k} " in f" {kk} " or f" {kk} " in f" {k} "]
+                    if len(parecidos) != 1:
+                        continue
+                    k = norm(parecidos[0])
+                prod = lista[k]
+            acao = {"tipo": tipo, "produto": prod}
+        else:
+            continue
+        chave = (acao["tipo"], norm(acao.get("produto") or acao.get("tela")))
+        if chave not in vistas:
+            vistas.add(chave)
+            out.append(acao)
+    return out[:MAX_ACOES_CHAT]
+
+
+def conversar(dado):
+    """Uma resposta da IA para a conversa: {resposta, acoes}. As mensagens vêm da página (as últimas 12)."""
+    if not ia_ligada():
+        raise ErroBusca(IA_DESLIGADA)
+    mensagens = []
+    for m in (dado.get("mensagens") if isinstance(dado.get("mensagens"), list) else [])[-MAX_TURNOS_CHAT:]:
+        if isinstance(m, dict):
+            t = "\n".join(" ".join(linha.split()) for linha in str(m.get("texto") or "").strip().splitlines()).strip()[:MAX_TEXTO_CHAT]
+            if t:
+                mensagens.append(("ia" if m.get("de") == "ia" else "eu", t))
+    if not mensagens or mensagens[-1][0] != "eu":
+        raise ErroBusca("Escreva a sua pergunta.")
+    cfg = ler_config()
+    tela = str(dado.get("tela") or "")
+    r = chamar_ai_task("EconomIA: conversa", instrucoes_chat(contexto_chat(tela if tela in TELAS_CHAT else "lista", cfg), mensagens),
+                       uso="conversa")
+    resposta = next((r[k] for k in ("resposta", "texto", "mensagem", "answer", "response") if isinstance(r.get(k), str) and r[k].strip()), "")
+    acoes = acoes_validas(r.get("acoes") if "acoes" in r else r.get("actions"), cfg)
+    if not resposta.strip() and not acoes:
+        raise ErroBusca("A IA não respondeu. Tente de novo.")
+    return {"resposta": resposta.strip()[:6000], "acoes": acoes}
 
 
 # ---------- HTTP ----------
@@ -6403,6 +6611,14 @@ class Painel(BaseHTTPRequestHandler):
                 return self._json(200, testar_ia("fotos" if dado.get("uso") == "fotos" else "busca"))
             except ErroBusca as e:
                 return self._json(200, {"ok": False, "msg": str(e)})
+        if urllib.parse.urlsplit(self.path).path == "/api/chat":
+            dado = self._corpo()
+            if dado is None:
+                return
+            try:
+                return self._json(200, conversar(dado))
+            except ErroBusca as e:
+                return self._json(400, {"erro": str(e)})
         if urllib.parse.urlsplit(self.path).path == "/api/ler-lista":
             dado = self._corpo(MAX_FOTOS_BODY)
             if dado is None:

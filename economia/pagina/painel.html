@@ -682,6 +682,49 @@ html:not(.sem-ia) .so-semia{display:none!important}
 .voz-dica{max-width:36ch;color:var(--muted);font-size:14px;line-height:1.45}
 .ouvido{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:12px;background:var(--bg);font-size:14.5px;line-height:1.4}
 .ouvido svg{flex:none;width:17px;height:17px;margin-top:2px;fill:none;stroke:var(--accent);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+/* Conversa com a IA: o balão ao lado do microfone. No celular sobe de baixo; no computador fica à direita */
+.chat-fundo{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.4)}
+.chat{position:fixed;left:0;right:0;bottom:0;z-index:41;display:flex;flex-direction:column;height:min(88vh,760px);height:min(88dvh,760px);background:var(--surface);color:var(--ink);border-radius:20px 20px 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.25);padding-bottom:env(safe-area-inset-bottom,0px)}
+.chat-cab{display:flex;align-items:center;gap:6px;padding:12px 12px 10px 18px;border-bottom:1px solid var(--line)}
+.chat-cab h2{flex:1;margin:0;font-family:var(--font-display);font-weight:600;font-size:22px;line-height:1.1}
+.chat-nova{border:0;background:none;color:var(--accent);font-size:14.5px;font-weight:600;padding:8px 8px;border-radius:8px}
+.chat-nova:disabled{color:var(--muted);opacity:.55;cursor:default}
+.chat-x{flex:none;width:40px;height:40px;border:0;border-radius:50%;display:grid;place-items:center;background:var(--bg);color:var(--ink)}
+.chat-x svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.chat-msgs{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:14px 14px 8px;display:flex;flex-direction:column;gap:10px}
+.chat-vazio{margin:auto 4px 0;color:var(--muted);font-size:15px;line-height:1.45}
+.cm{max-width:88%;padding:9px 13px;border-radius:16px;font-size:15.5px;line-height:1.45;overflow-wrap:anywhere}
+.cm p{margin:0}
+.cm.eu{align-self:flex-end;background:var(--accent);color:var(--on-accent);border-bottom-right-radius:5px;white-space:pre-wrap}
+.cm.ia{align-self:flex-start;background:var(--bg);border-bottom-left-radius:5px}
+.cm.erro{align-self:flex-start;background:var(--deal-soft);color:var(--deal);font-size:14.5px}
+.cm.erro .link{color:inherit;margin-left:4px}
+.cm-acoes{display:grid;gap:6px;margin-top:10px}
+.cm-acao{display:flex;align-items:center;gap:8px;width:100%;min-height:42px;padding:8px 12px;border:1px solid var(--accent);border-radius:12px;background:var(--surface);color:var(--accent);font-size:14.5px;font-weight:600;line-height:1.3;text-align:left}
+.cm-acao svg{flex:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cm-acao:disabled{border-color:var(--line);color:var(--muted);cursor:default}
+.cm.pensando{display:flex;gap:5px;padding:15px 16px}
+.cm.pensando i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:pisca 1.2s infinite ease-in-out}
+.cm.pensando i:nth-child(2){animation-delay:.15s}
+.cm.pensando i:nth-child(3){animation-delay:.3s}
+@keyframes pisca{0%,80%,100%{opacity:.25}40%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.cm.pensando i{animation:none;opacity:.6}}
+.chat-sug{display:flex;gap:8px;overflow-x:auto;padding:2px 14px 10px;scrollbar-width:none}
+.chat-sug button{flex:none;min-height:38px;padding:6px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font-size:14.5px;white-space:nowrap}
+.chat-ouvindo{margin:0;padding:0 18px 6px;font-size:13.5px;color:var(--muted)}
+.chat-ouvindo.err{color:var(--deal)}
+.chat-form{display:flex;align-items:flex-end;gap:8px;padding:10px 12px 12px;border-top:1px solid var(--line)}
+.chat-form textarea{flex:1;min-width:0;resize:none;height:44px;max-height:132px;padding:10px 15px;border:1px solid var(--line);border-radius:22px;background:var(--bg);color:var(--ink);font:inherit;font-size:16px;line-height:1.4}
+.chat-form textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
+.chat-mic,.chat-env{flex:none;width:44px;height:44px;border:0;border-radius:50%;display:grid;place-items:center}
+.chat-mic{background:var(--accent-soft);color:var(--accent)}
+.chat-mic.on{background:var(--deal);color:var(--surface)}
+.chat-mic:disabled{opacity:.6;cursor:progress}
+.chat-env{background:var(--accent);color:var(--on-accent)}
+.chat-env:disabled{opacity:.4;cursor:default}
+.chat-mic svg,.chat-env svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chat-aberto .toast{z-index:50;top:calc(14px + env(safe-area-inset-top,0px));bottom:auto}
+@media (max-width:999px){.chat-aberto body{overflow:hidden}}
 /* computador (1000 px ou mais): barra lateral no lugar das abas de baixo, ações no alto à direita,
    seções na página (sem cartões) com título grande e ícone, e o cupom ao lado das oportunidades */
 :root{--side-w:272px}
@@ -735,6 +778,9 @@ html:not(.sem-ia) .so-semia{display:none!important}
   .hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 40px;align-items:center}
   .hero .opps{max-width:none}
   .toast{left:calc(50% + var(--side-w) / 2);bottom:24px}
+  .chat-fundo{display:none!important}
+  .chat{left:auto;right:24px;bottom:24px;width:400px;height:min(680px,calc(100vh - 48px));padding-bottom:0;border-radius:18px;border:1px solid var(--line);box-shadow:0 18px 50px rgba(0,0,0,.22)}
+  .chat-aberto .toast{top:auto;bottom:24px;left:calc(50% + var(--side-w) / 2 - 200px)}
 }
 @media (prefers-reduced-motion:no-preference){
   .btn,.copy,.ghost,.pick,.filters button,.cats button,.tab,.seg button{transition:filter .15s,border-color .15s,color .15s,background .15s}
@@ -950,9 +996,9 @@ html:not(.sem-ia) .so-semia{display:none!important}
 <aside id="lado" aria-label="Menu"></aside>
 <div class="wrap">
   <header class="cab">
-    <div class="cab-topo"><p class="eyebrow" id="hello"><span class="brand"><svg class="app-ic" viewBox="0 0 32 32" aria-hidden="true"><path d="M6 5h20v22.5l-2.5-2.2-2.5 2.2-2.5-2.2-2.5 2.2-2.5-2.2-2.5 2.2-2.5-2.2-2.5 2.2z" fill="var(--accent)"/><rect x="3" y="2.5" width="26" height="4" rx="2" fill="currentColor"/><path d="M9 10.5h7M9 13.5h5" stroke="var(--on-accent)" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round"/><path d="M20.5 10.5h2.5M19.5 13.5h3.5" stroke="var(--on-accent)" stroke-width="1.6" stroke-linecap="round"/><path d="M9 16.6h14" stroke="var(--on-accent)" stroke-opacity=".55" stroke-width="1" stroke-dasharray="1 1.3"/><text x="16" y="24.6" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="700" font-size="10.5" fill="var(--on-accent)">%</text></svg>Econom<span>IA</span></span></p><button type="button" class="mic-top so-voz" data-acao="falar" aria-label="Falar: adicionar itens falando" title="Falar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button></div>
+    <div class="cab-topo"><p class="eyebrow" id="hello"><span class="brand"><svg class="app-ic" viewBox="0 0 32 32" aria-hidden="true"><path d="M6 5h20v22.5l-2.5-2.2-2.5 2.2-2.5-2.2-2.5 2.2-2.5-2.2-2.5 2.2-2.5-2.2-2.5 2.2z" fill="var(--accent)"/><rect x="3" y="2.5" width="26" height="4" rx="2" fill="currentColor"/><path d="M9 10.5h7M9 13.5h5" stroke="var(--on-accent)" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round"/><path d="M20.5 10.5h2.5M19.5 13.5h3.5" stroke="var(--on-accent)" stroke-width="1.6" stroke-linecap="round"/><path d="M9 16.6h14" stroke="var(--on-accent)" stroke-opacity=".55" stroke-width="1" stroke-dasharray="1 1.3"/><text x="16" y="24.6" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="700" font-size="10.5" fill="var(--on-accent)">%</text></svg>Econom<span>IA</span></span></p><button type="button" class="mic-top so-ia" data-acao="chat" aria-label="Conversar com a IA" title="Conversar com a IA" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4 19.5l1.3-4.6A7.5 7.5 0 1 1 20 11.5z"/><path d="M8.8 11.6h.01M12.4 11.6h.01M16 11.6h.01" stroke-width="2.6"/></svg></button><button type="button" class="mic-top so-voz" data-acao="falar" aria-label="Falar: adicionar itens falando" title="Falar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button></div>
     <div class="top-acts">
-      <button type="button" class="mic-top so-voz" data-acao="falar" aria-label="Falar: adicionar itens falando" title="Falar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <button type="button" class="mic-top so-ia" data-acao="chat" aria-label="Conversar com a IA" title="Conversar com a IA" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4 19.5l1.3-4.6A7.5 7.5 0 1 1 20 11.5z"/><path d="M8.8 11.6h.01M12.4 11.6h.01M16 11.6h.01" stroke-width="2.6"/></svg></button><button type="button" class="mic-top so-voz" data-acao="falar" aria-label="Falar: adicionar itens falando" title="Falar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
       <button type="button" class="ghost big so-ia" data-acao="ler"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7-4.7-1.8 4.7-1.8z"/><path d="M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>Ler com IA</button>
       <button type="button" class="btn" data-acao="adicionar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Adicionar item</button>
     </div>
@@ -1430,6 +1476,23 @@ html:not(.sem-ia) .so-semia{display:none!important}
     <button type="button" class="tab" data-view="mais"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Mais</button>
   </div>
 </nav>
+
+<div class="chat-fundo" id="chatFundo" data-noswipe hidden></div>
+<section class="chat" id="chat" role="dialog" aria-labelledby="chatTit" data-noswipe hidden>
+  <header class="chat-cab">
+    <h2 id="chatTit">Conversa</h2>
+    <button type="button" class="chat-nova" id="chatNova">Nova conversa</button>
+    <button type="button" class="chat-x" id="chatFechar" aria-label="Fechar a conversa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </header>
+  <div class="chat-msgs" id="chatMsgs" aria-live="polite"></div>
+  <div class="chat-sug" id="chatSug"></div>
+  <p class="chat-ouvindo" id="chatOuvindo" aria-live="polite" hidden></p>
+  <form class="chat-form" id="chatForm" novalidate>
+    <textarea id="chatTxt" rows="1" maxlength="2000" placeholder="Pergunte o que quiser" aria-label="Mensagem para a IA" enterkeyhint="send"></textarea>
+    <button type="button" class="chat-mic so-voz" id="chatMic" aria-label="Falar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+    <button type="submit" class="chat-env" id="chatEnv" aria-label="Enviar" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+  </form>
+</section>
 
 <script>
 (function(){
@@ -2672,7 +2735,196 @@ html:not(.sem-ia) .so-semia{display:none!important}
     if (a === 'falar') abreFala();
     else if (a === 'ler'){ irPara('lista'); abreFoto('texto'); $('fotoBox').scrollIntoView({block:'center'}); $('fotoTxt').focus(); }
     else if (a === 'adicionar'){ irPara('lista'); var i = $('novoItem'); i.scrollIntoView({block:'center'}); i.focus(); }
+    else if (a === 'chat'){ if (CHAT.aberto) fechaChat(); else abreChat(); }
   });
+
+  // ===== Conversa com a IA: sobre a tela aberta ou qualquer assunto. A IA só sugere; cada ação acontece com um toque =====
+  var KEY_CHAT = 'ofertas-bairro:chat', CHAT_MAX = 40, CHAT_TURNOS = 12, CHAT_VOZ_MAX_S = 60;
+  var CHAT = {aberto:false, esperando:false, msgs:[], grav:null, gravT:null, voz:'off'};
+  var SUG_CHAT = {
+    lista:['Onde a compra fica mais barata?', 'O que está acabando?', 'Monte uma lista para um churrasco'],
+    roteiro:['Vale a pena ir em duas lojas?', 'Onde compro tudo de uma vez?'],
+    ofertas:['Quais ofertas valem a pena para mim?', 'Tem cupom bom agora?', 'Um jantar com o que está em oferta'],
+    mais:['O que está mais barato hoje?', 'Monte uma lista para a semana']
+  };
+  var ACAO_CHAT = {
+    por_na_lista:{ic:'<path d="M12 5v14M5 12h14"/>', faz:'Pôr na lista: ', feito:'Na lista: '},
+    tirar_da_lista:{ic:'<path d="M5 12h14"/>', faz:'Tirar da lista: ', feito:'Saiu da lista: '},
+    comprei:{ic:'<path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.3 14.2l2 2 3.6-3.7"/>', faz:'Comprei hoje: ', feito:'Compra registrada: '},
+    buscar:{ic:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>', faz:'Buscar o preço: ', feito:'Buscando: '},
+    abrir:{ic:'<path d="M5 12h14M13 6l6 6-6 6"/>', faz:'Abrir ', feito:'Abrir '}
+  };
+  var SVG_FEITO = '<path d="M5 12.5l4.5 4.5L19 7.5"/>';
+  function acaoOk(a){ return !!(a && ACAO_CHAT[a.tipo] && (a.tipo === 'abrir' ? TITULOS[a.tela] : typeof a.produto === 'string' && a.produto.trim().length > 1)); }
+  (function(){
+    var c = lerLocal(KEY_CHAT);
+    CHAT.msgs = arr(c && c.msgs).filter(function(m){ return m && (m.de === 'eu' || m.de === 'ia') && typeof m.texto === 'string'; })
+      .map(function(m){ return {de:m.de, texto:m.texto.slice(0, 6000), acoes:m.de === 'ia' ? arr(m.acoes).filter(acaoOk).slice(0, 6) : undefined}; }).slice(-CHAT_MAX);
+  })();
+  function guardaChat(){ gravarLocal(KEY_CHAT, {msgs:CHAT.msgs.filter(function(m){ return m.de !== 'erro'; }).slice(-CHAT_MAX)}); }
+  function textoAcao(a, feito){ return ACAO_CHAT[a.tipo][feito ? 'feito' : 'faz'] + (a.tipo === 'abrir' ? TITULOS[a.tela] : a.produto); }
+  function fmtChat(t){ return esc(String(t || '').replace(/^#+\s*/gm, '')).replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>'); }
+  function pintaChat(){
+    var h = !CHAT.msgs.length && !CHAT.esperando ? '<p class="chat-vazio">Pergunte sobre a lista, as ofertas ou o que quiser. A IA sugere; você confirma.</p>' : '';
+    CHAT.msgs.forEach(function(m, i){
+      if (m.de === 'eu'){ h += '<div class="cm eu"><p>' + esc(m.texto) + '</p></div>'; return; }
+      if (m.de === 'erro'){ h += '<div class="cm erro" role="alert">' + esc(m.texto) + ' <button type="button" class="link" data-chat-repete="1">Tentar de novo</button></div>'; return; }
+      var acoes = arr(m.acoes);
+      h += '<div class="cm ia">' + (m.texto ? '<p>' + fmtChat(m.texto) + '</p>' : '') + (acoes.length ? '<div class="cm-acoes">' + acoes.map(function(a, j){
+        var feito = !!a.feito && a.tipo !== 'abrir';
+        return '<button type="button" class="cm-acao" data-chat-m="' + i + '" data-chat-a="' + j + '"' + (feito ? ' disabled' : '') + '><svg viewBox="0 0 24 24" aria-hidden="true">'
+          + (feito ? SVG_FEITO : ACAO_CHAT[a.tipo].ic) + '</svg><span>' + esc(textoAcao(a, feito)) + '</span></button>';
+      }).join('') + '</div>' : '') + '</div>';
+    });
+    if (CHAT.esperando) h += '<div class="cm ia pensando" role="status" aria-label="A IA está respondendo"><i></i><i></i><i></i></div>';
+    var box = $('chatMsgs'); box.innerHTML = h; box.scrollTop = box.scrollHeight;
+    var sug = CHAT.msgs.length || CHAT.esperando ? [] : (SUG_CHAT[ui.view] || SUG_CHAT.lista);
+    $('chatSug').hidden = !sug.length;
+    $('chatSug').innerHTML = sug.map(function(s){ return '<button type="button" data-chat-sug="' + esc(s) + '">' + esc(s) + '</button>'; }).join('');
+    $('chatNova').disabled = !CHAT.msgs.length || CHAT.esperando;
+    pintaEnvio();
+  }
+  function pintaEnvio(){ $('chatEnv').disabled = CHAT.esperando || !$('chatTxt').value.trim(); }
+  function ajustaTxt(){ var t = $('chatTxt'); t.style.height = '44px'; t.style.height = Math.min(132, Math.max(44, t.scrollHeight + 2)) + 'px'; }
+  function marcaBalao(on){ [].forEach.call(document.querySelectorAll('[data-acao="chat"]'), function(b){ b.setAttribute('aria-expanded', String(on)); }); }
+  function noComputador(){ return window.matchMedia('(min-width: 1000px)').matches; }
+  function abreChat(){
+    if (!iaOn()) return;
+    CHAT.aberto = true; $('chat').hidden = false; $('chatFundo').hidden = false;
+    document.documentElement.classList.add('chat-aberto');
+    marcaBalao(true);
+    pintaChat(); ajustaTxt();
+    if (noComputador()) $('chatTxt').focus();
+  }
+  function fechaChat(){
+    paraVozChat();
+    CHAT.aberto = false; $('chat').hidden = true; $('chatFundo').hidden = true;
+    document.documentElement.classList.remove('chat-aberto');
+    marcaBalao(false);
+  }
+  $('chatFechar').addEventListener('click', fechaChat);
+  $('chatFundo').addEventListener('click', fechaChat);
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && CHAT.aberto) fechaChat(); });
+  $('chatNova').addEventListener('click', function(){ if (CHAT.esperando) return; CHAT.msgs = []; guardaChat(); pintaChat(); });
+  function exemploChat(){
+    var novo = ['Detergente 500 ml', 'Papel toalha', 'Sabonete'].filter(function(n){ return itemDaLista(n) < 0; })[0];
+    return {resposta:'No Home Assistant, a sua IA responde aqui, com a sua lista, os preços e as ofertas. Quando ela sugerir uma mudança, só acontece com o seu toque:',
+      acoes:(novo ? [{tipo:'por_na_lista', produto:novo}] : []).concat([{tipo:'abrir', tela:'ofertas'}])};
+  }
+  function enviaChat(texto){
+    texto = String(texto || '').trim().slice(0, 2000);
+    if (!texto || CHAT.esperando) return;
+    CHAT.msgs = CHAT.msgs.filter(function(m){ return m.de !== 'erro'; });
+    CHAT.msgs.push({de:'eu', texto:texto});
+    $('chatTxt').value = ''; ajustaTxt();
+    pedeChat();
+  }
+  function pedeChat(){
+    CHAT.msgs = CHAT.msgs.filter(function(m){ return m.de !== 'erro'; });
+    if (!CHAT.msgs.length || CHAT.esperando) return;
+    CHAT.esperando = true; guardaChat(); pintaChat();
+    // o que a IA sugeriu e o que a pessoa fez vão junto, para a IA saber do que se fala
+    var hist = CHAT.msgs.slice(-CHAT_TURNOS).map(function(m){
+      var ac = arr(m.acoes);
+      return {de:m.de, texto:m.texto + (ac.length ? '\n(Sugeri: ' + ac.map(function(a){ return textoAcao(a, false) + (a.feito ? ', feito' : ''); }).join('; ') + ')' : '')};
+    });
+    var resp = MODO !== 'addon' ? new Promise(function(ok){ setTimeout(function(){ ok(exemploChat()); }, 700); })
+      : fetch('api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({mensagens:hist, tela:ui.view})})
+        .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if (!r.ok) throw new Error(j.erro || 'A IA não respondeu. Tente de novo.'); return j; }); },
+          function(){ throw new Error('Sem conexão com o Home Assistant. Tente de novo.'); });
+    resp.then(function(j){
+      CHAT.esperando = false;
+      CHAT.msgs.push({de:'ia', texto:String(j.resposta || ''), acoes:arr(j.acoes).filter(acaoOk).slice(0, 6)});
+      CHAT.msgs = CHAT.msgs.slice(-CHAT_MAX); guardaChat(); pintaChat();
+    }).catch(function(err){
+      CHAT.esperando = false;
+      CHAT.msgs.push({de:'erro', texto:err.message}); pintaChat();
+    });
+  }
+  $('chatForm').addEventListener('submit', function(e){ e.preventDefault(); enviaChat($('chatTxt').value); });
+  $('chatTxt').addEventListener('input', function(){ ajustaTxt(); pintaEnvio(); });
+  $('chatTxt').addEventListener('keydown', function(e){ if (e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); enviaChat(this.value); } });
+  $('chatSug').addEventListener('click', function(e){ var b = e.target.closest('[data-chat-sug]'); if (b) enviaChat(b.dataset.chatSug); });
+  function itemDaLista(nome){ var k = norm(nome); for (var i = 0; i < estado.lista.length; i++) if (norm(estado.lista[i].produto) === k) return i; return -1; }
+  function fazAcaoChat(a){
+    if (a.tipo === 'abrir'){ irPara(a.tela); window.scrollTo(0, 0); if (!noComputador()) fechaChat(); return true; }
+    var i = itemDaLista(a.produto);
+    if (a.tipo === 'por_na_lista'){
+      if (i >= 0){ toast('"' + estado.lista[i].produto + '" já está na lista'); return true; }
+      var voltou = entraNaLista(a.produto);
+      salvar('"' + a.produto + '" ' + (voltou ? 'voltou para a lista' : 'entrou na lista')); pintaLista(); pintaOfertasTela(); pintaHist();
+      return true;
+    }
+    if (i < 0){ toast('"' + a.produto + '" não está mais na lista'); return false; }
+    if (a.tipo === 'tirar_da_lista'){
+      vaiProHistorico(estado.lista.splice(i, 1)); salvar('"' + a.produto + '" saiu da lista e ficou no histórico'); pintaLista(); pintaOfertasTela(); pintaHist();
+      return true;
+    }
+    if (a.tipo === 'comprei'){
+      var it = estado.lista[i], hoje = hojeSP();
+      if (it.compras.indexOf(hoje) < 0) it.compras.push(hoje);
+      salvar('Compra registrada: ' + it.produto); pintaLista();
+      return true;
+    }
+    if (a.tipo === 'buscar'){
+      if (MODO === 'addon' && !estado.cep) fechaChat();
+      buscarItem(estado.lista[i].produto);
+      return MODO === 'addon' && !!estado.cep;
+    }
+    return false;
+  }
+  $('chatMsgs').addEventListener('click', function(e){
+    if (e.target.closest('[data-chat-repete]')){ pedeChat(); return; }
+    var b = e.target.closest('[data-chat-a]'); if (!b) return;
+    var m = CHAT.msgs[Number(b.dataset.chatM)], a = m && arr(m.acoes)[Number(b.dataset.chatA)];
+    if (!a || (a.feito && a.tipo !== 'abrir')) return;
+    if (fazAcaoChat(a)){ a.feito = true; guardaChat(); if (CHAT.aberto) pintaChat(); }
+  });
+  // microfone da conversa: o que você falar vira texto na caixa, para conferir antes de enviar
+  function vozChatMsg(t, err){ var o = $('chatOuvindo'); o.hidden = !t; o.textContent = t || ''; o.className = 'chat-ouvindo' + (err ? ' err' : ''); }
+  function pintaMicChat(){
+    var b = $('chatMic'), on = CHAT.voz === 'on';
+    b.classList.toggle('on', on); b.disabled = CHAT.voz === 'starting' || CHAT.voz === 'enviando';
+    b.setAttribute('aria-label', on ? 'Pronto: transcrever o que falei' : 'Falar');
+  }
+  function comecaVozChat(){
+    if (CHAT.grav || GRAV) return;
+    CHAT.voz = 'starting'; pintaMicChat(); vozChatMsg('Abrindo o microfone…');
+    var simular = MODO !== 'addon' && !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    var g = simular ? new GravadorSimulado() : new Gravador();
+    CHAT.grav = g;
+    g.start().catch(function(err){
+      g.cancel(); if (CHAT.grav === g) CHAT.grav = null;
+      if (MODO !== 'addon'){ var s = new GravadorSimulado(); CHAT.grav = s; return s.start(); }
+      throw err;
+    }).then(function(){
+      if (!CHAT.grav || !CHAT.aberto){ paraVozChat(); return; }
+      CHAT.voz = 'on'; pintaMicChat(); vozChatMsg('Ouvindo… toque no microfone quando terminar.');
+      clearInterval(CHAT.gravT);
+      CHAT.gravT = setInterval(function(){ if (!CHAT.grav) return clearInterval(CHAT.gravT); if (CHAT.grav.segundos() >= CHAT_VOZ_MAX_S) terminaVozChat(); }, 250);
+    }, function(err){ CHAT.grav = null; CHAT.voz = 'off'; pintaMicChat(); vozChatMsg(erroMicrofone(err), true); });
+  }
+  function paraVozChat(){
+    clearInterval(CHAT.gravT); if (CHAT.grav) CHAT.grav.cancel(); CHAT.grav = null;
+    if (CHAT.voz !== 'enviando'){ CHAT.voz = 'off'; pintaMicChat(); vozChatMsg(''); }
+  }
+  function terminaVozChat(){
+    var g = CHAT.grav; if (!g) return;
+    clearInterval(CHAT.gravT); CHAT.grav = null;
+    var pcm = g.stop();
+    if (pcm.length < VOZ_TAXA * 0.4){ CHAT.voz = 'off'; pintaMicChat(); vozChatMsg('Não ouvi nada. Toque no microfone e fale.', true); return; }
+    CHAT.voz = 'enviando'; pintaMicChat(); vozChatMsg('Transcrevendo…');
+    var tr = MODO !== 'addon' ? new Promise(function(ok){ setTimeout(function(){ ok({texto:'Onde a compra fica mais barata?'}); }, 700); })
+      : fetch('api/voz', {method:'POST', headers:{'Content-Type':'application/octet-stream'}, body:pcm.buffer})
+        .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if (!r.ok) throw new Error(j.erro || 'Não consegui transcrever.'); return j; }); });
+    tr.then(function(r){
+      CHAT.voz = 'off'; pintaMicChat(); vozChatMsg('');
+      var t = $('chatTxt'), dito = String(r.texto || '').trim();
+      if (!dito){ vozChatMsg('Não entendi. Tente de novo.', true); return; }
+      t.value = (t.value.trim() ? t.value.trim() + ' ' : '') + dito; ajustaTxt(); pintaEnvio(); t.focus();
+    }).catch(function(err){ CHAT.voz = 'off'; pintaMicChat(); vozChatMsg(err.message, true); });
+  }
+  $('chatMic').addEventListener('click', function(){ if (CHAT.voz === 'on') terminaVozChat(); else if (CHAT.voz === 'off') comecaVozChat(); });
 
   $('fotoAdd').addEventListener('click', function(){
     var novos = 0;
@@ -3605,6 +3857,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   function pintaAjustes(){
     var on = iaOn();
     document.documentElement.classList.toggle('sem-ia', !on);
+    if (!on && CHAT && CHAT.aberto) fechaChat();
     $('usarIA').checked = on; $('iaDet').hidden = !on;
     $('usarIATxt').textContent = on
       ? 'Ligado.'
@@ -3848,7 +4101,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
 
   // ----- uso da IA -----
   var USO = null, usoDia = null;
-  var USO_TIPO = {busca:'Busca de ofertas', itens:'Itens sem preço', encarte:'Encartes', fotos:'Fotos e mensagens', cupons:'Cupons por print', fala:'Falar', teste:'Testes'};
+  var USO_TIPO = {busca:'Busca de ofertas', itens:'Itens sem preço', encarte:'Encartes', fotos:'Fotos e mensagens', cupons:'Cupons por print', fala:'Falar', conversa:'Conversa', teste:'Testes'};
   var USO_RES = {ok:'', cota:'cota excedida', formato:'fora do formato', erro:'erro'};
   var DIA_SEM = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
   function usoExemplo(){
