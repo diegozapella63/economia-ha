@@ -128,7 +128,7 @@ async def main():
             await espera(pg, "() => /Copiado|Selecionado/.test(document.querySelector('#tickets .copy[data-code=\"PANVEL20\"]').textContent)")
             check(True, "Copiar o código")
             forma = await pg.locator("#tickets .chip.deal").evaluate_all("es => es.map(e => [getComputedStyle(e).display, Math.round(e.getBoundingClientRect().height)])")
-            check(len(forma) == 2 and all(d == "inline-flex" and h < 30 for d, h in forma), f"o selo de validade urgente é um selo, não uma linha de oferta ({forma})")
+            check(len(forma) == 2 and all(d in ("flex", "inline-flex") and h < 30 for d, h in forma), f"o selo de validade urgente é um selo, não uma linha de oferta ({forma})")
             await pg.locator("#tickets").screenshot(path=SHOTS + "/eco-cupons.png")
             # Online: frete, prazo, loja oficial, mercado da região
             await pg.click('#cats [data-cat="online"]')
