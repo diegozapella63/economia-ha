@@ -72,6 +72,9 @@ class Pagina(Rotas):
         self.assertEqual((st, self.cab["Content-Type"], d[:4]), (200, "font/woff", b"wOFF"))
         self.assertIn("immutable", self.cab["Cache-Control"])
         self.assertEqual(self.pede("GET", "/fonts/nao-existe.woff")[0], 404)
+        st, d = self.pede("GET", "/fonts/OFL.txt")
+        self.assertEqual(st, 200, "a licença das fontes (nome com maiúsculas) também abre")
+        self.assertIn(b"SIL", d)
         self.assertEqual(self.pede("GET", "/fonts/../server.py")[0], 404, "só nomes simples de fonte")
 
     def test_saude_e_rota_que_nao_existe(self):

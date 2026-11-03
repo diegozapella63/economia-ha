@@ -193,6 +193,14 @@ def numero(v):
 
 
 def frete_ok(v):
+    if isinstance(v, str):  # "R$ 9,90", "9,90", "Grátis"
+        if norm(v) in ("gratis", "frete gratis", "gratuito", "frete gratuito"):
+            return 0.0
+        if v.strip().startswith("-"):
+            return None
+        v = re.sub(r"[^\d,.]", "", v)
+        if "," in v:
+            v = v.replace(".", "").replace(",", ".")
     try:
         n = round(float(v), 2)
     except (TypeError, ValueError):
@@ -313,7 +321,7 @@ def gravar_config(cfg):
 
 
 def nome_item(i):
-    return (i.get("produto") if isinstance(i, dict) else str(i or "")).strip()
+    return str((i.get("produto") if isinstance(i, dict) else i) or "").strip()
 
 
 IA_DESLIGADA = "A IA está desligada. Para usar, ligue em Mais › Integrações › Usar IA."
@@ -6275,7 +6283,7 @@ def conversar(dado):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.20.0"
+    server_version = "EconomIA/0.20.1"
 
     def log_message(self, fmt, *args):
         pass
@@ -6322,7 +6330,7 @@ class Painel(BaseHTTPRequestHandler):
             self.send_header("Content-Length", str(len(corpo)))
             self.end_headers()
             self.wfile.write(corpo)
-        elif re.fullmatch(r"/fonts/[a-z0-9-]+\.(woff2?|txt)", rota):
+        elif re.fullmatch(r"/fonts/[A-Za-z0-9-]+\.(woff2?|txt)", rota):
             caminho = os.path.join(WWW, rota.lstrip("/"))
             if not os.path.isfile(caminho):
                 return self._json(404, {"erro": "Não encontrado"})

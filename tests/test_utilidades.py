@@ -27,6 +27,13 @@ class Numeros(Base):
         S = self.S
         self.assertEqual(S.frete_ok(0), 0)
         self.assertIsNone(S.frete_ok(-1))
+        self.assertEqual(S.frete_ok("R$ 9,90"), 9.9, "frete em texto, como as lojas mostram")
+        self.assertEqual(S.frete_ok("9,90"), 9.9)
+        self.assertEqual(S.frete_ok("1.234,50"), 1234.5)
+        self.assertEqual(S.frete_ok("Grátis"), 0)
+        self.assertIsNone(S.frete_ok("-5,00"))
+        self.assertIsNone(S.frete_ok("a combinar"))
+        self.assertEqual(S.valor_total({"preco": "R$ 20,00", "frete": "R$ 9,90"}), 29.9, "o preço online soma o frete em texto")
         self.assertEqual(S.frete_item("no carrinho"), "carrinho")
         self.assertEqual(S.frete_item("9,90".replace(",", ".")), 9.9)
         self.assertEqual(S.valor_total(10), 10)

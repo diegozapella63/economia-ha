@@ -18,7 +18,7 @@ jobs:
       - name: Página montada a partir da fonte
         run: python3 tools/montar_pagina.py --conferir
       - name: Testes e cobertura de linhas (mínimo 80%)
-        run: TZ=America/Sao_Paulo python3 tools/cobertura.py --minimo 80 --linhas --resumo "$GITHUB_STEP_SUMMARY"
+        run: TZ=America/Sao_Paulo python3 tools/cobertura.py --minimo 97 --linhas --resumo "$GITHUB_STEP_SUMMARY"
 
   visual:
     name: Visuais (Playwright)

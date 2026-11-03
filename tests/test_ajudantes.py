@@ -75,6 +75,8 @@ class JeitoBrasileiro(Cenario):
         self.assertEqual(S.nomes_da_lista(cfg), ["Leite", "Café", "Sabão"])
         self.assertEqual(S.quer_similares(cfg), {"sabao"})
         self.assertEqual(S.nome_item(None), "")
+        self.assertEqual(S.nome_item({"quantidade": 2}), "", "item sem produto (de um PUT direto) não derruba")
+        self.assertEqual(S.nome_item({"produto": None}), "")
 
 
 class Instagram(Cenario):
