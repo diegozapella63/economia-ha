@@ -41,7 +41,7 @@ async def main():
             check(await pg.text_content('#lado [data-lado="lista"] .side-badge') == "1", "1 item acabando na Minha lista")
             cats = [(await x.locator(".sl-nome").inner_text(), await x.locator(".sl-num").inner_text()) for x in await pg.locator("#lado .side-item").all()]
             check(cats == [("Mercados", "2"), ("Farmácias", "1")] and await pg.text_content("#lado .side-h small") == "3", f"as ofertas por tipo de loja ({cats})")
-            check(await pg.locator(".top-acts").is_visible() and await pg.locator(".cab-topo .mic-top").is_hidden(), "as ações no alto")
+            check(await pg.locator(".top-acts").is_visible() and await pg.locator(".cab-topo .mic-top.so-voz").is_hidden(), "as ações no alto")
             await pg.screenshot(path=SHOTS + "/ecdk-lista.png")
             # ofertas pela barra lateral, com as colunas lado a lado
             await pg.click('#lado [data-lado-cat="farmacias"]')

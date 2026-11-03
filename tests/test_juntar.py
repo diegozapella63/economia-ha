@@ -142,6 +142,37 @@ class Mesclar(Base):
         self.assertEqual(next(i for i in o["lista"] if i["produto"] == "Café 500 g")["precos"], {"farm-raia": 20})
 
 
+class MesclarBordas(Base):
+    """A mesma loja em outra categoria, a busca completa que tira o "esperando a próxima busca", o relatório que guarda
+    só o que veio dos sites, e a data da busca que só muda na busca completa."""
+
+    def test_a_mesma_loja_em_outra_categoria_tambem_sai(self):
+        S = self.S
+        S.gravar_json(S.OFERTAS, {"categorias": [], "lista": [{"produto": "Leite integral", "precos": {"onli-fort": 4.0, "merc-giassi": 5.0}},
+                                                             {"produto": "Café 500 g", "precos": {"onli-fort": 15.0}}, "lixo", {"precos": {}}]})
+        cat = {"id": "mercados", "nome": "Mercados", "singular": "Mercado", "redes": [], "lojas": [], "cupons": [], "ofertas": [],
+               "_buscados": ["leite integral"], "_redes_buscadas": ["merc-fort"]}
+        S.mesclar_resultado([(cat, {})], self.cfg)
+        lista = {i["produto"]: i for i in S.ler_json(S.OFERTAS)["lista"]}
+        self.assertEqual(lista["Leite integral"]["precos"], {"merc-giassi": 5.0}, "o Fort que era mercado que entrega")
+        self.assertEqual(lista["Café 500 g"]["precos"], {"onli-fort": 15.0}, "item que não foi buscado agora fica")
+
+    def test_busca_completa_e_relatorio(self):
+        S = self.S
+        S.gravar_json(S.OFERTAS, {"gerado_em": "2026-01-01T00:00:00", "relatorio": {"falhas": ["antiga"], "diretas": ["Velha"]},
+                                  "categorias": [{"id": "mercados", "redes": [{"id": "merc-a", "nome": "A"}], "lojas": [{"rede": "merc-a", "nova": True}]}]})
+        S.mesclar_resultado([], self.cfg, extra={"diretas": ["Giassi"], "shopee": 2, "instagram": ["x"]})
+        o = S.ler_json(S.OFERTAS)
+        self.assertEqual(o["gerado_em"], "2026-01-01T00:00:00", "só a busca completa muda a data da busca")
+        self.assertTrue(o["categorias"][0]["lojas"][0]["nova"])
+        self.assertEqual((o["relatorio"]["diretas"], o["relatorio"]["shopee"], o["relatorio"]["falhas"]), (["Giassi"], 2, ["antiga"]))
+        self.assertNotIn("instagram", o["relatorio"], "só diretas, shopee e folhetos entram por aqui")
+        S.mesclar_resultado([], self.cfg, completa=True)
+        o = S.ler_json(S.OFERTAS)
+        self.assertNotEqual(o["gerado_em"], "2026-01-01T00:00:00")
+        self.assertNotIn("nova", o["categorias"][0]["lojas"][0], "busca feita: ninguém mais espera a próxima busca")
+
+
 class Arquivos(Base):
     def test_gravar_e_ler_json(self):
         S = self.S

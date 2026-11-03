@@ -338,7 +338,7 @@ class TesteDePreco(Base):
         return st
 
     def test_cada_caminho(self):
-        S, b = self.S, self.lojas.base
+        b = self.lojas.base
         st = self.prova("mercados", "Super Koch", {"site": b + "/super-koch/"})
         self.assertEqual((st["como"], st["exemplo"], st["site"]), ("site", "Leite Integral Tirol 1L por R$ 4,59", "127.0.0.1:" + str(self.lojas.porta) + "/super-koch"))
         self.assertEqual(st["passos"][0], "✓ Site com busca direta, loja do seu CEP.")
@@ -357,7 +357,7 @@ class TesteDePreco(Base):
         self.assertEqual(st["passos"][-1], "✗ Sem IA, não há de onde tirar o preço desta loja.")
 
     def test_sem_site_rede_social_e_folheto(self):
-        S, b = self.S, self.lojas.base
+        S = self.S
         st = self.prova("mercados", "Açougue Boi", {"social": "https://www.facebook.com/boi"})
         self.assertIn("✗ O site desta loja no mapa é o Facebook (www.facebook.com/boi), sem preços para ler.", st["passos"])
         self.assertEqual(st["como"], "ia")
@@ -475,3 +475,28 @@ class OrdemDosScripts(Base):
         self.assertEqual(rel["diretas"], ["Busca", "Catálogo", "Página"])
         self.assertEqual(rel["instagram"], ["Boi"])
         self.assertEqual(ja, {"mercados": ["Busca", "Catálogo"], "farmacias": ["Página"]}, "a página de ofertas sabe quem já tem preço")
+
+
+class CandidatosBordas(Base):
+    """Os sites candidatos à busca direta: a cidade do CEP que não vem, lojas com folheto ou sem nome, o link de uma oferta
+    online regional e o limite de sites testados por vez."""
+
+    def test_cidade_que_nao_vem_e_lojas_que_nao_contam(self):
+        S, b = self.S, self.lojas.base
+        S.cidade_do_cep = lambda cep, cache: (_ for _ in ()).throw(OSError("viacep fora"))
+        cfg = self.config()
+        merc = categoria("mercados", [("merc-com-folheto", "Com Folheto", 1.0, {"site": b + "/folheto/", "folheto": "u"}),
+                                      ("merc-sem-nome", "", 1.0, {"site": b + "/semnome/"}), ("merc-ok", "Loja Ok", 1.0, {"site": b + "/ok/"})])
+        merc["lojas"].append("lixo")
+        online = categoria("online", [("onli-reg", "Regional", None, {"regional": True}), ("onli-sem", "Sem Link", None, {"regional": True})],
+                           ofertas=[{"rede": "onli-reg", "produto": "Arroz", "fonte": b + "/regional/arroz/p"}, "x"])
+        self.ofertas({"categorias": ["x", merc, online]})
+        self.assertEqual(S.candidatos_site(cfg), {b + "/ok": ("Loja Ok", "mercados"), b + "/regional": ("Regional", "online")},
+                         "o folheto já é lido por outro caminho; sem nome não dá para testar; o link da oferta serve de site")
+
+    def test_ate_tantos_sites_novos_por_vez(self):
+        S, b = self.S, self.lojas.base
+        cfg = self.config(lojas={"adicionar": [{"categoria": "mercados", "nome": f"Loja {i}", "site": f"{b}/loja{i}/"} for i in range(4)]})
+        memo = S.atualiza_diretas(cfg, max_novas=2)
+        self.assertEqual(sorted(memo), [b + "/loja0", b + "/loja1"], "os outros ficam para a próxima")
+        self.assertEqual(len(S.atualiza_diretas(cfg, max_novas=2)), 4)

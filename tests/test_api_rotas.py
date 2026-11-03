@@ -153,6 +153,14 @@ class Config(Rotas):
         self.assertEqual(self.pede("PUT", "/api/config", bruto="ç".encode("latin-1")), (400, {"erro": "Conteúdo inválido."}))
         self.assertEqual(self.so_tamanho("PUT", "/api/config", 2 * 1024 * 1024 + 1)[0], 413)
 
+    def test_corpo_invalido_em_cada_rota(self):
+        for metodo, rota in (("PUT", "/api/integracoes"), ("PUT", "/api/ofertas"), ("POST", "/api/ler-encarte"), ("POST", "/api/ler-lista"),
+                             ("POST", "/api/integracoes/ml/conectar")):
+            with self.subTest(rota=rota):
+                self.assertEqual(self.pede(metodo, rota, bruto=b'["nao", "objeto"]'), (400, {"erro": "Conteúdo inválido."}))
+        self.assertEqual(self.S.segredos(), {}, "nada gravado")
+        self.assertIsNone(self.S.ler_json(self.S.OFERTAS))
+
     def test_put_ofertas(self):
         self.assertEqual(self.pede("PUT", "/api/ofertas", {"lista": []}), (400, {"erro": "Faltou a lista de categorias."}))
         self.assertEqual(self.pede("PUT", "/api/ofertas", {"categorias": [], "lista": []}), (200, {"ok": True}))

@@ -14,7 +14,18 @@ from apoio import Cenario, limpa, servidor
 from ha_falso import estado
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "economia" / "app"))
-import voz  # noqa: E402
+
+
+class _Voz:
+    """O voz.py, importado só quando um teste usa: assim a medição de cobertura (que começa depois de carregar os
+    testes) vê o módulo inteiro."""
+
+    def __getattr__(self, nome):
+        import voz as m
+        return getattr(m, nome)
+
+
+voz = _Voz()
 
 UM_SEGUNDO = b"\0\1" * 16000
 
@@ -211,7 +222,7 @@ class Conexao:
 class WebSocketCru(unittest.TestCase):
     """_ws_comando contra um servidor de soquete com roteiro: o que o Home Assistant pode mandar de diferente."""
 
-    def roda(self, roteiro, comando=None, url=None):
+    def roda(self, roteiro, comando=None, esquema="ws"):
         srv = socket.socket()
         srv.bind(("127.0.0.1", 0))
         srv.listen(1)
@@ -239,7 +250,7 @@ class WebSocketCru(unittest.TestCase):
         t = threading.Thread(target=atende, daemon=True)
         t.start()
         try:
-            return voz._ws_comando(url or f"ws://127.0.0.1:{srv.getsockname()[1]}/api/websocket?x=1", "tok", comando or {"type": "x"}, timeout=5)
+            return voz._ws_comando(f"{esquema}://127.0.0.1:{srv.getsockname()[1]}/api/websocket?x=1", "tok", comando or {"type": "x"}, timeout=5)
         finally:
             t.join(10)
 
@@ -338,21 +349,10 @@ class WebSocketCru(unittest.TestCase):
             def roteiro(cx):
                 cx.entra()
                 cx.manda(quadro({"id": 1, "type": "result", "success": True, "result": "ok"}))
-            r = self.roda_wss(roteiro)
+            r = self.roda(roteiro, esquema="wss")
         finally:
             voz.ssl.create_default_context = orig
         self.assertEqual((r, visto["host"]), ("ok", "127.0.0.1"))
-
-    def roda_wss(self, roteiro):
-        orig = voz._ws_comando
-
-        def troca(url, *a, **k):
-            return orig(url.replace("ws://", "wss://"), *a, **k)
-        voz._ws_comando = troca
-        try:
-            return self.roda(roteiro)
-        finally:
-            voz._ws_comando = orig
 
 
 class FalaSimulada(Cenario):

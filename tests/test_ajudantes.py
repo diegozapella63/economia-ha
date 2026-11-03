@@ -29,6 +29,12 @@ class FormatoDaIA(Cenario):
         self.assertEqual(S.extrai_json('A resposta: {\\"lojas\\": [{\\"nome\\": \\"Giassi\\"}]}\nfim'), {"lojas": [{"nome": "Giassi"}]},
                          "aspas escapadas no meio do texto")
 
+    def test_texto_entre_aspas_que_nao_e_json(self):
+        S = self.S
+        with self.assertRaises(S.ErroFormato) as c:
+            S.extrai_json('"Não encontrei ofertas hoje."')
+        self.assertIn("Não encontrei ofertas hoje.", c.exception.trecho)
+
     def test_sem_json_registra_e_avisa(self):
         S = self.S
         with self.assertRaises(S.ErroFormato) as c:
@@ -164,7 +170,6 @@ class TesteDoSite(Cenario):
         self.assertLess(r["em"], S.agora(), "sem resposta: guardado como velho, para testar de novo amanhã")
 
     def test_erros_http(self):
-        S = self.S
         h = lambda c: urllib.error.HTTPError("https://loja.com.br/robots.txt", c, "x", {}, None)  # noqa: E731
         self.assertEqual(self.com_erro(h(403))["erro"], "recusou o acesso de programas (erro 403)")
         self.assertEqual(self.com_erro(h(500))["erro"], "respondeu com erro 500")
@@ -225,6 +230,9 @@ class Textos(Cenario):
         self.assertIn("Não precisa trazer estas lojas, que ficam perto e já são buscadas: Giassi.", t)
         self.assertEqual(S.entrega_txt({"online": {"mercados_entrega": False}}), "")
         self.assertEqual(S.lojas_perto({"raio_km": "x"}), ["Giassi"], "raio inválido: 2 km")
+        self.assertEqual(S.lojas_perto_cat({"raio_km": "x"}), {"giassi": "mercados"})
+        self.assertEqual(S.categoria_da_loja("Fort Atacadista", S.lojas_perto_cat({"raio_km": 10})), "mercados", "nome parecido com a do bairro")
+        self.assertEqual(S.categoria_da_loja("Loja Distante", {"giassi": "mercados"}), "online", "a que não fica no bairro entrega")
         self.assertEqual(S.ja_tenho_txt({"_ja_tenho": {"mercados": ["Giassi", "Angeloni"]}}, "mercados"),
                          "Os preços da lista destas lojas já vieram direto do site delas: Giassi, Angeloni. Não traga preços da lista dessas lojas; procure as outras.")
         self.assertEqual(S.ja_tenho_txt({}, "mercados"), "")

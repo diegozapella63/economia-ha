@@ -219,5 +219,65 @@ class Categoria(Base):
         self.assertEqual(self.S.busca_direta({"lista": [{"produto": "Leite"}]}), [])
 
 
+class Bordas(Base):
+    """A loja do CEP que não responde, o erro num item que não para os outros, o estado das lojas com busca direta,
+    a correção que quebra, o Open Food Facts fora do ar e similares sem tamanho para comparar."""
+
+    def test_loja_do_cep_que_nao_responde_e_item_com_erro(self):
+        S = self.S
+        S.regiao_direta = (lambda orig: (lambda k, cep: (_ for _ in ()).throw(OSError("tempo esgotado")) if k == "angeloni" else orig(k, cep)))(S.regiao_direta)
+        S.alternativas = (lambda orig: (lambda n: (_ for _ in ()).throw(ValueError("nome estranho")) if n == "Item Quebrado" else orig(n)))(S.alternativas)
+        r = self.busca("Item Quebrado", "Leite integral")
+        self.assertEqual(set(r["Leite integral"]["precos"]), {"merc-giassi"}, "o erro num item não para os outros")
+        self.assertIn("busca direta Angeloni: não consegui saber a loja do CEP (tempo esgotado)", self.log)
+        self.assertIn("busca direta Giassi 'Item Quebrado': nome estranho", self.log)
+
+    def test_estado_das_lojas_com_busca_direta(self):
+        S = self.S
+        b = self.lojas.base
+        S.gravar_json(S.LOJAS_SITE, {b + "/farmavida": {"nome": "Farmácia Vida", "paginas": True, "vtex": False, "em": "2099-01-01T00:00:00+00:00"}})
+        S.regiao_direta = (lambda orig: (lambda k, cep: (_ for _ in ()).throw(OSError("x" * 200)) if k == "angeloni" else orig(k, cep)))(S.regiao_direta)
+        st = {x["id"]: x for x in S.lojas_diretas_status({"cep": CEP})}
+        self.assertEqual((st["giassi"]["atende"], st["giassi"]["fixa"]), (True, True))
+        self.assertEqual((st["angeloni"]["atende"], len(st["angeloni"]["erro"])), (None, 120), "o erro, curto")
+        self.assertEqual(st["farmacia-vida"], {"id": "farmacia-vida", "nome": "Farmácia Vida", "atende": None, "paginas": True},
+                         "site comum que deixa ler as páginas")
+
+    def test_correcao_que_quebra(self):
+        S = self.S
+        S.corrige_texto = lambda n: (_ for _ in ()).throw(KeyError("vocab")) if n == "Ruim" else ("Leite" if n == "Leiet" else None)
+        self.assertEqual(S.sugestoes_para(["Ruim", "Leiet", "Café"]), {"Leiet": "Leite"})
+
+    def test_open_food_facts_fora_do_ar(self):
+        S = self.S
+        S.OFF_API = "http://127.0.0.1:9"
+        r = S.produto_por_ean("7896004000855", {"cep": CEP})
+        self.assertFalse(r["ok"])
+        self.assertIn("Não achei esse código nas lojas nem no Open Food Facts", r["msg"])
+        S.busca_vtex = lambda *a, **k: (_ for _ in ()).throw(OSError("loja fora"))
+        self.assertFalse(S.produto_por_ean(EAN_COXINHA, {"cep": CEP})["ok"], "a loja que falha é pulada")
+
+    def test_similares_sem_tamanho_ou_unidade_diferente(self):
+        S = self.S
+        cand = [{"nome": "Coxinha", "secao": "acougue/aves", "secao_nome": "Aves", "tam": None, "preco": 30, "link": "c"}]
+        self.assertEqual(S.similares_vtex("giassi", None, "Coxinha", cand), [], "sem tamanho: não dá para comparar o quilo")
+        cand = [{"nome": "Coxinha", "secao": "acougue/aves", "secao_nome": "Aves", "tam": (1.0, "kg"), "preco": 30, "link": "c"}]
+        self.lojas.catalogo["giassi"] = [prod("Frango Inteiro Congelado Kg", 10.99, AVES, "kg", 1), prod("Caldo de Galinha 1L", 5.0, AVES),
+                                         prod("Asa sem seção", 9.0, None, "kg", 1)]
+        self.assertEqual([p["nome"] for p in S.similares_vtex("giassi", None, "Coxinha", cand)], ["Frango Inteiro Congelado Kg"],
+                         "litro não se compara com quilo; sem seção fica de fora")
+
+    def test_loja_achada_fora_do_bairro_so_como_mercado_que_entrega(self):
+        S = self.S
+        self.lojas.regioes["super-longe"] = "l1"
+        self.lojas.catalogo["super-longe"] = [prod("Leite Integral Tirol 1L", 3.99, "Laticínios/Leites")]
+        S.VTEX_ACHADAS["super-longe"] = {"nome": "Super Longe", "site": self.lojas.base + "/super-longe", "categoria": "mercados"}
+        self.busca("Leite integral")
+        self.assertFalse(self.lojas.pedidos_de("/super-longe/"), "não fica no bairro e Online não está marcado: nem pergunta")
+        cfg = {"cep": CEP, "categorias": ["mercados", "online"], "lista": [{"produto": "Leite integral"}]}
+        cats = {c["id"]: c for c, _ in S.busca_direta(cfg, cats=("mercados",))}
+        self.assertIn("onli-super-longe", [r["id"] for r in cats["online"]["redes"]], "com Online marcado: entra como mercado que entrega")
+
+
 if __name__ == "__main__":
     unittest.main()

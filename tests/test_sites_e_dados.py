@@ -136,6 +136,19 @@ class Versoes(Base):
         self.assertEqual(len(S.listar_versoes()), S.MAX_VERSOES)
 
 
+    def test_sem_pasta_e_nome_estranho(self):
+        S = self.S
+        self.assertEqual(S.listar_versoes(), [], "sem nenhuma versão guardada")
+        S.gravar_config({"cep": "1", "lista": ["Café", {"produto": ""}]})
+        n = S.guardar_versao("qualquer", forcar=True)
+        self.assertTrue(n.endswith("-auto.json"), "motivo desconhecido vira automática")
+        open(os.path.join(S.VERSOES, "anotacoes.txt"), "w").close()
+        open(os.path.join(S.VERSOES, "config-x.json"), "w").close()
+        self.assertEqual([(v["nome"], v["itens"], v["motivo"]) for v in S.listar_versoes()], [(n, 1, "automática")], "só os arquivos de versão")
+        with self.assertRaisesRegex(S.ErroBusca, "Versão não encontrada."):
+            S.restaurar_versao("config-20200101-000000-auto.json")
+
+
 class UsoDaIA(Base):
     def test_conta_chamadas_tokens_e_erros(self):
         S = self.S
@@ -179,6 +192,29 @@ class Exportar(Base):
         folha = z.read("xl/worksheets/sheet1.xml").decode()
         self.assertIn("Leite integral", folha)
         self.assertIn("Giassi R$ 4,89", folha)
+
+
+    def test_lojas_que_nao_contam(self):
+        S = self.S
+        S.gravar_config({"raio_km": "perto", "categorias": ["mercados", "online"], "clubes": ["merc-fort"],
+                         "lojas": {"ignorar": ["merc-ignorada"], "manter": ["merc-mantida"]},
+                         "lista": [{"produto": "Leite", "compras": ["2026-10-01", "x", "2026-10-03", "2026-10-08"]}, {"produto": ""}, "Café"]})
+        S.gravar_json(S.OFERTAS, {"categorias": ["x", {"id": "mercados", "singular": "Mercado", "redes": [
+            {"id": "merc-perto", "nome": "Perto"}, {"id": "merc-longe", "nome": "Longe"}, {"id": "merc-ignorada", "nome": "Ignorada"},
+            {"id": "merc-mantida", "nome": "Mantida"}, {"id": "merc-sem-loja", "nome": "Sem loja"}, {"id": "merc-fort", "nome": "Fort"}, "y"],
+            "lojas": [{"rede": "merc-perto", "distancia_km": 1.0}, {"rede": "merc-longe", "distancia_km": 2.5}, {"rede": "merc-ignorada", "distancia_km": 1.0},
+                      {"rede": "merc-mantida", "distancia_km": 9.0}, {"rede": "merc-fort", "distancia_km": 1.5}, "z"]},
+            {"id": "farmacias", "redes": [{"id": "farm-x", "nome": "X"}], "lojas": [{"rede": "farm-x", "distancia_km": 1}]}],
+            "lista": [{"produto": "Leite", "precos": {"merc-perto": 5.0, "merc-longe": 4.0, "merc-ignorada": 3.0, "merc-mantida": 4.5,
+                                                      "merc-sem-loja": 2.0, "farm-x": 1.0, "merc-desconhecida": 1.5,
+                                                      "merc-fort": {"preco": 6.0, "clube": 4.2}}}]})
+        itens = json.loads(S.exportar("json")[0])["lista"]
+        self.assertEqual([i["produto"] for i in itens], ["Leite", "Café"], "sem nome: fica de fora")
+        leite = itens[0]
+        self.assertEqual([(p["loja"], p["preco"]) for p in leite["precos"]], [("Fort", 4.2), ("Mantida", 4.5), ("Perto", 5.0)],
+                         "raio inválido: 2 km; sem a longe, a ignorada, a sem loja, a de categoria desmarcada e a desconhecida; clube do sócio")
+        self.assertEqual((leite["compras"], leite["compra_a_cada_dias"], leite["economia"]), (["2026-10-01", "2026-10-03", "2026-10-08"], 4, 0.8))
+        self.assertEqual((itens[1]["precos"], itens[1]["mais_barato"], itens[1]["compra_a_cada_dias"]), ([], None, None))
 
 
 class CategoriaDaLoja(Base):

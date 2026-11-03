@@ -88,7 +88,7 @@ class ChamarIA(Cenario):
         self.assertEqual((u["chamadas"], u["cota"], u["erros"]), (2, 2, 0), "cota não conta como erro")
 
     def test_sem_home_assistant(self):
-        S, ha = self.S, self.ha
+        S = self.S
         self.config()
         S.HA_API = "http://127.0.0.1:9/api"
         with self.assertRaisesRegex(S.ErroBusca, "Não consegui falar com o Home Assistant"):
@@ -176,6 +176,51 @@ class UsoESensor(Cenario):
         S.publica_sensor_uso()
         self.assertNotIn("sensor.economia_ia_hoje", ha.estados, "desligado: o sensor sai do HA")
         self.assertTrue(ha.pedidos_de("/states/sensor.economia_ia_hoje", "DELETE"))
+
+
+class UsoBordas(Cenario):
+    """O histórico de uso fica com 120 dias, o sensor que falha avisa uma vez por dia, a conta do uso que falha não
+    derruba a chamada, e a lista de IAs ignora estados estranhos."""
+
+    def test_historico_de_120_dias(self):
+        S = self.S
+        S.gravar_json(S.USO_FILE, {"dias": {f"2025-{m:02d}-{d:02d}": {"chamadas": 1} for m in range(1, 13) for d in range(1, 29)}})
+        S.registra_uso("EconomIA: mercados", None, 40, 0, 0, 1, "ok")
+        dias = S.ler_json(S.USO_FILE)["dias"]
+        self.assertEqual(len(dias), S.DIAS_USO)
+        self.assertIn(S.hoje_br(), dias)
+        self.assertNotIn("2025-01-01", dias, "os mais antigos saem")
+
+    def test_sensor_que_falha_avisa_uma_vez_por_dia(self):
+        S = self.S
+        self.config(sensores=True)
+        S._sensor_dia.update(dia=None, ligado=True)
+        S.HA_API = "http://127.0.0.1:9/api"
+        S.publica_sensor_uso()
+        S.publica_sensor_uso()
+        self.assertEqual(len([m for m in self.log if m.startswith("sensor de uso da IA:")]), 1)
+
+    def test_conta_do_uso_que_falha(self):
+        S, ha = self.S, self.ha
+        self.config()
+        ha.responde_ia("", {"ok": True})
+        S.registra_uso = lambda *a: (_ for _ in ()).throw(OSError("sem disco"))
+        self.assertEqual(S.chamar_ai_task("EconomIA: mercados", "i"), {"ok": True})
+        self.assertIn("uso da IA: sem disco", self.log)
+
+    def test_estados_estranhos_na_lista_de_ias(self):
+        S, ha = self.S, self.ha
+        ha.tarefa_ia("ai_task.claude", "Claude")
+        S.ha_api = (lambda orig: (lambda m, c, *a, **k: (orig(m, c, *a, **k) or []) + ["lixo", None] if c == "/states" else orig(m, c, *a, **k)))(S.ha_api)
+        self.assertEqual(S.ias_disponiveis()["tarefas"], [{"id": "ai_task.claude", "nome": "Claude", "anexos": True}])
+
+    def test_teste_com_json_quebrado(self):
+        S, ha = self.S, self.ha
+        self.config()
+        ha.responde_ia("teste", 'Achei: {"busca": true, "exemplo": "Giassi" "fonte"}', vezes=1)
+        r = S.testar_ia("busca")
+        self.assertFalse(r["ok"])
+        self.assertIn("formato que o EconomIA não conseguiu ler", r["msg"])
 
 
 class ListaDeIAs(Cenario):

@@ -4,32 +4,99 @@ Três camadas, rodando a cada push no GitHub (aba Actions):
 
 | Camada | Onde | Como rodar | O que confere |
 |---|---|---|---|
-| Unitários | `tests/test_*.py` | `python3 -m unittest discover -s tests -p "test_*.py"` | cada parte do servidor (`economia/app/server.py`), sem Home Assistant e sem internet |
-| Integração | `tests/test_api.py` (no mesmo comando) | idem | o servidor de verdade num processo, pela API, contra lojas falsas |
+| Unitários | `tests/test_*.py` | `python3 -m unittest discover -s tests -p "test_*.py"` | cada parte do servidor (`economia/app/server.py` e `voz.py`), sem Home Assistant de verdade e sem internet |
+| Integração | `tests/test_api*.py` (no mesmo comando) | idem | o servidor pela API HTTP, num processo ou no mesmo, contra lojas e Home Assistant falsos |
 | Visuais | `tests/e2e/ec_*.py` | `tests/e2e/run.sh` | a página no Chromium (Playwright): clica, digita, confere e grava capturas |
 
-Só Python 3 para as duas primeiras (uns 30 segundos). As visuais precisam de `pip install playwright` e
+Só Python 3 para as duas primeiras (uns 60 segundos), e nada de internet: os pedidos para fora vão para um proxy que
+não existe, e tudo o que o app consulta é falso e local. As visuais precisam de `pip install playwright` e
 `python3 -m playwright install chromium`; as capturas ficam em `$E2E_TMP/shots`.
 
-- `apoio.py`: `servidor()` carrega o `server.py` do zero numa pasta de dados temporária; `LojasFalsas` responde como a
-  busca da VTEX (regiões, texto, código de barras, seção), o OAuth e o previsor de categorias do Mercado Livre, o Open
-  Food Facts e páginas soltas; `prod()` monta um produto da VTEX.
-- `test_casamento.py`: palavras, "ou", tipo do produto, parecido, restrições, fragrâncias, vocabulário, correção de
-  digitação, código de barras e o que fica guardado em `casados.json`.
+Cobertura de linhas (sem dependências): `TZ=America/Sao_Paulo python3 tools/cobertura.py --linhas` mostra o % de cada
+arquivo e as linhas que nenhum teste roda.
+
+Regras: nada de relógio real além do que o app já usa (o GitHub roda com `TZ=America/Sao_Paulo`), nada de `sleep` para
+esperar (espera-se a condição: `Cenario.espera`, `espera()` nas visuais), sempre portas livres.
+
+## Peças de apoio
+
+- `apoio.py`: `servidor()` carrega o `server.py` do zero numa pasta de dados temporária, sem internet; `LojasFalsas`
+  responde como a busca da VTEX (regiões, texto, código de barras, seção), o OAuth e o previsor de categorias do
+  Mercado Livre, o Open Food Facts, páginas soltas (com cabeçalhos, redirecionamento ou `FECHA`, a conexão fechada sem
+  resposta) e rotas com função (`rotas[caminho] = f(pedido)`: Overpass, Google, Brave, Graph API, Shopee); `prod()` monta
+  um produto da VTEX; `categoria()` uma categoria do `ofertas.json`; `Cenario` é a base dos testes novos (lojas falsas,
+  Home Assistant falso e servidor ligados entre si, `config()`, `ofertas()`, `espera()`).
+- `ha_falso.py`: o Home Assistant falso (REST e WebSocket): estados, `ai_task.generate_data` com roteiro por tarefa
+  (resposta, função ou `Erro`), assistentes de conversa, listas de tarefas (`todo.*`), fala para texto (`/api/stt`),
+  assistentes de voz pelo WebSocket, token conferido e tudo o que chegou guardado para conferir.
+
+## Unitários e integração
+
+- `test_ajudantes.py`: a resposta da IA fora do formato e o JSON no meio do texto, o tipo de cada chamada, preço e data,
+  o @ do Instagram, blocos de texto da página, tamanho de imagem, períodos de folheto, robots.txt, o teste de um site que
+  não responde (cada erro explicado), distância entre palavras, tamanhos repetidos e textos para a IA.
+- `test_casamento.py`: palavras, "ou", tipo do produto, parecido, restrições, fragrâncias, dose (500 mg = 500mg),
+  vocabulário (os mais recentes, palavras associadas), correção de digitação, código de barras e `casados.json`.
 - `test_utilidades.py`: números, tamanhos e pacotes, links, datas, robots.txt, meta tags e schema.org, nomes de loja.
+- `test_normalizar.py`: a resposta da IA de cada categoria virando lojas, cupons, ofertas, preços da lista, tamanhos,
+  a junção de categorias e o casamento do item.
+- `test_juntar.py`: montar os preços de um item, normalizar a resposta, juntar categorias, o `ofertas.json` gravado
+  (a loja consultada de novo, a mesma loja em outra categoria, a busca completa e o relatório).
 - `test_busca_direta.py`: preço por peso, seção da loja, similares, "ou", item pelo código, produto pelo código (loja e
-  Open Food Facts), nome corrigido, loja que não atende o CEP.
-- `test_juntar.py`: montar os preços de um item, normalizar a resposta, juntar categorias, o `ofertas.json` gravado.
-- `test_mercadolivre.py`: autorização, renovação, revogação, limite por hora, 429, cache e o filtro de categoria.
+  Open Food Facts, fora do ar), nome corrigido, loja que não atende o CEP ou não responde, loja achada fora do bairro.
+- `test_paginas.py`: dados embutidos nos scripts, texto das páginas, página do produto, sitemap, busca do site e
+  páginas de ofertas (limites, validade, robots.txt).
 - `test_sites_e_dados.py`: páginas das lojas sem IA, busca do site com robots.txt, Shopee (assinatura), versões, uso da
-  IA, exportar (JSON e planilha), categoria das lojas.
+  IA, exportar (JSON e planilha, as lojas que não contam), categoria das lojas.
+- `test_lojas_online.py`: o robots.txt e a busca direta nas lojas VTEX achadas, sitemap, busca do site, página de
+  ofertas, Shopee (busca e erros), o site das lojas pelo Brave e pela IA, o teste de cada loja e a ordem dos scripts
+  (uma fonte que quebra não para as outras).
+- `test_sondagem.py`: o teste de preço de cada loja passo a passo (VTEX, sitemap, outro produto, página de ofertas,
+  Instagram, folheto, marketplaces), as rodadas (Encontrar lojas e Testar agora) e o resultado posto em cada loja.
+- `test_mercadolivre.py`: autorização, renovação, revogação, limite por hora, 429, cache (até 8000), erros e o filtro.
+- `test_mapa.py`: OpenStreetMap e Google juntos, filial mais perto, falhas no meio, site pelo Google, Encontrar lojas,
+  lojas sem localização (com erros e limite) e a cidade do CEP.
+- `test_folhetos.py`: Kimbino, Seus Folhetos, Portafolhetos e Catálogos Ofertas: links e validade, páginas e tamanho
+  das imagens, robots.txt e `ai-input=no`, verificação de robô (não contorna), o site que recusa, quebra ou vem vazio,
+  as capas, a leitura guardada até vencer e os limites por busca.
+- `test_instagram.py`: a conta pela chave, a validade, os erros da Meta, os posts de oferta, as lojas com Instagram,
+  a leitura guardada, imagens que não baixam e a IA que falha.
+- `test_ia.py`: a chamada à IA do Home Assistant (estruturada, em texto, erros, cota, desligada), conversa, uso e
+  sensor (120 dias, sensor que falha), lista de IAs, Testar a IA, os pedidos de cada categoria e o registro.
+- `test_busca_ia.py`: o Buscar de ponta a ponta (sites primeiro, uma pergunta por categoria, cota, IA desligada,
+  encarte do site, itens sem preço) e o que não pode derrubar a busca; a busca de poucos itens.
+- `test_leitura.py`: Ler com IA (foto, mensagem, fala), cupons do app, encarte mandado pelo morador, encarte do site
+  (limites de arquivos e tamanho) e os erros (pasta de mídia, erro inesperado, foto que não é base64).
+- `test_sincronizacao.py`: a Minha lista com a lista de tarefas do Home Assistant, nos dois sentidos, o diário e o laço.
+- `test_voz.py`: Falar (opções, escolha, áudio para texto, erros) e o WebSocket do Home Assistant falado à mão
+  (ping, pedaços, mensagens grandes, wss, cada erro), contra um servidor de soquete com roteiro.
+- `test_privacidade.py`: o e-mail do dono nunca sai, cada chave só vai para o serviço dela, as chaves não ficam no
+  config.json nem no arquivo exportado, as fotos saem da pasta de mídia.
 - `test_api.py`: página e fontes, estado, config, integrações (chaves nunca voltam), Mercado Livre do começo ao fim,
-  código de barras, correção, acesso só pelo Home Assistant.
+  código de barras, correção, acesso só pelo Home Assistant (servidor num processo).
+- `test_api_fluxos.py`: os fluxos pela API com o Home Assistant falso (busca, leitura, sincronizar, Falar, integrações)
+  e o `main()`, com o servidor num processo.
+- `test_api_rotas.py`: cada rota no mesmo processo, com os casos de sucesso e de erro (corpo inválido ou grande, IA
+  desligada, HA fora, busca ou teste já rodando) e o acesso só pelo ingress.
+
+## Visuais
+
 - `e2e/ec_lista.py`: a lista com preços (busca de verdade contra lojas falsas), similares, escolher, roteiro, adicionar,
   "Quis dizer…?", Comprei hoje, histórico, limpar.
 - `e2e/ec_codigo.py`: código de barras por foto (deitada, em pé, de ponta-cabeça, borrada, com ruído, pequena, EAN-8,
   UPC-A) e por número, loja, Open Food Facts, balança, número errado, item com o código.
 - `e2e/ec_integracoes.py`: Mercado Livre em Mais › Integrações, do salvar ao apagar.
+- `e2e/ec_integracoes_chaves.py`: Shopee, Google, Brave e Instagram em Mais › Integrações (salvar, testar, apagar,
+  chave que nunca volta para a página), Usar IA e a escolha das IAs.
 - `e2e/ec_lojas.py`: Mais › Lojas: abas, procurar, só sem fonte, inativas, clube, loja sem localização.
+- `e2e/ec_lojas_acoes.py`: Encontrar lojas, Testar agora, Como foi testado, adicionar e ignorar loja.
+- `e2e/ec_ofertas.py`: Ofertas e cupons por categoria, filtros, cupom que vence, online com frete.
+- `e2e/ec_roteiro.py`: o roteiro de compras por loja, distância e total.
+- `e2e/ec_buscar.py`: o Buscar com o andamento, a cota, o erro e os avisos.
+- `e2e/ec_ler_ia.py`: Ler com IA (mensagem, foto, cupons, encarte) e o Falar com microfone falso do Chromium.
+- `e2e/ec_dados.py`: Mais › Dados: exportar (downloads), importar, versões e restaurar.
+- `e2e/ec_aparencia.py`: tema claro e escuro, sem IA, estados vazios e textos sem inglês.
+- `e2e/ec_tamanhos.py`: os tamanhos do item, a base e o preço por quilo ou litro.
+- `e2e/ec_desktop.py`: no computador (1280 px): barra lateral, ações no alto e colunas lado a lado.
 
 `python3 tools/montar_pagina.py --conferir` (também no GitHub) garante que a página do add-on foi montada da fonte.

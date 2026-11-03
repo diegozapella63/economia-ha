@@ -27,6 +27,8 @@ import unicodedata
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+from ha_falso import cala_desistencia
+
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 APP = os.path.join(RAIZ, "economia", "app")
 CEP = "89216120"
@@ -143,6 +145,7 @@ class LojasFalsas:
                     dono._post(self, corpo)
 
         self._srv = ThreadingHTTPServer(("127.0.0.1", 0), H)
+        self._srv.handle_error = cala_desistencia(self._srv)
         self.porta = self._srv.server_address[1]
         self.base = f"http://127.0.0.1:{self.porta}"
         threading.Thread(target=self._srv.serve_forever, kwargs={"poll_interval": 0.05}, daemon=True).start()

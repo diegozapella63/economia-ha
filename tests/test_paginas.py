@@ -3,7 +3,6 @@ antes do nome, centavos da VTEX), cartões de texto (nome em duas linhas), pági
 AggregateOffer, lowPrice, sem dados: o título e os dados da página), sitemap (.gz quebrado, índice sem produtos),
 preço da página do produto (nome pelo endereço, erro), busca do site (o núcleo do item, o nome corrigido) e as lojas
 com página de ofertas na busca."""
-import gzip
 import json
 import types
 
@@ -31,6 +30,12 @@ class DadosEmbutidos(Cenario):
     def test_scripts_curtos_e_dados_estruturados_ficam_de_fora(self):
         h = '<script>"a"</script><script type="application/ld+json">{"name":"Produto do schema org","price":5}</script><script>var semAspas = 1;</script>'
         self.assertEqual(self.S.ofertas_json_embutido(h), [])
+
+    def test_nome_com_escape_quebrado_e_script_sem_nome(self):
+        h = ('<script>var a = {"descricao": "x", "codigo": "12345678901234567890", "outro": "texto qualquer aqui"};</script>'
+             '<script>{"name":"Sabonete Dove \\q Original 90g","price":4.5}</script>')
+        self.assertEqual(self.S.ofertas_json_embutido(h), [{"produto": "Sabonete Dove \\q Original 90g", "preco": 4.5}],
+                         "o escape que o JSON não aceita fica como veio; o script sem nome de produto é pulado")
 
     def test_vira_oferta_da_pagina_quando_nao_tem_schema_org(self):
         h = '<script>{"name":"Ração Golden Gatos Castrados 10kg","price":159.9}</script><p>R$ 1,00</p>'

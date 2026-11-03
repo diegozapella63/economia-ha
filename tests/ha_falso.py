@@ -14,11 +14,24 @@ import base64
 import hashlib
 import json
 import struct
+import sys
 import threading
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 TOKEN = "token-do-supervisor-de-teste"
+
+
+def cala_desistencia(srv):
+    """handle_error do servidor falso: o app que desiste no meio (tempo esgotado, conexão fechada) não é erro do teste;
+    o resto (um erro no roteiro do teste) continua aparecendo."""
+    padrao = srv.handle_error
+
+    def h(pedido, endereco):
+        if isinstance(sys.exc_info()[1], (ConnectionError, TimeoutError)):
+            return
+        padrao(pedido, endereco)
+    return h
 
 
 class Erro:
@@ -138,6 +151,7 @@ class HAFalso:
                     self._out({"message": "Entity removed."} if existia else {"message": "Entity not found."}, 200 if existia else 404)
 
         self._srv = ThreadingHTTPServer(("127.0.0.1", 0), H)
+        self._srv.handle_error = cala_desistencia(self._srv)
         self._srv.daemon_threads = True
         self.porta = self._srv.server_address[1]
         self.base = f"http://127.0.0.1:{self.porta}"

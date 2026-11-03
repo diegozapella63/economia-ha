@@ -376,6 +376,7 @@ class BuscaBordas(Cenario):
                           {"ofertas": [{"produto": "Café Pilão Tradicional 500 g", "preco": 14.5}], "lista": []}, cfg)
             return [r], {"bistek": {"loja": "Bistek", "fonte": "Kimbino", "ofertas": 1}}
         S.busca_folhetos = folhetos
+        S.gravar_json(S.OFERTAS, {})  # a Bistek ainda não estava no resultado: só a busca na web a acha
         S.buscar()
         of = S.ler_json(S.OFERTAS)
         cafe = next(i for i in of["lista"] if i["produto"] == "Café Pilão 500 g")
@@ -447,3 +448,20 @@ class BuscaBordas(Cenario):
         S.grava_vocab = lambda: (_ for _ in ()).throw(OSError("disco cheio"))
         S.buscar_itens(["Leite"])
         self.assertEqual((S.BUSCA["erro"], S.BUSCA["rodando"]), ("Erro inesperado na busca: sites quebrou", False))
+
+    def test_busca_na_web_falha_mas_o_encarte_cadastrado_vale(self):
+        S, ha = self.S, self.ha
+        self.lojas.regioes.clear()
+        S._regioes.clear()
+        self.config(raio_km=5, categorias=["mercados"], lista=LISTA[1:2], opcoes={"itens_sem_preco": False},
+                    lojas={"adicionar": [{"nome": "Mercado do Bairro, Centro", "categoria": "mercados", "site": "https://bairro.com.br/ofertas"}]})
+        ha.responde_ia("EconomIA: mercados", Erro(500, "falhou"))
+        resultado = S.resultado_folheto
+        S.ler_encarte = lambda loja, cfg: resultado(dict(loja, site=None), {"url": loja["site"], "ate": "2099-01-01"},
+                                                    {"ofertas": [{"produto": "Café Pilão Tradicional 500 g", "preco": 15.9}], "lista": []}, cfg)
+        S.buscar()
+        self.assertIsNone(S.BUSCA["erro"], "o encarte salva a busca")
+        self.assertTrue(S.BUSCA["avisos"][0].startswith("Algumas buscas falharam e mantive o resultado anterior: Mercados:"))
+        of = S.ler_json(S.OFERTAS)
+        self.assertEqual([r["nome"] for r in of["categorias"][0]["redes"]], ["Mercado do Bairro"])
+        self.assertEqual(S.valor_total(of["lista"][0]["precos"]["merc-mercado-do-bairro"]), 15.9)

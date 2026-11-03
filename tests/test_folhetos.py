@@ -413,3 +413,46 @@ class Bordas(Base):
         S = self.S
         cats = ["x", {"id": "mercados", "redes": [{"id": "m-a", "nome": "Perto"}, "y"], "lojas": ["z", {"rede": "m-a", "distancia_km": 1.5}]}]
         self.assertEqual(S.lojas_folheto({"raio_km": "dois"}, categorias=cats), [{"nome": "Perto", "categoria": "mercados"}])
+
+    def test_site_de_encartes_fora_do_ar(self):
+        S = self.S
+        self.assertFalse(S.agreg_permite("http://127.0.0.1:9/zeta/"), "sem resposta do robots.txt: não abre nada")
+        self.assertTrue(S._robots_agreg["_ultimo"].startswith("o site não respondeu ("), S._robots_agreg["_ultimo"])
+
+    def test_link_repetido_validade_por_mes_e_nome_generico(self):
+        S, b, lj = self.S, self.lojas.base, self.lojas
+        html = '<a href="/kimbino/zeta/ofertas-1234567/">capa</a><a href="/kimbino/zeta/ofertas-1234567/">ver</a>'
+        self.assertEqual(len(S.folhetos_da_pagina(S.AGREGADORES[0], b + "/kimbino/zeta/", html)), 1, "o mesmo folheto uma vez")
+        ano = int(S.hoje_br()[:4])
+        lj.paginas["/catalogosofertas/vista/ofertas/zeta-semana-1"] = (200, "<p>Ofertas válidas de 30 out. até 10 nov.</p>", "text/html")
+        f = {"url": b + "/catalogosofertas/vista/ofertas/zeta-semana-1", "id": "catalogosofertas:1", "de": None, "ate": None}
+        S.paginas_folheto(S.AGREGADORES[3], f)
+        self.assertEqual((f["de"], f["ate"]), (f"{ano}-10-30", f"{ano}-11-10"), "sem dd-mm-aaaa: o período escrito por mês")
+        self.assertEqual(S.bases_loja("Supermercado Joinville", S.ler_json(S.FOLHETOS)), ["supermercado"], "só palavras genéricas: a primeira")
+
+    def test_capa_vencida_sai_e_limite_de_folhetos_novos(self):
+        S, lj = self.S, self.lojas
+        S.gravar_json(S.FOLHETOS, dict(S.ler_json(S.FOLHETOS), _vale={"kimbino:1": {"v": "sim", "ate": "2020-01-01"}, "kimbino:2": {"v": "sim", "ate": "2099-01-01"}}))
+        res, st = S.busca_folhetos(self.config(), [{"nome": "Zeta", "categoria": "mercados"}], max_novas=0)
+        self.assertEqual(st, {}, "sem folheto guardado e no limite de folhetos novos: fica para a próxima busca")
+        self.assertFalse(lj.pedidos_de("/kimbino/zeta"))
+        self.assertEqual(list(S.ler_json(S.FOLHETOS)["_vale"]), ["kimbino:2"], "a escolha da capa vencida sai")
+
+    def test_paginas_que_nao_baixam_viram_erro_da_loja(self):
+        S, lj = self.S, self.lojas
+        self.kimbino("zeta", [(1234567, -3, 4)])
+        for n in (1, 2):
+            lj.paginas.pop(f"/kimbicdn.com/0x0/data/1234567/9/{n}.jpg")
+        res, st = S.busca_folhetos(self.config(lista=[{"produto": "Café"}]), [{"nome": "Zeta", "categoria": "mercados"}])
+        self.assertEqual((res, st["zeta"]["erro"], st["zeta"]["fonte"]), ([], "não consegui baixar as páginas do folheto", "Kimbino"))
+        self.assertEqual(self.ha.chamadas_ia, [])
+
+    def test_tamanho_que_o_robots_nao_deixa(self):
+        S, b, lj = self.S, self.lojas.base, self.lojas
+        lj.paginas["/assets/robots.txt"] = (200, "User-agent: *\nDisallow: /uploads/flyers/123456/1040x1080WebP\n", "text/plain")
+        lj.paginas["/assets/uploads/flyers/123456/1040x1080WebP/z-1-1-abc.webp"] = (200, webp_vp8x(1040, 1080), "image/webp")
+        lj.paginas["/assets/uploads/flyers/123456/780x810WebP/z-1-1-abc.webp"] = (200, webp_vp8(780, 810), "image/webp")
+        mini = b + "/assets/uploads/flyers/123456/260x270WebP/z-1-1-abc.webp"
+        self.assertEqual(S.paginas_grandes([mini]), [b + "/assets/uploads/flyers/123456/780x810WebP/z-1-1-abc.webp"],
+                         "a maior que o robots.txt deixa abrir")
+        self.assertFalse(lj.pedidos_de("/1040x1080WebP/"), "a proibida nem é pedida")

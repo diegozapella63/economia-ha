@@ -6,7 +6,7 @@ import types
 from apoio import Cenario
 
 
-class Sincronizar(Cenario):
+class BaseSincronizar(Cenario):
     ENT = "todo.compras"
 
     def setUp(self):
@@ -25,6 +25,8 @@ class Sincronizar(Cenario):
     def no_ha(self):
         return [(i["summary"], i["status"]) for i in self.ha.todos[self.ENT]]
 
+
+class Sincronizar(BaseSincronizar):
     def test_listas_do_home_assistant(self):
         self.assertEqual(self.S.listas_ha(), [{"id": "todo.casa", "nome": "Afazeres da casa"}, {"id": "todo.compras", "nome": "Compras"}])
         self.assertEqual([i["summary"] for i in self.S.itens_ha(self.ENT)], ["Pão francês", "Leite"])
@@ -136,3 +138,33 @@ class Sincronizar(Cenario):
         self.config(sync=self.sync())
         with self.assertRaisesRegex(S.ErroBusca, r"O Home Assistant recusou o pedido \(401\)"):
             S.sincronizar_lista()
+
+
+class SincronizarBordas(BaseSincronizar):
+    """Nomes curtos demais, item concluído no HA que ninguém tinha na lista, e itens estranhos na lista do painel."""
+
+    def test_nome_curto_e_concluido_fora_da_lista(self):
+        S, ha = self.S, self.ha
+        hoje = S.hoje_br()
+        ha.item(self.ENT, "x")
+        ha.item(self.ENT, "  ")
+        sabao = ha.item(self.ENT, "Sabão em pó", "needs_action")
+        self.config(sync=self.sync(), lista=[])
+        S.sincronizar_lista()
+        self.assertNotIn("x", self.lista(), "nome de uma letra fica de fora")
+        cfg = S.ler_config()
+        cfg["lista"] = [i for i in cfg["lista"] if i["produto"] != "Sabão em pó"]  # tirado do painel
+        S.gravar_config(cfg)
+        sabao["status"] = "completed"
+        S.sincronizar_lista()
+        self.assertEqual(self.lista()["Sabão em pó"], {"produto": "Sabão em pó", "compras": [hoje], "origem": "ha"},
+                         "concluído no HA sem estar na lista: volta, com a compra de hoje")
+
+    def test_itens_estranhos_na_lista_do_painel(self):
+        S = self.S
+        self.config(sync=self.sync(), lista=["Café solto", {"produto": ""}])
+        S.sincronizar_lista()
+        self.config(sync=self.sync(), lista=["Café solto", {"produto": ""}, {"produto": "Detergente", "compras": []}])
+        S.sincronizar_lista()
+        self.assertIn(("Detergente", "needs_action"), self.no_ha())
+        self.assertNotIn("", [s for s, _ in self.no_ha()])

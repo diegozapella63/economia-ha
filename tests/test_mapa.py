@@ -198,7 +198,7 @@ class Mapa(BaseMapa):
 
 class EncontrarLojas(BaseMapa):
     def test_encontrar_lojas(self):
-        S, lj = self.S, self.lojas
+        S = self.S
         self.com_google()
         self.config(raio_km=2, categorias=["farmacias", "mercados"], usar_ia=False)
         self.assertEqual(S.atualizar_lojas_mapa({"categorias": ["online"]}), {"ok": False, "msg": "Marque farmácias, mercados ou pet shops."})
@@ -342,6 +342,37 @@ class Bordas(BaseMapa):
         S.CASA_TESTE = None
         self.ha.estados.pop("zone.home")
         self.assertEqual(S.localiza_sem_local(S.ler_config()), 0, "sem a casa: nada")
+
+
+class JuntarFontes(BaseMapa):
+    """O que vem do OpenStreetMap e do Google junto: a varredura que salva quando o Nearby falha e a filial mais perto
+    de uma fonte que troca o endereço e a distância da outra."""
+
+    def loja(self, nome, km, fonte, **kw):
+        return dict({"nome": nome, "categoria": "farmacias", "distancia_km": km, "fonte": fonte, "endereco": f"Rua {fonte}, {km}",
+                     "lat": LAT - km * KM, "lon": LON, "place_id": None, "site": None, "social": None}, **kw)
+
+    def test_varredura_salva_quando_o_nearby_falha(self):
+        S = self.S
+        self.com_google()
+        S.osm_lojas = lambda *a: []
+        S.google_lojas = lambda *a: (_ for _ in ()).throw(S.ErroBusca("O Google recusou a chave (500)."))
+        S.google_varredura = lambda *a: [self.loja("Drogaria Catarina", 0.8, "Google", place_id="pl-1", site="https://catarina.com.br")]
+        m = S.lojas_do_mapa(self.config(), ["farmacias"], forcar=True)
+        self.assertEqual([l["nome"] for l in m["farmacias"]], ["Drogaria Catarina"])
+        self.assertEqual(S.ler_json(S.LOJAS_MAPA)["fontes"], ["OpenStreetMap", "Google"])
+
+    def test_filial_mais_perto_de_outra_fonte(self):
+        S = self.S
+        self.com_google()
+        S.osm_lojas = lambda *a: [self.loja("Drogaria Catarina", 0.4, "OpenStreetMap", site="https://catarina.com.br")]
+        S.google_lojas = lambda *a: [self.loja("DROGARIA CATARINA", 1.6, "Google", place_id="pl-longe")]
+        S.google_varredura = lambda *a: []
+        m = S.lojas_do_mapa(self.config(), ["farmacias"], forcar=True)
+        self.assertEqual(len(m["farmacias"]), 1, "a mesma rede uma vez")
+        l = m["farmacias"][0]
+        self.assertEqual((l["distancia_km"], l["endereco"], l["site"]), (0.4, "Rua OpenStreetMap, 0.4", "https://catarina.com.br"),
+                         "fica a filial mais perto, com o site que só uma fonte tinha")
 
 
 class CidadeDoCep(Cenario):

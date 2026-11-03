@@ -90,7 +90,7 @@ async def main():
             await pg.click("#fotoFechar")
             # ----- Falar -----
             await espera(pg, "() => !document.getElementById('falarBtn').hidden")
-            check(await pg.locator(".cab-topo .mic-top").is_visible(), "o microfone aparece no alto (o HA tem fala para texto)")
+            check(await pg.locator(".cab-topo .mic-top.so-voz").is_visible(), "o microfone aparece no alto (o HA tem fala para texto)")
             await pg.click("#falarBtn")
             await espera(pg, "() => /Ouvindo/.test(document.getElementById('vozEstado').textContent)")
             check(await pg.locator("#vozBox .vz-ok").is_visible() and await pg.locator("#vozBox .vz-mic").is_hidden(), "gravando: o botão vira o de pronto")
