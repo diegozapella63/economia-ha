@@ -125,6 +125,10 @@ async def main():
             await pg.click("#aba-dados")
             await pg.click("#aba-integracoes")
             await espera(pg, "() => document.querySelectorAll('#usoChart .uso-bar').length === 7")
+            try:  # o gráfico já estava desenhado com o uso de antes: espera chegar a contagem nova (o Testar de agora há pouco)
+                await espera(pg, "() => /^\\s*hoje\\s*1\\b/i.test(document.querySelector('#usoTiles .uso-tile').innerText)", 8000)
+            except Exception:  # noqa: BLE001  (o check abaixo mostra o que ficou)
+                pass
             tiles = [t.replace("\n", " ") for t in await pg.locator("#usoTiles .uso-tile").all_inner_texts()]
             check(tiles[0].upper().startswith("HOJE 1") and tiles[1].upper().startswith("7 DIAS 3") and "1 vez sem cota" in tiles[1], f"quadros de uso ({tiles})")
             check((await pg.text_content("#usoCap")).startswith("Hoje: 1 chamada"), "hoje no gráfico")
