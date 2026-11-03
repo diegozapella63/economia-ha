@@ -65,6 +65,9 @@ Toda mudança de comportamento vem com teste. Bug corrigido ganha o teste que o 
   não serve para guardar preços.
 - **Primeiro o que não gasta IA** (busca direta VTEX, busca do site, páginas de produto, catálogos, Shopee, folhetos);
   a IA do Home Assistant (`ai_task.generate_data`) entra por último, só para o que faltou, e pode ser desligada.
+- **A Conversa (`POST /api/chat`, `conversar` no servidor) só usa tarefa de IA** (`ia_da_conversa`: `ai_task.*`),
+  nunca um assistente `conversation.*`, que pode mexer na casa. A IA só **sugere** ações (`acoes_validas` confere
+  cada uma com a lista); quem faz é a página, quando a pessoa toca no botão.
 - O casamento item × produto é **aprendido** (vocabulário das lojas, seção da loja, código de barras, previsor do
   Mercado Livre), não uma lista fixa de palavras. Veja "Casamento do item com o produto" em `docs/tecnico.md`.
 
