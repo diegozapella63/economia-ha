@@ -1,5 +1,11 @@
 # Mudanças
 
+## 0.20.2
+
+- **Buscar o preço de um item:** quando a IA falha (cota, erro) e os sites das lojas respondem, o aviso agora diz que a IA falhou e por quê. Antes, aparecia só "Não achei preço" ou nada.
+- **Encarte do site feito no Wix:** as imagens do encarte não viram mais pedaços de endereço sem sentido (o endereço do Wix tem vírgulas).
+- **Folhetos:** um folheto sem data na página da loja não pega mais a data do folheto ao lado. A validade vem da página do próprio folheto.
+
 ## 0.20.1
 
 - **Remédio pela dose:** "Dipirona 500 mg" e "Dipirona 500mg" agora são o mesmo item, e 500 mg continua sem casar com 1000 mg.

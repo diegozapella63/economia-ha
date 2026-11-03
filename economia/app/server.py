@@ -1341,7 +1341,8 @@ def candidatos_encarte(pagina_html, base):
     """Imagens e PDFs da página, na ordem em que aparecem (Wix: pede uma versão de até 1600 px)."""
     vistos, out = set(), []
     for valor in URL_ATTR_RE.findall(pagina_html):
-        for parte in valor.split(","):
+        # srcset: "a.jpg 1x, b.jpg 2x"; a vírgula sem espaço depois fica no endereço (o Wix usa: /v1/fill/w_400,h_600/)
+        for parte in re.split(r",\s+|(?<=\d[wx]),", valor):
             u = parte.strip().split(" ")[0].replace("&amp;", "&")
             if not u or u.startswith("data:"):
                 continue
@@ -3018,18 +3019,20 @@ def folhetos_da_pagina(a, url_loja, html_txt):
         padrao = re.compile(r"href=[\"']((?:https?://[^/\"']+)?" + re.escape(caminho)
                             + r"/(?:folheto-(\d+)(?:-\d+)?|[a-z0-9-]*folheto[a-z0-9-]*))[\"']", re.I)
     achados = [(urllib.parse.urljoin(url_loja, html_mod.unescape(m.group(1))), m) for m in padrao.finditer(html_txt)]
-    vistos, out = set(), []
+    vistos, out, lido = set(), [], 0
     for i, (u, m) in enumerate(achados):
         if u in vistos:
             continue
         vistos.add(u)
-        # o texto do folheto fica entre o link dele e o link do próximo folheto (ou, antes, desde o anterior)
+        # o texto do folheto fica entre o link dele e o link do próximo folheto (ou, antes, desde o anterior). O que já
+        # foi lido como texto do folheto anterior é dele: sem data própria, fica sem data (a página do folheto diz depois)
         ultimo = max(k for k, (x, _) in enumerate(achados) if x == u)
         prox = next((mm.start() for x, mm in achados[ultimo + 1:] if x != u), len(html_txt))
-        ant = max([mm.end() for x, mm in achados[:i] if x != u] or [0])
+        ant = max([mm.end() for x, mm in achados[:i] if x != u] + [lido])
         ini = max(0, html_txt.rfind("<", 0, m.start()))
+        fim = min(prox, ini + 2500)
         de, ate = None, None
-        for trecho in (html_txt[ini:min(prox, ini + 2500)], html_txt[max(ant, ini - 1500):ini]):
+        for trecho in (html_txt[ini:fim], html_txt[max(ant, ini - 1500):ini] if ant < ini else ""):
             mp = PERIODO.search(sem_tags(trecho))
             if mp:
                 de, ate = periodo_de(mp)
@@ -3038,6 +3041,7 @@ def folhetos_da_pagina(a, url_loja, html_txt):
             d = re.search(r"-(\d{2})-(\d{2})-(\d{4})-\d{6,}/?$", u)
             if d:
                 de = f"{d.group(3)}-{d.group(2)}-{d.group(1)}"
+        lido = max(lido, fim)
         out.append({"url": u, "id": a["id"] + ":" + (m.group(2) or slug(urllib.parse.urlsplit(u).path, 60)), "de": de, "ate": ate})
     return out
 
@@ -5723,16 +5727,23 @@ def buscar_itens(itens):
         resultado, rel, _ = busca_scripts(cfg, cats, itens, ler_folhetos=False)
         conta = {n: sum(len(p[n]["precos"]) for _, p in resultado if n in p) for n in itens}
         faltam = [n for n in itens if conta[n] < 2]
+        erro_ia = None
         if faltam and ia_ligada(cfg):
             try:
                 resultado = busca_focada(cfg, faltam, cats) + resultado  # o site da loja por último: vale mais
-            except ErroBusca:
+            except ErroBusca as e:
                 if not resultado:
                     raise
+                erro_ia = str(e)  # os sites responderam: a busca segue com eles, e o aviso diz que a IA falhou
+                erro_ia = erro_ia[0].lower() + erro_ia[1:] if erro_ia[:2] in ("A ", "O ") else erro_ia
+                log(f"busca de itens: a IA falhou ({e}); ficam os preços dos sites")
         lista = mesclar_resultado(resultado, cfg, rel)
         achados = [n for n in itens if n in lista and any(n in p for _, p in resultado)]
         if not achados:
-            BUSCA["avisos"] = ["Não achei preço para " + ", ".join(itens) + ". Tente com marca e tamanho, por exemplo \"Detergente Ypê 500 ml\"."]
+            BUSCA["avisos"] = [f"Não achei preço para {', '.join(itens)} nos sites das lojas, e a IA falhou: {erro_ia}" if erro_ia else
+                               "Não achei preço para " + ", ".join(itens) + ". Tente com marca e tamanho, por exemplo \"Detergente Ypê 500 ml\"."]
+        elif erro_ia:
+            BUSCA["avisos"] = [f"A IA falhou, e {', '.join(faltam)} {'ficou' if len(faltam) == 1 else 'ficaram'} só com os preços dos sites das lojas: {erro_ia}"]
         BUSCA["chamadas_ia"] = _uso_local.chamadas
         log(f"busca de itens: {len(achados)} de {len(itens)} com preço, {_uso_local.chamadas} chamada(s) de IA")
     except ErroBusca as e:
@@ -6283,7 +6294,7 @@ def conversar(dado):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/0.20.1"
+    server_version = "EconomIA/0.20.2"
 
     def log_message(self, fmt, *args):
         pass

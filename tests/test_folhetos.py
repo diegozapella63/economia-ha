@@ -83,6 +83,14 @@ class PaginasDosSites(Base):
         kim = {"url": b + "/kimbino/loja/x-30-10-2026-1234567/", "id": "k:1"}
         fs = S.folhetos_da_pagina(S.AGREGADORES[0], b + "/kimbino/loja/", f'<a href="{kim["url"]}">x</a>')
         self.assertEqual(fs[0]["de"], "2026-10-30", "a data do começo pelo endereço do folheto")
+        html = (f'<p>Válido de {self.br(-2)} a {self.br(3)}</p><a href="/seusfolhetos/kuntze-ofertas/folheto-111-0">Semana</a>'
+                f'<a href="/seusfolhetos/kuntze-ofertas/folheto-222-0">Hortifrúti</a> <span>{self.br(0)} a {self.br(6)}</span>'
+                '<a href="/seusfolhetos/kuntze-ofertas/folheto-aniversario">Aniversário</a> <span>Confira!</span>')
+        fs = S.folhetos_da_pagina(S.AGREGADORES[1], b + "/seusfolhetos/kuntze-ofertas", html)
+        self.assertEqual([(f["id"], f["de"], f["ate"]) for f in fs],
+                         [("seusfolhetos:111", self.iso(-2), self.iso(3)), ("seusfolhetos:222", self.iso(0), self.iso(6)),
+                          ("seusfolhetos:seusfolhetos-kuntze-ofertas-folheto-aniversario", None, None)],
+                         "a data antes do primeiro link vale para ele; o folheto sem data não pega a do vizinho")
 
     def test_catalogos_ofertas_e_tamanho_das_paginas(self):
         S, b, lj = self.S, self.lojas.base, self.lojas

@@ -244,8 +244,8 @@ class ConversaPelaAPI(Servidor):
         self.assertEqual((st, d["erro"]), (400, "Escreva a sua pergunta."))
         st, d = self.pede("POST", "/api/chat", bruto=b"[1, 2]")
         self.assertEqual((st, d["erro"]), (400, "Conteúdo inválido."))
-        st, d = self.pede("POST", "/api/chat", bruto=b"x" * (self.S.MAX_BODY + 1))
-        self.assertEqual(st, 413)
+        self.assertEqual(self.so_tamanho("POST", "/api/chat", self.S.MAX_BODY + 1), (413, {"erro": "Conteúdo vazio ou grande demais."}),
+                         "grande demais: recusa sem ler")
         st, d = self.pede("GET", "/api/uso-ia")
         self.assertEqual(d["hoje"]["tipos"].get("conversa"), 1)
         self.config(usar_ia=False)

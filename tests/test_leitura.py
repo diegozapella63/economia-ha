@@ -222,6 +222,13 @@ class EncarteDoSite(Cenario):
                          [lj.base + "/mb/p1.jpg", lj.base + "/mb/p1-2x.jpg", lj.base + "/mb/encarte.pdf",
                           "https://static.wixstatic.com/media/abc_123~mv2.jpg/v1/fit/w_1600,h_3200,q_85/encarte.jpg"],
                          "sem ícone, sem data:, sem repetido; Wix em 1600 px")
+        wix = "https://static.wixstatic.com/media/def_456~mv2.png"
+        html_wix = (f'<img src="{wix}/v1/fill/w_400,h_600,al_c,q_80,enc_auto/def.png" '
+                    f'srcset="{wix}/v1/fill/w_400,h_600,al_c/def.png 1x, {wix}/v1/fill/w_800,h_1200,al_c/def.png 2x">'
+                    '<img srcset="/mb/a.jpg 480w,/mb/b.jpg 960w">')
+        self.assertEqual(S.candidatos_encarte(html_wix, lj.base + "/mb/ofertas"),
+                         [wix + "/v1/fit/w_1600,h_3200,q_85/encarte.jpg", lj.base + "/mb/a.jpg", lj.base + "/mb/b.jpg"],
+                         "o endereço do Wix com vírgulas não vira pedaços; srcset sem espaço depois da vírgula também separa")
         texto_pag = S.texto_da_pagina(lj.paginas["/mb/ofertas"][1])
         self.assertTrue(texto_pag.startswith("Ofertas & promoções Encarte em PDF"), texto_pag)
         ha.responde_ia("encarte", {"validade": None, "ofertas": [{"produto": "Arroz Tio João 5 kg", "preco": 24.9, "preco_normal": 29.9}],

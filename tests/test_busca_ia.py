@@ -320,6 +320,25 @@ class BuscarItens(Cenario):
         self.assertEqual(lista["Dipirona 500 mg"]["precos"], {"farm-x": 5.0}, "o resto do resultado anterior fica")
         self.assertEqual((S.BUSCA["chamadas_ia"], S.BUSCA["rodando"], S.BUSCA["avisos"]), (1, False, []))
 
+    def test_a_ia_falha_e_os_sites_respondem(self):
+        S, ha = self.S, self.ha
+        self.config(categorias=["mercados"], lista=[{"produto": "Abacaxi pérola"}, {"produto": "Café Pilão 500 g"}])
+        ha.responde_ia("itens", Erro(500, "boom"))
+        S.buscar_itens(["Abacaxi pérola"])
+        self.assertIsNone(S.BUSCA["erro"], "os sites responderam: não é erro da busca")
+        self.assertEqual(S.BUSCA["avisos"], ["Não achei preço para Abacaxi pérola nos sites das lojas, e a IA falhou: "
+                                             "a IA do Home Assistant recusou o pedido (500): boom"], "o aviso diz que a IA falhou")
+        S.buscar_itens(["Café Pilão 500 g"])  # só o Giassi tem: 1 preço, e a IA falha
+        self.assertEqual(S.BUSCA["avisos"], ["A IA falhou, e Café Pilão 500 g ficou só com os preços dos sites das lojas: "
+                                             "a IA do Home Assistant recusou o pedido (500): boom"])
+        lista = {i["produto"]: i for i in S.ler_json(S.OFERTAS)["lista"]}
+        self.assertEqual({k: S.valor_total(v) for k, v in lista["Café Pilão 500 g"]["precos"].items()}, {"merc-giassi": 19.9}, "o preço do site fica")
+        ha.responde_ia("itens", Erro(429, "quota"), vezes=2)
+        ha.regras_ia.insert(0, ha.regras_ia.pop())
+        S.buscar_itens(["Café Pilão 500 g"])
+        self.assertTrue(S.BUSCA["avisos"][0].startswith("A IA falhou, e Café Pilão 500 g ficou só com os preços dos sites das lojas: a cota da IA acabou"),
+                        S.BUSCA["avisos"])
+
     def test_nada_achado_e_erros(self):
         S, ha = self.S, self.ha
         self.config(categorias=["mercados"], lista=[{"produto": "Abacaxi pérola"}])
