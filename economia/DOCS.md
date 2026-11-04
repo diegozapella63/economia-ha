@@ -4,7 +4,7 @@ Cupons, ofertas e a sua lista de compras nas farmácias, mercados e pet shops pe
 
 ## Antes de começar
 
-O EconomIA usa a IA do próprio Home Assistant (Anthropic Claude, OpenAI, Google Gemini...). Escolha qual usar em **Mais › Integrações › IA do Home Assistant** e toque em **Verificar de novo** para testar. A chave **Usar IA**, no mesmo lugar, desliga tudo o que usa IA (Buscar, leitura de fotos e mensagens, cupons por print e Falar), para todos os aparelhos.
+O EconomIA usa a IA do próprio Home Assistant (Anthropic Claude, OpenAI, Google Gemini...). Escolha qual usar em **Mais › Integrações › IA do Home Assistant** e toque em **Verificar de novo** para testar. A chave **Usar IA**, no mesmo lugar, desliga tudo o que usa IA (leitura de fotos e mensagens, cupons e encartes por print, Falar e Conversa), para todos os aparelhos. O **Buscar** continua, só com o que não gasta IA.
 
 - **Para buscar ofertas**, a IA precisa de busca na web:
   - **Anthropic**: ligue a busca na web nas opções da tarefa de IA.
@@ -15,14 +15,14 @@ O EconomIA usa a IA do próprio Home Assistant (Anthropic Claude, OpenAI, Google
 
 1. Abra **EconomIA** no menu lateral do Home Assistant.
 2. Em **Mais › Casa**, preencha o CEP e a distância e toque em **Encontrar lojas**: o app registra as lojas perto de casa pelo mapa e testa, sem IA, se dá para tirar preço de cada uma (em Mais › Lojas, cada loja mostra o resultado e o passo a passo em "Como foi testado", com **Testar agora** para testar de novo só aquela, inclusive as online; **Só sem fonte de preço** mostra só as que faltam). Preencha também quem mora na casa (incluindo quantos pets), restrições, interesses e os dias em que você costuma comprar.
-3. Em **Minha lista**, adicione o que você compra sempre, pelo campo do topo, por **Escolher fotos**, por **Colar mensagem** ou por **Falar**. Toque em **Comprei hoje** quando comprar: o painel aprende de quanto em quanto tempo cada coisa acaba. Em cada item, o ✓ ao lado de uma loja ou de um tamanho fixa **Sua escolha** (mesmo que não seja a mais barata), que vale também no Roteiro. A "economia de" de cada item é em relação à segunda loja mais barata. **Limpar lista** tira tudo da lista, com opção de desfazer. O que sai da lista (por remover ou limpar) fica no **Histórico**, o botão ao lado do Adicionar: do que você mais compra para o que menos compra, e um toque põe de volta com as compras de antes. Escrever no campo filtra o histórico.
-4. Toque em **Buscar**, no centro do menu de baixo. A busca leva alguns minutos e você pode continuar usando o painel.
+3. Em **Minha lista**, adicione o que você compra sempre, pelo campo do topo, pelo **código de barras**, por **Escolher fotos**, por **Colar mensagem** ou por **Falar**. Toque em **Comprei hoje** quando comprar: o painel aprende de quanto em quanto tempo cada coisa acaba. Em cada item, o ✓ ao lado de uma loja ou de um tamanho fixa **Sua escolha** (mesmo que não seja a mais barata), que vale também no Roteiro. A "economia de" de cada item é em relação à segunda loja mais barata. Toque num preço para abrir o produto na loja (sem link, o botão **Procurar** abre a busca da loja). **Limpar lista** tira tudo da lista, com opção de desfazer. O que sai da lista (por remover ou limpar) fica no **Histórico**, o botão ao lado do Adicionar: do que você mais compra para o que menos compra, e um toque põe de volta com as compras de antes. Escrever no campo filtra o histórico.
+4. Toque em **Buscar**, no centro do menu de baixo. A busca leva alguns minutos e você pode continuar usando o painel. Item que ficou sem preço tem **Buscar este item**, que procura só ele.
 5. Em **Ofertas**, use **Não mostrar** em qualquer oferta que não faça sentido para você. Cada oferta tem um link para a fonte.
-6. Em **Mais › Lojas**, desmarque as que não quer acompanhar ou adicione uma que não apareceu.
+6. Em **Mais › Lojas**, desmarque as que não quer acompanhar ou adicione uma que não apareceu (veja **Lojas**, abaixo).
 
 ## Mais, em abas
 
-Como nos outros apps (InventarIA, GerencIA, ResolvIA e CronologIA), **Mais** tem abas presas no alto: **Casa** (CEP, quem mora, rotina, restrições, interesses e o que nunca mostrar), **Lojas** (lojas perto de casa, com o clube de cada uma e o Encontrar lojas, cupons do app e compras online), **Integrações** (IA do Home Assistant, Usar IA, Falar, Uso da IA, Lista do Home Assistant e Sensores no Home Assistant), **Dados** (Exportar, Importar, Versões anteriores e onde ficam os dados), **Aparência** (tema e cor do app) e **Opções** (as etapas extras da busca).
+Como nos outros apps (InventarIA, GerencIA, ResolvIA e CronologIA), **Mais** tem abas presas no alto: **Casa** (CEP, quem mora, rotina, restrições, interesses e o que nunca mostrar), **Lojas** (lojas perto de casa, com o clube de cada uma, Encontrar lojas e Testar agora; cupons do app; compras online; e como o EconomIA busca os preços), **Integrações** (IA do Home Assistant, com Usar IA e Para falar; Shopee Afiliados, Google Places, Brave Search, Mercado Livre e Instagram; Uso da IA, Lista do Home Assistant e Sensores no Home Assistant), **Dados** (Exportar, Importar, Versões anteriores e onde ficam os dados), **Aparência** (tema e cor do app) e **Opções** (as etapas da busca que dá para desligar).
 
 ## Falar
 
@@ -94,7 +94,7 @@ Toque em **Similares** no item para ver até 3 produtos parecidos, da mesma seç
 
 Em **Mais › Lojas**:
 
-- Em Mais › Lojas, cada loja tem o botão do clube: o nome do clube quando o EconomIA conhece (como Amigo Giassi), **Tem clube** quando a busca achou um, ou **Adicionar clube**. Toque nele nas lojas em que você é cadastrado (quase sempre é só o CPF no caixa) e ele vira **Sou do clube**. O preço de clube dessas lojas passa a valer na lista, no roteiro e nas ofertas, e a busca com IA procura o preço de membro delas. Nas outras, o preço de clube aparece marcado e o EconomIA avisa quando valeria a pena entrar no clube. Clube só de pontos ou cartão (como o Clube Angeloni) não muda o preço da prateleira e não aparece. O preço de clube chega pela IA (busca, encarte ou print dos cupons): com a IA desligada, a tela avisa.
+- Cada loja tem o botão do clube: o nome do clube quando o EconomIA conhece (como Amigo Giassi), **Tem clube** quando a busca achou um, ou **Adicionar clube**. Toque nele nas lojas em que você é cadastrado (quase sempre é só o CPF no caixa) e ele vira **Sou do clube**. O preço de clube dessas lojas passa a valer na lista, no roteiro e nas ofertas, e a busca com IA procura o preço de membro delas. Nas outras, o preço de clube aparece marcado e o EconomIA avisa quando valeria a pena entrar no clube. Clube só de pontos ou cartão (como o Clube Angeloni) não muda o preço da prateleira e não aparece. O preço de clube chega pela IA (busca, encarte ou print dos cupons): com a IA desligada, a tela avisa.
 - Em **Cupons do app**, escolha prints da carteira de cupons do app da loja (Bem Panvel, Raia, Meu Atacadão...) e toque em **Digitalizar com IA**. Confira a loja de cada cupom e guarde: eles aparecem em Ofertas como **Seu cupom** e na abertura quando estiverem perto de vencer.
 
 O EconomIA não entra na sua conta das lojas: esses apps não têm acesso aberto e pedem código por SMS.
@@ -103,9 +103,9 @@ O EconomIA não entra na sua conta das lojas: esses apps não têm acesso aberto
 
 A busca na web lê texto; muitos mercados do bairro publicam as ofertas como **imagem de encarte** no site. Por isso:
 
-- A busca procura também mercadinhos e lojas independentes do raio. Se achar o site de uma loja sem nenhum preço, o EconomIA abre o site, baixa o encarte e a IA de fotos lê os preços (até 2 lojas por busca).
+- A busca procura também mercadinhos e lojas independentes perto de casa. Se achar o site de uma loja sem nenhum preço, o EconomIA abre o site, baixa o encarte e a IA de fotos lê os preços (até 2 lojas por busca).
 - Loja que continua sem preço aparece com o selo **Sem preços** em Mais › Lojas e um aviso nas Ofertas. Toque em **Adicionar site de ofertas** e cole o endereço da página do encarte (por exemplo `mercadosalles.com.br/ofertas`): a partir da próxima busca, o encarte é lido sempre.
-- Também dá para informar o site ao **Adicionar loja**.
+- Também dá para informar o site ao adicionar uma loja que não apareceu, no fim de Mais › Lojas.
 - Mercado sem site de ofertas (Koch, Komprão, Atacadão): nas Ofertas, toque em **Encarte ou print de preços**, escolha as fotos ou prints do encarte (até 8: do WhatsApp, do Tiendeo, do app da loja ou da gôndola), diga de qual loja é e toque em **Ler com IA**. Os preços valem até a próxima busca.
 
 As ofertas de encarte aparecem com o rótulo "Encarte" e a validade, e os preços entram na comparação da lista e no roteiro.
@@ -114,13 +114,17 @@ As ofertas de encarte aparecem com o rótulo "Encarte" e a validade, e os preço
 
 A busca começa pelo que não gasta IA e só chama a IA para o que faltar (o passo a passo também está no fim de Mais › Lojas):
 
-1. **Lojas do raio, pelo mapa.** A localização da zona Casa do Home Assistant e o OpenStreetMap dizem quais farmácias, mercados e pet shops existem no raio, com endereço e distância certos (de rede, a filial mais perto). Com uma chave do Google Places em Mais › Integrações, entra também o Google Maps, que tem as lojas pequenas e o site de cada uma. Loja pequena cujo site mostra os produtos com preço na própria página tem o preço lido dessa página, sem IA. Atualiza uma vez por semana e quando você toca em Encontrar lojas.
-2. **Site das lojas.** O site de cada mercado cadastrado ou achado na busca é testado uma vez por semana. Se a loja usa VTEX e o robots.txt permite, o preço vem direto da loja que atende o seu CEP (Giassi, Angeloni e outros). Se o site não deixa programas usarem a busca, mas libera as páginas de produto (como o Bistek), o EconomIA baixa uma vez por dia a lista de produtos que a loja publica, acha os itens da sua lista pelo nome e lê o preço na página de cada produto. Esse é o preço padrão do site, que pode variar de loja para loja. O EconomIA não dribla bloqueio de site.
-3. **Shopee**, pela Open API do Shopee Afiliados, se você ligou em Mais › Integrações.
-4. **Folheto da semana** das lojas que você acompanha e que não têm preço pelo site (veja abaixo).
-5. **IA**: busca na web com a lista de lojas do mapa, para ofertas, cupons e os preços que faltam, avisada das lojas que já têm preço.
+1. **Lojas perto de casa, pelo mapa.** A localização da zona Casa do Home Assistant e o OpenStreetMap dizem quais farmácias, mercados e pet shops existem perto, com endereço e distância certos (de rede, a filial mais perto). Com uma chave do Google Places em Mais › Integrações, entra também o Google Maps, que tem as lojas pequenas e o site de cada uma. Atualiza uma vez por semana e quando você toca em Encontrar lojas.
+2. **Site das lojas sem site.** Pelo Brave Search (com chave, em Mais › Integrações) e, com a IA ligada, pela busca na web da IA. Uma vez por mês.
+3. **Site da loja.** O site de cada loja cadastrada ou achada na busca é testado uma vez por semana. Se a loja usa VTEX e o robots.txt permite, o preço vem direto da loja que atende o seu CEP (Giassi, Angeloni e outros).
+4. **Busca do site.** A página de resultados da busca da própria loja, como a da Cobasi.
+5. **Páginas de produto.** Se o site não deixa programas usarem a busca, mas libera as páginas de produto (como o Bistek), o EconomIA baixa uma vez por dia a lista de produtos que a loja publica, acha os itens da sua lista pelo nome e lê o preço na página de cada produto. Esse é o preço padrão do site, que pode variar de loja para loja.
+6. **Página de ofertas do site.** Loja pequena que mostra os produtos com preço na própria página (como a Drogaria Floresta) tem o preço lido dali, no máximo a cada 12 horas.
+7. **Shopee**, pela Open API do Shopee Afiliados, se você ligou em Mais › Integrações.
+8. **Folheto da semana** e **Instagram** das lojas que você acompanha e que não têm preço pelo site (veja abaixo). A IA lê cada um uma vez.
+9. **IA**: busca na web com a lista de lojas do mapa, para ofertas, cupons, marketplaces e os preços que faltam, avisada das lojas que já têm preço. Depois, o encarte do site das lojas que você cadastrou e uma última pergunta só sobre os itens sem preço.
 
-Com a IA desligada, o Buscar faz só os passos 2 a 4, com os folhetos já lidos.
+Com a IA desligada, o Buscar faz só o que não usa IA e aproveita os folhetos já lidos. O EconomIA respeita o robots.txt de cada site e não dribla bloqueio.
 
 ## Folhetos de encarte
 
@@ -133,7 +137,7 @@ Muito mercado do bairro posta o encarte da semana só no Instagram. Com a integr
 O que precisa, uma vez:
 
 1. **Conta profissional no Instagram.** No app do Instagram: perfil › ☰ › Tipo de conta e ferramentas › Mudar para conta profissional › Criador (ou Empresa). Pode ser a sua conta ou uma conta nova só para isso.
-2. **Página no Facebook ligada a ela.** No Facebook, crie uma página (pode ser vazia, por exemplo "EconomIA de Diego"). Nas configurações da página, em Contas vinculadas › Instagram, conecte a conta do passo 1.
+2. **Página no Facebook ligada a ela.** No Facebook, crie uma página (pode ser vazia, por exemplo "EconomIA da Ana"). Nas configurações da página, em Contas vinculadas › Instagram, conecte a conta do passo 1.
 3. **App da Meta.** Em developers.facebook.com › Meus apps › Criar app, escolha o uso "Outro" e o tipo "Empresa". O app fica em modo de desenvolvimento, só para você; não precisa de análise da Meta.
 4. **Chave de acesso.** No Explorador da Graph API (developers.facebook.com/tools/explorer), escolha o app, peça um token de usuário com as permissões `pages_show_list`, `pages_read_engagement`, `instagram_basic`, `instagram_manage_insights` e `business_management`, toque em Gerar e marque a página e a conta do Instagram.
 5. **Chave que dura.** A chave do Explorador vale umas horas. No Depurador de token (developers.facebook.com/tools/debug/accesstoken), cole a chave e toque em "Estender token de acesso": ela passa a valer 60 dias. Para uma chave que não vence, crie um usuário do sistema em business.facebook.com › Configurações do negócio › Usuários do sistema, dê a ele a página e a conta do Instagram, e gere a chave com validade "Nunca" e as mesmas permissões, mais `ads_read` (a Meta pede essa a mais quando a página foi dada pelo Gerenciador de Negócios).
@@ -145,9 +149,18 @@ O Instagram de cada loja vem do mapa ou de você: em Mais › Lojas, toque em Ad
 
 O OpenStreetMap é gratuito, mas pode não ter as lojas pequenas do bairro. Em **Mais › Integrações › Google Places**, cole uma chave da Places API (New), criada em console.cloud.google.com › APIs e serviços. O Google pede cartão cadastrado e dá uma cota gratuita por mês; o EconomIA consulta uma vez por semana e quando você toca em Encontrar lojas: as lojas mais perto de cada tipo, a busca por "farmácia", "supermercado"… e o site das lojas que vieram sem site (guardado por 30 dias). São algumas dezenas de pedidos por vez, o que cabe na cota gratuita no uso normal. A chave fica em `segredos.json`.
 
-## Lojas inativas
+## Brave Search (opcional)
 
-Em **Mais › Lojas**, desmarque a loja que não quer acompanhar: ela vai para **Inativas**, um bloco fechado no fim de cada grupo, e sai das ofertas, do roteiro e da procura de folhetos.
+Acha o site das lojas que o mapa trouxe sem site, sem IA: o EconomIA busca "nome da loja + cidade" e fica com o primeiro resultado que é o site da própria loja (pula redes sociais, guias, marketplaces e sites de encartes). O site achado é testado na hora. Em **Mais › Integrações › Brave Search**, cole uma chave grátis (2.000 buscas por mês), criada em api-dashboard.search.brave.com, e toque em **Salvar e testar**. O app faz uma busca por segundo, só para as lojas sem site, e guarda a resposta por 30 dias. Com a IA ligada, ela procura só as lojas que o Brave não achou. A chave fica em `segredos.json`.
+
+## Lojas
+
+Em **Mais › Lojas**, as lojas ficam em abas: **Farmácias**, **Mercados**, **Pet shops** e **Online**. **Procurar loja na lista** acha uma loja pelo nome em todas as abas, também nas Inativas.
+
+- **De onde vem o preço:** o **Encontrar lojas** testa, sem IA, cada loja que você acompanha, e ela mostra o resultado: **Preço pelo site**, **Preço pela busca do site**, **Preço pelas páginas do site**, **Preço pela página do site**, **Folheto da semana**, **Encarte do Instagram**, **Só com IA** ou **Sem fonte de preço**, com um exemplo. **Como foi testado** mostra o passo a passo, com ✓ e ✗. **Testar agora** testa de novo só aquela loja, sem o que ficou guardado. **Só sem fonte de preço** mostra só as que faltam.
+- **Inativas:** desmarque a loja que não quer acompanhar. Ela vai para um bloco fechado no fim de cada grupo e sai das ofertas, do roteiro e da procura de folhetos. Dá para testar e marcar de novo.
+- **Sem localização:** loja sem endereço no mapa (adicionada à mão ou que veio só de um site, como a Cobasi) fica em Online e conta como loja online. Com a chave do Google, o Encontrar lojas procura onde ela fica (a filial mais perto, até 20 km).
+- **Loja que não apareceu:** no fim da lista, escreva o nome, escolha o tipo e, se quiser, o site de ofertas, e toque em **Adicionar**.
 
 ## Mercado Livre: categorias (opcional)
 
