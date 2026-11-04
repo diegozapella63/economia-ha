@@ -97,6 +97,8 @@ esperar (espera-se a condição: `Cenario.espera`, `espera()` nas visuais), semp
 - `e2e/ec_dados.py`: Mais › Dados: exportar (downloads), importar, versões e restaurar.
 - `e2e/ec_aparencia.py`: tema claro e escuro, sem IA, estados vazios e textos sem inglês.
 - `e2e/ec_tamanhos.py`: os tamanhos do item, a base e o preço por quilo ou litro.
+- `e2e/ec_sobre.py`: Mais › Sobre, a última linha de Mais: os textos, os 7 links para o GitHub, a versão em Este app, o
+  Voltar, o ‹ Mais e arrastar de volta para Mais, recarregar em Sobre; 390 px escuro, 320 px claro e o computador.
 - `e2e/ec_desktop.py`: no computador (1280 px): barra lateral, ações no alto e colunas lado a lado.
 
 `python3 tools/montar_pagina.py --conferir` (também no GitHub) garante que a página do add-on foi montada da fonte.

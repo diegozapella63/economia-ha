@@ -24,6 +24,8 @@ O EconomIA usa a IA do próprio Home Assistant (Anthropic Claude, OpenAI, Google
 
 Como nos outros apps (InventarIA, GerencIA, ResolvIA e CronologIA), **Mais** tem abas presas no alto: **Casa** (CEP, quem mora, rotina, restrições, interesses e o que nunca mostrar), **Lojas** (lojas perto de casa, com o clube de cada uma, Encontrar lojas e Testar agora; cupons do app; compras online; e como o EconomIA busca os preços), **Integrações** (IA do Home Assistant, com Usar IA e Para falar; Shopee Afiliados, Google Places, Brave Search, Mercado Livre e Instagram; Uso da IA, Lista do Home Assistant e Sensores no Home Assistant), **Dados** (Exportar, Importar, Versões anteriores e onde ficam os dados), **Aparência** (tema e cor do app) e **Opções** (as etapas da busca que dá para desligar).
 
+A última linha de Mais, embaixo das abas, é **Sobre**: CorrerIA Code, quem faz os apps, os apps da família, cada um com o link para o GitHub dele (o EconomIA marcado como **Este app**, com a versão), e **Meu GitHub**. O Voltar do celular, o **‹ Mais** no alto e arrastar para a direita voltam para Mais.
+
 ## Falar
 
 O microfone fica no alto da tela, à direita (e em **Minha lista › Falar**). Fale os itens, por exemplo "leite integral, 2 pacotes de café 500 g e detergente"; o Home Assistant transcreve com a fala para texto escolhida em **Mais › Integrações › IA do Home Assistant › Para falar** (um assistente de voz do Home Assistant ou uma entidade de fala para texto; no padrão, a do assistente de voz preferido, em **Configurações › Assistentes de voz**; com o Home Assistant Cloud já vem pronta) e a IA de "Para ler fotos" separa os itens para você conferir e adicionar, com o que foi ouvido no alto. Até 2 minutos de cada vez.

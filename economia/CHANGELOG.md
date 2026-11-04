@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.1.0
+
+- **Mais › Sobre:** a última linha de Mais, embaixo das abas, abre a página de quem faz os apps: **CorrerIA Code** (desenvolvimento de softwares), por que o nome, os seis apps da família (CronologIA, ResolvIA, GerencIA, InventarIA, EconomIA e MemorIA), cada um com uma linha e o link para o GitHub dele, e **Meu GitHub**. O EconomIA aparece marcado como **Este app**, com a versão. O Voltar do celular, o **‹ Mais** no alto e arrastar para a direita voltam para Mais. A mesma página dos outros apps, nas cores do EconomIA.
+
 ## 1.0.0
 
 - **Versão 1.0:** a EconomIA sai da fase de testes. Tudo continua igual ao 0.20.2.

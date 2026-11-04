@@ -373,3 +373,16 @@ Agropecuárias: `OSM_TIPOS.petshops` inclui `shop=agrarian`; `GOOGLE_BUSCA.petsh
 ## Brave Search
 
 `segredos.brave.key`. `brave_busca` chama `GET {OFERTAS_BRAVE}?q=&country=BR&search_lang=pt-br&count=10` com `X-Subscription-Token` (401/403/422 = chave recusada, 429 = limite). `site_pelo_brave(nome, cidade)` busca "nome cidade" e fica com o primeiro resultado que não está em `NAO_SITE` (redes sociais, guias, CNPJ, marketplaces, apps de entrega, sites de encartes, gov.br…), passa em `site_loja` e tem no endereço ou no título uma palavra do nome (`chave_loja`, 4 letras ou mais, sem palavras genéricas nem a cidade; nome só genérico não busca). `sites_por_ia` usa o Brave primeiro (até 15 lojas, 1,1 s entre buscas, `via: "brave"`) e a IA para as que ficaram sem site e ainda não passaram por ela (`via: "ia"`). `forcar` (Testar agora) ignora os 30 dias.
+
+## Mais › Sobre
+
+A mesma página dos outros apps (o `about.js` do CronologIA), em JavaScript puro na fonte da página: `PRODUTOS` (nome,
+repositório, ícone e a linha de cada app, na ordem), `IC_SOBRE` (ícones do Lucide escritos à mão), `marcaNome` (o "IA"
+do nome num `<span>`, sem espaço) e `linkFora` (`target="_blank" rel="noopener"`) montam `#mp-sobre` uma vez. "Este app"
+fica no `economia-ha`, com a versão lida do `#versaoTxt` (não é um quinto lugar para mudar a versão).
+A linha `#maisFim` (`#sobreBtn`) fica depois dos painéis das abas, antes do rodapé. `irPara(v, tela)`: com
+`tela === 'sobre'` abre Sobre (`ui.maisTela`, guardado em `ofertas-bairro:ui`), esconde as abas, os painéis, a linha e o
+rodapé, mostra o `#maisVolta` (‹ Mais) e põe `na-sobre` no `<html>` (sem a linha do alto e o aviso de exemplo); qualquer
+outro caminho sai de Sobre. `marcarTela` dá a Sobre uma entrada no histórico (`{tela: 'sobre'}`, como no GerencIA): o
+Voltar do celular (`popstate`) volta para Mais, na aba de antes; saindo de outro jeito (‹ Mais, abas de baixo, barra
+lateral, arrastar), a entrada é desfeita com `history.back()`. Arrastar para a direita em Sobre volta para Mais.
