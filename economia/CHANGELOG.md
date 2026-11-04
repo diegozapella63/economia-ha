@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.0.0
+
+- **Versão 1.0:** a EconomIA sai da fase de testes. Tudo continua igual ao 0.20.2.
+
 ## 0.20.2
 
 - **Buscar o preço de um item:** quando a IA falha (cota, erro) e os sites das lojas respondem, o aviso agora diz que a IA falhou e por quê. Antes, aparecia só "Não achei preço" ou nada.
