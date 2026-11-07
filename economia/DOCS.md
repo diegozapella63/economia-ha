@@ -90,7 +90,7 @@ Se uma palavra do item não aparece em nenhum produto que as lojas já mostraram
 
 ### Similares
 
-Toque em **Similares** no item para ver até 3 produtos parecidos, da mesma seção da loja, que saem mais em conta pelo preço do quilo ou do litro: para "coxinha da asa", sobrecoxa, asa ou frango inteiro. O preço do item continua o mesmo. Se preferir um similar, toque no ✓ dele: vira a sua escolha, também no Roteiro. Os similares vêm das lojas com busca no próprio site (como Giassi e Angeloni) e aparecem na busca seguinte.
+Toque em **Similares** no item para ver até 3 produtos parecidos, da mesma seção da loja, que saem mais em conta pelo preço do quilo ou do litro: para "coxinha da asa", sobrecoxa, asa ou frango inteiro. O preço do item continua o mesmo. Se preferir um similar, toque no ✓ dele: vira a sua escolha, também no Roteiro. Os similares vêm das lojas com busca no próprio site (como Giassi e Angeloni) e aparecem na busca seguinte, com a **Busca direta nas lojas** ligada em Mais › Opções.
 
 ## Clubes e cupons
 
@@ -145,7 +145,7 @@ O que precisa, uma vez:
 5. **Chave que dura.** A chave do Explorador vale umas horas. No Depurador de token (developers.facebook.com/tools/debug/accesstoken), cole a chave e toque em "Estender token de acesso": ela passa a valer 60 dias. Para uma chave que não vence, crie um usuário do sistema em business.facebook.com › Configurações do negócio › Usuários do sistema, dê a ele a página e a conta do Instagram, e gere a chave com validade "Nunca" e as mesmas permissões, mais `ads_read` (a Meta pede essa a mais quando a página foi dada pelo Gerenciador de Negócios).
 6. Em **Mais › Integrações › Instagram**, cole a chave e toque em **Salvar e testar**. O teste acha a sua conta do Instagram sozinho e diz até quando a chave vale.
 
-O Instagram de cada loja vem do mapa ou de você: em Mais › Lojas, toque em Adicionar site de ofertas (ou Trocar site) e escreva o @ da loja. Só contas comerciais ou de criador podem ser lidas pela API; se a loja tiver perfil pessoal, o "Como foi testado" avisa. A chave fica em `segredos.json` e nunca volta para a página. Ler o encarte precisa da IA ligada.
+O Instagram de cada loja vem do mapa ou de você: em Mais › Lojas, toque em Adicionar site de ofertas (ou Trocar site) e escreva o @ da loja. Só contas comerciais ou de criador podem ser lidas pela API; se a loja tiver perfil pessoal, o "Como foi testado" avisa. A chave fica em `segredos.json` e nunca volta para a página. Ler o encarte precisa da IA e dos **Folhetos** ligados (Mais › Opções).
 
 ## Google Places (opcional)
 
@@ -181,7 +181,7 @@ Em **Mais › Integrações › Shopee Afiliados**, informe o App ID e a senha (
 
 ## Compras online
 
-A aba **Online** compara iFood, Rappi, Mercado Livre, Amazon e outros que você marcar em **Mais › Lojas › Compras online**. Marque também as assinaturas que dão frete grátis (Amazon Prime, Meli+, Clube iFood).
+A aba **Online** compara iFood, Rappi, Mercado Livre, Amazon e outros que você marcar em **Mais › Lojas › Compras online**. Marque também as assinaturas que dão frete grátis (Amazon Prime, Meli+, Clube iFood). Compras online aparece com **Online** marcado em Mais › Casa.
 
 - **iFood e Rappi**: trazem os preços dos mercados, farmácias e pet shops do bairro no app, com a taxa de entrega somada. O preço no app pode ser maior que no balcão. Com Clube iFood, a taxa fica zerada nas lojas participantes; os cupons pessoais do Clube entram pelo print, em Cupons do app.
 

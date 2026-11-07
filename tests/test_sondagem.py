@@ -143,6 +143,14 @@ class Instagram(Base):
         self.assertEqual((st["instagram"], st["como"]), ("boi", "instagram_novo"))
         self.assertTrue(st["passos"][-1].endswith("; ler o post precisa da IA."))
 
+    def test_post_novo_com_folhetos_desligados(self):
+        """Folhetos desligados em Mais › Opções: a busca não lê o Instagram, então o passo não diz que a IA vai ler."""
+        self.posts = [{"id": "1", "media_type": "IMAGE", "caption": "Ofertas da semana", "media_url": self.b + "/x.jpg", "timestamp": self.quando(1)}]
+        st = self.prova("Boi", {"social": "https://www.instagram.com/boi/"}, cat="mercados", cfg=self.config(opcoes={"folhetos": False}))
+        self.assertEqual(st["como"], "instagram_novo")
+        self.assertTrue(st["passos"][-1].endswith("; Folhetos desligados em Mais › Opções."), st["passos"])
+        self.assertEqual(self.S.busca_instagram(self.config(opcoes={"folhetos": False}), ["mercados"], {}), [], "e a busca não lê mesmo")
+
 
 class Folhetos(Base):
     def test_testar_agora_procura_de_novo(self):
@@ -152,6 +160,18 @@ class Folhetos(Base):
         self.assertNotEqual(st["como"], "folheto_novo", "\"não tem\" guardado: não procura de novo")
         st = self.prova("Mercadinho", {}, cat="mercados", cache_f=cache, forcar=True)
         self.assertEqual(st["como"], "folheto_novo", "Testar agora esquece o \"não tem\"")
+        self.assertTrue(st["passos"][-1].endswith("; a IA lê na próxima busca."), st["passos"])
+
+    def test_folheto_novo_com_folhetos_desligados(self):
+        """Só diz que a IA lê na próxima busca quando a busca vai ler: com Folhetos desligados, diz onde ligar."""
+        self.lojas.paginas["/kimbino/mercadinho/"] = (200, '<a href="/kimbino/mercadinho/ofertas-1234567/">x</a>', "text/html")
+        cfg = self.config(opcoes={"folhetos": False})
+        st = self.prova("Mercadinho", {}, cat="mercados", cfg=cfg)
+        self.assertEqual(st["como"], "folheto_novo")
+        self.assertEqual(st["passos"][-1], "✓ Tem folheto da semana no Kimbino; Folhetos desligados em Mais › Opções.")
+        self.assertEqual(self.S.busca_folhetos(cfg, [{"nome": "Mercadinho", "categoria": "mercados"}]), ([], {}), "e a busca não lê mesmo")
+        st = self.prova("Mercadinho", {}, cat="mercados", cfg=self.config(usar_ia=False), forcar=True)
+        self.assertEqual(st["passos"][-1], "✓ Tem folheto da semana no Kimbino; ler o folheto precisa da IA.")
 
     def test_erro_ao_procurar_folheto(self):
         S = self.S

@@ -1,5 +1,13 @@
 # Mudanças
 
+## 1.1.1
+
+- **Os textos só dizem o que vai acontecer:**
+  - **Mais › Casa › Rotina de compras:** sai o **Avisar no celular**. O aviso no celular ainda não existe, e a tela mostrava o dia em que ele chegaria.
+  - **Mais › Integrações:** o **Instagram** só diz que os encartes entram na busca com a IA e os Folhetos ligados. A **Shopee** só diz de onde vem o preço quando ele vem mesmo (com a aba Online; sem a chave, só com a IA e a Shopee marcada em Compras online). A **Lista do Home Assistant** só explica o que sincroniza com uma lista escolhida.
+  - **Mais › Lojas:** **Compras online** aparece só com a aba Online. A ordem da busca não mostra as etapas desligadas em Mais › Opções. Com a IA desligada, a loja adicionada à mão não promete mais o encarte nem a próxima busca. No **Como foi testado**, "a IA lê na próxima busca" só aparece com os Folhetos ligados.
+  - **Minha lista:** com a busca direta desligada, **Similares** diz que ela está desligada em vez de prometer a próxima busca, e o item posto pelo código de barras não promete ser achado nas lojas.
+
 ## 1.1.0
 
 - **Mais › Sobre:** a última linha de Mais, embaixo das abas, abre a página de quem faz os apps: **CorrerIA Code** (desenvolvimento de softwares), por que o nome, os seis apps da família (CronologIA, ResolvIA, GerencIA, InventarIA, EconomIA e MemorIA), cada um com uma linha e o link para o GitHub dele, e **Meu GitHub**. O EconomIA aparece marcado como **Este app**, com a versão. O Voltar do celular, o **‹ Mais** no alto e arrastar para a direita voltam para Mais. A mesma página dos outros apps, nas cores do EconomIA.

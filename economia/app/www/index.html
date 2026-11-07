@@ -212,8 +212,6 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 .people{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .people label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;min-width:0}
 .people .field{width:100%;font-family:var(--font-display);font-stretch:80%;font-weight:750;font-size:1.2rem;padding:6px 10px}
-.aviso{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13.5px;display:flex;flex-direction:column;gap:3px}
-.aviso strong{font-weight:600}
 
 /* cupons (tíquetes) */
 .tickets{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,225px),1fr));gap:12px}
@@ -602,7 +600,7 @@ h3{font-size:13px;font-weight:600}
 .sec-meta,.rhythm,.d-meta,.r-sub,.i-online,.i-tam,.i-avulso,.opp-txt small,.sync,.cat-note,.t-cond,.parada ul,.rot-sub,.set-line,.checks,.foto-itens{font-size:14px}
 .de,.opp-val small,.i-foot,.fact .s,.why,footer,.tam-list li,.i-others li,.parada-h .sub,.cup-row .r-name small,.i-tam summary,.r-dica,.foto-add,.hide-menu{font-size:13px}
 .chip,.dchip,.src,.tarja,.opps-h,.fact .k,.t-rede,.i-best .lbl,.rot-total .lbl,.i-save{font-size:12px;font-weight:600}
-.banner,.busca-msg,.aviso,.empty,.confirma,.toast{font-size:15px}
+.banner,.busca-msg,.empty,.confirma,.toast{font-size:15px}
 @media (max-width:900px){
   .cols,.cols.even{grid-template-columns:minmax(0,1fr)}
 }
@@ -620,6 +618,8 @@ h3{font-size:13px;font-weight:600}
 /* Usar IA desligado: some tudo o que usa IA */
 .sem-ia .so-ia{display:none!important}
 html:not(.sem-ia) .so-semia{display:none!important}
+/* etapa da busca desligada em Mais › Opções: some da ordem da busca */
+.sem-diretas .so-diretas,.sem-folhetos .so-folhetos,.sem-itens .so-itens{display:none!important}
 /* Escolher fotos, Colar mensagem e Falar numa linha só, em quadrinhos */
 .ler-tiles{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:8px}
 .ler-tile{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;min-height:76px;padding:14px 6px 10px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit;font-size:14px;font-weight:500;line-height:1.2;text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -1232,15 +1232,6 @@ html:not(.sem-ia) .so-semia{display:none!important}
           <div class="group"><h3>Dias de mercado</h3><div class="picks dias" id="dMercado"></div></div>
           <div class="group"><h3>Dias de farmácia</h3><div class="picks dias" id="dFarmacia"></div></div>
           <div class="group">
-            <h3><label for="avisar">Avisar no celular</label></h3>
-            <select class="field" id="avisar" style="align-self:flex-start">
-              <option value="vespera">Na véspera, à noite</option>
-              <option value="dia">No dia, de manhã</option>
-              <option value="nao">Não avisar</option>
-            </select>
-          </div>
-          <div class="aviso" id="proxAviso"></div>
-          <div class="group">
             <h3><label for="estoque">Espaço para estoque</label></h3>
             <select class="field" id="estoque" style="align-self:flex-start">
               <option value="pouco">Pouco: até 2 meses de estoque</option>
@@ -1305,7 +1296,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
           <ul class="rows" id="cupLista"></ul>
         </div>
       </section>
-        <section class="panel so-ia" aria-labelledby="h-online">
+        <section class="panel so-ia" aria-labelledby="h-online" id="onlineSec">
           <div class="sec-head"><h2 id="h-online"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 6h11v10H2zM13 9h4l4 4v3h-8z"/><circle cx="6.5" cy="17.5" r="2"/><circle cx="17.5" cy="17.5" r="2"/></svg></span>Compras online</h2></div>
           <div class="group"><h3>Onde procurar</h3><div class="picks" id="pMkt"></div></div>
           <div class="group"><h3>Assinaturas com frete grátis</h3><div class="picks" id="pAss"></div></div>
@@ -1320,17 +1311,17 @@ html:not(.sem-ia) .so-semia{display:none!important}
         <ol class="passos">
           <li><b>Lojas perto de casa.</b> Pelo mapa (OpenStreetMap e Google Maps). Sem IA.</li>
           <li><b>Site das lojas sem site.</b> Pela busca do Brave (chave em Integrações) e, com a IA ligada, pela IA. Uma vez por mês.</li>
-          <li><b>Site da loja.</b> Preço direto, quando o site permite (Giassi, Angeloni…). Sem IA.</li>
-          <li><b>Busca do site.</b> A página de resultados da busca da loja, como a da Cobasi. Sem IA.</li>
-          <li><b>Páginas de produto.</b> Sites que só liberam a página do produto, como o do Bistek. Sem IA.</li>
-          <li><b>Página de ofertas do site.</b> Lojas que mostram os preços na própria página, como a Drogaria Floresta. Sem IA.</li>
+          <li class="so-diretas"><b>Site da loja.</b> Preço direto, quando o site permite (Giassi, Angeloni…). Sem IA.</li>
+          <li class="so-diretas"><b>Busca do site.</b> A página de resultados da busca da loja, como a da Cobasi. Sem IA.</li>
+          <li class="so-diretas"><b>Páginas de produto.</b> Sites que só liberam a página do produto, como o do Bistek. Sem IA.</li>
+          <li class="so-diretas"><b>Página de ofertas do site.</b> Lojas que mostram os preços na própria página, como a Drogaria Floresta. Sem IA.</li>
           <li><b>Shopee.</b> Pela API do Shopee Afiliados. Sem IA.</li>
-          <li class="so-ia"><b>Folheto da semana.</b> Kimbino, Portafolhetos, Seus Folhetos e Catálogos Ofertas. A IA lê cada folheto uma vez.</li>
-          <li class="so-ia"><b>Instagram das lojas.</b> Posts de oferta, lidos uma vez pela IA.</li>
-          <li class="so-semia"><b>Folhetos já lidos.</b> Até vencerem.</li>
+          <li class="so-ia so-folhetos"><b>Folheto da semana.</b> Kimbino, Portafolhetos, Seus Folhetos e Catálogos Ofertas. A IA lê cada folheto uma vez.</li>
+          <li class="so-ia so-folhetos"><b>Instagram das lojas.</b> Posts de oferta, lidos uma vez pela IA.</li>
+          <li class="so-semia so-folhetos"><b>Folhetos já lidos.</b> Até vencerem.</li>
           <li class="so-ia"><b>Busca na web com IA.</b> O que faltou: outras lojas, marketplaces e cupons.</li>
           <li class="so-ia"><b>Encarte do site.</b> Sites de ofertas que você cadastrou.</li>
-          <li class="so-ia"><b>Itens sem preço.</b> Uma última pergunta só sobre eles.</li>
+          <li class="so-ia so-itens"><b>Itens sem preço.</b> Uma última pergunta só sobre eles.</li>
         </ol>
         <p class="hint">Cada produto achado é conferido antes de valer: pela seção onde a loja o cadastrou e, com o Mercado Livre ligado em Integrações, pela categoria dele. Hambúrguer não entra como carne moída.</p>
         <p class="hint so-ia">Preço do site e do folheto vale mais que o da busca na web.</p>
@@ -1424,7 +1415,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       <p class="hint" id="usoSensor"></p>
     </section>
     <section class="panel settings" aria-labelledby="h-ha">
-      <div class="set-head"><h2 id="h-ha"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6h11M10 12h11M10 18h11"/><path d="M3 6l1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/></svg></span>Lista do Home Assistant</h2><p class="sec-meta">O que entrar na lista do Home Assistant aparece aqui; marcado lá conta como "Comprei hoje".</p></div>
+      <div class="set-head"><h2 id="h-ha"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6h11M10 12h11M10 18h11"/><path d="M3 6l1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/></svg></span>Lista do Home Assistant</h2><p class="sec-meta" id="syncDesc">O que entrar na lista do Home Assistant aparece aqui; marcado lá conta como "Comprei hoje".</p></div>
       <div class="set-row">
         <div><h3 class="set-t">Sincronizar com</h3><p class="sec-meta" id="syncInfo"></p></div>
         <select class="field" id="syncEnt" aria-label="Lista do Home Assistant"></select>
@@ -1512,7 +1503,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     <nav class="mais-fim" id="maisFim" aria-label="Sobre o app">
       <button type="button" class="menu-row" id="sobreBtn"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span><span class="mb"><b>Sobre</b><span>CorrerIA Code, os apps e o GitHub.</span></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
     </nav>
-    <p class="foot" id="maisPe"><b>EconomIA</b><br><span id="versaoTxt">v1.1.0</span></p>
+    <p class="foot" id="maisPe"><b>EconomIA</b><br><span id="versaoTxt">v1.1.1</span></p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -2188,6 +2179,8 @@ html:not(.sem-ia) .so-semia{display:none!important}
     if (!x.it.similares) return '';
     var info = itemDe(x.it.produto), b = info && info.base, best = p[0], k = 'sim|' + norm(x.it.produto);
     var todos = similaresDe(x.it);
+    // os similares só vêm da busca direta nas lojas: desligada em Mais › Opções, não há próxima busca que os traga
+    if (!todos.length && !estado.opcoes.lojas_diretas) return '<p class="i-sub sim-vazio">Similares ligados: vêm da busca direta nas lojas, desligada em Mais › Opções.</p>';
     if (!todos.length) return '<p class="i-sub sim-vazio">Similares ligados: eles aparecem na próxima busca, vindos da mesma seção das lojas com busca no próprio site. '
       + '<button type="button" class="link" data-buscaitem="' + x.i + '"' + (buscaItem === x.it.produto ? ' disabled' : '') + '>' + (buscaItem === x.it.produto ? 'Buscando…' : 'Buscar agora') + '</button></p>';
     var ref = best && b ? best.v / Number(b.quantidade) : null;
@@ -3144,7 +3137,8 @@ html:not(.sem-ia) .so-semia{display:none!important}
     var igual = estado.lista.filter(function(i){ return norm(i.produto) === norm(nome); })[0];
     if (igual){ igual.ean = ean; salvar('Código guardado em "' + igual.produto + '"'); }
     else { entraNaLista(nome); estado.lista[estado.lista.length - 1].ean = ean; salvar('Adicionado à lista'); }
-    $('addMsg').className = 'hint ok'; $('addMsg').textContent = igual ? 'O código ficou guardado em "' + igual.produto + '".' : '"' + nome + '" entrou na lista com o código de barras: com ele, o mesmo produto é achado nas lojas com busca no site.';
+    // o código só é usado pela busca direta nas lojas (Mais › Opções)
+    $('addMsg').className = 'hint ok'; $('addMsg').textContent = igual ? 'O código ficou guardado em "' + igual.produto + '".' : '"' + nome + '" entrou na lista com o código de barras' + (estado.opcoes.lojas_diretas ? ': com ele, o mesmo produto é achado nas lojas com busca no site.' : '.');
     $('codNum').value = ''; $('codRes').hidden = true; codMsg(''); abreCod(false);
     pintaHist(); pintaLista(); pintaOfertasTela();
   });
@@ -3637,7 +3631,8 @@ html:not(.sem-ia) .so-semia{display:none!important}
       arr(c.lojas).forEach(function(l){ if (G[l.rede]){ var m2 = manualDe(G[l.rede].nome); if (m2 >= 0) usadas[m2] = true; } });  // já aparece como loja
       estado.lojas.adicionar.forEach(function(a, i){  // cadastrada e ainda sem dados: também sem localização
         if (a.categoria !== c.id || usadas[i] || modo !== 'semLocal' && fis || (TERMO_LOJA && norm(a.nome).indexOf(TERMO_LOJA) < 0)) return;
-        manuais.push('<li class="row"><span class="r-name">' + esc(a.nome) + '</span><button type="button" class="rm" data-loja="' + i + '">remover</button><span class="r-sub"><span>Adicionada por você · ' + (a.site ? 'o encarte de ' + esc(host(a.site)) + ' é lido a cada busca' : 'entra na próxima busca') + '</span></span></li>');
+        // a loja adicionada à mão (e o encarte do site dela) só entra na busca com IA
+        manuais.push('<li class="row"><span class="r-name">' + esc(a.nome) + '</span><button type="button" class="rm" data-loja="' + i + '">remover</button><span class="r-sub"><span>Adicionada por você' + (!iaOn() ? '' : a.site ? ' · o encarte de ' + esc(host(a.site)) + ' é lido a cada busca' : ' · entra na próxima busca') + '</span></span></li>');
       });
       var mktOn = [], mktOff = [];
       if (c.id === 'online' && modo !== 'semLocal'){
@@ -3795,7 +3790,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     if (site && !/^https?:\/\//i.test(site)) site = 'https://' + site;
     if (site && !/^https?:\/\/[^\s.]+\.[^\s]+$/i.test(site)){ msg.className = 'hint err'; msg.textContent = 'O site de ofertas não parece um endereço válido.'; return; }
     estado.lojas.adicionar.push(site ? {categoria:$('novaLojaCat').value, nome:nome, site:site} : {categoria:$('novaLojaCat').value, nome:nome}); $('novaLoja').value = ''; $('novaLojaSite').value = '';
-    msg.className = 'hint ok'; msg.textContent = '"' + nome + '" entra na próxima busca' + (site ? ', com o encarte do site.' : '.');
+    msg.className = 'hint ok'; msg.textContent = !iaOn() ? '"' + nome + '" adicionada.' : '"' + nome + '" entra na próxima busca' + (site ? ', com o encarte do site.' : '.');
     salvar('Loja adicionada'); pintaLojas();
   });
 
@@ -3910,24 +3905,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   function picks(el, itens, sel){
     $(el).innerHTML = itens.map(function(x){ return '<button type="button" class="pick" data-v="' + x.id + '" aria-pressed="' + (sel.indexOf(x.id) >= 0) + '"><span>' + esc(x.nome) + '</span></button>'; }).join('');
   }
-  function proximoDia(ids){
-    if (!ids.length) return null;
-    var hoje = hojeSP();
-    for (var k = 1; k <= 7; k++){ var iso = soma(hoje, k), wd = new Date(utc(iso)).getUTCDay(); if (ids.indexOf(DIAS[wd].id) >= 0) return iso; }
-    return null;
-  }
-  function pintaAviso(){
-    var r = estado.cotidiano, partes = [];
-    if (r.avisar === 'nao'){ $('proxAviso').innerHTML = '<span>Sem avisos no celular. O painel continua atualizando toda semana.</span>'; return; }
-    [['mercado', 'Mercado'], ['farmacia', 'Farmácia']].forEach(function(par){
-      var d = proximoDia(r[par[0]]); if (!d) return;
-      var av = r.avisar === 'vespera' ? soma(d, -1) : d;
-      partes.push('<span><strong>' + par[1] + ' ' + esc(diaLongo(d)) + '</strong> · aviso ' + (r.avisar === 'vespera' ? 'na véspera, ' : 'no dia, ') + esc(diaLongo(av)) + '</span>');
-    });
-    $('proxAviso').innerHTML = partes.length
-      ? partes.join('') + '<span class="hint">O aviso no celular chega numa próxima versão do painel.</span>'
-      : '<span>Escolha os dias em que você costuma comprar para receber o aviso com as ofertas certas.</span>';
-  }
+  // "Avisar no celular" fica de fora da tela enquanto o aviso não existe (cotidiano.avisar continua guardado na config)
   function pintaPerfil(){
     var p = estado.perfil, r = estado.cotidiano;
     if (estado.cep && document.activeElement !== $('cep')) $('cep').value = estado.cep;
@@ -3945,8 +3923,9 @@ html:not(.sem-ia) .so-semia{display:none!important}
     picks('pAss', ASS, estado.online.assinaturas);
     picks('dMercado', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.mercado);
     picks('dFarmacia', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.farmacia);
-    $('avisar').value = r.avisar; $('estoque').value = r.estoque;
-    pintaAviso(); pintaTema(); pintaCores(); pintaSyncUI(); pintaIA(); pintaAjustes();
+    $('estoque').value = r.estoque;
+    $('onlineSec').hidden = estado.categorias.indexOf('online') < 0;  // sem a aba Online, as opções dela não valem
+    pintaTema(); pintaCores(); pintaSyncUI(); pintaIA(); pintaAjustes();
   }
   var TAG_SW = 'M8 0h20a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8L0 13V7z', FURO_SW = 'M9.7 10a2.7 2.7 0 1 0-5.4 0a2.7 2.7 0 1 0 5.4 0z';
   function pintaCores(){
@@ -3993,6 +3972,12 @@ html:not(.sem-ia) .so-semia{display:none!important}
     $('opItens').checked = estado.opcoes.itens_sem_preco; $('opEncartes').checked = estado.opcoes.encartes_auto;
     $('opDiretas').checked = estado.opcoes.lojas_diretas; $('opFolhetos').checked = estado.opcoes.folhetos;
     $('onEntrega').checked = estado.online.mercados_entrega;
+    pintaEtapas();
+  }
+  // a ordem da busca (fim de Mais › Lojas) mostra só as etapas ligadas em Mais › Opções
+  function pintaEtapas(){
+    var r = document.documentElement, o = estado.opcoes;
+    r.classList.toggle('sem-diretas', !o.lojas_diretas); r.classList.toggle('sem-folhetos', !o.folhetos); r.classList.toggle('sem-itens', !o.itens_sem_preco);
   }
   // lojas com busca direta: se atendem o CEP e qual loja
   var DIRETAS = null;
@@ -4011,16 +3996,16 @@ html:not(.sem-ia) .so-semia{display:none!important}
   $('usarIA').addEventListener('change', function(){
     estado.usar_ia = this.checked;
     salvar(this.checked ? 'IA ligada' : 'IA desligada');
-    pintaAjustes(); carregaVoz(); pintaLista(); pintaLado(); pintaLojas();
+    pintaAjustes(); carregaVoz(); pintaLista(); pintaLado(); pintaLojas(); pintaIntegSt();
     if (this.checked){ carregaIAs(); carregaUso(); }
   });
   $('sensores').addEventListener('change', function(){
     estado.sensores = this.checked; salvar(this.checked ? 'Sensores ligados' : 'Sensores desligados'); pintaAjustes(); pintaUso();
   });
-  $('opItens').addEventListener('change', function(){ estado.opcoes.itens_sem_preco = this.checked; salvar('Opção salva'); });
+  $('opItens').addEventListener('change', function(){ estado.opcoes.itens_sem_preco = this.checked; salvar('Opção salva'); pintaEtapas(); });
   $('opEncartes').addEventListener('change', function(){ estado.opcoes.encartes_auto = this.checked; salvar('Opção salva'); });
-  $('opDiretas').addEventListener('change', function(){ estado.opcoes.lojas_diretas = this.checked; salvar(this.checked ? 'Busca direta ligada' : 'Busca direta desligada'); });
-  $('opFolhetos').addEventListener('change', function(){ estado.opcoes.folhetos = this.checked; salvar(this.checked ? 'Folhetos ligados' : 'Folhetos desligados'); });
+  $('opDiretas').addEventListener('change', function(){ estado.opcoes.lojas_diretas = this.checked; salvar(this.checked ? 'Busca direta ligada' : 'Busca direta desligada'); pintaEtapas(); pintaLista(); });
+  $('opFolhetos').addEventListener('change', function(){ estado.opcoes.folhetos = this.checked; salvar(this.checked ? 'Folhetos ligados' : 'Folhetos desligados'); pintaEtapas(); });
   $('onEntrega').addEventListener('change', function(){ estado.online.mercados_entrega = this.checked; salvar(this.checked ? 'Mercados que entregam: ligado' : 'Mercados que entregam: desligado'); });
 
   // ----- chave guardada: o campo aparece preenchido (••••); tocar nele limpa para colar outra -----
@@ -4039,21 +4024,31 @@ html:not(.sem-ia) .so-semia{display:none!important}
     if (MODO !== 'addon'){ shSt('No Home Assistant, aqui você liga a Shopee com o App ID e a senha.'); gSt('No Home Assistant, aqui você liga o Google Maps com a chave.'); iSt('No Home Assistant, aqui você liga o Instagram com a chave da Meta.'); bSt('No Home Assistant, aqui você liga o Brave com a chave.'); mlSt('No Home Assistant, aqui você liga o Mercado Livre com o seu app.'); return; }
     fetch('api/integracoes', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
       var sh = j.shopee || {}, g = j.google || {}, ig = j.instagram || {}, br = j.brave || {};
+      INTEG = j;
       pintaMl(j.ml);
       guardado('bKey', br.tem_chave);
       $('bApagar').hidden = !br.tem_chave;
       bSt(br.tem_chave ? 'Ligado.' : 'Desligado.', br.tem_chave ? true : null);
       guardado('iKey', ig.tem_chave);
       $('iApagar').hidden = !ig.tem_chave;
-      iSt(ig.tem_chave ? 'Ligado' + (ig.usuario ? ' com a conta @' + ig.usuario : '') + ': os encartes postados pelas lojas entram na busca.' : 'Desligado.', ig.tem_chave ? true : null);
       guardado('gKey', g.tem_chave);
       $('gApagar').hidden = !g.tem_chave;
       gSt(g.tem_chave ? 'Ligada: as lojas vêm do OpenStreetMap e do Google Maps.' : 'Desligada: as lojas vêm só do OpenStreetMap.', g.tem_chave ? true : null);
       $('shApp').value = sh.app_id || '';
       guardado('shSenha', sh.tem_senha);
       $('shApagar').hidden = !sh.app_id;
-      shSt(sh.app_id && sh.tem_senha ? 'Ligada. Os preços da Shopee vêm direto da Shopee.' : 'Desligada: a Shopee entra pela busca com IA.', sh.app_id && sh.tem_senha ? true : null);
+      pintaIntegSt();
     }).catch(function(){ shSt('Não consegui ler agora.'); });
+  }
+  // o que o Instagram e a Shopee trazem, só quando acontece: o Instagram precisa da IA e dos folhetos (Mais › Opções);
+  // a Shopee precisa da aba Online e, sem a API, da IA com a Shopee marcada em Compras online
+  var INTEG = null;
+  function pintaIntegSt(){
+    if (!INTEG) return;
+    var sh = INTEG.shopee || {}, ig = INTEG.instagram || {}, online = estado.categorias.indexOf('online') >= 0;
+    iSt(ig.tem_chave ? 'Ligado' + (ig.usuario ? ' com a conta @' + ig.usuario : '') + (iaOn() && estado.opcoes.folhetos ? ': os encartes postados pelas lojas entram na busca.' : '.') : 'Desligado.', ig.tem_chave ? true : null);
+    shSt(sh.app_id && sh.tem_senha ? 'Ligada' + (online ? '. Os preços da Shopee vêm direto da Shopee.' : '.')
+      : online && iaOn() && estado.online.marketplaces.indexOf('shopee') >= 0 ? 'Desligada: a Shopee entra pela busca com IA.' : 'Desligada.', sh.app_id && sh.tem_senha ? true : null);
   }
   function testaShopee(){
     shSt('Testando com a Shopee…');
@@ -4369,6 +4364,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   }
   function pintaSyncUI(){
     var sel = $('syncEnt'), s = estado.sync, listas = LISTAS_HA || [];
+    $('syncDesc').hidden = !s.ativo;  // "o que entrar lá aparece aqui" só sincronizando
     var opts = '<option value="">Não sincronizar</option>' + listas.map(function(l){ return '<option value="' + esc(l.id) + '">' + esc(l.nome) + '</option>'; }).join('');
     if (s.entidade && !listas.some(function(l){ return l.id === s.entidade; })) opts += '<option value="' + esc(s.entidade) + '">' + esc(s.entidade) + '</option>';
     sel.innerHTML = opts;
@@ -4457,7 +4453,6 @@ html:not(.sem-ia) .so-semia{display:none!important}
       salvar(); tudo();
     });
   });
-  $('avisar').addEventListener('change', function(){ estado.cotidiano.avisar = this.value; salvar(); pintaAviso(); });
   $('estoque').addEventListener('change', function(){ estado.cotidiano.estoque = this.value; salvar(); pintaLista(); });
 
   function mascara(v){ var d = v.replace(/\D/g, '').slice(0, 8); return d.length > 5 ? d.slice(0, 5) + '-' + d.slice(5) : d; }
@@ -4553,7 +4548,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 1.1.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 1.1.1' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

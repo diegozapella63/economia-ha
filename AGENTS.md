@@ -24,7 +24,7 @@ ResolvIA (tarefas), CronologIA (agenda), GerencIA (finanças), InventarIA (cômo
 
 ```bash
 python3 -m unittest discover -s tests -p "test_*.py"     # unitários e integração (511, ~1 min, só Python)
-tests/e2e/run.sh                                          # visuais (16 telas; pip install playwright; python3 -m playwright install chromium)
+tests/e2e/run.sh                                          # visuais (17 telas; pip install playwright; python3 -m playwright install chromium)
 python3 tools/cobertura.py --linhas                       # cobertura de linhas (99%; o GitHub exige 97%)
 python3 tools/montar_pagina.py --conferir                 # a página do add-on está em dia com a fonte?
 python3 tools/prints_readme.py                            # refaz as imagens do README (docs/*.png), com o exemplo embutido

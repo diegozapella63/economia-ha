@@ -4891,6 +4891,14 @@ def lojas_acompanhadas(cfg, categorias):
     return out
 
 
+def quem_le(cfg, o_que):
+    """Fim do passo de um folheto ou post achado: quem lê, e só se a busca vai mesmo ler (IA e Folhetos ligados;
+    o Instagram também segue a opção Folhetos)."""
+    if not ia_ligada(cfg):
+        return f"; ler {o_que} precisa da IA."
+    return "; a IA lê na próxima busca." if opcao("folhetos", cfg) else "; Folhetos desligados em Mais › Opções."
+
+
 def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto, forcar=False):
     """Tenta um preço de exemplo sem IA e diz, passo a passo, o que funcionou e o que não."""
     termo = TERMO_TESTE.get(cat_id, "leite")
@@ -5033,8 +5041,7 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
                 enc = posts_encarte(posts)
                 if enc:
                     st["como"] = "instagram_novo"
-                    st["passos"].append(f"✓ Instagram @{h}: post de oferta de {datetime.fromisoformat(enc[0]['de']).strftime('%d/%m')}"
-                                        + ("; a IA lê na próxima busca." if ia_ligada(cfg) else "; ler o post precisa da IA."))
+                    st["passos"].append(f"✓ Instagram @{h}: post de oferta de {datetime.fromisoformat(enc[0]['de']).strftime('%d/%m')}" + quem_le(cfg, "o post"))
                 else:
                     st["passos"].append(f"✗ Instagram @{h}: nenhum post de oferta nos últimos {INSTA_DIAS} dias.")
         else:
@@ -5057,7 +5064,7 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
             diag_f = alvo_f.get("_diag") or {}
             if cands:
                 st["como"] = "folheto_novo"
-                st["passos"].append(f"✓ Tem folheto da semana no {a['nome']}" + ("; a IA lê na próxima busca." if ia_ligada(cfg) else "; ler o folheto precisa da IA."))
+                st["passos"].append(f"✓ Tem folheto da semana no {a['nome']}" + quem_le(cfg, "o folheto"))
             else:
                 sem = [x["nome"] for x in AGREGADORES if x["nome"] not in diag_f]
                 txt = ("✗ Sem folheto no " + ", ".join(sem[:-1]) + (" e " if len(sem) > 1 else "") + sem[-1]) if sem else "✗ Sem folheto"
@@ -6294,7 +6301,7 @@ def conversar(dado):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/1.1.0"
+    server_version = "EconomIA/1.1.1"
 
     def log_message(self, fmt, *args):
         pass

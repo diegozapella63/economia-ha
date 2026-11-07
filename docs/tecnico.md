@@ -374,6 +374,30 @@ Agropecuárias: `OSM_TIPOS.petshops` inclui `shop=agrarian`; `GOOGLE_BUSCA.petsh
 
 `segredos.brave.key`. `brave_busca` chama `GET {OFERTAS_BRAVE}?q=&country=BR&search_lang=pt-br&count=10` com `X-Subscription-Token` (401/403/422 = chave recusada, 429 = limite). `site_pelo_brave(nome, cidade)` busca "nome cidade" e fica com o primeiro resultado que não está em `NAO_SITE` (redes sociais, guias, CNPJ, marketplaces, apps de entrega, sites de encartes, gov.br…), passa em `site_loja` e tem no endereço ou no título uma palavra do nome (`chave_loja`, 4 letras ou mais, sem palavras genéricas nem a cidade; nome só genérico não busca). `sites_por_ia` usa o Brave primeiro (até 15 lojas, 1,1 s entre buscas, `via: "brave"`) e a IA para as que ficaram sem site e ainda não passaram por ela (`via: "ia"`). `forcar` (Testar agora) ignora os 30 dias.
 
+## Textos que dependem de uma opção ou integração
+
+A tela só diz que algo vai acontecer quando a opção ou a integração que faz isso está ligada:
+
+- **Ordem da busca** (fim de Mais › Lojas): além de `so-ia`/`so-semia` (Usar IA), as etapas têm `so-diretas` (site da loja,
+  busca do site, páginas de produto, página de ofertas: `opcoes.lojas_diretas`), `so-folhetos` (folheto da semana,
+  Instagram e folhetos já lidos: `opcoes.folhetos`, que `busca_folhetos` e `busca_instagram` conferem) e `so-itens`
+  (`opcoes.itens_sem_preco`). `pintaEtapas` põe `sem-diretas`, `sem-folhetos` e `sem-itens` no `<html>`.
+- **Similares e código de barras**: só a busca direta traz similares (`similares_vtex`) e usa o código do item
+  (`eans_da_lista`). Com `lojas_diretas` desligada, `blocoSimilares` diz que ela está desligada (sem o Buscar agora) e o
+  item posto pelo código não promete ser achado nas lojas.
+- **Integrações**: `carregaShopee` guarda a resposta de `/api/integracoes` em `INTEG`, e `pintaIntegSt` (também ao mudar
+  Usar IA) escreve o estado do Instagram e da Shopee. Instagram: "os encartes … entram na busca" só com IA e
+  `opcoes.folhetos`. Shopee ligada: "os preços vêm direto da Shopee" só com a aba Online (`busca_shopee` só roda com
+  `online` nas categorias); desligada: "entra pela busca com IA" só com IA, a aba Online e `shopee` em
+  `online.marketplaces` (`mkts_online`).
+- **Lista do Home Assistant**: `#syncDesc` só com `sync.ativo` (sem lista, `sincronizar_lista` não faz nada).
+- **Compras online** (`#onlineSec`): só com `online` em `estado.categorias`.
+- **Loja adicionada à mão**: com `usar_ia: false`, nem o encarte do site (`ler_encarte`) nem o nome (no pedido da IA)
+  entram na busca; a linha diz só "Adicionada por você" e o Adicionar, "adicionada".
+- **Como foi testado**: `quem_le(cfg, o_que)` fecha o passo do folheto ou do post novo: sem IA, "precisa da IA"; com IA e
+  Folhetos desligados, "Folhetos desligados em Mais › Opções"; só com os dois, "a IA lê na próxima busca".
+- **Avisar no celular**: fora da tela enquanto o aviso no celular não existe; `cotidiano.avisar` continua na config.
+
 ## Mais › Sobre
 
 A mesma página dos outros apps (o `about.js` do CronologIA), em JavaScript puro na fonte da página: `PRODUTOS` (nome,
