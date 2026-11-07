@@ -11,6 +11,8 @@ ResolvIA (tarefas), CronologIA (agenda), GerencIA (finanças), InventarIA (cômo
 
 - `economia/app/server.py`: o servidor, **só biblioteca padrão do Python** (sem pip, sem dependências). Serve a página
   pelo ingress, faz as buscas, guarda tudo em `/data`. `voz.py`: o Falar (fala para texto do Home Assistant).
+- `economia/pagina/selectsheet.js`: as caixas de seleção no visual do app, **o mesmo arquivo dos outros apps** (ao
+  mudar, copie para os outros); o `montar_pagina.py` põe dentro da página.
 - `economia/pagina/painel.html`: **a fonte da página** (HTML + CSS + JS ES5 num arquivo só, sem framework). Roda sozinha
   com os dados de exemplo e, dentro do add-on, com `api/estado`.
 - `economia/app/www/index.html`: a página do add-on, **gerada**. Nunca edite à mão: edite a fonte e rode

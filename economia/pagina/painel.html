@@ -1492,7 +1492,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     <nav class="mais-fim" id="maisFim" aria-label="Sobre o app">
       <button type="button" class="menu-row" id="sobreBtn"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span><span class="mb"><b>Sobre</b><span>CorrerIA Code, os apps e o GitHub.</span></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
     </nav>
-    <p class="foot" id="maisPe"><b>EconomIA</b><br><span id="versaoTxt">v1.1.1</span></p>
+    <p class="foot" id="maisPe"><b>EconomIA</b><br><span id="versaoTxt">v1.2.0</span></p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -1525,6 +1525,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   </form>
 </section>
 
+<script src="selectsheet.js"></script>
 <script>
 (function(){
   'use strict';
@@ -4537,7 +4538,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 1.1.1' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 1.2.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

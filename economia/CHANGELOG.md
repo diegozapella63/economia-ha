@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.2.0
+
+- **Caixas de seleção** (a distância, o espaço para estoque, o tipo de loja, as IAs, a lista do Home Assistant, a loja de um item) abrem uma janela no visual do app, de baixo para cima, com as opções em linhas e a atual marcada na cor do app, no tema escuro ou claro, e não mais a janela padrão do celular, como nos outros apps da família. O Voltar do celular, o X ou tocar fora fecham só ela.
+
 ## 1.1.1
 
 - **Os textos só dizem o que vai acontecer:**

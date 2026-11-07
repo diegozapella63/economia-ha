@@ -44,6 +44,8 @@ A conversa usa a tarefa de IA de "Para ler fotos" (ou a de buscar ofertas, ou a 
 
 Arraste para o lado para trocar de aba: Minha lista ⇄ Roteiro ⇄ Ofertas ⇄ Mais. Começando na borda da tela vale o Voltar do celular.
 
+As caixas de seleção (como a distância ou o espaço para estoque) abrem uma janela de baixo para cima com as opções; a atual vem marcada. O Voltar do celular, o **X** ou tocar fora fecham sem mudar nada. No computador, a janela abre no meio da tela, e dá para escolher com as setas e Enter.
+
 ## No computador
 
 Com a tela de 1000 pixels ou mais, as abas de baixo viram uma **barra lateral** com Minha lista (com o número de itens acabando), Roteiro, Ofertas, Mais, o botão **Buscar ofertas** e as ofertas por tipo de loja. No alto à direita ficam **Conversa**, **Falar**, **Ler com IA** e **Adicionar item**. As seções ficam direto na página, com título grande e ícone, e o cupom de economia fica ao lado das oportunidades. No celular e no tablet nada muda.

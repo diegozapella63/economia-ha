@@ -12,6 +12,9 @@ import sys
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FONTE = os.path.join(RAIZ, "economia", "pagina", "painel.html")
+# as caixas de seleção no visual do app: o mesmo arquivo dos outros apps, ao lado da fonte; no add-on, vai embutido
+CAIXAS = os.path.join(RAIZ, "economia", "pagina", "selectsheet.js")
+TAG_CAIXAS = '<script src="selectsheet.js"></script>'
 DESTINO = os.path.join(RAIZ, "economia", "app", "www", "index.html")
 
 CABECALHO = """<!doctype html>
@@ -38,6 +41,10 @@ def montar(fonte_txt):
         s = s.replace(p, "")
     if "fonts.googleapis" in s or "gstatic" in s:
         raise SystemExit("Sobrou link do Google Fonts na página.")
+    caixas = open(CAIXAS, encoding="utf-8").read()
+    if s.count(TAG_CAIXAS) != 1 or "</script" in caixas:
+        raise SystemExit("A fonte precisa carregar o selectsheet.js uma vez, antes do script da página.")
+    s = s.replace(TAG_CAIXAS, "<script>\n" + caixas.rstrip("\n") + "\n</script>")
     return CABECALHO + "\n" + s.rstrip("\n") + "\n\n</html>\n"
 
 
