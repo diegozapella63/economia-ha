@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.7.1
+
+- **Mais › Configurações › Integrações**: o que você começava a digitar logo ao abrir a aba (o App ID da Shopee, uma chave) podia ser apagado. Agora fica.
+
 ## 1.7.0
 
 - **CorrerIA**: em **Mais › Configurações › Integrações**, ligue **Ligar a CorrerIA** e o EconomIA passa a responder no WhatsApp, no Claude e no Gemini, como os outros apps da família.

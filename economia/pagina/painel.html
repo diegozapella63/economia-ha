@@ -1526,7 +1526,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     </section>
     </div>
     <div class="mais-painel sb-pagina" id="mp-sobre" aria-label="Sobre" hidden></div>
-    <p class="foot" id="maisPe"><b>EconomIA</b><br><span id="versaoTxt">v1.7.0</span></p>
+    <p class="foot" id="maisPe"><b>EconomIA</b><br><span id="versaoTxt">v1.7.1</span></p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -4188,7 +4188,11 @@ html:not(.sem-ia) .so-semia{display:none!important}
   });
   // ----- Shopee Afiliados: o App ID aparece; a senha fica só no Home Assistant -----
   function shSt(msg, ok){ var el = $('shSt'); el.className = 'ia-st' + (ok === true ? ' ok' : ok === false ? ' erro' : ''); el.textContent = msg; }
-  function carregaShopee(){
+  // abrir a aba duas vezes seguidas (o menu e a aba guardada) não lê de novo: a segunda leitura apagava o que já foi digitado
+  var INTEG_EM = 0;
+  function carregaShopee(forcar){
+    if (MODO === 'addon' && !forcar && Date.now() - INTEG_EM < 3000){ pintaIntegSt(); return; }
+    INTEG_EM = Date.now();
     if (MODO !== 'addon'){ shSt('No Home Assistant, aqui você liga a Shopee com o App ID e a senha.'); gSt('No Home Assistant, aqui você liga o Google Maps com a chave.'); iSt('No Home Assistant, aqui você liga o Instagram com a chave da Meta.'); bSt('No Home Assistant, aqui você liga o Brave com a chave.'); mlSt('No Home Assistant, aqui você liga o Mercado Livre com o seu app.'); return; }
     fetch('api/integracoes', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
       var sh = j.shopee || {}, g = j.google || {}, ig = j.instagram || {}, br = j.brave || {};
@@ -4255,7 +4259,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   $('bTestar').addEventListener('click', function(){ if (MODO === 'addon') testaBrave(); else toast('Só no Home Assistant'); });
   $('bApagar').addEventListener('click', function(){
     fetch('api/integracoes', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({brave:null})})
-      .then(function(){ toast('Chave do Brave apagada'); carregaShopee(); }).catch(function(){ toast('Sem conexão com o Home Assistant.'); });
+      .then(function(){ toast('Chave do Brave apagada'); carregaShopee(true); }).catch(function(){ toast('Sem conexão com o Home Assistant.'); });
   });
   // ----- Mercado Livre: previsor de categorias, com o app de desenvolvedor da pessoa -----
   function mlSt(msg, ok){ var el = $('mlSt'); el.className = 'ia-st' + (ok === true ? ' ok' : ok === false ? ' erro' : ''); el.textContent = msg; }
@@ -4301,7 +4305,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   $('mlTestar').addEventListener('click', function(){ if (MODO === 'addon') testaMl(); else toast('Só no Home Assistant'); });
   $('mlApagar').addEventListener('click', function(){
     fetch('api/integracoes', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ml:null})})
-      .then(function(){ toast('Mercado Livre desligado'); carregaShopee(); }).catch(function(){ toast('Sem conexão com o Home Assistant.'); });
+      .then(function(){ toast('Mercado Livre desligado'); carregaShopee(true); }).catch(function(){ toast('Sem conexão com o Home Assistant.'); });
   });
   // ----- Instagram: chave da Meta para ler os encartes que as lojas postam -----
   function iSt(msg, ok){ var el = $('iSt'); el.className = 'ia-st' + (ok === true ? ' ok' : ok === false ? ' erro' : ''); el.textContent = msg; }
@@ -4321,7 +4325,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   $('iTestar').addEventListener('click', function(){ if (MODO === 'addon') testaInsta(); else toast('Só no Home Assistant'); });
   $('iApagar').addEventListener('click', function(){
     fetch('api/integracoes', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({instagram:null})})
-      .then(function(){ toast('Chave do Instagram apagada'); carregaShopee(); }).catch(function(){ toast('Sem conexão com o Home Assistant.'); });
+      .then(function(){ toast('Chave do Instagram apagada'); carregaShopee(true); }).catch(function(){ toast('Sem conexão com o Home Assistant.'); });
   });
   // ----- Google Places: chave opcional para achar as lojas perto de casa -----
   function gSt(msg, ok){ var el = $('gSt'); el.className = 'ia-st' + (ok === true ? ' ok' : ok === false ? ' erro' : ''); el.textContent = msg; }
@@ -4341,11 +4345,11 @@ html:not(.sem-ia) .so-semia{display:none!important}
   $('gTestar').addEventListener('click', function(){ if (MODO === 'addon') testaGoogle(); else toast('Só no Home Assistant'); });
   $('gApagar').addEventListener('click', function(){
     fetch('api/integracoes', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({google:null})})
-      .then(function(){ toast('Chave do Google apagada'); carregaShopee(); }).catch(function(){ toast('Sem conexão com o Home Assistant.'); });
+      .then(function(){ toast('Chave do Google apagada'); carregaShopee(true); }).catch(function(){ toast('Sem conexão com o Home Assistant.'); });
   });
   $('shApagar').addEventListener('click', function(){
     fetch('api/integracoes', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({shopee:null})})
-      .then(function(){ toast('Chaves da Shopee apagadas'); carregaShopee(); }).catch(function(){ toast('Sem conexão com o Home Assistant.'); });
+      .then(function(){ toast('Chaves da Shopee apagadas'); carregaShopee(true); }).catch(function(){ toast('Sem conexão com o Home Assistant.'); });
   });
 
   // ----- Versões anteriores: as 3 cópias mais recentes do config.json -----
@@ -4717,7 +4721,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 1.7.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 1.7.1' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;
