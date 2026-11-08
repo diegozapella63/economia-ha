@@ -1502,7 +1502,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     </section>
     </div>
     <div class="mais-painel sb-pagina" id="mp-sobre" aria-label="Sobre" hidden></div>
-    <p class="foot" id="maisPe"><b>EconomIA</b><br><span id="versaoTxt">v1.4.0</span></p>
+    <p class="foot" id="maisPe"><b>EconomIA</b><br><span id="versaoTxt">v1.4.1</span></p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -3567,7 +3567,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   }
   function fonteOnline(nome){
     if (norm(nome) === 'shopee' && (D.relatorio || {}).shopee) return '<span class="chip selo">Preço pela API</span>';
-    return iaOn() ? '<span class="chip">Só com IA</span>' : '<span class="chip warn">Sem fonte de preço</span><span>Só com IA</span>';
+    return iaOn() ? '<span class="chip">Preço pela busca da IA</span>' : '<span class="chip warn">Sem fonte de preço</span><span>Ligue a IA para ter o preço</span>';
   }
   // clubes conferidos: preço de membro na loja, com CPF. Os outros vêm marcados pela busca com IA ("Clube" nas fontes).
   var CLUBES = [
@@ -3715,7 +3715,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   }
   // resultado do teste de preço (Encontrar lojas): de onde dá para tirar preço e, passo a passo, o que funcionou
   var FONTE_ROT = {site:['selo', 'Preço pelo site'], paginas:['selo', 'Preço pelas páginas do site'], ofertas_site:['selo', 'Preço pela página do site'], busca_site:['selo', 'Preço pela busca do site'], folheto:['', 'Folheto da semana'], instagram:['', 'Encarte do Instagram'], instagram_novo:['', 'Tem encarte no Instagram'],
-    folheto_novo:['', 'Tem folheto'], api:['selo', 'Preço pela API'], ia:['', 'Só com IA'], nenhum:['warn', 'Sem fonte de preço']};
+    folheto_novo:['', 'Tem folheto'], api:['selo', 'Preço pela API'], ia:['', 'Preço pela busca da IA'], nenhum:['warn', 'Sem fonte de preço']};
   var TESTANDO = null, FONTE_ABERTA = {};
   function botaoTestar(l, cid){
     if (!/^(farmacias|mercados|petshops|online)$/.test(cid)) return '';
@@ -3751,6 +3751,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     var f = l.preco_fonte, r = FONTE_ROT[f.como] || FONTE_ROT.nenhum;
     var rot = f.como === 'ia' && !iaOn() ? FONTE_ROT.nenhum : r;
     return '<span class="chip ' + rot[0] + '">' + rot[1] + '</span>' + (f.exemplo ? '<span>ex.: ' + esc(f.exemplo) + '</span>' : '')
+      + ((f.como === 'ia' || f.como === 'nenhum') && !iaOn() ? '<span>Ligue a IA para ter o preço</span>' : '')
       + (arr(f.passos).length ? '<details class="fonte-det"' + (FONTE_ABERTA[l.rede] ? ' open' : '') + ' data-fonte="' + esc(l.rede) + '"><summary>Como foi testado' + (f.em ? ' · ' + esc(quandoCurto(f.em)) : '') + '</summary><ul>'
         + arr(f.passos).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></details>' : '')
       + botaoTestar(l, cid) + ((f.como === 'ia' || f.como === 'nenhum') && !(cid === 'online' && !regional(l.rede)) ? botaoSite(l) : '');
@@ -4591,7 +4592,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 1.4.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 1.4.1' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

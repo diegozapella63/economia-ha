@@ -1659,6 +1659,7 @@ def testa_site(origem, cep):
         if txt is None:
             res["erro"] = (f"recusou o acesso de programas (erro {e.code})" if e.code in (401, 403, 429)
                            else f"respondeu com erro {e.code}")
+            res["bloqueio"] = e.code in (401, 403, 429)
     except Exception as e:  # noqa: BLE001
         txt = None
         r = getattr(e, "reason", None) or e
@@ -1670,6 +1671,7 @@ def testa_site(origem, cep):
         elif any(x in t for x in ("remotedisconnected", "closed connection", "connection reset", "connectionreset",
                                   "connection aborted", "eof occurred", "unexpected_eof", "incompleteread")):
             res["erro"] = "fechou a conexão sem responder ao EconomIA. No navegador ele abre: é a proteção do site contra acesso de programas"
+            res["bloqueio"] = True
         elif "ssl" in t or "certificate" in t:
             res["erro"] = "teve erro de conexão segura"
         elif "name or service" in t or "getaddrinfo" in t or "nodename" in t:
@@ -4891,6 +4893,14 @@ def lojas_acompanhadas(cfg, categorias):
     return out
 
 
+def passo_ia(cfg, barrado, de="desta loja"):
+    """O último passo do teste, quando o preço só pode vir da busca na web da IA. Se o site barra programas (proteção ou
+    robots.txt), diz que a IA pesquisa em seu nome, como o Google e o Claude fazem, sem forçar a entrada no site."""
+    if ia_ligada(cfg):
+        return f"✓ O preço {de} vem da busca na web da IA, que pesquisa em seu nome." if barrado else "Preço só pela busca na web com IA."
+    return f"✗ Sem IA, não há de onde tirar o preço {de}. Ligue em Mais › Configurações › Integrações › Usar IA."
+
+
 def quem_le(cfg, o_que):
     """Fim do passo de um folheto ou post achado: quem lê, e só se a busca vai mesmo ler (IA e Folhetos ligados;
     o Instagram também segue a opção Folhetos)."""
@@ -4912,6 +4922,7 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
     if social_manual:
         manual = None
     site = manual or site_loja(l.get("site")) or site_da_rede(nome, cidade) or l.get("_site_ia")
+    barrado = False
     if site:
         o = origem_de(site)
         st["site"] = o.split("://", 1)[-1].replace("www.", "")
@@ -4921,8 +4932,9 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
             m = {}
         if not m or m.get("sem_resposta"):  # no Encontrar lojas, site que falhou é testado de novo na hora
             m = memo[o] = dict(testa_site(o, cfg.get("cep")), nome=nome, categoria=cat_id)
-        if m.get("sem_resposta"):
-            st["passos"].append(f"✗ O site {st['site']} {m.get('erro') or 'não respondeu'}. Tento de novo amanhã.")
+        barrado = bool(m.get("bloqueio")) or (not m.get("sem_resposta") and not (m.get("vtex") and m.get("permite")) and not m.get("paginas"))
+        if m.get("sem_resposta"):  # tenta de novo amanhã; a proteção contra programas não costuma mudar, então nem promete
+            st["passos"].append(f"✗ O site {st['site']} {m.get('erro') or 'não respondeu'}" + ("." if m.get("bloqueio") else ". Tento de novo amanhã."))
         elif m.get("vtex") and m.get("permite"):
             k = chave_direta(o)
             if not k:
@@ -5072,7 +5084,7 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
                 st["passos"].append(txt + ".")
     if not st["como"]:
         st["como"] = "ia" if ia_ligada(cfg) else "nenhum"
-        st["passos"].append("Preço só pela busca na web com IA." if ia_ligada(cfg) else "✗ Sem IA, não há de onde tirar o preço desta loja.")
+        st["passos"].append(passo_ia(cfg, barrado))
     return st
 
 
@@ -5301,10 +5313,11 @@ def testa_marketplace(cfg, mid, nome, memo):
                 st["passos"].append("✗ A API de afiliados da Shopee não trouxe produtos no teste.")
         else:
             st["passos"].append("A Shopee tem API de afiliados, que dá preço sem IA: ligue em Mais › Configurações › Integrações.")
-    o = MKT_SITES.get(mid)
+    o, barrado = MKT_SITES.get(mid), False
     if o:
         st["site"] = o.split("://", 1)[-1].replace("www.", "")
         m = dict(testa_site(o, cfg.get("cep")), nome=nome, categoria="online", marketplace=True)
+        barrado = bool(m.get("bloqueio")) or (not m.get("sem_resposta") and not m.get("paginas"))
         if m.get("sem_resposta"):
             st["passos"].append(f"✗ O site {st['site']} {m.get('erro') or 'não respondeu'}.")
         elif not m.get("paginas"):
@@ -5323,7 +5336,7 @@ def testa_marketplace(cfg, mid, nome, memo):
                 st["passos"].append(f"✗ A busca do site {st['site']} não mostra os preços para programas (ou o robots.txt não deixa).")
     if not st["como"]:
         st["como"] = "ia" if ia_ligada(cfg) else "nenhum"
-        st["passos"].append("Preço só pela busca na web com IA." if ia_ligada(cfg) else "✗ Sem IA, não há de onde tirar o preço deste marketplace.")
+        st["passos"].append(passo_ia(cfg, barrado, "deste marketplace"))
     return st
 
 
@@ -6301,7 +6314,7 @@ def conversar(dado):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/1.4.0"
+    server_version = "EconomIA/1.4.1"
 
     def log_message(self, fmt, *args):
         pass

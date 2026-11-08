@@ -6,7 +6,7 @@ import json
 import types
 from datetime import datetime, timedelta, timezone
 
-from apoio import Cenario, categoria, prod
+from apoio import FECHA, Cenario, categoria, prod
 
 LD = '<script type="application/ld+json">{}</script>'
 
@@ -103,6 +103,55 @@ class SitemapEPaginas(Base):
         S.ofertas_do_site = lambda *a: (_ for _ in ()).throw(OSError("conexão recusada"))
         st = self.prova("Loja 6", {"site": self.b + "/loja6/"})
         self.assertIn("✗ Não consegui abrir a página do site (conexão recusada).", st["passos"])
+
+
+class SiteQueBarraProgramas(Base):
+    """O site barra programas (proteção, erro 403, robots.txt): o teste diz isso e que o preço vem da busca na web da IA,
+    que pesquisa em seu nome (como o Google e o Claude), sem forçar a entrada. Sem IA, diz onde ligar."""
+
+    def ultimo(self, st):
+        return st["passos"][-1]
+
+    def test_erro_403_e_conexao_fechada(self):
+        S, lj, b = self.S, self.lojas, self.b
+        porta = lj.porta
+        lj.paginas["/raia/robots.txt"] = (403, "Access Denied", "text/html")
+        st = self.prova("Droga Raia", {"site": b + "/raia/"})
+        self.assertEqual(st["passos"][0], f"✗ O site 127.0.0.1:{porta}/raia recusou o acesso de programas (erro 403).", "sem prometer tentar amanhã")
+        self.assertEqual((st["como"], self.ultimo(st)), ("ia", "✓ O preço desta loja vem da busca na web da IA, que pesquisa em seu nome."))
+        st = self.prova("Droga Raia", {"site": b + "/raia/"}, cfg=self.config(usar_ia=False))
+        self.assertEqual((st["como"], self.ultimo(st)),
+                         ("nenhum", "✗ Sem IA, não há de onde tirar o preço desta loja. Ligue em Mais › Configurações › Integrações › Usar IA."))
+        lj.paginas["/protegido/robots.txt"] = FECHA
+        st = self.prova("Farmácia Protegida", {"site": b + "/protegido/"})
+        self.assertIn("é a proteção do site contra acesso de programas.", st["passos"][0])
+        self.assertEqual(self.ultimo(st), "✓ O preço desta loja vem da busca na web da IA, que pesquisa em seu nome.")
+        self.assertTrue(S.testa_site(b + "/raia", "89216120")["bloqueio"])
+
+    def test_robots_que_proibe_e_erro_que_passa(self):
+        lj, b = self.lojas, self.b
+        lj.paginas["/fechada/robots.txt"] = (200, "User-agent: *\nDisallow: /\n", "text/plain")
+        st = self.prova("Farmácia Fechada", {"site": b + "/fechada/"})
+        self.assertIn("pede para programas não consultarem os preços", st["passos"][0])
+        self.assertEqual(self.ultimo(st), "✓ O preço desta loja vem da busca na web da IA, que pesquisa em seu nome.")
+        lj.paginas["/instavel/robots.txt"] = (500, "erro", "text/html")
+        st = self.prova("Farmácia Instável", {"site": b + "/instavel/"})
+        self.assertEqual(st["passos"][0], f"✗ O site 127.0.0.1:{lj.porta}/instavel respondeu com erro 500. Tento de novo amanhã.",
+                         "erro que passa: tenta amanhã")
+        self.assertEqual(self.ultimo(st), "Preço só pela busca na web com IA.", "não é bloqueio: o aviso de sempre")
+        self.assertFalse(self.S.testa_site(b + "/instavel", "89216120").get("bloqueio"))
+
+    def test_marketplace_que_barra(self):
+        S, lj, b = self.S, self.lojas, self.b
+        S.MKT_SITES["casas"] = b + "/casas"
+        lj.paginas["/casas/robots.txt"] = (403, "Access Denied", "text/html")
+        st = S.testa_marketplace(self.config(), "casas", "Casas Bahia", {})
+        self.assertEqual(st["passos"][-1], "✓ O preço deste marketplace vem da busca na web da IA, que pesquisa em seu nome.")
+        st = S.testa_marketplace(self.config(usar_ia=False), "casas", "Casas Bahia", {})
+        self.assertEqual(st["passos"][-1], "✗ Sem IA, não há de onde tirar o preço deste marketplace. Ligue em Mais › Configurações › Integrações › Usar IA.")
+        S.MKT_SITES.pop("casas")
+        st = S.testa_marketplace(self.config(), "casas", "Casas Bahia", {})
+        self.assertEqual(st["passos"][-1], "Preço só pela busca na web com IA.", "sem site conhecido: nada a barrar")
 
 
 class Instagram(Base):

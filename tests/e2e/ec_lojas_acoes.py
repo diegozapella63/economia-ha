@@ -46,6 +46,7 @@ async def main():
             await pg.click('#lojasAbas [data-loja-aba="farmacias"]')
             bem = (await (await linha(pg, "Farmácia Bem Estar")).inner_text()).upper()
             check("SEM FONTE DE PREÇO" in bem and "ADICIONAR SITE DE OFERTAS" in bem and "RUA DAS FLORES, 100" in bem, "a farmácia sem site: sem fonte, com o botão do site")
+            check("LIGUE A IA PARA TER O PREÇO" in bem, "sem IA: diz o que falta")
             # ----- site da loja: inválido e @ do Instagram -----
             await (await linha(pg, "Farmácia Bem Estar")).locator("[data-site]").click()
             form = pg.locator("#lojasCats form[data-site-form]")

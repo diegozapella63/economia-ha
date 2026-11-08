@@ -1,5 +1,12 @@
 # Mudanças
 
+## 1.4.1
+
+- **Loja cujo site barra programas** (como a Droga Raia, que responde "erro 403"): em **Mais › Lojas › Como foi testado**, o último passo agora diz que o preço dela vem da busca na web da IA, que pesquisa em seu nome, como o Google e o Claude fazem. O EconomIA não força a entrada no site.
+  - Sem a promessa de "Tento de novo amanhã", porque esse bloqueio não costuma mudar.
+  - Sem IA, o passo diz onde ligar: **Mais › Configurações › Integrações › Usar IA**.
+- O selo **Só com IA** virou **Preço pela busca da IA**. Com a IA desligada, a loja mostra "Ligue a IA para ter o preço".
+
 ## 1.4.0
 
 - **Cor do dia**, igual nos outros apps: em **Mais › Configurações › Aparência**, a cor do app muda sozinha todo dia, uma por dia, na ordem das cores (sem o cinza). Vem ligada. Escolher uma cor desliga a Cor do dia e fica com ela; desligar volta para a última cor escolhida.

@@ -354,7 +354,7 @@ class TesteDePreco(Base):
         st = self.prova("farmacias", "Farmácia Fechada", {"site": b + "/fechado/"}, self.config(usar_ia=False))
         self.assertEqual(st["como"], "nenhum")
         self.assertIn("pede para programas não consultarem os preços", st["passos"][0])
-        self.assertEqual(st["passos"][-1], "✗ Sem IA, não há de onde tirar o preço desta loja.")
+        self.assertEqual(st["passos"][-1], "✗ Sem IA, não há de onde tirar o preço desta loja. Ligue em Mais › Configurações › Integrações › Usar IA.")
 
     def test_sem_site_rede_social_e_folheto(self):
         S = self.S
