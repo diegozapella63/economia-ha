@@ -40,8 +40,11 @@ def antes(S):
                                             "tokens": 1500, "imagens": 0}]})
 
 
-async def st(pg, el, txt, ms=15000):
-    await espera(pg, f"() => document.getElementById('{el}').textContent.indexOf({json.dumps(txt)}) >= 0", ms)
+async def st(pg, el, txt, ms=25000):
+    try:
+        await espera(pg, f"() => document.getElementById('{el}').textContent.indexOf({json.dumps(txt)}) >= 0", ms)
+    except Exception as e:  # noqa: BLE001  (no GitHub, mais lento: diz o que esperava e o que ficou)
+        raise AssertionError(f"#{el} não mostrou {txt!r} em {ms // 1000} s (está: {await pg.text_content('#' + el)!r})") from e
     return await pg.text_content("#" + el)
 
 
