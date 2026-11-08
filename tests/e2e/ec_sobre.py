@@ -17,7 +17,7 @@ APPS = [("CronologIA", "cronologia-ha", "Agenda da família, remédios, rotinas 
         ("InventarIA", "inventario-ha", "Inventário da casa: cômodos, itens e valores."),
         ("EconomIA", "economia-ha", "Lista de compras com o melhor preço perto de casa."),
         ("MemorIA", "memoria-ha", "Cadernos de anotação que abrem na hora certa."),
-        ("CorrerIA", "correria-ha", "O contato no WhatsApp: os apps respondem por lá.")]
+        ("CorrerIA", "correria-ha", "Pergunte e peça a qualquer app, no chat ou no WhatsApp.")]
 POR_QUE = ("Porque eu sou um programador sem tempo: vivo na correria. Então eu uso a IA para rodar tudo isso aqui. "
            "Ela escreve, testa e publica; eu dou as ideias e reclamo dos botões tortos.")
 INFO = '<circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path>'  # o ícone de informação (Lucide)

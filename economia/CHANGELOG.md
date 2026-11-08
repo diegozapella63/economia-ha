@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.6.1
+
+- **Mais › Sobre**: a CorrerIA agora é descrita como o chat com todos os apps (pergunte e peça, também pelo WhatsApp).
+
 ## 1.6.0
 
 - **Vale a pena?** em cada oferta: abre a Conversa e a IA avalia o produto. Ela procura na web a nota, as avaliações de quem comprou, as reclamações e o preço de costume, e começa pelo veredito: Vale a pena, Depende ou Não vale. Usa a IA de buscar ofertas, a que tem a busca na web.
