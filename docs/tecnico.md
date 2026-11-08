@@ -111,6 +111,25 @@ Com `config.usar_ia` em `false`, nenhuma chamada de IA sai: `/api/buscar`, `/api
 
 `acompanha(id)` na página: além de `lojas.ignorar`/`manter` e do raio, na aba Online o marketplace fora de `online.marketplaces` (`mktDe(nome)`) e os mercados da região com `online.mercados_entrega` desligado não contam. Ligar uma dessas lojas em Mais › Lojas (`setAcompanha`) liga também o marketplace na busca ou os mercados da região; desligar tira o marketplace da busca. Os botões de loja (`pintaFiltros`) mostram só as lojas com oferta para mostrar (`comOferta`; as escondidas contam com "Ver quais são"), e somem com menos de 2. O **Destaque para você** é um botão: volta o filtro para Todas e rola até a linha (`li[data-oferta]`), que pisca (`.achada`).
 
+### CorrerIA (o WhatsApp, o Claude e o Gemini)
+
+O contrato é o mesmo dos outros apps (AGENTS.md do CorrerIA). Com `correria: true` na configuração (**Mais › Configurações ›
+Integrações › CorrerIA**, desligado por padrão e sem depender da IA), `publicar_correria` grava `share/economia/correria.json`
+(`OFERTAS_SHARE`, modo 600, de uma vez): `app: "economia"`, `nome`, `assunto`, `versao` (a do `server_version`), `url`
+(`http://<nome do contêiner>:8099`; `OFERTAS_URL_INTERNA` troca), `ip_url`, `chave` (própria, em `/data/correria.key`) e
+`ferramentas: "/api/integracao/ferramentas"`. Sem `rota`: a conversa fica com a IA do CorrerIA. Grava no `main()` e quando
+o PUT `/api/config` liga ou desliga; desligado, o arquivo some. A rota (`Painel._ferramentas`) não passa pelo ingress: vale
+a chave (`Authorization: Bearer`, `hmac.compare_digest`) com a opção ligada; senão 401. `GET` → `{instrucoes, ferramentas}`
+(`FERRAMENTAS_CORRERIA`); `POST {nome, argumentos, pessoa, cliente}` → `{texto}`, 400 `{erro}` (`ErroFerramenta`: o que
+vale) ou 404. Ferramentas: `lista`, `preco`, `ofertas` (`categoria`, `loja`, `busca`, `limite` até 50), `cupons` (leitura,
+com `redes_acompanhadas` e sem as escondidas) e `por_na_lista`, `tirar_da_lista`, `comprei` (`data` até hoje), que gravam
+como a tela (`entraNaLista`, `vaiProHistorico` → `vai_pro_historico`): o item é achado pelo nome igual ou pelo único que
+contém o nome (`_indice_na_lista`). Cada gravação guarda a versão anterior, sobe a `rev` com `mudou_por: "CorrerIA"` (a
+página avisa "pela CorrerIA"; a próxima gravação tira) e entra no `DIARIO` (`novo` com o `item`, `saiu`, `compra`): a página
+que gravar com a revisão velha junta pelo `aplicar_diario`. O último uso fica em `CORRERIA_USO` e vai no `/api/estado`
+(`correria: {ligada, ultimo}`). `redes_acompanhadas` também tira, em Online, o marketplace fora de `online.marketplaces`
+(`mkt_id`) e os mercados da região com `mercados_entrega` desligado (a mesma regra da página).
+
 ### Conversa com a IA
 
 `conversar` no `server.py`. A página manda as últimas 12 mensagens (até 2000 letras cada; a mensagem da IA leva junto

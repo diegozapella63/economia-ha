@@ -70,7 +70,7 @@ class App:
             S.grava_vocab()
         self.porta = porta_livre()
         env = dict(os.environ, OFERTAS_DATA=self.pasta, OFERTAS_PORT=str(self.porta), OFERTAS_ALLOW_ALL="1",
-                   OFERTAS_MEDIA=os.path.join(self.pasta, "media"), OFERTAS_HA_API="http://127.0.0.1:9/api",
+                   OFERTAS_MEDIA=os.path.join(self.pasta, "media"), OFERTAS_SHARE=os.path.join(self.pasta, "share"), OFERTAS_HA_API="http://127.0.0.1:9/api",
                    OFERTAS_HA_WS="ws://127.0.0.1:9/websocket", SUPERVISOR_TOKEN="", OFERTAS_ESPERA_COTA="0", OFERTAS_SYNC_SEG="3600")
         env.update(self.lojas.env_servicos() if self.servicos else self.lojas.env())
         if self.ha:

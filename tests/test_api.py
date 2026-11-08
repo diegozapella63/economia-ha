@@ -40,7 +40,7 @@ class Servidor(unittest.TestCase):
         S.aprende_nomes(NOMES_VOCAB)
         S.grava_vocab()
         cls.porta = porta_livre()
-        env = dict(os.environ, OFERTAS_DATA=cls.pasta, OFERTAS_PORT=str(cls.porta), OFERTAS_MEDIA=os.path.join(cls.pasta, "media"),
+        env = dict(os.environ, OFERTAS_DATA=cls.pasta, OFERTAS_PORT=str(cls.porta), OFERTAS_MEDIA=os.path.join(cls.pasta, "media"), OFERTAS_SHARE=os.path.join(cls.pasta, "share"),
                    OFERTAS_HA_API="http://127.0.0.1:9/api", OFERTAS_HA_WS="ws://127.0.0.1:9/websocket", SUPERVISOR_TOKEN="", **cls.lojas.env())
         if cls.permitir_todos:
             env["OFERTAS_ALLOW_ALL"] = "1"

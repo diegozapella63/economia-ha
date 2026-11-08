@@ -270,7 +270,7 @@ SEM_INTERNET.update({"no_proxy": _enderecos_locais(), "NO_PROXY": _enderecos_loc
 def servidor(env=None):
     """O módulo server.py carregado do zero, com a pasta de dados própria. Devolve (módulo, pasta, mensagens do log)."""
     pasta = tempfile.mkdtemp(prefix="economia-teste-")
-    os.environ.update({"OFERTAS_DATA": pasta, "OFERTAS_MEDIA": os.path.join(pasta, "media"), "OFERTAS_ALLOW_ALL": "1",
+    os.environ.update({"OFERTAS_DATA": pasta, "OFERTAS_MEDIA": os.path.join(pasta, "media"), "OFERTAS_SHARE": os.path.join(pasta, "share"), "OFERTAS_ALLOW_ALL": "1",
                        "OFERTAS_HA_API": "http://127.0.0.1:9/api", "OFERTAS_HA_WS": "ws://127.0.0.1:9/websocket"})
     os.environ.update(SEM_INTERNET)
     for k in ("OFERTAS_VTEX_TESTE", "OFERTAS_ML_API", "OFERTAS_ML_AUTH", "OFERTAS_OFF", "OFERTAS_SHOPEE_API", "OFERTAS_OVERPASS",

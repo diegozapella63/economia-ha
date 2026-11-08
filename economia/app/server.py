@@ -44,12 +44,15 @@ Só usa a biblioteca padrão do Python.
 import base64
 import gzip
 import hashlib
+import hmac
 import html as html_mod
 import http.cookiejar
 import io
 import json
 import os
 import re
+import secrets
+import socket
 import threading
 import time
 import unicodedata
@@ -92,6 +95,9 @@ MAX_BODY = 2 * 1024 * 1024
 MAX_FOTOS_BODY = 16 * 1024 * 1024
 # fotos ficam um instante na pasta de mídia do HA, para a IA ler, e são apagadas em seguida
 MEDIA = os.environ.get("OFERTAS_MEDIA", "/media")
+SHARE = os.environ.get("OFERTAS_SHARE", "/share/economia")  # a pasta que os outros apps da casa leem (o CorrerIA)
+CORRERIA_ARQ = os.path.join(SHARE, "correria.json")
+CORRERIA_CHAVE = os.path.join(DATA, "correria.key")
 MEDIA_URI = os.environ.get("OFERTAS_MEDIA_URI", "media-source://media_source/local")
 LEITURAS = {}
 
@@ -313,8 +319,12 @@ def ler_config():
     return ler_json(CONFIG, {}) or {}
 
 
-def gravar_config(cfg):
+def gravar_config(cfg, por=None):
+    """Grava com a revisão nova. por: quem mudou de fora da tela (a CorrerIA), para o aviso da página."""
     cfg["rev"] = int(cfg.get("rev") or 0) + 1
+    cfg.pop("mudou_por", None)
+    if por:
+        cfg["mudou_por"] = por
     cfg["atualizado_em"] = agora()
     gravar_json(CONFIG, cfg)
     return cfg
@@ -391,13 +401,44 @@ def restaurar_versao(nome):
 
 def aplicar_diario(cfg, d):
     lista = cfg.setdefault("lista", [])
+    k = norm(d["produto"])
     idx = {norm(nome_item(i)): i for i in lista if isinstance(i, dict)}
-    item = idx.get(norm(d["produto"]))
+    item = idx.get(k)
+    if d["tipo"] == "saiu":  # tirado pela CorrerIA: sai da lista e fica no histórico
+        if item:
+            lista.remove(item)
+            vai_pro_historico(cfg, item, d.get("data") or hoje_br())
+        return
     if not item:
-        item = {"produto": d["produto"], "compras": [], "origem": "ha"}
+        if isinstance(d.get("item"), dict):  # posto pela CorrerIA (talvez de volta do histórico)
+            item = json.loads(json.dumps(d["item"]))
+            cfg["historico"] = [h for h in cfg.get("historico") or [] if not (isinstance(h, dict) and norm(h.get("produto")) == k)]
+        else:
+            item = {"produto": d["produto"], "compras": [], "origem": "ha"}
         lista.append(item)
     if d["tipo"] == "compra" and d.get("data") and d["data"] not in item.setdefault("compras", []):
         item["compras"].append(d["data"])
+
+
+def vai_pro_historico(cfg, item, hoje):
+    """O item que sai da lista fica no histórico com as compras (a mesma regra da página: vaiProHistorico)."""
+    hist = cfg.setdefault("historico", [])
+    k = norm(nome_item(item))
+    h = next((x for x in hist if isinstance(x, dict) and norm(x.get("produto")) == k), None)
+    compras = [c for c in (item.get("compras") or []) if data_ok(c)] if isinstance(item, dict) else []
+    if h:
+        h["compras"] = (h.get("compras") or []) + [c for c in compras if c not in (h.get("compras") or [])]
+        h["saiu"] = hoje
+        if isinstance(item, dict) and item.get("ean"):
+            h["ean"] = item["ean"]
+    else:
+        novo = {"produto": nome_item(item), "compras": list(compras), "saiu": hoje}
+        if isinstance(item, dict) and item.get("ean"):
+            novo["ean"] = item["ean"]
+        hist.append(novo)
+    if len(hist) > 300:  # fica o que foi mais comprado e saiu por último
+        hist.sort(key=lambda x: (len(x.get("compras") or []), str(x.get("saiu") or "")))
+        del hist[:-300]
 
 
 def ritmo_info(item):
@@ -6167,15 +6208,21 @@ def redes_acompanhadas(cfg, of):
         if not isinstance(c, dict):
             continue
         dist = {l.get("rede"): l.get("distancia_km") for l in c.get("lojas") or [] if isinstance(l, dict)}
+        reg = {l.get("rede") for l in c.get("lojas") or [] if isinstance(l, dict) and l.get("regional")}
         for r in c.get("redes") or []:
             if isinstance(r, dict) and r.get("id"):
                 info[r["id"]] = {"nome": r.get("nome") or r["id"], "tipo": c.get("singular") or c.get("nome") or "",
-                                 "cat": c.get("id"), "dist": dist.get(r["id"]), "loja": r["id"] in dist}
+                                 "cat": c.get("id"), "dist": dist.get(r["id"]), "loja": r["id"] in dist, "regional": r["id"] in reg}
+    mkts = set((cfg.get("online") or {}).get("marketplaces") or ["mercadolivre", "amazon"])
 
     def acompanha(rid):
         i = info.get(rid)
         if not i or i["cat"] not in ativas or rid in ignorar:
             return False
+        if i["cat"] == "online":  # desligados em Online: os mercados da região e o marketplace fora da busca
+            mk = mkt_id(i["nome"])
+            if (i["regional"] and not entrega_ligada(cfg)) or (mk and mk not in mkts):
+                return False
         if not i["loja"] and i["cat"] != "online" and rid not in manter:
             return False  # rede que ficou sem loja (o mapa tirou: de outra categoria ou duplicada)
         return rid in manter or i["dist"] is None or i["dist"] <= raio
@@ -6458,9 +6505,337 @@ def conversar(dado):
     return {"resposta": resposta.strip()[:6000], "acoes": acoes}
 
 
+# ---------- CorrerIA: o WhatsApp, o Claude e o Gemini usam a lista e as ofertas daqui pelas ferramentas ----------
+# Com Mais › Configurações › Integrações › CorrerIA ligado, o arquivo share/economia/correria.json diz onde estão as
+# ferramentas e a chave (o contrato é o mesmo de todos os apps da família: ver o AGENTS.md do CorrerIA). Sem a IA daqui:
+# as ferramentas só leem e gravam, com as regras da tela.
+CORRERIA_USO = {"ultimo": None}  # a última ferramenta usada: {"app": "Claude", "em", "nome"}
+CORRERIA_ASSUNTO = ("compras da casa: a lista de compras, o preço de cada item nos mercados, farmácias e pet shops do bairro "
+                    "e online, ofertas e cupons")
+CORRERIA_INSTRUCOES = (
+    "EconomIA: a lista de compras da casa e os preços dos mercados, farmácias e pet shops do bairro e online, da última busca "
+    "de preços (que roda no app). Valores em reais e datas no formato AAAA-MM-DD. Comece por economia_lista; economia_preco "
+    "diz onde um produto está mais barato. Use o nome do item como está na lista. Antes de gravar, diga à pessoa o que vai "
+    "ser feito.")
+CATS_CORRERIA = {"farmacias": "Farmácias", "mercados": "Mercados", "petshops": "Pet shops", "online": "Online"}
+MAX_OFERTAS_CORRERIA = 50
+
+
+class ErroFerramenta(ValueError):
+    pass
+
+
+def _obj(props, obrig=()):
+    return {"type": "object", "properties": props, "required": list(obrig), "additionalProperties": False}
+
+
+_PRODUTO = {"type": "string", "description": "O produto, com marca e tamanho quando fizer sentido, como \"Café Pilão 500 g\"."}
+_DO_ITEM = {"type": "string", "description": "O item, com o nome como está na lista (de economia_lista)."}
+FERRAMENTAS_CORRERIA = [
+    {"nome": "lista", "titulo": "Lista de compras", "grava": False, "apaga": False,
+     "descricao": "Os itens da lista de compras com o preço mais barato de cada um (a loja e as outras), quantas vezes foi "
+                  "comprado, de quanto em quanto tempo e se deve estar acabando. Comece por aqui.",
+     "entrada": _obj({})},
+    {"nome": "preco", "titulo": "Onde está mais barato", "grava": False, "apaga": False,
+     "descricao": "O preço de um produto em cada loja (da lista, pela última busca) e as ofertas que batem com ele.",
+     "entrada": _obj({"produto": _PRODUTO}, ["produto"])},
+    {"nome": "ofertas", "titulo": "Ofertas", "grava": False, "apaga": False,
+     "descricao": "As ofertas das lojas acompanhadas, as de maior desconto primeiro. Dá para filtrar pelo tipo de loja, pela "
+                  "loja e por palavras do produto.",
+     "entrada": _obj({"categoria": {"type": "string", "enum": list(CATS_CORRERIA), "description": "O tipo de loja."},
+                      "loja": {"type": "string", "description": "Parte do nome da loja, como \"Giassi\"."},
+                      "busca": {"type": "string", "description": "Palavras do produto, como \"café\"."},
+                      "limite": {"type": "integer", "minimum": 1, "maximum": MAX_OFERTAS_CORRERIA, "description": "Quantas (até 50; padrão 15)."}})},
+    {"nome": "cupons", "titulo": "Cupons", "grava": False, "apaga": False,
+     "descricao": "Os cupons válidos das lojas acompanhadas e os guardados pela pessoa, com o código e a validade.",
+     "entrada": _obj({})},
+    {"nome": "por_na_lista", "titulo": "Pôr na lista", "grava": True, "apaga": False,
+     "descricao": "Põe um produto na lista de compras (se já saiu antes, volta com as compras de antes). O preço vem na "
+                  "próxima busca do app.",
+     "entrada": _obj({"produto": _PRODUTO}, ["produto"])},
+    {"nome": "tirar_da_lista", "titulo": "Tirar da lista", "grava": True, "apaga": False,
+     "descricao": "Tira um item da lista. Ele fica no histórico, com as compras, e volta com economia_por_na_lista.",
+     "entrada": _obj({"produto": _DO_ITEM}, ["produto"])},
+    {"nome": "comprei", "titulo": "Anotar compra", "grava": True, "apaga": False,
+     "descricao": "Anota que um item da lista foi comprado (hoje, ou na data dada). As compras dizem de quanto em quanto "
+                  "tempo o item acaba.",
+     "entrada": _obj({"produto": _DO_ITEM, "data": {"type": "string", "description": "AAAA-MM-DD; sem data, hoje."}}, ["produto"])},
+]
+
+
+def correria_ligada(cfg=None):
+    return (ler_config() if cfg is None else cfg).get("correria") is True
+
+
+def correria_chave():
+    try:
+        with open(CORRERIA_CHAVE, encoding="utf-8") as f:
+            chave = f.read().strip()
+    except OSError:
+        chave = ""
+    if len(chave) < 32:
+        chave = secrets.token_urlsafe(32)
+        os.makedirs(DATA, exist_ok=True)
+        with open(CORRERIA_CHAVE, "w", encoding="utf-8") as f:
+            f.write(chave)
+        os.chmod(CORRERIA_CHAVE, 0o600)
+    return chave
+
+
+def correria_endereco():
+    """Onde o CorrerIA acha este app na rede interna do Home Assistant: o nome do contêiner (e o IP, de reserva)."""
+    url = os.environ.get("OFERTAS_URL_INTERNA")
+    if url:
+        return url.rstrip("/"), None
+    host = socket.gethostname()
+    try:
+        ip = socket.gethostbyname(host)
+    except OSError:
+        ip = None
+    return f"http://{host}:{PORT}", (f"http://{ip}:{PORT}" if ip else None)
+
+
+def publicar_correria(cfg=None):
+    """Grava (ligado) ou apaga (desligado) share/economia/correria.json, só com permissão do dono e de uma vez."""
+    try:
+        if not correria_ligada(cfg):
+            if os.path.exists(CORRERIA_ARQ):
+                os.remove(CORRERIA_ARQ)
+            return
+        url, ip_url = correria_endereco()
+        corpo = {"app": "economia", "nome": "EconomIA", "assunto": CORRERIA_ASSUNTO, "versao": Painel.server_version.split("/", 1)[1],
+                 "url": url, "ip_url": ip_url, "chave": correria_chave(), "ferramentas": "/api/integracao/ferramentas", "gravado_em": agora()}
+        os.makedirs(SHARE, exist_ok=True)
+        tmp = CORRERIA_ARQ + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(corpo, f, ensure_ascii=False, indent=1)
+        os.chmod(tmp, 0o600)
+        os.replace(tmp, CORRERIA_ARQ)
+    except OSError as e:
+        log(f"CorrerIA: não consegui gravar {CORRERIA_ARQ} ({e})")
+
+
+def correria_autorizado(headers):
+    h = headers.get("Authorization") or ""
+    return h.startswith("Bearer ") and hmac.compare_digest(h[7:].strip().encode(), correria_chave().encode())
+
+
+def _texto_arg(a, campo, obrig=True, n=120):
+    v = " ".join(str(a.get(campo) or "").split())[:n]
+    if obrig and len(norm(v)) < 2:
+        raise ErroFerramenta(f'Falta "{campo}": o nome do produto, como "Café Pilão 500 g".')
+    return v
+
+
+def _indice_na_lista(cfg, nome):
+    """O item da lista pelo nome: igual, ou o único que contém (ou está contido em) o nome dado."""
+    lista = cfg.get("lista") or []
+    k = norm(nome)
+    nomes = [(i, norm(nome_item(it))) for i, it in enumerate(lista) if nome_item(it)]
+    igual = [i for i, n in nomes if n == k]
+    if igual:
+        return igual[0]
+    parecidos = [i for i, n in nomes if f" {k} " in f" {n} " or f" {n} " in f" {k} "]
+    if len(parecidos) == 1:
+        return parecidos[0]
+    if parecidos:
+        raise ErroFerramenta(f'"{nome}" bate com mais de um item da lista: ' + "; ".join(nome_item(lista[i]) for i in parecidos[:8])
+                             + ". Use o nome inteiro.")
+    raise ErroFerramenta(f'"{nome}" não está na lista. Os itens estão em economia_lista.')
+
+
+def _prazo(item):
+    dias, _ = ritmo_info(item) if isinstance(item, dict) else (None, None)
+    if dias is None:
+        return ""
+    return "; já deve ter acabado" if dias < 0 else "; deve acabar hoje" if dias == 0 else f"; deve acabar em {dias} dia(s)"
+
+
+def _ferr_lista(a, cfg, of):
+    itens, gerado = dados_lista(cfg, of)
+    crus = {norm(nome_item(i)): i for i in cfg.get("lista") or [] if nome_item(i)}
+    if not itens:
+        return "A lista de compras está vazia."
+    linhas = [f"Lista de compras ({len(itens)} itens)." + (f" Preços da última busca, de {br_data(gerado[:10])}." if data_ok(str(gerado or "")[:10]) else "")]
+    for i in itens:
+        partes = []
+        if i["mais_barato"]:
+            outros = ", ".join(f'{p["loja"]} {br_preco(p["preco"])}' for p in i["precos"][1:3])
+            partes.append(f'mais barato no {i["mais_barato"]["loja"]}, {br_preco(i["mais_barato"]["preco"])}' + (f" ({outros})" if outros else ""))
+        else:
+            partes.append("sem preço na última busca")
+        if i["compras"]:
+            n = len(i["compras"])
+            partes.append(("comprado 1 vez" if n == 1 else f"comprado {n} vezes") + f', a última em {br_data(i["compras"][-1])}'
+                          + (f', a cada {i["compra_a_cada_dias"]} dias' if i["compra_a_cada_dias"] else ""))
+        linhas.append(f'- {i["produto"]}: ' + "; ".join(partes) + _prazo(crus.get(norm(i["produto"]))))
+    return "\n".join(linhas)
+
+
+def _ofertas_vivas(cfg, of):
+    """As ofertas e os cupons das lojas acompanhadas, sem as escondidas, com o nome da loja e o tipo."""
+    info, acompanha = redes_acompanhadas(cfg, of)
+    ocultas, hoje = set(cfg.get("ocultas") or []), hoje_br()
+    ofertas, cupons = [], []
+    for c in of.get("categorias") or []:
+        if not isinstance(c, dict):
+            continue
+        for o in c.get("ofertas") or []:
+            if isinstance(o, dict) and o.get("produto") and numero(o.get("preco_oferta")) and acompanha(o.get("rede")) \
+                    and (o.get("id") or f'{o.get("rede")}|{o.get("produto")}') not in ocultas:
+                ofertas.append(dict(o, _loja=info[o["rede"]]["nome"], _cat=c.get("id")))
+        for k in c.get("cupons") or []:
+            if isinstance(k, dict) and acompanha(k.get("rede")) and k.get("status") == "confirmado" and k.get("beneficio") \
+                    and (not data_ok(k.get("valido_ate")) or k["valido_ate"] >= hoje):
+                cupons.append(dict(k, _loja=info[k["rede"]]["nome"]))
+    for k in cfg.get("cupons_meus") or []:
+        if isinstance(k, dict) and k.get("beneficio") and (not data_ok(k.get("valido_ate")) or k["valido_ate"] >= hoje):
+            cupons.append(dict(k, _loja=(info.get(k.get("rede")) or {}).get("nome") or k.get("rede") or "", _meu=True))
+    ofertas.sort(key=lambda o: (-_pct(o), numero(o["preco_oferta"])))
+    return ofertas, cupons
+
+
+def _linha_oferta(o):
+    de = numero(o.get("preco_normal"))
+    t = f'- {o["produto"]}, no {o["_loja"]}: {br_preco(numero(o["preco_oferta"]))}' + (f" (era {br_preco(de)}, {_pct(o)}% menos)" if _pct(o) else "")
+    if o.get("tipo") == "clube":
+        t += ", com o clube da loja"
+    if isinstance(o.get("frete"), (int, float)):
+        t += f', frete {br_preco(o["frete"])}' if o["frete"] else ", frete grátis"
+    if data_ok(o.get("valido_ate")):
+        t += f', até {br_data(o["valido_ate"])}'
+    return t + f' [{CATS_CORRERIA.get(o["_cat"], o["_cat"])}]'
+
+
+def _ferr_ofertas(a, cfg, of):
+    cat = str(a.get("categoria") or "")
+    if cat and cat not in CATS_CORRERIA:
+        raise ErroFerramenta("categoria vale: " + ", ".join(CATS_CORRERIA) + ".")
+    try:
+        limite = int(a.get("limite") or 15)
+    except (TypeError, ValueError):
+        raise ErroFerramenta("limite é um número de 1 a 50.") from None
+    limite = max(1, min(MAX_OFERTAS_CORRERIA, limite))
+    loja, palavras = norm(a.get("loja") or ""), norm(a.get("busca") or "").split()
+    todas, _ = _ofertas_vivas(cfg, of)
+    achadas = [o for o in todas if (not cat or o["_cat"] == cat) and (not loja or loja in norm(o["_loja"]))
+               and all(w in norm(o["produto"]) for w in palavras)]
+    if not achadas:
+        return "Nenhuma oferta" + (" com esse filtro" if cat or loja or palavras else "") + " nas lojas acompanhadas."
+    cab = f"Ofertas ({min(limite, len(achadas))} de {len(achadas)}, as de maior desconto primeiro):"
+    return "\n".join([cab] + [_linha_oferta(o) for o in achadas[:limite]])
+
+
+def _ferr_preco(a, cfg, of):
+    prod = _texto_arg(a, "produto")
+    linhas = []
+    try:
+        item = (cfg.get("lista") or [])[_indice_na_lista(cfg, prod)]
+    except ErroFerramenta:
+        item = None
+    if item is not None:
+        dados = next((i for i in dados_lista(cfg, of)[0] if norm(i["produto"]) == norm(nome_item(item))), None)
+        if dados and dados["precos"]:
+            linhas.append(f'{dados["produto"]} (na lista), da última busca: ' + "; ".join(f'{p["loja"]} {br_preco(p["preco"])}' for p in dados["precos"][:8]) + ".")
+        else:
+            linhas.append(f"{nome_item(item)} está na lista, mas ficou sem preço na última busca.")
+    palavras = [w for w in norm(prod).split() if len(w) > 2 and not w.isdigit()] or norm(prod).split()
+    bate = [o for o in _ofertas_vivas(cfg, of)[0] if all(w in norm(o["produto"]) for w in palavras)][:5]
+    if bate:
+        linhas.append("Ofertas que batem:")
+        linhas += [_linha_oferta(o) for o in bate]
+    if not linhas:
+        return f'Não achei preço de "{prod}" na última busca. Com economia_por_na_lista, o preço vem na próxima busca do app.'
+    return "\n".join(linhas)
+
+
+def _ferr_cupons(a, cfg, of):
+    _, cupons = _ofertas_vivas(cfg, of)
+    if not cupons:
+        return "Nenhum cupom válido nas lojas acompanhadas."
+    return "\n".join(["Cupons válidos:"] + [
+        f'- {k["_loja"]}: {k["beneficio"]}' + (f' (código {k["codigo"]})' if k.get("codigo") else "") + (f' ({k["condicao"]})' if k.get("condicao") else "")
+        + (f' até {br_data(k["valido_ate"])}' if data_ok(k.get("valido_ate")) else "") + (", guardado pela pessoa" if k.get("_meu") else "")
+        for k in cupons[:20]])
+
+
+def _ferr_por(a, cfg, of):
+    prod = _texto_arg(a, "produto")
+    k = norm(prod)
+    lista = cfg.setdefault("lista", [])
+    ja = next((nome_item(i) for i in lista if norm(nome_item(i)) == k), None)
+    if ja:
+        return f"{ja} já está na lista.", None
+    hist = cfg.get("historico") or []
+    h = next((x for x in hist if isinstance(x, dict) and norm(x.get("produto")) == k), None)
+    item = {"produto": h["produto"] if h else prod, "compras": sorted(c for c in (h.get("compras") or []) if data_ok(c)) if h else []}
+    if h and h.get("ean"):
+        item["ean"] = h["ean"]
+    cfg["historico"] = [x for x in hist if x is not h]
+    lista.append(item)
+    n = len(item["compras"])
+    return (f'Pus {item["produto"]} na lista' + (f", de volta do histórico com {n} compra(s)" if h and n else "")
+            + ". O preço vem na próxima busca do app."), {"tipo": "novo", "produto": item["produto"], "item": item}
+
+
+def _ferr_tirar(a, cfg, of):
+    i = _indice_na_lista(cfg, _texto_arg(a, "produto"))
+    item = cfg["lista"].pop(i)
+    if not isinstance(item, dict):
+        item = {"produto": nome_item(item), "compras": []}
+    hoje = hoje_br()
+    vai_pro_historico(cfg, item, hoje)
+    return f'Tirei {item["produto"]} da lista. Ficou no histórico, com as compras.', {"tipo": "saiu", "produto": item["produto"], "data": hoje}
+
+
+def _ferr_comprei(a, cfg, of):
+    i = _indice_na_lista(cfg, _texto_arg(a, "produto"))
+    hoje = hoje_br()
+    data = str(a.get("data") or hoje)
+    if not data_ok(data) or data > hoje:
+        raise ErroFerramenta("data vale AAAA-MM-DD, até hoje.")
+    lista = cfg["lista"]
+    if not isinstance(lista[i], dict):
+        lista[i] = {"produto": nome_item(lista[i]), "compras": []}
+    item = lista[i]
+    compras = item.setdefault("compras", [])
+    if data in compras:
+        return f'A compra de {item["produto"]} em {br_data(data)} já estava anotada.', None
+    compras.append(data)
+    compras.sort()
+    return f'Anotei a compra de {item["produto"]} em {br_data(data)}' + _prazo(item) + ".", {"tipo": "compra", "produto": item["produto"], "data": data}
+
+
+FERR_IMPL = {"lista": _ferr_lista, "preco": _ferr_preco, "ofertas": _ferr_ofertas, "cupons": _ferr_cupons,
+             "por_na_lista": _ferr_por, "tirar_da_lista": _ferr_tirar, "comprei": _ferr_comprei}
+
+
+def usar_ferramenta(nome, argumentos, cliente="CorrerIA"):
+    """Uma ferramenta chamada pelo CorrerIA. As de gravar mudam a lista com a revisão nova e entram no diário, para a
+    página que estava aberta com a revisão velha juntar ao gravar (como a lista do Home Assistant)."""
+    a = argumentos if isinstance(argumentos, dict) else {}
+    gravar = next(f["grava"] for f in FERRAMENTAS_CORRERIA if f["nome"] == nome)
+    of = ler_json(OFERTAS, {}) or {}
+    if not gravar:
+        return FERR_IMPL[nome](a, ler_config(), of)
+    with _cfg_trava:
+        cfg = ler_config()
+        texto, mudanca = FERR_IMPL[nome](a, cfg, of)
+        if mudanca:
+            try:
+                guardar_versao("auto")
+            except OSError as e:
+                log(f"versão anterior: {e}")
+            rev = gravar_config(cfg, por="CorrerIA")["rev"]
+            DIARIO.append(dict(mudanca, rev=rev))
+            del DIARIO[:-300]
+            log(f"CorrerIA ({cliente}): {nome} {mudanca['produto']}")
+    return texto
+
+
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/1.6.1"
+    server_version = "EconomIA/1.7.0"
 
     def log_message(self, fmt, *args):
         pass
@@ -6494,7 +6869,31 @@ class Painel(BaseHTTPRequestHandler):
             return None
         return dado
 
+    def _ferramentas(self):
+        """O CorrerIA, de outro contêiner do Home Assistant, com a chave de share/economia/correria.json (sem a IA daqui)."""
+        if not correria_ligada() or not correria_autorizado(self.headers):
+            return self._json(401, {"erro": "Chave inválida ou CorrerIA desligado no EconomIA."})
+        if self.command == "GET":
+            return self._json(200, {"instrucoes": CORRERIA_INSTRUCOES, "ferramentas": FERRAMENTAS_CORRERIA})
+        dado = self._corpo()
+        if dado is None:
+            return None
+        if not isinstance(dado, dict):
+            return self._json(400, {"erro": "Mande {nome, argumentos}."})
+        nome = str(dado.get("nome") or "")
+        if nome not in FERR_IMPL:
+            return self._json(404, {"erro": f"Ferramenta desconhecida: {nome[:40]}. Vale: " + ", ".join(FERR_IMPL) + "."})
+        cliente = str(dado.get("cliente") or self.headers.get("X-App") or "CorrerIA")[:40]
+        try:
+            texto = usar_ferramenta(nome, dado.get("argumentos"), cliente)
+        except ErroFerramenta as e:
+            return self._json(400, {"erro": str(e)})
+        CORRERIA_USO["ultimo"] = {"app": cliente, "em": agora(), "nome": nome}
+        return self._json(200, {"texto": texto})
+
     def do_GET(self):
+        if urllib.parse.urlsplit(self.path).path == "/api/integracao/ferramentas":
+            return self._ferramentas()
         if not self._permitido():
             return
         rota = urllib.parse.urlsplit(self.path).path
@@ -6529,6 +6928,7 @@ class Painel(BaseHTTPRequestHandler):
                 "busca": BUSCA,
                 "sync": SYNC,
                 "uso_ia": uso_resumo(),
+                "correria": {"ligada": correria_ligada(), "ultimo": CORRERIA_USO["ultimo"]},
             })
         elif rota == "/api/todos":
             try:
@@ -6627,6 +7027,8 @@ class Painel(BaseHTTPRequestHandler):
                     log(f"versão anterior: {e}")
                 ligados = sensores_ligados(atual), ia_ligada(atual)
                 novo = gravar_config(cfg)
+            if correria_ligada(novo) != correria_ligada(atual):
+                publicar_correria(novo)
             if (sensores_ligados(novo), ia_ligada(novo)) != ligados:
                 threading.Thread(target=publica_sensor_uso, daemon=True).start()
             self._json(200, {"ok": True, "config": novo, "mesclado": mesclado})
@@ -6710,6 +7112,8 @@ class Painel(BaseHTTPRequestHandler):
             self._json(404, {"erro": "Não encontrado"})
 
     def do_POST(self):
+        if urllib.parse.urlsplit(self.path).path == "/api/integracao/ferramentas":
+            return self._ferramentas()
         if not self._permitido():
             return
         if urllib.parse.urlsplit(self.path).path == "/api/sincronizar-lista":
@@ -6849,6 +7253,7 @@ def main():
     os.makedirs(DATA, exist_ok=True)
     log("chave do Home Assistant: " + ("encontrada" if token_ha() else "AUSENTE (a busca e a lista do HA não vão funcionar)"))
     threading.Thread(target=laco_sincronizacao, daemon=True).start()
+    publicar_correria()  # o endereço e a versão de agora (ou apaga o arquivo, se desligado)
     servidor = ThreadingHTTPServer(("0.0.0.0", PORT), Painel)
     log(f"painel no ar na porta {PORT}; dados em {DATA}")
     servidor.serve_forever()

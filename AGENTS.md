@@ -7,7 +7,9 @@ Leia isto antes de mexer. Vale para o Codex, o Claude ou qualquer outro assisten
 
 App (add-on) do Home Assistant que compara a lista de compras da casa nas farmácias, mercados e pet shops perto do CEP
 e no online. Faz parte de uma família de apps do mesmo dono, com o mesmo visual e as mesmas regras:
-ResolvIA (tarefas), CronologIA (agenda), GerencIA (finanças), InventarIA (cômodos e equipamentos).
+ResolvIA (tarefas), CronologIA (agenda), GerencIA (finanças), InventarIA (cômodos e equipamentos), MemorIA (anotações)
+e CorrerIA (os apps no WhatsApp, no Claude e no Gemini: com a opção ligada, usa as ferramentas daqui; veja "CorrerIA" em
+`docs/tecnico.md` e o contrato no AGENTS.md do `diegozapella63/correria-ha`).
 
 - `economia/app/server.py`: o servidor, **só biblioteca padrão do Python** (sem pip, sem dependências). Serve a página
   pelo ingress, faz as buscas, guarda tudo em `/data`. `voz.py`: o Falar (fala para texto do Home Assistant).

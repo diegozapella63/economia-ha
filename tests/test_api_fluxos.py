@@ -40,7 +40,7 @@ class Servidor(unittest.TestCase):
         cls.S = S
         cls.prepara()
         cls.porta = porta_livre()
-        env = dict(os.environ, OFERTAS_DATA=cls.pasta, OFERTAS_PORT=str(cls.porta), OFERTAS_MEDIA=os.path.join(cls.pasta, "media"),
+        env = dict(os.environ, OFERTAS_DATA=cls.pasta, OFERTAS_PORT=str(cls.porta), OFERTAS_MEDIA=os.path.join(cls.pasta, "media"), OFERTAS_SHARE=os.path.join(cls.pasta, "share"),
                    OFERTAS_ALLOW_ALL="1", OFERTAS_ESPERA_COTA="0", OFERTAS_SYNC_SEG="3600", **cls.lojas.env_servicos(), **cls.ha.env())
         cls.saida = open(os.path.join(cls.pasta, "servidor.log"), "w")
         cls.proc = subprocess.Popen([sys.executable, os.path.join(APP, "server.py")], env=env, stdout=cls.saida, stderr=subprocess.STDOUT)

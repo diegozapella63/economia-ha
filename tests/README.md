@@ -82,6 +82,9 @@ esperar (espera-se a condição: `Cenario.espera`, `espera()` nas visuais), semp
   e o `main()`, com o servidor num processo.
 - `test_comparar.py`: Comparar preço (a oferta nas outras lojas): sites primeiro e a IA só se faltar, a loja da oferta
   de fora, outro tamanho pelo preço por quilo, medidas diferentes, online com frete, o que guarda e os erros.
+- `test_correria.py`: a CorrerIA pelas ferramentas: o arquivo em share (só ligado, modo 600, chave guardada), a rota com
+  a chave (401, 404, 400), cada ferramenta com as regras da tela, o diário que junta a gravação da página e as lojas
+  desligadas em Online.
 - `test_api_rotas.py`: cada rota no mesmo processo, com os casos de sucesso e de erro (corpo inválido ou grande, IA
   desligada, HA fora, busca ou teste já rodando) e o acesso só pelo ingress.
 
@@ -99,6 +102,8 @@ esperar (espera-se a condição: `Cenario.espera`, `espera()` nas visuais), semp
 - `e2e/ec_ofertas.py`: Ofertas e cupons por categoria, filtros, cupom que vence, online com frete.
 - `e2e/ec_comparar.py`: Comparar preço numa oferta (busca de verdade contra as lojas falsas): mais barato em outra loja,
   menor preço, não achado, "Comparando…", o aviso no fim, depois de recarregar; 390 px e 320 px.
+- `e2e/ec_correria.py`: Integrações › CorrerIA: ligar (o arquivo), uma ferramenta grava e a página avisa "pela
+  CorrerIA", o último uso, recarregar e desligar (o arquivo some e a rota fecha).
 - `e2e/ec_roteiro.py`: o roteiro de compras por loja, distância e total.
 - `e2e/ec_buscar.py`: o Buscar com o andamento, a cota, o erro e os avisos.
 - `e2e/ec_ler_ia.py`: Ler com IA (mensagem, foto, cupons, encarte) e o Falar com microfone falso do Chromium.

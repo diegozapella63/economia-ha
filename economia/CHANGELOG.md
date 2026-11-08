@@ -1,5 +1,13 @@
 # Mudanças
 
+## 1.7.0
+
+- **CorrerIA**: em **Mais › Configurações › Integrações**, ligue **Ligar a CorrerIA** e o EconomIA passa a responder no WhatsApp, no Claude e no Gemini, como os outros apps da família.
+  - Dá para ver a lista com o preço mais barato de cada item, perguntar onde um produto está mais barato, ver as ofertas e os cupons.
+  - Também dá para pôr e tirar itens da lista e anotar compras, com as mesmas regras da tela.
+  - A tela avisa quando a lista mudou pela CorrerIA, e o quadro mostra o último uso.
+  - Vem desligado e não precisa da IA daqui. Ao atualizar, o Home Assistant dá ao app acesso à pasta compartilhada, onde fica o endereço que a CorrerIA usa.
+
 ## 1.6.1
 
 - **Mais › Sobre**: a CorrerIA agora é descrita como o chat com todos os apps (pergunte e peça, também pelo WhatsApp).

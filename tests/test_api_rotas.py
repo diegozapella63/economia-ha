@@ -97,7 +97,7 @@ class Estado(Rotas):
     def test_estado_com_o_usuario_do_ingress(self):
         st, d = self.pede("GET", "/api/estado", cab={"X-Remote-User-Display-Name": "Diego"})
         self.assertEqual(d["usuario"], "Diego")
-        self.assertEqual(set(d), {"config", "ofertas", "comparacoes", "usuario", "busca", "sync", "uso_ia"})
+        self.assertEqual(set(d), {"config", "ofertas", "comparacoes", "usuario", "busca", "sync", "uso_ia", "correria"})
         self.assertIsNone(self.pede("GET", "/api/estado")[1]["usuario"])
 
     def test_busca_e_uso(self):

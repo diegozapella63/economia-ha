@@ -217,6 +217,12 @@ Em **Mais › Configurações › Integrações › Uso da IA**: as chamadas de 
 
 **Sensores no Home Assistant** vem desligado. Ligado, o app cria o `sensor.economia_ia_hoje`, com as chamadas de hoje e os detalhes nos atributos; desligado, apaga o sensor.
 
+## CorrerIA (opcional)
+
+A **CorrerIA** é o app da família que põe os apps da casa no WhatsApp, no Claude e no Gemini. Em **Mais › Configurações › Integrações › CorrerIA**, ligue **Ligar a CorrerIA**: o EconomIA aparece sozinho na CorrerIA (o app CorrerIA precisa estar instalado no Home Assistant). Vem desligado e não depende da IA daqui.
+
+Pela CorrerIA dá para ver a lista com o preço mais barato de cada item, perguntar onde um produto está mais barato, ver as ofertas (por tipo de loja, loja ou produto) e os cupons, pôr e tirar itens da lista e anotar compras. As mudanças seguem as mesmas regras da tela: o item tirado fica no histórico e volta com as compras. Os preços são os da última busca do app. A tela avisa "Sua lista foi atualizada pela CorrerIA", e o quadro mostra o último uso. Desligar fecha o acesso na hora.
+
 ## Dados
 
 Em **Mais › Configurações › Dados** você exporta a lista para Excel ou JSON e as ofertas da última busca, importa uma lista e volta para uma das **Versões anteriores**: o app guarda uma cópia da lista, do perfil e dos ajustes a cada 10 minutos de uso e antes de importar, restaurar ou limpar a lista, e fica com as 3 mais recentes. Em **Mais › Aparência**, o tema (automático, claro ou escuro) e a **cor do app**, guardados em cada aparelho. Com a **Cor do dia** ligada (vem assim), a cor muda sozinha todo dia; escolher uma cor desliga.
