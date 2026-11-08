@@ -5780,6 +5780,147 @@ def buscar_itens(itens):
             pass
 
 
+# ---------- comparar uma oferta com as outras lojas ----------
+# A oferta pode ser "−49%" numa loja e ainda assim mais cara que o preço normal de outra. O Comparar preço procura o
+# mesmo produto nas outras lojas, como o Buscar este item (primeiro os sites, a IA só se faltar), sem pôr na lista.
+COMPARACOES = os.path.join(DATA, "comparacoes.json")
+MAX_COMPARACOES = 60
+OFERTA_SUMIU = "Essa oferta não está mais nas ofertas. Toque em Buscar para atualizar."
+
+
+def acha_oferta(oid):
+    """(categoria, oferta, nome da loja) de uma oferta do ofertas.json, pelo id; (None, None, "") se não houver."""
+    of = ler_json(OFERTAS, {}) or {}
+    for c in of.get("categorias") or []:
+        if not isinstance(c, dict):
+            continue
+        for o in c.get("ofertas") or []:
+            if isinstance(o, dict) and o.get("id") == oid and o.get("produto") and numero(o.get("preco_oferta")):
+                nomes = {r.get("id"): r.get("nome") for r in c.get("redes") or [] if isinstance(r, dict)}
+                return c.get("id"), o, nomes.get(o.get("rede")) or ""
+    return None, None, ""
+
+
+def termo_da_oferta(produto):
+    """O que procurar: o nome da oferta, sem o tamanho que vem depois do " · " ("Protetor Nivea FPS 50 · 200 ml")."""
+    return " ".join(str(produto or "").split(" · ")[0].split())[:100]
+
+
+def tamanho_da_oferta(o):
+    """O tamanho da oferta numa unidade comum, para comparar pelo preço por quilo, litro ou unidade; None se não souber."""
+    if o.get("unidade"):  # preço por quilo ou por litro
+        return medida(1, o["unidade"])
+    t = o.get("tamanho") if isinstance(o.get("tamanho"), dict) else {}
+    return medida(t.get("quantidade"), t.get("unidade")) or tamanho_nome(str(o.get("produto") or "").replace(" · ", " "))
+
+
+def comparar_precos(ent, nomes, o, loja):
+    """Os preços das outras lojas para o produto da oferta, do mais barato para o mais caro (no máximo 6, um por loja).
+    "equivale" é o preço no tamanho da oferta (outro tamanho vale pelo preço por quilo, litro ou unidade); medidas
+    diferentes (quilo e litro) ficam de fora. A loja da própria oferta não entra."""
+    tam = tamanho_da_oferta(o)
+    base = ent.get("base") or {}
+    links = ent.get("links") or {}
+    propria = {norm(loja), str(o.get("rede") or "")[5:]}
+    cands = [(rid, v, (base.get("quantidade"), base.get("unidade")) if base else None, links.get(rid)) for rid, v in (ent.get("precos") or {}).items()]
+    cands += [(t.get("rede"), t, (t.get("quantidade"), base.get("unidade")), t.get("fonte"))
+              for t in ent.get("tamanhos") or [] if isinstance(t, dict) and base and t.get("rede")]
+    melhor = {}
+    for rid, v, med, link in cands:
+        nome = nomes.get(rid) or rid[5:]
+        total = valor_total(v)
+        if not total or norm(nome) in propria or rid[5:] in propria:
+            continue
+        equiv = total
+        if tam and med and med[0] and med[1]:
+            if med[1] != tam[1]:
+                continue
+            equiv = round(total / med[0] * tam[0], 2)
+        p = {"loja": nome, "preco": total, "equivale": equiv}
+        if med and med[0] and med[1] and not (tam and mesmo_tamanho(med[0], tam[0])):
+            p.update(quantidade=med[0], unidade=med[1])
+        if isinstance(v, dict) and v.get("carrinho"):
+            p["carrinho"] = True
+        if isinstance(v, dict) and texto(v.get("obs"), 60):
+            p["obs"] = texto(v.get("obs"), 60)
+        if url_ok(link):
+            p["fonte"] = link
+        k = norm(nome)
+        if k not in melhor or equiv < melhor[k]["equivale"]:
+            melhor[k] = p
+    return sorted(melhor.values(), key=lambda p: p["equivale"])[:6]
+
+
+def comparacoes():
+    d = ler_json(COMPARACOES, {}) or {}
+    return d if isinstance(d, dict) else {}
+
+
+def guarda_comparacao(oid, dado):
+    todas = comparacoes()
+    todas.pop(oid, None)
+    todas[oid] = dado
+    recentes = sorted(todas.items(), key=lambda kv: str((kv[1] or {}).get("em") or ""))[-MAX_COMPARACOES:]
+    gravar_json(COMPARACOES, dict(recentes))
+
+
+def comparar_oferta(oid):
+    cfg = ler_json(CONFIG, {}) or {}
+    _uso_local.chamadas = 0
+    BUSCA.update({"rodando": True, "erro": None, "avisos": [], "atual": 1, "total": 1, "chamadas_ia": None, "etapa": None})
+    try:
+        if not cfg.get("cep"):
+            raise ErroBusca("Salve o CEP em Mais › Casa antes de buscar.")
+        cat_id, o, loja = acha_oferta(oid)
+        if not o:
+            raise ErroBusca(OFERTA_SUMIU)
+        termo = termo_da_oferta(o["produto"])
+        BUSCA["etapa"] = "o preço de " + termo.lower()
+        ativas = [c for c in (cfg.get("categorias") or list(CATEGORIAS)) if c in CATEGORIAS]
+        # a oferta de uma loja do bairro: as lojas do mesmo tipo e o online; a do online: todas
+        cats = [c for c in ativas if c in (cat_id, "online")] if cat_id in ativas and cat_id != "online" else ativas
+        cfg_c = dict(cfg, lista=[{"produto": termo}])
+        resultado, _, _ = busca_scripts(cfg_c, cats, [termo], ler_folhetos=False)
+
+        def precos_de(res):
+            nomes = {r["id"]: r["nome"] for c, _ in res for r in c.get("redes") or [] if isinstance(r, dict) and r.get("id")}
+            ent = juntar_categorias([p for _, p in res]).get(termo)
+            return comparar_precos(ent, nomes, o, loja) if ent else []
+
+        precos, erro_ia = precos_de(resultado), None
+        if len(precos) < 2 and ia_ligada(cfg):
+            try:
+                resultado = busca_focada(cfg_c, [termo], cats) + resultado  # o site da loja por último: vale mais
+                precos = precos_de(resultado)
+            except ErroBusca as e:
+                erro_ia = str(e)
+                log(f"comparar {termo}: a IA falhou ({e}); ficam os preços dos sites")
+        total = round(numero(o["preco_oferta"]) + (frete_ok(o.get("frete")) or 0), 2)
+        guarda_comparacao(oid, {"em": agora(), "produto": termo, "preco": total, "precos": precos})
+        baratos = [p for p in precos if p["equivale"] < total - 0.005]
+        if baratos:
+            aviso = f"{termo}: mais barato em {baratos[0]['loja']}."
+        elif precos:
+            aviso = f"{termo}: a oferta é o menor preço."
+        else:
+            aviso = f"{termo}: não achei em outras lojas" + (f", e a IA falhou: {erro_ia}" if erro_ia else ".")
+        BUSCA["avisos"] = [aviso]
+        BUSCA["chamadas_ia"] = _uso_local.chamadas
+        log(f"comparar {termo}: {len(precos)} preço(s) em outras lojas, {len(baratos)} mais barato(s), {_uso_local.chamadas} chamada(s) de IA")
+    except ErroBusca as e:
+        BUSCA["erro"] = str(e)
+        log(f"comparar falhou: {e}")
+    except Exception as e:  # noqa: BLE001
+        BUSCA["erro"] = f"Erro inesperado na busca: {e}"
+        log(BUSCA["erro"])
+    finally:
+        BUSCA.update({"rodando": False, "etapa": None, "terminou_em": agora()})
+        try:
+            grava_vocab()
+        except OSError:
+            pass
+
+
 # ---------- ler a lista de fotos ou texto ----------
 def instrucoes_leitura(texto_msg, n_fotos, cfg, origem="mensagem"):
     atuais = [nome_item(i) for i in (cfg.get("lista") or []) if nome_item(i)]
@@ -6314,7 +6455,7 @@ def conversar(dado):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/1.4.2"
+    server_version = "EconomIA/1.5.0"
 
     def log_message(self, fmt, *args):
         pass
@@ -6378,7 +6519,8 @@ class Painel(BaseHTTPRequestHandler):
             self._json(200, {
                 "config": ler_json(CONFIG),
                 "ofertas": ler_json(OFERTAS),
-                "usuario": self.headers.get("X-Remote-User-Display-Name") or self.headers.get("X-Remote-User-Name") or None,
+                "comparacoes": comparacoes(),
+                "usuario":self.headers.get("X-Remote-User-Display-Name") or self.headers.get("X-Remote-User-Name") or None,
                 "busca": BUSCA,
                 "sync": SYNC,
                 "uso_ia": uso_resumo(),
@@ -6669,9 +6811,17 @@ class Painel(BaseHTTPRequestHandler):
                 return self._json(400, {"erro": "Escolha uma foto ou cole o texto da mensagem."})
             return self._json(202, {"id": job})
         rota = urllib.parse.urlsplit(self.path).path
-        if rota not in ("/api/buscar", "/api/buscar-itens"):
+        if rota not in ("/api/buscar", "/api/buscar-itens", "/api/comparar"):
             return self._json(404, {"erro": "Não encontrado"})
         alvo, args = buscar, ()
+        if rota == "/api/comparar":
+            dado = self._corpo()
+            if dado is None:
+                return None
+            oid = dado.get("id")
+            if not isinstance(oid, str) or not acha_oferta(oid)[1]:
+                return self._json(400, {"erro": OFERTA_SUMIU})
+            alvo, args = comparar_oferta, (oid,)
         if rota == "/api/buscar-itens":
             dado = self._corpo() or {}
             nomes = {norm(n): n for n in nomes_da_lista(ler_json(CONFIG, {}) or {})}

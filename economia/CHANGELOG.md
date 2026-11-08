@@ -1,5 +1,15 @@
 # Mudanças
 
+## 1.5.0
+
+- **Ofertas › Comparar preço**: cada oferta tem **Comparar preço**, ao lado do **Não mostrar**. Ele procura o mesmo produto nas outras lojas e mostra a resposta embaixo da oferta.
+  - **Mais barato em outra loja**: as lojas que têm o produto, da mais barata para a mais cara, com a mais barata marcada. Toque numa loja para abrir o produto.
+  - **Menor preço entre 3 lojas** quando a oferta ganha, ou **Não achei em outras lojas**.
+  - Outro tamanho conta pelo preço por quilo, litro ou unidade, e o tamanho dele aparece.
+  - Procura primeiro nos sites das lojas, sem IA. A IA só entra quando faltam preços, e só se estiver ligada.
+  - A comparação não mexe na Minha lista e continua lá depois de fechar o app.
+- As ações de cada oferta (**Comparar preço** e **Não mostrar**) ficam numa linha só, embaixo da oferta.
+
 ## 1.4.2
 
 - **Mais › Sobre**: a **CorrerIA** (o contato no WhatsApp) entra na lista dos apps.

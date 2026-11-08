@@ -254,6 +254,16 @@ li.deal:first-child{border-top:0}
 .hide-btn{background:none;border:0;padding:0;color:var(--muted);font-size:12.5px;text-decoration:underline;text-underline-offset:2px}
 .hide-btn:hover{color:var(--ink)}
 .hide-menu{grid-column:1 / -1;display:flex;flex-wrap:wrap;align-items:center;gap:6px;background:var(--bg);border-radius:10px;padding:8px 10px;font-size:12.5px}
+.hide-btn:disabled{text-decoration:none;opacity:.7}
+.d-acts{grid-column:1 / -1;display:flex;flex-wrap:wrap;align-items:center;gap:4px 20px}
+.cmp{grid-column:1 / -1;display:flex;flex-direction:column;gap:7px;background:var(--bg);border-radius:10px;padding:9px 10px;min-width:0}
+.cmp-t{font-size:13px;font-weight:600;color:var(--muted)}
+.cmp.caro .cmp-t{color:var(--deal)}
+.cmp.ok .cmp-t{color:var(--accent)}
+.cmp .i-chip{display:flex;align-items:baseline;justify-content:center;gap:5px;padding:6px 9px;color:inherit;text-decoration:none;min-width:0}
+.cmp .i-others li{background:var(--surface)}
+.cmp .i-others li.barato{border-color:var(--accent)}
+.cmp .i-others li.barato b{color:var(--accent)}
 .price{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1}
 .de{font-size:12px;color:var(--muted);white-space:nowrap}
 .de s{text-decoration-thickness:1px}
@@ -1513,7 +1523,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     </section>
     </div>
     <div class="mais-painel sb-pagina" id="mp-sobre" aria-label="Sobre" hidden></div>
-    <p class="foot" id="maisPe"><b>EconomIA</b><br><span id="versaoTxt">v1.4.2</span></p>
+    <p class="foot" id="maisPe"><b>EconomIA</b><br><span id="versaoTxt">v1.5.0</span></p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -2346,7 +2356,8 @@ select:not([multiple]){pointer-events:none}
         ? '<button type="button" class="hide-btn" data-act="perfil">Ajustar no perfil</button>'
         : '<button type="button" class="hide-btn" data-act="mostrar" data-id="' + esc(id) + '"' + (oc.tag ? ' data-tag="' + oc.tag + '"' : '') + '>Mostrar de novo</button>';
     } else {
-      acao = '<button type="button" class="hide-btn" data-act="menu" data-id="' + esc(id) + '" aria-expanded="' + (menuAberto === id) + '">Não mostrar</button>';
+      acao = '<button type="button" class="hide-btn" data-act="comparar" data-id="' + esc(id) + '"' + (comparando === id ? ' disabled' : '') + '>' + (comparando === id ? 'Comparando…' : 'Comparar preço') + '</button>'
+        + '<button type="button" class="hide-btn" data-act="menu" data-id="' + esc(id) + '" aria-expanded="' + (menuAberto === id) + '">Não mostrar</button>';
     }
     var menu = '';
     if (!oc && menuAberto === id){
@@ -2358,14 +2369,52 @@ select:not([multiple]){pointer-events:none}
     }
     return '<li class="deal' + (oc ? ' muted' : '') + '">'
       + '<div><p class="d-prod">' + esc(o.produto) + '</p>' + why
-      + '<p class="d-meta"><span>' + esc(G[o.rede].nome) + '</span>' + selo + cond + rec + fonteLink(o.fonte) + acao + '</p></div>'
+      + '<p class="d-meta"><span>' + esc(G[o.rede].nome) + '</span>' + selo + cond + rec + fonteLink(o.fonte) + '</p></div>'
       + '<div class="price num"><span class="de">' + (o.preco_normal ? ROT_PRECO[tipo] + ' <s>' + brl.format(o.preco_normal) + '</s>' : o.encarte || tipo === 'encarte' ? 'Encarte' : 'Preço atual') + '</span><span class="por">' + brl.format(o.preco_oferta) + un + '</span>' + (o.tamanho && Number(o.tamanho.quantidade) > 0 && !o.unidade ? '<span class="de">' + porUn(o.preco_oferta, Number(o.tamanho.quantidade), o.tamanho) + '</span>' : o.unidades > 1 ? '<span class="de">' + brl.format(o.preco_oferta / o.unidades) + ' cada</span>' : '') + '</div>'
       + (o.preco_normal ? '<span class="off num">−' + pct(o) + '%</span>' : '<span class="off off-enc" aria-hidden="true">−0%</span>')
-      + menu + '</li>';
+      + '<p class="d-acts">' + acao + '</p>' + menu + (oc ? '' : blocoComparar(o, id)) + '</li>';
+  }
+  // Comparar preço: o mesmo produto nas outras lojas (o servidor procura como no Buscar este item, sem pôr na lista).
+  // O preço de cada loja vale no tamanho da oferta ("equivale"); outro tamanho aparece com o tamanho dela.
+  var COMP = {}, comparando = null;
+  function precoDaOferta(o){ return Number(o.preco_oferta) + (typeof o.frete === 'number' ? o.frete : 0); }
+  function blocoComparar(o, id){
+    var c = COMP[id];
+    if (!c || comparando === id) return '';
+    var ps = arr(c.precos), alvo = precoDaOferta(o);
+    var baratos = ps.filter(function(p){ return p.equivale < alvo - 0.005; });
+    var dia = c.em ? fmtDiaSP.format(new Date(c.em)) : '';
+    var quando = dia && dia !== hojeSP() ? ' · ' + dataBR(dia) : '';
+    var tit = baratos.length ? (baratos.length > 1 ? 'Mais barato em ' + baratos.length + ' lojas' : 'Mais barato em outra loja')
+      : ps.length ? 'Menor preço entre ' + (ps.length + 1) + ' lojas' : 'Não achei em outras lojas';
+    var chip = function(p){
+      var dentro = '<span class="ic-n">' + esc(p.loja) + '</span><b>' + brl.format(p.preco) + '</b>'
+        + (p.quantidade ? '<small>' + esc(medidaTxt(p.quantidade, {unidade:p.unidade})) + '</small>' : '') + (p.carrinho ? '<small>+ frete</small>' : '');
+      return '<li' + (p.equivale < alvo - 0.005 ? ' class="barato"' : '') + (p.obs ? ' title="' + esc(p.obs) + '"' : '') + '>'
+        + (p.fonte ? abreLink({url:p.fonte}, 'i-chip', dentro) : '<span class="i-chip">' + dentro + '</span>') + '</li>';
+    };
+    return '<div class="cmp ' + (baratos.length ? 'caro' : ps.length ? 'ok' : 'nada') + '"><p class="cmp-t">' + tit + quando + '</p>'
+      + (ps.length ? '<ul class="i-others num">' + ps.slice(0, 4).map(chip).join('') + '</ul>' : '') + '</div>';
+  }
+  function comparar(id){
+    if (MODO !== 'addon'){ toast('No Home Assistant, este botão procura o mesmo produto nas outras lojas.'); return; }
+    if (!estado.cep){ abrirMais('casa'); toast('Salve o CEP antes de buscar.'); return; }
+    if (BUSCANDO){ toast('Já tem uma busca rodando. Espere ela terminar.'); return; }
+    comparando = id; menuAberto = null; pintaDeals(); botaoBusca(true, 'Começando');
+    var solta = function(){ comparando = null; pintaDeals(); };
+    fetch('api/comparar', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id:id})})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+      .then(function(x){
+        if (!x.ok){ solta(); mostraBusca({erro:x.j.erro || 'Não deu para começar a busca.'}); toast(x.j.erro || 'Não deu para começar a busca.'); return; }
+        if (x.j.ja_rodando){ solta(); toast('Já tem uma busca rodando. Espere ela terminar.'); acompanhaBusca(false); return; }
+        toast('Procurando nas outras lojas. Leva cerca de 1 minuto.'); acompanhaBusca(false);
+      })
+      .catch(function(){ solta(); mostraBusca({erro:'Sem conexão com o Home Assistant. Tente de novo.'}); });
   }
   $('deals').addEventListener('click', function(e){
     var b = e.target.closest('button[data-act]'); if (!b) return;
     var act = b.dataset.act;
+    if (act === 'comparar'){ comparar(b.dataset.id); return; }
     if (act === 'menu'){ menuAberto = menuAberto === b.dataset.id ? null : b.dataset.id; pintaDeals(); return; }
     if (act === 'fechar'){ menuAberto = null; pintaDeals(); return; }
     if (act === 'perfil'){ abrirMais('casa'); return; }
@@ -4924,7 +4973,7 @@ select:not([multiple]){pointer-events:none}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 1.4.2' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 1.5.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;
@@ -4976,15 +5025,20 @@ select:not([multiple]){pointer-events:none}
       if (st.rodando) buscaT = setTimeout(function(){ acompanhaBusca(false); }, 3000);
       else {
         if (buscaItem){ buscaItem = null; pintaLista(); }
-        if (!inicial && !st.erro) recarrega();
+        var comp = comparando; comparando = null;
+        if (!inicial && !st.erro) recarrega(comp);
+        else if (comp) pintaDeals();
       }
     }).catch(function(){ buscaT = setTimeout(function(){ acompanhaBusca(inicial); }, 5000); });
   }
-  function recarrega(){
+  function recarrega(comp){
     fetch('api/estado', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(api){
       if (api.uso_ia){ USO = api.uso_ia; pintaUso(); }
-      if (api.ofertas && api.ofertas.categorias){ D = api.ofertas; exemplo = false; indexa(); pintaSync(); tudo(); toast('Ofertas atualizadas'); }
-    }).catch(function(){});
+      COMP = api.comparacoes || {};
+      if (api.ofertas && api.ofertas.categorias){ D = api.ofertas; exemplo = false; indexa(); pintaSync(); tudo(); if (!comp) toast('Ofertas atualizadas'); }
+      else if (comp) pintaDeals();
+      if (comp && ui.view === 'ofertas' && api.busca && arr(api.busca.avisos).length) toast(api.busca.avisos[0]);
+    }).catch(function(){ if (comp) pintaDeals(); });
   }
   $('buscar').addEventListener('click', function(){
     if (MODO !== 'addon'){ toast('No Home Assistant, este botão busca as ofertas do seu CEP na hora.'); return; }
@@ -5018,7 +5072,7 @@ select:not([multiple]){pointer-events:none}
     .then(function(r){ var ct = r.headers.get('content-type') || ''; if (!r.ok || ct.indexOf('json') < 0) throw new Error('sem add-on'); return r.json(); })
     .then(function(api){
       clearTimeout(limite);
-      MODO = 'addon'; usuario = api.usuario || null;
+      MODO = 'addon'; usuario = api.usuario || null; COMP = api.comparacoes || {};
       D = api.ofertas && api.ofertas.categorias ? api.ofertas : EX; exemplo = D === EX; indexa();
       estado = normaliza(api.config || (exemplo ? EX.config_exemplo : null)); iniciar();
     })

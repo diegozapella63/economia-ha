@@ -446,3 +446,30 @@ repositório, ícone e a linha de cada app, na ordem), `IC_SOBRE` (ícones do Lu
 do nome num `<span>`, sem espaço) e `linkFora` (`target="_blank" rel="noopener"`) montam `#mp-sobre` uma vez. "Este app"
 fica no `economia-ha`, com a versão lida do `#versaoTxt` (não é um quinto lugar para mudar a versão). É a última linha
 do menu de Mais e segue as regras das outras telas de Mais (acima).
+
+## Comparar preço (1.5.0)
+
+Uma oferta "−49%" numa loja pode ser mais cara que o preço normal de outra. **Comparar preço** (`data-act="comparar"`
+em cada oferta) manda `POST api/comparar` com o `id` da oferta; o servidor acha a oferta no `ofertas.json`
+(`acha_oferta`: 400 com `OFERTA_SUMIU` se ela saiu ou não tem preço) e roda `comparar_oferta` numa thread, com o mesmo
+`BUSCA` do Buscar (uma busca de cada vez: `ja_rodando`; o botão Buscar gira e o `api/busca` mostra o andamento).
+
+- O que procurar: `termo_da_oferta`, o nome sem o tamanho que vem depois do " · ". Onde: a oferta de uma loja do bairro
+  procura nas lojas do mesmo tipo e no online; a do online, em todas as categorias ligadas.
+- Como: `busca_scripts` com uma configuração só para a busca (`lista` = o termo, sem folhetos novos) e, se sobrarem
+  menos de 2 preços e a IA estiver ligada, `busca_focada`. Nada vai para o `ofertas.json` nem para a lista (não usa o
+  `mesclar_resultado`); o vocabulário aprendido é gravado como numa busca.
+- `comparar_precos` junta as categorias (`juntar_categorias`) e devolve até 6 preços, um por loja, do mais barato para o
+  mais caro. A loja da oferta fica de fora (pelo nome ou pelo id sem o prefixo da categoria). `equivale` é o preço no
+  tamanho da oferta (`tamanho_da_oferta`: `unidade` do preço por quilo, `tamanho` ou o tamanho no nome): outro tamanho
+  vale pelo preço por quilo, litro ou unidade e leva `quantidade`/`unidade`; medidas diferentes ficam de fora. Online
+  conta o frete (`valor_total`); frete no carrinho vira `carrinho`.
+- Guarda em `/data/comparacoes.json` (`{id: {em, produto, preco, precos}}`, as `MAX_COMPARACOES` = 60 mais recentes), que
+  o `api/estado` devolve em `comparacoes`. `BUSCA.avisos` diz o resultado ("mais barato em Giassi.", "a oferta é o menor
+  preço." ou "não achei em outras lojas", com o erro da IA se ela falhou).
+- Na página: `COMP` (de `api/estado`), `comparando` (o id em andamento: o botão vira "Comparando…") e `blocoComparar`,
+  que pinta `.cmp` embaixo da oferta com o veredito pelo preço atual da oferta (`precoDaOferta`, com frete): "Mais barato
+  em outra loja" (ou "em N lojas", na cor das ofertas), "Menor preço entre N lojas" ou "Não achei em outras lojas", a data
+  quando não é de hoje e as lojas como os chips da Minha lista (`.i-others`, a mais barata `.barato`, o link do produto).
+  No fim, `recarrega(comp)` troca o "Ofertas atualizadas" pelo aviso do resultado. No exemplo, o botão só explica.
+- As ações da oferta (Comparar preço e Não mostrar, ou Mostrar de novo) ficam em `.d-acts`, uma linha na largura toda.

@@ -80,6 +80,8 @@ esperar (espera-se a condição: `Cenario.espera`, `espera()` nas visuais), semp
   acesso só pelo Home Assistant (servidor num processo).
 - `test_api_fluxos.py`: os fluxos pela API com o Home Assistant falso (busca, leitura, sincronizar, Falar, integrações)
   e o `main()`, com o servidor num processo.
+- `test_comparar.py`: Comparar preço (a oferta nas outras lojas): sites primeiro e a IA só se faltar, a loja da oferta
+  de fora, outro tamanho pelo preço por quilo, medidas diferentes, online com frete, o que guarda e os erros.
 - `test_api_rotas.py`: cada rota no mesmo processo, com os casos de sucesso e de erro (corpo inválido ou grande, IA
   desligada, HA fora, busca ou teste já rodando) e o acesso só pelo ingress.
 
@@ -95,6 +97,8 @@ esperar (espera-se a condição: `Cenario.espera`, `espera()` nas visuais), semp
 - `e2e/ec_lojas.py`: Mais › Lojas: abas, procurar, só sem fonte, inativas, clube, loja sem localização.
 - `e2e/ec_lojas_acoes.py`: Encontrar lojas, Testar agora, Como foi testado, adicionar e ignorar loja.
 - `e2e/ec_ofertas.py`: Ofertas e cupons por categoria, filtros, cupom que vence, online com frete.
+- `e2e/ec_comparar.py`: Comparar preço numa oferta (busca de verdade contra as lojas falsas): mais barato em outra loja,
+  menor preço, não achado, "Comparando…", o aviso no fim, depois de recarregar; 390 px e 320 px.
 - `e2e/ec_roteiro.py`: o roteiro de compras por loja, distância e total.
 - `e2e/ec_buscar.py`: o Buscar com o andamento, a cota, o erro e os avisos.
 - `e2e/ec_ler_ia.py`: Ler com IA (mensagem, foto, cupons, encarte) e o Falar com microfone falso do Chromium.

@@ -97,7 +97,7 @@ class Estado(Rotas):
     def test_estado_com_o_usuario_do_ingress(self):
         st, d = self.pede("GET", "/api/estado", cab={"X-Remote-User-Display-Name": "Diego"})
         self.assertEqual(d["usuario"], "Diego")
-        self.assertEqual(set(d), {"config", "ofertas", "usuario", "busca", "sync", "uso_ia"})
+        self.assertEqual(set(d), {"config", "ofertas", "comparacoes", "usuario", "busca", "sync", "uso_ia"})
         self.assertIsNone(self.pede("GET", "/api/estado")[1]["usuario"])
 
     def test_busca_e_uso(self):
@@ -390,3 +390,24 @@ class Buscar(Rotas):
         self.assertEqual(self.pede("POST", "/api/buscar-itens", {"itens": [f"item {i}" for i in range(12)] + ["Item 0"]})[0], 202)
         self.espera(lambda: pedidos)
         self.assertEqual(pedidos[0], [f"Item {i}" for i in range(8)], "o nome da lista, sem repetir, até 8")
+
+    def test_comparar(self):
+        S = self.S
+        pedidos = []
+        S.comparar_oferta = lambda oid: (pedidos.append(oid), S.BUSCA.update(rodando=False))
+        sumiu = (400, {"erro": "Essa oferta não está mais nas ofertas. Toque em Buscar para atualizar."})
+        self.assertEqual(self.pede("POST", "/api/comparar", {"id": "o-1"}), sumiu)
+        self.assertEqual(self.pede("POST", "/api/comparar", {"id": 3}), sumiu)
+        self.assertEqual(self.pede("POST", "/api/comparar", bruto=b"[1]")[0], 400)
+        self.assertEqual(self.pede("POST", "/api/comparar", bruto=b"")[0], 413)
+        S.gravar_json(S.OFERTAS, {"categorias": [{"id": "mercados", "redes": [{"id": "merc-a", "nome": "A"}], "ofertas": [
+            {"id": "o-1", "rede": "merc-a", "produto": "Café 500 g", "preco_oferta": 20}, {"id": "o-2", "rede": "merc-a", "produto": "Sem preço"}]}]})
+        self.assertEqual(self.pede("POST", "/api/comparar", {"id": "o-2"}), sumiu, "oferta sem preço não se compara")
+        self.assertEqual(self.pede("POST", "/api/comparar", {"id": "o-1"}), (202, {"ok": True}))
+        self.espera(lambda: pedidos)
+        self.assertEqual(pedidos, ["o-1"])
+        S.BUSCA["rodando"] = True
+        self.assertEqual(self.pede("POST", "/api/comparar", {"id": "o-1"}), (202, {"ok": True, "ja_rodando": True}), "uma busca de cada vez")
+        S.BUSCA["rodando"] = False
+        S.guarda_comparacao("o-1", {"em": "2026-11-08T10:00:00-03:00", "produto": "Café", "preco": 20, "precos": []})
+        self.assertEqual(self.pede("GET", "/api/estado")[1]["comparacoes"], {"o-1": {"em": "2026-11-08T10:00:00-03:00", "produto": "Café", "preco": 20, "precos": []}})
