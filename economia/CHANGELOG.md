@@ -1,5 +1,16 @@
 # Mudanças
 
+## 1.6.0
+
+- **Vale a pena?** em cada oferta: abre a Conversa e a IA avalia o produto. Ela procura na web a nota, as avaliações de quem comprou, as reclamações e o preço de costume, e começa pelo veredito: Vale a pena, Depende ou Não vale. Usa a IA de buscar ofertas, a que tem a busca na web.
+- **Destaque para você:** tocar nele leva até a oferta, que pisca na lista. Se outra loja estava filtrada, volta para Todas.
+- **Botões de loja nas Ofertas:** aparecem só as lojas que têm oferta. Com uma loja só, os botões nem aparecem.
+- **Lojas desligadas não aparecem nas Ofertas,** nem nos cupons, no Destaque e nos preços da lista. Isso agora vale também para:
+  - o marketplace tirado da busca em Online;
+  - os mercados da região, com **Mercados da região que entregam** desligado.
+
+  Ligar uma dessas lojas em **Mais › Lojas** liga ela de novo na busca.
+
 ## 1.5.0
 
 - **Ofertas › Comparar preço**: cada oferta tem **Comparar preço**, ao lado do **Não mostrar**. Ele procura o mesmo produto nas outras lojas e mostra a resposta embaixo da oferta.

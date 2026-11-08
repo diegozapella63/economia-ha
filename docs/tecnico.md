@@ -107,6 +107,10 @@ As ações `ai_task.generate_data` e `conversation.process` não devolvem tokens
 Com `config.sensores` ligado (vem desligado), a cada chamada e na virada do dia publica `sensor.economia_ia_hoje` pela API de estados do HA: o estado é o número de chamadas de hoje (`state_class: total_increasing`) e os atributos trazem `erros`, `cota_excedida`, `tokens_texto_estimados`, `imagens`, `por_tipo`, `ultimos_7_dias`, `este_mes` e `ultima_chamada`. O sensor some se o HA reiniciar e volta no minuto seguinte. Desligado, o add-on apaga o sensor (`DELETE /api/states/...`) ao iniciar e quando a opção muda.
 Com `config.usar_ia` em `false`, nenhuma chamada de IA sai: `/api/buscar`, `/api/ler-lista` e `/api/voz` respondem 400.
 
+### Ofertas: lojas que aparecem e o Destaque
+
+`acompanha(id)` na página: além de `lojas.ignorar`/`manter` e do raio, na aba Online o marketplace fora de `online.marketplaces` (`mktDe(nome)`) e os mercados da região com `online.mercados_entrega` desligado não contam. Ligar uma dessas lojas em Mais › Lojas (`setAcompanha`) liga também o marketplace na busca ou os mercados da região; desligar tira o marketplace da busca. Os botões de loja (`pintaFiltros`) mostram só as lojas com oferta para mostrar (`comOferta`; as escondidas contam com "Ver quais são"), e somem com menos de 2. O **Destaque para você** é um botão: volta o filtro para Todas e rola até a linha (`li[data-oferta]`), que pisca (`.achada`).
+
 ### Conversa com a IA
 
 `conversar` no `server.py`. A página manda as últimas 12 mensagens (até 2000 letras cada; a mensagem da IA leva junto
@@ -118,7 +122,7 @@ de IA (`ia_da_conversa`: a de fotos, a de busca ou a opção do add-on, só `ai_
 nunca `conversation.*`. A resposta pedida é `{"resposta", "acoes"}`; texto solto também vale como resposta. As ações
 (`por_na_lista`, `tirar_da_lista`, `comprei`, `buscar`, `abrir`) passam por `acoes_validas`: item da lista pelo nome
 normalizado (ou o único que contém o nome), produto novo só se não estiver na lista, tela que existe, sem repetidas, até 6.
-Uso contado como `conversa`. A página guarda a conversa no `localStorage` do aparelho (`ofertas-bairro:chat`, 40 mensagens).
+Uso contado como `conversa`. **Vale a pena?** (cada oferta, 1.6.0) manda `web: true`: o uso vira `avaliar`, e `ia_da_conversa(web=True)` prefere a IA de busca (a de fotos depois), sempre só `ai_task.*`; as instruções pedem o veredito (Vale a pena, Depende ou Não vale) com a nota, as avaliações, as reclamações e o preço de costume pela busca na web. A página guarda a conversa no `localStorage` do aparelho (`ofertas-bairro:chat`, 40 mensagens).
 
 ### Leitura de fotos
 

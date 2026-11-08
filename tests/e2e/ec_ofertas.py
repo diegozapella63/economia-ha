@@ -84,12 +84,23 @@ async def main():
             check("Sem preços de: Farmácia Vida." in sp and "Mandar encarte" in sp and "Adicionar site" in sp, f"loja sem preços ({sp})")
             # filtro por loja
             filtros = [t.strip() for t in await pg.locator("#filters button").all_inner_texts()]
-            check(filtros == ["Todas", "Panvel", "Farmácias Nissei", "Farmácia Vida"], f"filtros ({filtros})")
+            check(filtros == ["Todas", "Panvel", "Farmácias Nissei"], f"filtros: só as lojas com oferta, sem a Farmácia Vida ({filtros})")
             await pg.click('#filters [data-rede="farm-nissei"]')
             check(await deals(pg) == ["Dipirona 1 g · 10 comprimidos", "Rivotril 2 mg"], f"só a Nissei ({await deals(pg)})")
-            await pg.click('#filters [data-rede="farm-vida"]')
-            check("Nenhuma oferta encontrada" in await pg.text_content("#deals"), "loja sem ofertas: avisa")
-            await pg.click('#filters [data-rede="todas"]')
+            # o Destaque leva à oferta: volta para Todas e a linha pisca no meio da tela
+            await pg.click("#factTop")
+            check(await pg.get_attribute('#filters [data-rede="todas"]', "aria-pressed") == "true", "o Destaque volta para Todas")
+            linha = pg.locator('#deals .deal', has_text="Protetor solar")
+            check("achada" in (await linha.get_attribute("class")), "a oferta do Destaque fica marcada")
+            await pg.wait_for_timeout(900)
+            caixa = await linha.bounding_box()
+            check(0 < caixa["y"] < 892 - caixa["height"], f"e aparece na tela ({caixa})")
+            check(await pg.locator('#deals [data-act="avaliar"]').count() == len(await deals(pg)), "cada oferta tem Vale a pena?")
+            acts = [x.strip() for x in await linha.locator(".d-acts .hide-btn").all_inner_texts()]
+            check(acts == ["Comparar preço", "Vale a pena?", "Não mostrar"], f"Comparar preço, Vale a pena? e Não mostrar ({acts})")
+            ys = [(await linha.locator(".d-acts .hide-btn").nth(i).bounding_box())["y"] for i in range(3)]
+            check(max(ys) - min(ys) < 2, f"os três na mesma linha ({ys})")
+            await pg.evaluate("window.scrollTo(0, 0)")
             # Não mostrar: o tipo inteiro (bebidas alcoólicas), ver as escondidas e mostrar de novo
             cerveja = pg.locator("#deals .deal", has_text="Cerveja")
             await cerveja.locator('[data-act="menu"]').click()
@@ -148,6 +159,15 @@ async def main():
             await pg.click('#cats [data-cat="mercados"]')
             check("Nenhuma oferta encontrada ainda" in await pg.text_content("#deals"), "categoria sem ofertas")
             check(await pg.locator("#resumo").is_hidden(), "sem nada: o resumo some")
+            # desligados em Online: o marketplace fora da busca e os mercados da região somem das ofertas e dos filtros
+            st = app.api("GET", "/api/estado")
+            app.api("PUT", "/api/config", dict(st["config"], online={"marketplaces": ["mercadolivre"], "mercados_entrega": False}))
+            await pg.reload()
+            await pg.wait_for_timeout(1200)
+            await pg.click('.tabbar [data-view="ofertas"]')
+            await pg.click('#cats [data-cat="online"]')
+            check("Nenhuma oferta encontrada" in await pg.text_content("#deals") and await pg.locator("#filters").is_hidden(),
+                  "Amazon fora da busca e Bistek com os mercados da região desligados: sem ofertas nem filtros")
             check(not pg.erros, f"sem erros na página {pg.erros}")
             await b.close()
 

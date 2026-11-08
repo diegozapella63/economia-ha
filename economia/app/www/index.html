@@ -165,6 +165,13 @@ h2.big{font-family:var(--font-display);font-stretch:75%;font-weight:800;font-siz
 .fact .k{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .fact .v{font-family:var(--font-display);font-stretch:75%;font-weight:750;font-size:1.55rem;line-height:1.15;overflow-wrap:anywhere}
 .fact .s{font-size:13px;color:var(--muted)}
+.fact-btn{font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%}
+.fact-btn .k{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.fact-btn .k svg{flex:none;width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.fact-btn:active{transform:scale(.98)}
+li.deal.achada{animation:achada 2.2s ease-out}
+@keyframes achada{0%,35%{background:var(--accent-soft);box-shadow:0 0 0 10px var(--accent-soft)}100%{background:transparent;box-shadow:0 0 0 10px transparent}}
+@media (prefers-reduced-motion:reduce){li.deal.achada{animation:none;outline:2px solid var(--accent);outline-offset:6px}}
 .linkbtn{background:none;border:0;padding:0;color:var(--accent);font-weight:600;font-size:13px;text-decoration:underline;text-underline-offset:2px;align-self:flex-start}
 
 /* painéis */
@@ -1092,7 +1099,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     </div>
     <div class="summary" id="resumo" aria-label="Resumo">
       <div class="fact" id="factCupom"><span class="k">Melhor cupom agora</span><span class="v num" id="sumCupom">—</span><span class="s" id="sumCupomS"></span></div>
-      <div class="fact" id="factTop"><span class="k">Destaque para você</span><span class="v num" id="sumTop">—</span><span class="s" id="sumTopS"></span></div>
+      <button type="button" class="fact fact-btn" id="factTop" aria-label="Destaque para você: ver a oferta"><span class="k">Destaque para você<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span><span class="v num" id="sumTop">—</span><span class="s" id="sumTopS"></span></button>
       <div class="fact" id="factHid"><span class="k">Escondidas pelo perfil</span><span class="v num" id="sumHid">0</span><button type="button" class="linkbtn" id="toggleHid">Ver quais são</button></div>
     </div>
     <div class="cols">
@@ -1523,7 +1530,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     </section>
     </div>
     <div class="mais-painel sb-pagina" id="mp-sobre" aria-label="Sobre" hidden></div>
-    <p class="foot" id="maisPe"><b>EconomIA</b><br><span id="versaoTxt">v1.5.0</span></p>
+    <p class="foot" id="maisPe"><b>EconomIA</b><br><span id="versaoTxt">v1.6.0</span></p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -2063,6 +2070,11 @@ select:not([multiple]){pointer-events:none}
   // ---------- regras ----------
   function acompanha(id){
     if (estado.lojas.ignorar.indexOf(id) >= 0) return false;
+    if (G[id] && G[id].cat === 'online'){  // desligados em Online: o marketplace fora da busca e os mercados da região
+      if (regional(id) && !estado.online.mercados_entrega) return false;
+      var mk = mktDe(G[id].nome);
+      if (mk && estado.online.marketplaces.indexOf(mk) < 0) return false;
+    }
     if (estado.lojas.manter.indexOf(id) >= 0) return true;
     var l = LOJA[id];
     if (!l && G[id] && G[id].cat !== 'online'){  // a rede ficou sem loja (o mapa tirou: de outra categoria ou duplicada)
@@ -2073,6 +2085,12 @@ select:not([multiple]){pointer-events:none}
   }
   function setAcompanha(id, on){
     tira(estado.lojas.ignorar, id); tira(estado.lojas.manter, id);
+    var mk = G[id] && G[id].cat === 'online' ? mktDe(G[id].nome) : '';
+    if (mk){  // marketplace: liga e desliga também na busca
+      tira(estado.online.marketplaces, mk);
+      if (on) estado.online.marketplaces.push(mk);
+    }
+    if (on && regional(id)) estado.online.mercados_entrega = true;
     var l = LOJA[id], auto = !l || l.distancia_km == null || l.distancia_km <= estado.raio_km;
     if (on !== auto) (on ? estado.lojas.manter : estado.lojas.ignorar).push(id);
   }
@@ -2278,7 +2296,7 @@ select:not([multiple]){pointer-events:none}
       : CAT.id === 'petshops'
       ? 'Só para os pets do seu perfil.'
       : '';
-    if (filtro !== 'todas' && !acompanha(filtro)) filtro = 'todas';
+    if (filtro !== 'todas' && (!acompanha(filtro) || !comOferta()[filtro])) filtro = 'todas';
     pintaResumo(); pintaFiltros(); pintaDeals(); pintaCupons();
   }
   $('cats').addEventListener('click', function(e){
@@ -2295,6 +2313,7 @@ select:not([multiple]){pointer-events:none}
     $('sumCupomS').textContent = cup ? G[cup.rede].nome + ' · ' + (/^R\$/.test(cup.beneficio) ? cup.beneficio : cup.beneficio.charAt(0).toLowerCase() + cup.beneficio.slice(1)) + ' · ' + validade(cup).t.toLowerCase() : 'Os cupons do app da loja entram pelo print, em Mais › Lojas';
     var lista = ofertasDaAba(), vis = lista.filter(function(o){ return !escondida(o); }).sort(function(a, b){ return nota(b) - nota(a); });
     var top = vis[0];
+    TOP_ID = top ? idOf(top) : null;
     $('sumTop').textContent = top ? (top.preco_normal ? '−' + pct(top) + '%' : brl.format(top.preco_oferta)) : '—';
     $('sumTopS').textContent = top ? top.produto.split(' · ')[0] + ' · ' + G[top.rede].nome + (porQue(top) ? ' · ' + porQue(top).toLowerCase() : '') : 'Nada por enquanto';
     var esc_ = lista.length - vis.length;
@@ -2305,11 +2324,30 @@ select:not([multiple]){pointer-events:none}
     $('factCupom').hidden = !cup; $('factTop').hidden = !top; $('factHid').hidden = esc_ === 0;
     $('resumo').hidden = !cup && !top && esc_ === 0;
   }
-  $('toggleHid').addEventListener('click', function(){ ui.verOcultas = !ui.verOcultas; salvarUI(); pintaResumo(); pintaDeals(); });
+  var TOP_ID = null;
+  // tocar no Destaque leva à oferta: Todas as lojas, a linha no meio da tela, piscando
+  $('factTop').addEventListener('click', function(){
+    if (!TOP_ID) return;
+    if (filtro !== 'todas'){ filtro = 'todas'; pintaFiltros(); }
+    menuAberto = null; pintaDeals();
+    var li = [].filter.call($('deals').children, function(x){ return x.dataset.oferta === TOP_ID; })[0];
+    if (!li) return;
+    var calmo = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    li.scrollIntoView({block:'center', behavior:calmo ? 'auto' : 'smooth'});
+    li.classList.remove('achada'); void li.offsetWidth; li.classList.add('achada');
+    setTimeout(function(){ li.classList.remove('achada'); }, 2600);
+  });
+  $('toggleHid').addEventListener('click', function(){ ui.verOcultas = !ui.verOcultas; salvarUI(); pintaResumo(); pintaFiltros(); pintaDeals(); });
 
   function regional(id){ return !!(LOJA[id] && LOJA[id].regional); }
+  function comOferta(){  // as lojas que têm oferta para mostrar (as escondidas contam só com "Ver quais são")
+    var tem = {};
+    ofertasDaAba().forEach(function(o){ if (ui.verOcultas || !escondida(o)) tem[o.rede] = true; });
+    return tem;
+  }
   function pintaFiltros(){
-    var redes = arr(CAT.redes).filter(function(r){ return acompanha(r.id); });
+    var tem = comOferta(), redes = arr(CAT.redes).filter(function(r){ return acompanha(r.id) && tem[r.id]; });
+    $('filters').hidden = redes.length < 2;
     var bt = function(r){ return '<button type="button" data-rede="' + r.id + '" aria-pressed="' + (r.id === filtro) + '">' + esc(r.nome) + '</button>'; };
     var reg = CAT.id === 'online' ? redes.filter(function(r){ return regional(r.id); }) : [];
     var mkt = redes.filter(function(r){ return reg.indexOf(r) < 0; });
@@ -2357,6 +2395,7 @@ select:not([multiple]){pointer-events:none}
         : '<button type="button" class="hide-btn" data-act="mostrar" data-id="' + esc(id) + '"' + (oc.tag ? ' data-tag="' + oc.tag + '"' : '') + '>Mostrar de novo</button>';
     } else {
       acao = '<button type="button" class="hide-btn" data-act="comparar" data-id="' + esc(id) + '"' + (comparando === id ? ' disabled' : '') + '>' + (comparando === id ? 'Comparando…' : 'Comparar preço') + '</button>'
+        + '<button type="button" class="hide-btn so-ia" data-act="avaliar" data-id="' + esc(id) + '">Vale a pena?</button>'
         + '<button type="button" class="hide-btn" data-act="menu" data-id="' + esc(id) + '" aria-expanded="' + (menuAberto === id) + '">Não mostrar</button>';
     }
     var menu = '';
@@ -2367,7 +2406,7 @@ select:not([multiple]){pointer-events:none}
         + (tp ? '<button type="button" class="ghost" data-act="nunca" data-tag="' + tp + '">Nada de ' + esc(ROTULO_TAG[tp]) + '</button>' : '')
         + '<button type="button" class="hide-btn" data-act="fechar">Cancelar</button></div>';
     }
-    return '<li class="deal' + (oc ? ' muted' : '') + '">'
+    return '<li class="deal' + (oc ? ' muted' : '') + '" data-oferta="' + esc(id) + '">'
       + '<div><p class="d-prod">' + esc(o.produto) + '</p>' + why
       + '<p class="d-meta"><span>' + esc(G[o.rede].nome) + '</span>' + selo + cond + rec + fonteLink(o.fonte) + '</p></div>'
       + '<div class="price num"><span class="de">' + (o.preco_normal ? ROT_PRECO[tipo] + ' <s>' + brl.format(o.preco_normal) + '</s>' : o.encarte || tipo === 'encarte' ? 'Encarte' : 'Preço atual') + '</span><span class="por">' + brl.format(o.preco_oferta) + un + '</span>' + (o.tamanho && Number(o.tamanho.quantidade) > 0 && !o.unidade ? '<span class="de">' + porUn(o.preco_oferta, Number(o.tamanho.quantidade), o.tamanho) + '</span>' : o.unidades > 1 ? '<span class="de">' + brl.format(o.preco_oferta / o.unidades) + ' cada</span>' : '') + '</div>'
@@ -2418,6 +2457,7 @@ select:not([multiple]){pointer-events:none}
     if (act === 'menu'){ menuAberto = menuAberto === b.dataset.id ? null : b.dataset.id; pintaDeals(); return; }
     if (act === 'fechar'){ menuAberto = null; pintaDeals(); return; }
     if (act === 'perfil'){ abrirMais('casa'); return; }
+    if (act === 'avaliar'){ var oa = ofertasDaAba().filter(function(o){ return idOf(o) === b.dataset.id; })[0]; if (oa) avaliaOferta(oa); return; }
     if (act === 'esconder'){ estado.ocultas.push(b.dataset.id); menuAberto = null; salvar('Oferta escondida'); }
     if (act === 'nunca'){ if (estado.perfil.nunca.indexOf(b.dataset.tag) < 0) estado.perfil.nunca.push(b.dataset.tag); menuAberto = null; salvar('Você não vai mais ver ' + ROTULO_TAG[b.dataset.tag]); }
     if (act === 'mostrar'){ if (b.dataset.tag) tira(estado.perfil.nunca, b.dataset.tag); else tira(estado.ocultas, b.dataset.id); salvar('Volta a aparecer'); }
@@ -3294,7 +3334,7 @@ select:not([multiple]){pointer-events:none}
   (function(){
     var c = lerLocal(KEY_CHAT);
     CHAT.msgs = arr(c && c.msgs).filter(function(m){ return m && (m.de === 'eu' || m.de === 'ia') && typeof m.texto === 'string'; })
-      .map(function(m){ return {de:m.de, texto:m.texto.slice(0, 6000), acoes:m.de === 'ia' ? arr(m.acoes).filter(acaoOk).slice(0, 6) : undefined}; }).slice(-CHAT_MAX);
+      .map(function(m){ return {de:m.de, texto:m.texto.slice(0, 6000), acoes:m.de === 'ia' ? arr(m.acoes).filter(acaoOk).slice(0, 6) : undefined, web:m.web === true || undefined}; }).slice(-CHAT_MAX);
   })();
   function guardaChat(){ gravarLocal(KEY_CHAT, {msgs:CHAT.msgs.filter(function(m){ return m.de !== 'erro'; }).slice(-CHAT_MAX)}); }
   function textoAcao(a, feito){ return ACAO_CHAT[a.tipo][feito ? 'feito' : 'faz'] + (a.tipo === 'abrir' ? TITULOS[a.tela] : a.produto); }
@@ -3341,19 +3381,30 @@ select:not([multiple]){pointer-events:none}
   $('chatFundo').addEventListener('click', fechaChat);
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && CHAT.aberto) fechaChat(); });
   $('chatNova').addEventListener('click', function(){ if (CHAT.esperando) return; CHAT.msgs = []; guardaChat(); pintaChat(); });
+  // "Vale a pena?" numa oferta: a conversa abre e a IA avalia o produto com a busca na web (avaliações, reclamações, preço de costume)
+  function avaliaOferta(o){
+    if (!iaOn()) return;
+    var t = 'Vale a pena? ' + o.produto + ', ' + brl.format(o.preco_oferta) + (o.preco_normal ? ' (era ' + brl.format(o.preco_normal) + ')' : '')
+      + ' no ' + G[o.rede].nome + (typeof o.frete === 'number' ? (o.frete ? ', frete ' + brl.format(o.frete) : ', frete grátis') : '') + '.';
+    if (!CHAT.aberto) abreChat();
+    enviaChat(t.replace(/\u00a0/g, ' '), true);
+  }
   function exemploChat(){
+    var ult = CHAT.msgs[CHAT.msgs.length - 1];
+    if (ult && ult.web) return {resposta:'Depende. No Home Assistant, a sua IA procura na web a nota e as avaliações de quem comprou, as reclamações e o preço de costume deste produto, e diz se vale a pena.', acoes:[]};
     var novo = ['Detergente 500 ml', 'Papel toalha', 'Sabonete'].filter(function(n){ return itemDaLista(n) < 0; })[0];
     return {resposta:'No Home Assistant, a sua IA responde aqui, com a sua lista, os preços e as ofertas. Quando ela sugerir uma mudança, só acontece com o seu toque:',
       acoes:(novo ? [{tipo:'por_na_lista', produto:novo}] : []).concat([{tipo:'abrir', tela:'ofertas'}])};
   }
-  function enviaChat(texto){
+  function enviaChat(texto, web){
     texto = String(texto || '').trim().slice(0, 2000);
     if (!texto || CHAT.esperando) return;
     CHAT.msgs = CHAT.msgs.filter(function(m){ return m.de !== 'erro'; });
-    CHAT.msgs.push({de:'eu', texto:texto});
+    CHAT.msgs.push(web ? {de:'eu', texto:texto, web:true} : {de:'eu', texto:texto});
     $('chatTxt').value = ''; ajustaTxt();
     pedeChat();
   }
+  function ultimaMinha(){ for (var i = CHAT.msgs.length - 1; i >= 0; i--) if (CHAT.msgs[i].de === 'eu') return CHAT.msgs[i]; return {}; }
   function pedeChat(){
     CHAT.msgs = CHAT.msgs.filter(function(m){ return m.de !== 'erro'; });
     if (!CHAT.msgs.length || CHAT.esperando) return;
@@ -3364,7 +3415,7 @@ select:not([multiple]){pointer-events:none}
       return {de:m.de, texto:m.texto + (ac.length ? '\n(Sugeri: ' + ac.map(function(a){ return textoAcao(a, false) + (a.feito ? ', feito' : ''); }).join('; ') + ')' : '')};
     });
     var resp = MODO !== 'addon' ? new Promise(function(ok){ setTimeout(function(){ ok(exemploChat()); }, 700); })
-      : fetch('api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({mensagens:hist, tela:ui.view})})
+      : fetch('api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({mensagens:hist, tela:ui.view, web:!!ultimaMinha().web})})
         .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if (!r.ok) throw new Error(j.erro || 'A IA não respondeu. Tente de novo.'); return j; }); },
           function(){ throw new Error('Sem conexão com o Home Assistant. Tente de novo.'); });
     resp.then(function(j){
@@ -4973,7 +5024,7 @@ select:not([multiple]){pointer-events:none}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 1.5.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 1.6.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

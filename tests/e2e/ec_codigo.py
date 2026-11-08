@@ -49,12 +49,14 @@ async def main():
             check(not await pg.evaluate("'BarcodeDetector' in window"), "sem BarcodeDetector: testa o leitor próprio")
             for nome, gera, esperado in FOTOS:
                 await pg.fill("#codNum", "")
+                await pg.evaluate("document.getElementById('codMsg').textContent = ''")
                 await pg.set_input_files("#codArq", files=[{"name": nome + ".png", "mimeType": "image/png", "buffer": gera()}])
                 await pg.wait_for_function("() => /Achei|Não achei|Não consegui|balança|já está|Procurando/.test(document.getElementById('codMsg').textContent) && !/Lendo/.test(document.getElementById('codMsg').textContent)", timeout=15000)
                 lido = await pg.input_value("#codNum")
                 check(lido == esperado, f"foto {nome}: leu {lido or 'nada'}")
             # foto sem código
             await pg.fill("#codNum", "")
+            await pg.evaluate("document.getElementById('codMsg').textContent = ''")  # a mensagem da foto anterior não conta
             await pg.set_input_files("#codArq", files=[{"name": "nada.png", "mimeType": "image/png", "buffer": png_codigo(EAN_COXINHA, altura=0)}])
             await pg.wait_for_function("() => /Não consegui|Achei|Não achei/.test(document.getElementById('codMsg').textContent)", timeout=15000)
             check("Não consegui ler" in await pg.text_content("#codMsg") and await pg.input_value("#codNum") == "", "foto sem código: avisa e não inventa número")

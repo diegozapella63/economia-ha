@@ -556,17 +556,19 @@ SEM_BUSCA = "A IA escolhida não usou a busca na web. " + COMO_BUSCA
 
 def ia_escolhida(uso):
     """Entidade escolhida em Mais › Configurações › Integrações (busca ou fotos); em branco, a opção antiga do add-on ou a preferida do HA."""
-    if uso == "conversa":
-        return ia_da_conversa()
+    if uso in ("conversa", "avaliar"):
+        return ia_da_conversa(web=uso == "avaliar")
     ent = str(((ler_config().get("ia") or {}).get(uso)) or "").strip()
     return ent or str(opcoes().get("ai_task_entity") or "").strip()
 
 
-def ia_da_conversa():
+def ia_da_conversa(web=False):
     """A conversa usa só uma tarefa de IA (gera texto e não mexe na casa), nunca um assistente de conversa:
-    a escolhida para fotos, a de buscar ofertas ou a do add-on; sem nenhuma, a tarefa de IA preferida do HA."""
+    a escolhida para fotos, a de buscar ofertas ou a do add-on; sem nenhuma, a tarefa de IA preferida do HA.
+    Para avaliar um produto (web), a de buscar ofertas vem primeiro: é ela que tem a busca na web."""
     escolhas = ler_config().get("ia") or {}
-    for ent in (escolhas.get("fotos"), escolhas.get("busca"), opcoes().get("ai_task_entity")):
+    ordem = ("busca", "fotos") if web else ("fotos", "busca")
+    for ent in (escolhas.get(ordem[0]), escolhas.get(ordem[1]), opcoes().get("ai_task_entity")):
         ent = str(ent or "").strip()
         if ent.startswith("ai_task."):
             return ent
@@ -803,7 +805,7 @@ def _chamar_ai_task(nome, instrucoes, anexos=None, uso="busca"):
     except urllib.error.URLError as e:
         raise ErroBusca("Não consegui falar com o Home Assistant. Tente de novo em instantes.") from e
     dado = (resp.get("service_response") or {}).get("data") if isinstance(resp, dict) else None
-    if uso == "conversa" and isinstance(dado, str) and dado.strip():  # na conversa, texto solto também é resposta
+    if uso in ("conversa", "avaliar") and isinstance(dado, str) and dado.strip():  # na conversa, texto solto também é resposta
         if "{" not in dado:
             return {"resposta": dado.strip()}
         try:
@@ -6374,6 +6376,9 @@ def instrucoes_chat(contexto, mensagens):
         "e cuida da lista de compras da casa. Converse em português do Brasil, com respostas curtas e diretas (poucas frases ou "
         "uma lista curta). Use os dados do app abaixo e não invente preços, lojas nem cupons: se não souber, diga. "
         "Também pode conversar sobre outros assuntos.\n"
+        "Para avaliar um produto (\"vale a pena?\", \"é bom?\"), use a busca na web se puder: a nota e as avaliações de quem "
+        "comprou, as reclamações mais comuns e o preço de costume dele. Comece com o veredito (Vale a pena, Depende ou Não vale) "
+        "e depois diga o porquê em até 4 linhas; se não achar avaliações, diga.\n"
         "Escreva texto simples, sem Markdown (sem asteriscos nem #); para listas, comece cada linha com \"• \".\n\n"
         "Você não muda nada sozinho. Quando ajudar, sugira ações, e a pessoa confirma com um toque:\n"
         "- por_na_lista (produto): pôr um produto na lista, com o tamanho quando fizer sentido, como \"Café 500 g\".\n"
@@ -6445,7 +6450,7 @@ def conversar(dado):
     cfg = ler_config()
     tela = str(dado.get("tela") or "")
     r = chamar_ai_task("EconomIA: conversa", instrucoes_chat(contexto_chat(tela if tela in TELAS_CHAT else "lista", cfg), mensagens),
-                       uso="conversa")
+                       uso="avaliar" if dado.get("web") is True else "conversa")
     resposta = next((r[k] for k in ("resposta", "texto", "mensagem", "answer", "response") if isinstance(r.get(k), str) and r[k].strip()), "")
     acoes = acoes_validas(r.get("acoes") if "acoes" in r else r.get("actions"), cfg)
     if not resposta.strip() and not acoes:
@@ -6455,7 +6460,7 @@ def conversar(dado):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/1.5.0"
+    server_version = "EconomIA/1.6.0"
 
     def log_message(self, fmt, *args):
         pass

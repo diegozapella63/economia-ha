@@ -28,6 +28,8 @@ def responde(corpo):
     p = ultima_pergunta(corpo).lower()
     if "quebra" in p:
         return Erro(500, "Internal Server Error")
+    if p.startswith("vale a pena?"):
+        return {"resposta": "Vale a pena. Nota 4,7 de quem comprou, e R$ 59,90 está bem abaixo do preço de costume.", "acoes": []}
     if "churrasco" in p:
         return {"resposta": "Para o churrasco:\n• Picanha em oferta no Giassi por R$ 59,90\n**Dica**: compre o café junto.",
                 "acoes": [{"tipo": "por_na_lista", "produto": "Picanha kg"}, {"tipo": "comprei", "produto": "café pilão"},
@@ -39,11 +41,12 @@ def responde(corpo):
 async def main():
     ha = HAFalso()
     ha.tarefa_ia("ai_task.claude", "Claude")
+    ha.tarefa_ia("ai_task.busca", "Busca")
     ha.estados["stt.home_assistant_cloud"] = estado("stt.home_assistant_cloud", "unknown", friendly_name="Home Assistant Cloud")
     ha.pipelines = {"pipelines": [{"id": "p1", "name": "Casa", "stt_engine": "stt.home_assistant_cloud", "stt_language": "pt-BR"}], "preferred_pipeline": "p1"}
     ha.stt = (200, {"result": "success", "text": "tem cerveja em oferta"})
     ha.responde_ia("conversa", responde)
-    cfg = {"cep": CEP, "raio_km": 5, "categorias": ["mercados"], "ia": {"fotos": "ai_task.claude"}, "lista": LISTA}
+    cfg = {"cep": CEP, "raio_km": 5, "categorias": ["mercados"], "ia": {"fotos": "ai_task.claude", "busca": "ai_task.busca"}, "lista": LISTA}
     with App(cfg, buscar=False, antes=lambda S: S.gravar_json(S.OFERTAS, OFERTAS), ha=ha) as app:
         async with async_playwright() as p:
             b, pg = await pagina(p, args=["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"], permissoes=["microphone"])
@@ -194,6 +197,21 @@ async def main():
             check(await pg.text_content("#screenTitle") == "Ofertas" and await pg.locator("#chat").is_visible(), "no computador, Abrir não fecha a conversa")
             await pg.keyboard.press("Escape")
             check(await pg.locator("#chat").is_hidden(), "Esc fecha")
+            # ----- Vale a pena? numa oferta: a conversa abre e a IA de busca (com a busca na web) avalia -----
+            await pg.click('#lado [data-lado="ofertas"]')
+            await pg.locator('#deals .deal', has_text="Picanha kg").locator('[data-act="avaliar"]').click()
+            check(await pg.locator("#chat").is_visible(), "Vale a pena? abre a conversa")
+            pergunta = (await pg.locator(".cm.eu").last.text_content()).replace("\xa0", " ")
+            check(pergunta == "Vale a pena? Picanha kg, R$ 59,90 (era R$ 89,90) no Giassi.", f"a pergunta com o produto, o preço e a loja ({pergunta})")
+            await espera(pg, "() => /Nota 4,7/.test(document.getElementById('chatMsgs').textContent)")
+            c = ha.chamadas_ia[-1]
+            check(c["entity_id"] == "ai_task.busca" and "Para avaliar um produto" in c["instructions"], "vai para a IA de busca, com o pedido de avaliação")
+            await pg.screenshot(path=SHOTS + "/ecchat-vale-a-pena.png")
+            await pg.fill("#chatTxt", "e o café?")
+            await pg.keyboard.press("Enter")
+            await espera(pg, "() => /19,90/.test(document.querySelector('.cm.ia:last-child') ? document.querySelector('.cm.ia:last-child').textContent : '')")
+            check(ha.chamadas_ia[-1]["entity_id"] == "ai_task.claude", "a pergunta seguinte, escrita, volta para a IA da conversa")
+            await pg.keyboard.press("Escape")
             await pg.evaluate("localStorage.setItem('ofertas-bairro:ui', JSON.stringify(Object.assign(JSON.parse(localStorage.getItem('ofertas-bairro:ui') || '{}'), {tema: 'claro'})))")
             await pg.reload()
             await pg.wait_for_timeout(1200)

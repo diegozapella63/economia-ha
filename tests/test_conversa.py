@@ -224,6 +224,24 @@ class Conversa(Cenario):
         ultimas = S.uso_resumo()["ultimas"]
         self.assertEqual([(u["tipo"], u["resultado"]) for u in ultimas[:2]], [("conversa", "erro"), ("conversa", "cota")])
 
+    def test_avaliar_um_produto_usa_a_ia_de_busca(self):
+        S, ha = self.S, self.ha
+        ha.tarefa_ia("ai_task.fotos", "Fotos")
+        ha.tarefa_ia("ai_task.busca", "Busca")
+        ha.responde_ia("conversa", {"resposta": "Vale a pena.", "acoes": []})
+        self.prepara(ia={"fotos": "ai_task.fotos", "busca": "ai_task.busca"})
+        self.assertEqual(S.ia_da_conversa(web=True), "ai_task.busca", "avaliar: a IA de busca primeiro (tem a busca na web)")
+        r = S.conversar({"mensagens": [{"de": "eu", "texto": "Vale a pena? Picanha kg, R$ 59,90 no Giassi."}], "tela": "ofertas", "web": True})
+        self.assertEqual(r["resposta"], "Vale a pena.")
+        c = ha.chamadas_ia[-1]
+        self.assertEqual(c["entity_id"], "ai_task.busca")
+        self.assertIn("Comece com o veredito (Vale a pena, Depende ou Não vale)", c["instructions"])
+        S.conversar({"mensagens": [{"de": "eu", "texto": "e o café?"}], "web": "sim"})
+        self.assertEqual(ha.chamadas_ia[-1]["entity_id"], "ai_task.fotos", "só web: true vale; o resto é conversa")
+        self.prepara(ia={"fotos": "ai_task.fotos", "busca": "conversation.gemini"})
+        self.assertEqual(S.ia_da_conversa(web=True), "ai_task.fotos", "a de busca é assistente de conversa: fica de fora")
+        self.assertEqual(S.uso_resumo()["hoje"]["tipos"], {"conversa": 2}, "conta como Conversa")
+
     def test_tipo_de_uso(self):
         self.assertEqual(self.S.tipo_uso("EconomIA: conversa"), "conversa")
         self.assertEqual(self.S.tipo_uso("conversa"), "conversa")
