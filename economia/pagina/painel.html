@@ -1,6 +1,6 @@
 <title>EconomIA</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<script>try{var u=JSON.parse(localStorage.getItem('ofertas-bairro:ui'))||{},t=u.tema||'escuro';if(t!=='auto')document.documentElement.setAttribute('data-theme',t==='claro'?'light':'dark');if(u.cor&&u.cor!=='verde')document.documentElement.setAttribute('data-cor',u.cor);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
+<script>try{var u=JSON.parse(localStorage.getItem('ofertas-bairro:ui'))||{},t=u.tema||'escuro';if(t!=='auto')document.documentElement.setAttribute('data-theme',t==='claro'?'light':'dark');var c=u.cor,L=['vermelho','coral','rosa','magenta','laranja','amarelo','roxo','azul','verde'];if(u.corDia!==false){var d=new Date(),n=Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5);c=L[(n%9+9)%9];}if(c&&c!=='verde')document.documentElement.setAttribute('data-cor',c);}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap">
@@ -1472,6 +1472,10 @@ html:not(.sem-ia) .so-semia{display:none!important}
     </section>
     <section class="panel settings" aria-labelledby="h-cor">
       <div class="set-head"><h2 id="h-cor"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0 0 18c1.1 0 1.8-.8 1.8-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14.5" cy="7" r="1"/></svg></span>Cor do app</h2></div>
+      <div class="set-row cor-dia">
+        <div><h3 class="set-t"><label for="corDia">Cor do dia</label></h3><p class="sec-meta">Muda a cor do app todo dia.</p></div>
+        <input type="checkbox" class="switch" id="corDia" role="switch">
+      </div>
       <div class="tag-cores" id="cores" role="radiogroup" aria-label="Cor do app"></div>
     </section>
     </div>
@@ -1498,7 +1502,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     </section>
     </div>
     <div class="mais-painel sb-pagina" id="mp-sobre" aria-label="Sobre" hidden></div>
-    <p class="foot" id="maisPe"><b>EconomIA</b><br><span id="versaoTxt">v1.3.0</span></p>
+    <p class="foot" id="maisPe"><b>EconomIA</b><br><span id="versaoTxt">v1.4.0</span></p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -1629,7 +1633,24 @@ html:not(.sem-ia) .so-semia{display:none!important}
     var r = document.documentElement;
     if (!c || c === 'verde' || !CORES.some(function(x){ return x.id === c; })) r.removeAttribute('data-cor'); else r.setAttribute('data-cor', c);
   }
-  aplicaCor(ui.cor);
+  // Cor do dia (Mais › Configurações › Aparência), como nos outros apps: ligada até a pessoa desligar ou escolher uma cor.
+  // Uma cor por dia, pela data local, na ordem das cores (sem o cinza): a mesma o dia todo; amanhã, a seguinte.
+  // O script do <head> faz a mesma conta antes de pintar a tela.
+  var CORES_DIA = CORES.filter(function(c){ return c.id !== 'cinza'; });
+  function numeroDoDia(d){ d = d || new Date(); return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000); }
+  function corDoDia(d){ var n = CORES_DIA.length; return CORES_DIA[((numeroDoDia(d) % n) + n) % n].id; }
+  function corDiaOn(){ return ui.corDia !== false; }
+  function corAtual(){ return corDiaOn() ? corDoDia() : (ui.cor || 'verde'); }
+  aplicaCor(corAtual());
+  // passou da meia-noite com o app aberto: a cor do dia novo, sem recarregar
+  var diaDaCor = numeroDoDia();
+  function confereCorDoDia(){
+    if (!corDiaOn() || numeroDoDia() === diaDaCor) return;
+    diaDaCor = numeroDoDia(); aplicaCor(corAtual()); if ($('cores')) pintaCores();
+  }
+  setInterval(confereCorDoDia, 60000);
+  window.addEventListener('focus', confereCorDoDia);
+  document.addEventListener('visibilitychange', function(){ if (!document.hidden) confereCorDoDia(); });
 
   function indexa(){
     G = {}; LOJA = {}; GEMEA = {};
@@ -3947,7 +3968,8 @@ html:not(.sem-ia) .so-semia{display:none!important}
   }
   var TAG_SW = 'M8 0h20a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8L0 13V7z', FURO_SW = 'M9.7 10a2.7 2.7 0 1 0-5.4 0a2.7 2.7 0 1 0 5.4 0z';
   function pintaCores(){
-    var atual = ui.cor || 'verde';
+    var atual = corAtual();  // com a Cor do dia, a do dia fica marcada
+    $('corDia').checked = corDiaOn();
     $('cores').innerHTML = CORES.map(function(c){
       var sel = c.id === atual;
       return '<button type="button" class="tsw" role="radio" aria-checked="' + sel + '" style="--a:' + c.sw + '" data-v="' + c.id + '">'
@@ -3957,7 +3979,10 @@ html:not(.sem-ia) .so-semia{display:none!important}
   }
   $('cores').addEventListener('click', function(e){
     var b = e.target.closest('button[data-v]'); if (!b) return;
-    ui.cor = b.dataset.v; salvarUI(); aplicaCor(ui.cor); pintaCores();
+    ui.cor = b.dataset.v; ui.corDia = false; salvarUI(); aplicaCor(ui.cor); pintaCores();  // escolher uma cor desliga a Cor do dia
+  });
+  $('corDia').addEventListener('change', function(){
+    ui.corDia = this.checked; diaDaCor = numeroDoDia(); salvarUI(); aplicaCor(corAtual()); pintaCores();  // desligada: a última cor escolhida
   });
   function pintaTema(){
     var atual = ui.tema || 'escuro';
@@ -4566,7 +4591,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 1.3.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 1.4.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

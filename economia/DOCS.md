@@ -26,7 +26,7 @@ Como nos outros apps (InventarIA, GerencIA, ResolvIA e CronologIA), **Mais** é 
 
 - **Casa**: CEP e distância, o que acompanhar, quem mora, a rotina de compras, restrições, interesses e o que nunca mostrar.
 - **Lojas**: as lojas perto de casa, com o clube de cada uma, Encontrar lojas e Testar agora; cupons do app; compras online; e como o EconomIA busca os preços.
-- **Configurações**, em abas: **Integrações** (IA do Home Assistant, com Usar IA e Para falar; Shopee Afiliados, Google Places, Brave Search, Mercado Livre e Instagram; Uso da IA, Lista do Home Assistant e Sensores no Home Assistant), **Dados** (Exportar, Importar, Versões anteriores e onde ficam os dados), **Aparência** (tema e cor do app) e **Opções** (as etapas da busca que dá para desligar). A aba escolhida fica guardada.
+- **Configurações**, em abas: **Integrações** (IA do Home Assistant, com Usar IA e Para falar; Shopee Afiliados, Google Places, Brave Search, Mercado Livre e Instagram; Uso da IA, Lista do Home Assistant e Sensores no Home Assistant), **Dados** (Exportar, Importar, Versões anteriores e onde ficam os dados), **Aparência** (tema, cor do app e Cor do dia) e **Opções** (as etapas da busca que dá para desligar). A aba escolhida fica guardada.
 - **Sobre**, a última linha: CorrerIA Code, quem faz os apps, os apps da família, cada um com o link para o GitHub dele (o EconomIA marcado como **Este app**, com a versão), e **Meu GitHub**.
 
 Numa tela de Mais, o **‹ Mais** no alto, o Voltar do celular e arrastar para a direita voltam para o menu. Aberta por um atalho de outra tela (como **Preencher o perfil**, na Minha lista), o Voltar do celular volta para onde você estava.
@@ -217,6 +217,6 @@ Em **Mais › Configurações › Integrações › Uso da IA**: as chamadas de 
 
 ## Dados
 
-Em **Mais › Configurações › Dados** você exporta a lista para Excel ou JSON e as ofertas da última busca, importa uma lista e volta para uma das **Versões anteriores**: o app guarda uma cópia da lista, do perfil e dos ajustes a cada 10 minutos de uso e antes de importar, restaurar ou limpar a lista, e fica com as 3 mais recentes. Em **Mais › Aparência**, o tema (automático, claro ou escuro) e a **cor do app**, guardados em cada aparelho.
+Em **Mais › Configurações › Dados** você exporta a lista para Excel ou JSON e as ofertas da última busca, importa uma lista e volta para uma das **Versões anteriores**: o app guarda uma cópia da lista, do perfil e dos ajustes a cada 10 minutos de uso e antes de importar, restaurar ou limpar a lista, e fica com as 3 mais recentes. Em **Mais › Aparência**, o tema (automático, claro ou escuro) e a **cor do app**, guardados em cada aparelho. Com a **Cor do dia** ligada (vem assim), a cor muda sozinha todo dia; escolher uma cor desliga.
 
 Tudo o que você preenche fica guardado só no Home Assistant e entra nos backups dele.

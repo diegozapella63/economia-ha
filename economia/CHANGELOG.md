@@ -1,5 +1,10 @@
 # Mudanças
 
+## 1.4.0
+
+- **Cor do dia**, igual nos outros apps: em **Mais › Configurações › Aparência**, a cor do app muda sozinha todo dia, uma por dia, na ordem das cores (sem o cinza). Vem ligada. Escolher uma cor desliga a Cor do dia e fica com ela; desligar volta para a última cor escolhida.
+- Com o app aberto na virada do dia, a cor troca sem precisar recarregar.
+
 ## 1.3.0
 
 - **Mais virou um menu, igual ao dos outros apps** (GerencIA, InventarIA): uma linha para cada coisa, com o ícone, o nome e o que tem, e cada uma abre a sua tela.

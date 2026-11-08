@@ -428,6 +428,16 @@ Como no GerencIA e no InventarIA, Mais é um menu (`#maisMenu`, `.menu-list` com
 - O ícone de Mais (barra de baixo e lateral) são os três pontinhos, como nos outros apps; a linha de Configurações usa
   o ícone dos controles deslizantes, como no GerencIA e no InventarIA.
 
+## Cor do dia (1.4.0)
+
+Como no InventarIA, no GerencIA, no ResolvIA e no CronologIA: em Mais › Configurações › Aparência, a chave `#corDia`
+(`ui.corDia`, guardada no aparelho em `ofertas-bairro:ui`; ligada até ser `false`) troca a cor do app a cada dia.
+`corDoDia()` pega uma de `CORES_DIA` (as `CORES` sem o cinza, na ordem) pelo número do dia na data local
+(`numeroDoDia`: `Date.UTC` do ano, mês e dia ÷ 86400000), a mesma o dia todo; amanhã, a seguinte. `corAtual()` é a do
+dia ou, desligada, `ui.cor` (verde de começo), e é a etiqueta marcada em `#cores`. Escolher uma cor grava `ui.cor` e
+`ui.corDia = false`. O script do `<head>` faz a mesma conta (com a lista das cores escrita nele) antes de pintar a tela.
+Com o app aberto, `confereCorDoDia` (a cada minuto, no `focus` e ao voltar a ficar visível) troca a cor quando o dia muda.
+
 ## Mais › Sobre
 
 A mesma página dos outros apps (o `about.js` do CronologIA), em JavaScript puro na fonte da página: `PRODUTOS` (nome,
