@@ -4,7 +4,7 @@ Cupons, ofertas e a sua lista de compras nas farmácias, mercados e pet shops pe
 
 ## Antes de começar
 
-O EconomIA usa a IA do próprio Home Assistant (Anthropic Claude, OpenAI, Google Gemini...). Escolha qual usar em **Mais › Integrações › IA do Home Assistant** e toque em **Verificar de novo** para testar. A chave **Usar IA**, no mesmo lugar, desliga tudo o que usa IA (leitura de fotos e mensagens, cupons e encartes por print, Falar e Conversa), para todos os aparelhos. O **Buscar** continua, só com o que não gasta IA.
+O EconomIA usa a IA do próprio Home Assistant (Anthropic Claude, OpenAI, Google Gemini...). Escolha qual usar em **Mais › Configurações › Integrações › IA do Home Assistant** e toque em **Verificar de novo** para testar. A chave **Usar IA**, no mesmo lugar, desliga tudo o que usa IA (leitura de fotos e mensagens, cupons e encartes por print, Falar e Conversa), para todos os aparelhos. O **Buscar** continua, só com o que não gasta IA.
 
 - **Para buscar ofertas**, a IA precisa de busca na web:
   - **Anthropic**: ligue a busca na web nas opções da tarefa de IA.
@@ -20,17 +20,22 @@ O EconomIA usa a IA do próprio Home Assistant (Anthropic Claude, OpenAI, Google
 5. Em **Ofertas**, use **Não mostrar** em qualquer oferta que não faça sentido para você. Cada oferta tem um link para a fonte.
 6. Em **Mais › Lojas**, desmarque as que não quer acompanhar ou adicione uma que não apareceu (veja **Lojas**, abaixo).
 
-## Mais, em abas
+## Mais, um menu
 
-Como nos outros apps (InventarIA, GerencIA, ResolvIA e CronologIA), **Mais** tem abas presas no alto: **Casa** (CEP, quem mora, rotina, restrições, interesses e o que nunca mostrar), **Lojas** (lojas perto de casa, com o clube de cada uma, Encontrar lojas e Testar agora; cupons do app; compras online; e como o EconomIA busca os preços), **Integrações** (IA do Home Assistant, com Usar IA e Para falar; Shopee Afiliados, Google Places, Brave Search, Mercado Livre e Instagram; Uso da IA, Lista do Home Assistant e Sensores no Home Assistant), **Dados** (Exportar, Importar, Versões anteriores e onde ficam os dados), **Aparência** (tema e cor do app) e **Opções** (as etapas da busca que dá para desligar).
+Como nos outros apps (InventarIA, GerencIA, ResolvIA e CronologIA), **Mais** é um menu: cada linha abre a sua tela.
 
-A última linha de Mais, embaixo das abas, é **Sobre**: CorrerIA Code, quem faz os apps, os apps da família, cada um com o link para o GitHub dele (o EconomIA marcado como **Este app**, com a versão), e **Meu GitHub**. O Voltar do celular, o **‹ Mais** no alto e arrastar para a direita voltam para Mais.
+- **Casa**: CEP e distância, o que acompanhar, quem mora, a rotina de compras, restrições, interesses e o que nunca mostrar.
+- **Lojas**: as lojas perto de casa, com o clube de cada uma, Encontrar lojas e Testar agora; cupons do app; compras online; e como o EconomIA busca os preços.
+- **Configurações**, em abas: **Integrações** (IA do Home Assistant, com Usar IA e Para falar; Shopee Afiliados, Google Places, Brave Search, Mercado Livre e Instagram; Uso da IA, Lista do Home Assistant e Sensores no Home Assistant), **Dados** (Exportar, Importar, Versões anteriores e onde ficam os dados), **Aparência** (tema e cor do app) e **Opções** (as etapas da busca que dá para desligar). A aba escolhida fica guardada.
+- **Sobre**, a última linha: CorrerIA Code, quem faz os apps, os apps da família, cada um com o link para o GitHub dele (o EconomIA marcado como **Este app**, com a versão), e **Meu GitHub**.
+
+Numa tela de Mais, o **‹ Mais** no alto, o Voltar do celular e arrastar para a direita voltam para o menu. Aberta por um atalho de outra tela (como **Preencher o perfil**, na Minha lista), o Voltar do celular volta para onde você estava.
 
 ## Falar
 
-O microfone fica no alto da tela, à direita (e em **Minha lista › Falar**). Fale os itens, por exemplo "leite integral, 2 pacotes de café 500 g e detergente"; o Home Assistant transcreve com a fala para texto escolhida em **Mais › Integrações › IA do Home Assistant › Para falar** (um assistente de voz do Home Assistant ou uma entidade de fala para texto; no padrão, a do assistente de voz preferido, em **Configurações › Assistentes de voz**; com o Home Assistant Cloud já vem pronta) e a IA de "Para ler fotos" separa os itens para você conferir e adicionar, com o que foi ouvido no alto. Até 2 minutos de cada vez.
+O microfone fica no alto da tela, à direita (e em **Minha lista › Falar**). Fale os itens, por exemplo "leite integral, 2 pacotes de café 500 g e detergente"; o Home Assistant transcreve com a fala para texto escolhida em **Mais › Configurações › Integrações › IA do Home Assistant › Para falar** (um assistente de voz do Home Assistant ou uma entidade de fala para texto; no padrão, a do assistente de voz preferido, em **Configurações › Assistentes de voz**; com o Home Assistant Cloud já vem pronta) e a IA de "Para ler fotos" separa os itens para você conferir e adicionar, com o que foi ouvido no alto. Até 2 minutos de cada vez.
 
-Em **Mais › Integrações › IA do Home Assistant**, a linha **Falar** mostra se está pronto e com qual fala para texto. O microfone some com **Usar IA** desligado. No app do celular, permita o microfone para o app Home Assistant; no navegador, o Home Assistant precisa estar num endereço com https.
+Em **Mais › Configurações › Integrações › IA do Home Assistant**, a linha **Falar** mostra se está pronto e com qual fala para texto. O microfone some com **Usar IA** desligado. No app do celular, permita o microfone para o app Home Assistant; no navegador, o Home Assistant precisa estar num endereço com https.
 
 ## Conversa com a IA
 
@@ -92,7 +97,7 @@ Se uma palavra do item não aparece em nenhum produto que as lojas já mostraram
 
 ### Similares
 
-Toque em **Similares** no item para ver até 3 produtos parecidos, da mesma seção da loja, que saem mais em conta pelo preço do quilo ou do litro: para "coxinha da asa", sobrecoxa, asa ou frango inteiro. O preço do item continua o mesmo. Se preferir um similar, toque no ✓ dele: vira a sua escolha, também no Roteiro. Os similares vêm das lojas com busca no próprio site (como Giassi e Angeloni) e aparecem na busca seguinte, com a **Busca direta nas lojas** ligada em Mais › Opções.
+Toque em **Similares** no item para ver até 3 produtos parecidos, da mesma seção da loja, que saem mais em conta pelo preço do quilo ou do litro: para "coxinha da asa", sobrecoxa, asa ou frango inteiro. O preço do item continua o mesmo. Se preferir um similar, toque no ✓ dele: vira a sua escolha, também no Roteiro. Os similares vêm das lojas com busca no próprio site (como Giassi e Angeloni) e aparecem na busca seguinte, com a **Busca direta nas lojas** ligada em Mais › Configurações › Opções.
 
 ## Clubes e cupons
 
@@ -118,13 +123,13 @@ As ofertas de encarte aparecem com o rótulo "Encarte" e a validade, e os preço
 
 A busca começa pelo que não gasta IA e só chama a IA para o que faltar (o passo a passo também está no fim de Mais › Lojas):
 
-1. **Lojas perto de casa, pelo mapa.** A localização da zona Casa do Home Assistant e o OpenStreetMap dizem quais farmácias, mercados e pet shops existem perto, com endereço e distância certos (de rede, a filial mais perto). Com uma chave do Google Places em Mais › Integrações, entra também o Google Maps, que tem as lojas pequenas e o site de cada uma. Atualiza uma vez por semana e quando você toca em Encontrar lojas.
-2. **Site das lojas sem site.** Pelo Brave Search (com chave, em Mais › Integrações) e, com a IA ligada, pela busca na web da IA. Uma vez por mês.
+1. **Lojas perto de casa, pelo mapa.** A localização da zona Casa do Home Assistant e o OpenStreetMap dizem quais farmácias, mercados e pet shops existem perto, com endereço e distância certos (de rede, a filial mais perto). Com uma chave do Google Places em Mais › Configurações › Integrações, entra também o Google Maps, que tem as lojas pequenas e o site de cada uma. Atualiza uma vez por semana e quando você toca em Encontrar lojas.
+2. **Site das lojas sem site.** Pelo Brave Search (com chave, em Mais › Configurações › Integrações) e, com a IA ligada, pela busca na web da IA. Uma vez por mês.
 3. **Site da loja.** O site de cada loja cadastrada ou achada na busca é testado uma vez por semana. Se a loja usa VTEX e o robots.txt permite, o preço vem direto da loja que atende o seu CEP (Giassi, Angeloni e outros).
 4. **Busca do site.** A página de resultados da busca da própria loja, como a da Cobasi.
 5. **Páginas de produto.** Se o site não deixa programas usarem a busca, mas libera as páginas de produto (como o Bistek), o EconomIA baixa uma vez por dia a lista de produtos que a loja publica, acha os itens da sua lista pelo nome e lê o preço na página de cada produto. Esse é o preço padrão do site, que pode variar de loja para loja.
 6. **Página de ofertas do site.** Loja pequena que mostra os produtos com preço na própria página (como a Drogaria Floresta) tem o preço lido dali, no máximo a cada 12 horas.
-7. **Shopee**, pela Open API do Shopee Afiliados, se você ligou em Mais › Integrações.
+7. **Shopee**, pela Open API do Shopee Afiliados, se você ligou em Mais › Configurações › Integrações.
 8. **Folheto da semana** e **Instagram** das lojas que você acompanha e que não têm preço pelo site (veja abaixo). A IA lê cada um uma vez.
 9. **IA**: busca na web com a lista de lojas do mapa, para ofertas, cupons, marketplaces e os preços que faltam, avisada das lojas que já têm preço. Depois, o encarte do site das lojas que você cadastrou e uma última pergunta só sobre os itens sem preço.
 
@@ -132,7 +137,7 @@ Com a IA desligada, o Buscar faz só o que não usa IA e aproveita os folhetos j
 
 ## Folhetos de encarte
 
-Toda loja que você acompanha e que não tem preço pelo site, como Komprão e Atacadão, tem o folheto da semana procurado sozinho no Kimbino, no Portafolhetos, no Seus Folhetos e no Catálogos Ofertas (que tem o da Droga Raia e de outras redes), logo depois do site. Não precisa configurar nada (dá para desligar em Mais › Opções). Até 3 lojas com folheto novo por busca. A IA de fotos lê cada folheto uma vez, e as ofertas ficam guardadas até ele vencer. Os itens da sua lista que aparecem no folheto ganham preço, inclusive os que você adicionar depois, sem IA. Quando a loja tem vários folhetos regionais (o Atacadão tem um por região), a IA olha só a capa de cada um e escolhe os que valem para a sua cidade.
+Toda loja que você acompanha e que não tem preço pelo site, como Komprão e Atacadão, tem o folheto da semana procurado sozinho no Kimbino, no Portafolhetos, no Seus Folhetos e no Catálogos Ofertas (que tem o da Droga Raia e de outras redes), logo depois do site. Não precisa configurar nada (dá para desligar em Mais › Configurações › Opções). Até 3 lojas com folheto novo por busca. A IA de fotos lê cada folheto uma vez, e as ofertas ficam guardadas até ele vencer. Os itens da sua lista que aparecem no folheto ganham preço, inclusive os que você adicionar depois, sem IA. Quando a loja tem vários folhetos regionais (o Atacadão tem um por região), a IA olha só a capa de cada um e escolhe os que valem para a sua cidade.
 
 ## Instagram (opcional)
 
@@ -145,17 +150,17 @@ O que precisa, uma vez:
 3. **App da Meta.** Em developers.facebook.com › Meus apps › Criar app, escolha o uso "Outro" e o tipo "Empresa". O app fica em modo de desenvolvimento, só para você; não precisa de análise da Meta.
 4. **Chave de acesso.** No Explorador da Graph API (developers.facebook.com/tools/explorer), escolha o app, peça um token de usuário com as permissões `pages_show_list`, `pages_read_engagement`, `instagram_basic`, `instagram_manage_insights` e `business_management`, toque em Gerar e marque a página e a conta do Instagram.
 5. **Chave que dura.** A chave do Explorador vale umas horas. No Depurador de token (developers.facebook.com/tools/debug/accesstoken), cole a chave e toque em "Estender token de acesso": ela passa a valer 60 dias. Para uma chave que não vence, crie um usuário do sistema em business.facebook.com › Configurações do negócio › Usuários do sistema, dê a ele a página e a conta do Instagram, e gere a chave com validade "Nunca" e as mesmas permissões, mais `ads_read` (a Meta pede essa a mais quando a página foi dada pelo Gerenciador de Negócios).
-6. Em **Mais › Integrações › Instagram**, cole a chave e toque em **Salvar e testar**. O teste acha a sua conta do Instagram sozinho e diz até quando a chave vale.
+6. Em **Mais › Configurações › Integrações › Instagram**, cole a chave e toque em **Salvar e testar**. O teste acha a sua conta do Instagram sozinho e diz até quando a chave vale.
 
-O Instagram de cada loja vem do mapa ou de você: em Mais › Lojas, toque em Adicionar site de ofertas (ou Trocar site) e escreva o @ da loja. Só contas comerciais ou de criador podem ser lidas pela API; se a loja tiver perfil pessoal, o "Como foi testado" avisa. A chave fica em `segredos.json` e nunca volta para a página. Ler o encarte precisa da IA e dos **Folhetos** ligados (Mais › Opções).
+O Instagram de cada loja vem do mapa ou de você: em Mais › Lojas, toque em Adicionar site de ofertas (ou Trocar site) e escreva o @ da loja. Só contas comerciais ou de criador podem ser lidas pela API; se a loja tiver perfil pessoal, o "Como foi testado" avisa. A chave fica em `segredos.json` e nunca volta para a página. Ler o encarte precisa da IA e dos **Folhetos** ligados (Mais › Configurações › Opções).
 
 ## Google Places (opcional)
 
-O OpenStreetMap é gratuito, mas pode não ter as lojas pequenas do bairro. Em **Mais › Integrações › Google Places**, cole uma chave da Places API (New), criada em console.cloud.google.com › APIs e serviços. O Google pede cartão cadastrado e dá uma cota gratuita por mês; o EconomIA consulta uma vez por semana e quando você toca em Encontrar lojas: as lojas mais perto de cada tipo, a busca por "farmácia", "supermercado"… e o site das lojas que vieram sem site (guardado por 30 dias). São algumas dezenas de pedidos por vez, o que cabe na cota gratuita no uso normal. A chave fica em `segredos.json`.
+O OpenStreetMap é gratuito, mas pode não ter as lojas pequenas do bairro. Em **Mais › Configurações › Integrações › Google Places**, cole uma chave da Places API (New), criada em console.cloud.google.com › APIs e serviços. O Google pede cartão cadastrado e dá uma cota gratuita por mês; o EconomIA consulta uma vez por semana e quando você toca em Encontrar lojas: as lojas mais perto de cada tipo, a busca por "farmácia", "supermercado"… e o site das lojas que vieram sem site (guardado por 30 dias). São algumas dezenas de pedidos por vez, o que cabe na cota gratuita no uso normal. A chave fica em `segredos.json`.
 
 ## Brave Search (opcional)
 
-Acha o site das lojas que o mapa trouxe sem site, sem IA: o EconomIA busca "nome da loja + cidade" e fica com o primeiro resultado que é o site da própria loja (pula redes sociais, guias, marketplaces e sites de encartes). O site achado é testado na hora. Em **Mais › Integrações › Brave Search**, cole uma chave grátis (2.000 buscas por mês), criada em api-dashboard.search.brave.com, e toque em **Salvar e testar**. O app faz uma busca por segundo, só para as lojas sem site, e guarda a resposta por 30 dias. Com a IA ligada, ela procura só as lojas que o Brave não achou. A chave fica em `segredos.json`.
+Acha o site das lojas que o mapa trouxe sem site, sem IA: o EconomIA busca "nome da loja + cidade" e fica com o primeiro resultado que é o site da própria loja (pula redes sociais, guias, marketplaces e sites de encartes). O site achado é testado na hora. Em **Mais › Configurações › Integrações › Brave Search**, cole uma chave grátis (2.000 buscas por mês), criada em api-dashboard.search.brave.com, e toque em **Salvar e testar**. O app faz uma busca por segundo, só para as lojas sem site, e guarda a resposta por 30 dias. Com a IA ligada, ela procura só as lojas que o Brave não achou. A chave fica em `segredos.json`.
 
 ## Lojas
 
@@ -172,14 +177,14 @@ Confere se o produto achado é mesmo o item da lista, pela categoria que o Merca
 
 1. Em developers.mercadolivre.com.br, entre com sua conta e crie uma aplicação (Minhas aplicações › Criar aplicação).
 2. Em **URI de redirect**, ponha `https://www.google.com`. Se aparecer a permissão **offline_access**, marque: é ela que deixa o EconomIA renovar o acesso sozinho.
-3. Em **Mais › Integrações › Mercado Livre**, cole o App ID e a Chave secreta, com a mesma URL de retorno, e toque em **Salvar**.
+3. Em **Mais › Configurações › Integrações › Mercado Livre**, cole o App ID e a Chave secreta, com a mesma URL de retorno, e toque em **Salvar**.
 4. Toque em **Autorizar no Mercado Livre** e aceite. A página que abrir tem `code=TG-…` no endereço: copie o endereço inteiro, cole no EconomIA e toque em **Conectar**. O código vale só alguns minutos.
 
 O App ID, a chave e o acesso ficam só no Home Assistant, em `segredos.json`.
 
 ## Shopee Afiliados
 
-Em **Mais › Integrações › Shopee Afiliados**, informe o App ID e a senha (Secret) da Open API, que você pega em affiliate.shopee.com.br › Open API. Toque em **Salvar e testar**. A partir daí, os preços da Shopee vêm direto da Shopee, sem IA, com o link do produto. A Shopee não informa o frete antes do carrinho, então o preço aparece com "+ frete". As chaves ficam só no Home Assistant, em `segredos.json`, e a senha não aparece de novo no painel.
+Em **Mais › Configurações › Integrações › Shopee Afiliados**, informe o App ID e a senha (Secret) da Open API, que você pega em affiliate.shopee.com.br › Open API. Toque em **Salvar e testar**. A partir daí, os preços da Shopee vêm direto da Shopee, sem IA, com o link do produto. A Shopee não informa o frete antes do carrinho, então o preço aparece com "+ frete". As chaves ficam só no Home Assistant, em `segredos.json`, e a senha não aparece de novo no painel.
 
 ## Compras online
 
@@ -196,7 +201,7 @@ A aba **Online** compara iFood, Rappi, Mercado Livre, Amazon e outros que você 
 
 ## Lista por voz
 
-Em **Mais › Integrações › Lista do Home Assistant**, escolha a lista de tarefas que o EconomIA deve acompanhar (por exemplo, a **Lista de compras**). A partir daí:
+Em **Mais › Configurações › Integrações › Lista do Home Assistant**, escolha a lista de tarefas que o EconomIA deve acompanhar (por exemplo, a **Lista de compras**). A partir daí:
 
 - O que você pedir ao Assist, como "adicione café na lista de compras", aparece na Minha lista em até um minuto.
 - Marcar um item como concluído na lista do Home Assistant conta como **Comprei hoje** no EconomIA.
@@ -206,12 +211,12 @@ Também dá para usar uma lista do **Google Tasks** conectada ao Home Assistant 
 
 ## Uso da IA e sensores
 
-Em **Mais › Integrações › Uso da IA**: as chamadas de hoje, dos últimos 7 dias e do mês, o gráfico por dia, o tipo de uso (busca, itens sem preço, encartes, fotos, cupons, Falar, Conversa e testes), erros e cota excedida, e as últimas chamadas. Para economizar a cota, desligue em **Mais › Opções** a busca extra dos itens sem preço e a leitura automática de encartes.
+Em **Mais › Configurações › Integrações › Uso da IA**: as chamadas de hoje, dos últimos 7 dias e do mês, o gráfico por dia, o tipo de uso (busca, itens sem preço, encartes, fotos, cupons, Falar, Conversa e testes), erros e cota excedida, e as últimas chamadas. Para economizar a cota, desligue em **Mais › Configurações › Opções** a busca extra dos itens sem preço e a leitura automática de encartes.
 
 **Sensores no Home Assistant** vem desligado. Ligado, o app cria o `sensor.economia_ia_hoje`, com as chamadas de hoje e os detalhes nos atributos; desligado, apaga o sensor.
 
 ## Dados
 
-Em **Mais › Dados** você exporta a lista para Excel ou JSON e as ofertas da última busca, importa uma lista e volta para uma das **Versões anteriores**: o app guarda uma cópia da lista, do perfil e dos ajustes a cada 10 minutos de uso e antes de importar, restaurar ou limpar a lista, e fica com as 3 mais recentes. Em **Mais › Aparência**, o tema (automático, claro ou escuro) e a **cor do app**, guardados em cada aparelho.
+Em **Mais › Configurações › Dados** você exporta a lista para Excel ou JSON e as ofertas da última busca, importa uma lista e volta para uma das **Versões anteriores**: o app guarda uma cópia da lista, do perfil e dos ajustes a cada 10 minutos de uso e antes de importar, restaurar ou limpar a lista, e fica com as 3 mais recentes. Em **Mais › Aparência**, o tema (automático, claro ou escuro) e a **cor do app**, guardados em cada aparelho.
 
 Tudo o que você preenche fica guardado só no Home Assistant e entra nos backups dele.

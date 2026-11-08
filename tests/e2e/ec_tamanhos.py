@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 
 from playwright.async_api import async_playwright
 
-from base_e2e import CEP, SHOTS, App, categoria, check, pagina, resumo
+from base_e2e import CEP, SHOTS, App, abrir_mais, categoria, check, pagina, resumo
 
 HOJE = (datetime.now(timezone.utc) - timedelta(hours=3)).date()
 D = lambda n: (HOJE + timedelta(days=n)).isoformat()  # noqa: E731
@@ -77,8 +77,7 @@ async def main():
             await (await item(pg, "Lysoform")).locator("[data-desescolher]").click()
             await pg.wait_for_timeout(600)
             # pouco espaço para estoque: o galão dura demais
-            await pg.click('.tabbar [data-view="mais"]')
-            await pg.click("#aba-casa")
+            await abrir_mais(pg, "casa")
             await pg.select_option("#estoque", "pouco")
             await pg.wait_for_timeout(500)
             check(app.config_salva()["cotidiano"]["estoque"] == "pouco", "estoque: pouco")
@@ -87,7 +86,7 @@ async def main():
             check("MAIS BARATO" in (await txt(lys.locator(".i-best"))).upper(), "com pouco espaço, o de sempre volta a ser a compra")
             lys = await abre(pg, "Lysoform")
             det = await txt(lys.locator("details.i-det"))
-            check("COMPENSA, MAS DURA MUITO" in det.upper() and "mais do que você costuma guardar. Fique no de 1 L ou mude o espaço para estoque em Mais." in det, f"avisa que dura demais ({det[-160:]})")
+            check("COMPENSA, MAS DURA MUITO" in det.upper() and "mais do que você costuma guardar. Fique no de 1 L ou mude o espaço para estoque em Mais › Casa." in det, f"avisa que dura demais ({det[-160:]})")
             # ----- online ou na loja -----
             casos = [("Café Pilão", "Online ou na loja", "COMPENSA PEDIR", "Economiza R$ 3,00 pedindo online."),
                      ("Arroz 5 kg", "Online ou na loja", "CONFIRA O FRETE", "Online sai R$ 2,00 mais barato antes do frete, que só aparece no carrinho."),
@@ -104,10 +103,9 @@ async def main():
             check("SÓ ONLINE" in (await txt(it.locator("details.i-det"))).upper(), "Só online")
             # ----- preço de clube -----
             dip = await item(pg, "Dipirona")
-            check("Panvel tem preço de clube: R$ 6,90. Se você for do clube, marque em Mais → Lojas." in await txt(dip), "a dica do clube para quem não marcou")
+            check("Panvel tem preço de clube: R$ 6,90. Se você for do clube, marque em Mais › Lojas." in await txt(dip), "a dica do clube para quem não marcou")
             check("Farmácias Nissei" in await txt(dip.locator(".i-best")), "sem o clube, a Nissei é a mais barata")
-            await pg.click('.tabbar [data-view="mais"]')
-            await pg.click("#aba-lojas")
+            await abrir_mais(pg, "lojas")
             await pg.click('#lojasAbas [data-loja-aba="farmacias"]')
             await pg.click('#lojasCats [data-clube="farm-panvel"]')
             await pg.wait_for_timeout(700)

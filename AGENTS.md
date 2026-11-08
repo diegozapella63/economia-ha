@@ -25,8 +25,8 @@ ResolvIA (tarefas), CronologIA (agenda), GerencIA (finanças), InventarIA (cômo
 ## Rodar e testar
 
 ```bash
-python3 -m unittest discover -s tests -p "test_*.py"     # unitários e integração (511, ~1 min, só Python)
-tests/e2e/run.sh                                          # visuais (17 telas; pip install playwright; python3 -m playwright install chromium)
+python3 -m unittest discover -s tests -p "test_*.py"     # unitários e integração (515, ~1 min, só Python)
+tests/e2e/run.sh                                          # visuais (19 telas; pip install playwright; python3 -m playwright install chromium)
 python3 tools/cobertura.py --linhas                       # cobertura de linhas (99%; o GitHub exige 97%)
 python3 tools/montar_pagina.py --conferir                 # a página do add-on está em dia com a fonte?
 python3 tools/prints_readme.py                            # refaz as imagens do README (docs/*.png), com o exemplo embutido
@@ -80,6 +80,10 @@ Toda mudança de comportamento vem com teste. Bug corrigido ganha o teste que o 
 
 - Textos em português claro e curto, sem jargão; botões com verbos ("Salvar e testar", "Pôr na lista").
 - Mesmo visual dos outros apps da família (Barlow e Barlow Condensed, cores por tokens, tema claro e escuro, abas).
+- **Mais é um menu**, como no GerencIA e no InventarIA, não uma tela de ajustes: Casa, Lojas, **Configurações** (abas
+  Integrações, Dados, Aparência e Opções) e, por último, **Sobre**, cada um na sua tela. A tela aberta fica em
+  `ui.maisTela` e ocupa uma entrada no histórico: o Voltar do celular, o ‹ Mais e arrastar para a direita voltam ao menu.
+  Nada de misturar uma função do app com as configurações (veja "Mais: o menu" em `docs/tecnico.md`).
 - Celular primeiro (412 px), e no computador a barra lateral a partir de 1000 px.
 - A página precisa funcionar também sem o add-on (modo exemplo), sem erros no console.
 

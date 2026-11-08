@@ -9,7 +9,7 @@ import zipfile
 
 from playwright.async_api import async_playwright
 
-from base_e2e import CEP, SHOTS, App, categoria, check, espera, pagina, resumo
+from base_e2e import CEP, SHOTS, App, abrir_mais, categoria, check, espera, pagina, resumo
 
 OFERTAS = {"versao": 2, "gerado_em": "2026-11-01T10:00:00-03:00", "categorias": [categoria("mercados", [("merc-giassi", "Giassi", 1.0), ("merc-fort", "Fort", 2.0)])],
            "lista": [{"produto": "Arroz 5 kg", "precos": {"merc-giassi": 24.9, "merc-fort": 22.9}}]}
@@ -24,8 +24,7 @@ async def baixa(pg, sel):
 
 
 async def abre_dados(pg):
-    await pg.click('.tabbar [data-view="mais"]')
-    await pg.click("#aba-dados")
+    await abrir_mais(pg, "dados")
     await pg.wait_for_timeout(300)
 
 

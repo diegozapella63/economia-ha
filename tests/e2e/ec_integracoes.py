@@ -4,13 +4,11 @@ import asyncio
 
 from playwright.async_api import async_playwright
 
-from base_e2e import CEP, SHOTS, App, check, pagina, resumo
+from base_e2e import CEP, SHOTS, App, abrir_mais, check, pagina, resumo
 
 
 async def abre_integracoes(pg):
-    await pg.click('.tabbar [data-view="mais"]')
-    await pg.wait_for_timeout(300)
-    await pg.click("#aba-integracoes")
+    await abrir_mais(pg, "integracoes")
     await pg.wait_for_timeout(500)
 
 

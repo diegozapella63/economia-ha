@@ -399,18 +399,39 @@ A tela só diz que algo vai acontecer quando a opção ou a integração que faz
 - **Loja adicionada à mão**: com `usar_ia: false`, nem o encarte do site (`ler_encarte`) nem o nome (no pedido da IA)
   entram na busca; a linha diz só "Adicionada por você" e o Adicionar, "adicionada".
 - **Como foi testado**: `quem_le(cfg, o_que)` fecha o passo do folheto ou do post novo: sem IA, "precisa da IA"; com IA e
-  Folhetos desligados, "Folhetos desligados em Mais › Opções"; só com os dois, "a IA lê na próxima busca".
+  Folhetos desligados, "Folhetos desligados em Mais › Configurações › Opções"; só com os dois, "a IA lê na próxima busca".
 - **Avisar no celular**: fora da tela enquanto o aviso no celular não existe; `cotidiano.avisar` continua na config.
+
+## Mais: o menu (1.3.0)
+
+Como no GerencIA e no InventarIA, Mais é um menu (`#maisMenu`, `.menu-list` com um `.menu-row` por linha: o ícone no
+`.h-ic`, o título e a linha em `.mb`, a seta `.chev`), e cada linha (`data-mais`) abre a sua tela: **Casa** (`#mp-casa`),
+**Lojas** (`#mp-lojas`), **Configurações** (as abas `#maisAbas`: `#mp-integracoes`, `#mp-dados`, `#mp-aparencia` e
+`#mp-opcoes`) e, por último, **Sobre** (`#sobreBtn`, `#mp-sobre`). Nada de função do app misturada com as configurações.
+
+- **Estado**: `ui.maisTela` (`MAIS_IDS`: `casa`, `lojas`, `config`, `sobre`; `''` é o menu) e `ui.maisAba` (`CONFIG_ABAS`;
+  `integracoes` de começo), guardados em `ofertas-bairro:ui`. Recarregar volta na mesma tela e aba.
+- **`irPara(v, tela)`**: só com `v === 'mais'` e uma tela de `MAIS_IDS` abre a tela; sem ela, Mais abre no menu, e
+  qualquer outro caminho (abas de baixo, barra lateral, arrastar, ‹ Mais) sai da tela. Põe no `<html>` `na-menu` (sem a
+  linha da busca e o aviso de exemplo), `na-tela` (mostra o `#maisVolta`, ‹ Mais; no computador, o título desce uma
+  linha) e `na-sobre` (também sem a linha e o aviso; sem o rodapé `#maisPe`, porque a versão está em Este app).
+  `abaConfig(k)` troca a aba (setas do teclado também) e carrega o Uso da IA, a Shopee e as lojas diretas como antes.
+  `abrirMais(tela, aba, alvo)` é o atalho de outras telas: Preencher o perfil e Buscar sem CEP (Casa), Ver lojas (Lojas),
+  Importar lista (Configurações › Dados, no quadro Importar) e o "Ajuste no perfil" das ofertas.
+- **Histórico**: `marcarTela` dá a cada tela uma entrada (`{tela}`, como no GerencIA; de uma tela para outra,
+  `replaceState`). O Voltar do celular (`popstate`) volta para o menu ou, se um atalho abriu a tela (`TELA_DE`: a aba de
+  baixo de onde veio), para essa aba. Saindo de outro jeito, a entrada é desfeita com `history.back()`. Arrastar para a
+  direita numa tela volta para o menu; para a esquerda, não faz nada.
+- **Da 1.2**: Mais era em abas (`maisAba` com `casa` e `lojas`). Sem `ui.menuMais`, quem estava em Mais abre na tela
+  nova do mesmo lugar (Casa, Lojas ou Configurações na aba de antes) e `maisAba` vira `integracoes` se não for uma aba de
+  Configurações. O endereço antigo `#lojas` abre Mais › Lojas.
+- O ícone de Mais (barra de baixo e lateral) são os três pontinhos, como nos outros apps; a linha de Configurações usa
+  o ícone dos controles deslizantes, como no GerencIA e no InventarIA.
 
 ## Mais › Sobre
 
 A mesma página dos outros apps (o `about.js` do CronologIA), em JavaScript puro na fonte da página: `PRODUTOS` (nome,
 repositório, ícone e a linha de cada app, na ordem), `IC_SOBRE` (ícones do Lucide escritos à mão), `marcaNome` (o "IA"
 do nome num `<span>`, sem espaço) e `linkFora` (`target="_blank" rel="noopener"`) montam `#mp-sobre` uma vez. "Este app"
-fica no `economia-ha`, com a versão lida do `#versaoTxt` (não é um quinto lugar para mudar a versão).
-A linha `#maisFim` (`#sobreBtn`) fica depois dos painéis das abas, antes do rodapé. `irPara(v, tela)`: com
-`tela === 'sobre'` abre Sobre (`ui.maisTela`, guardado em `ofertas-bairro:ui`), esconde as abas, os painéis, a linha e o
-rodapé, mostra o `#maisVolta` (‹ Mais) e põe `na-sobre` no `<html>` (sem a linha do alto e o aviso de exemplo); qualquer
-outro caminho sai de Sobre. `marcarTela` dá a Sobre uma entrada no histórico (`{tela: 'sobre'}`, como no GerencIA): o
-Voltar do celular (`popstate`) volta para Mais, na aba de antes; saindo de outro jeito (‹ Mais, abas de baixo, barra
-lateral, arrastar), a entrada é desfeita com `history.back()`. Arrastar para a direita em Sobre volta para Mais.
+fica no `economia-ha`, com a versão lida do `#versaoTxt` (não é um quinto lugar para mudar a versão). É a última linha
+do menu de Mais e segue as regras das outras telas de Mais (acima).

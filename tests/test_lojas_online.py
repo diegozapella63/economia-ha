@@ -219,7 +219,7 @@ class Shopee(Base):
 
     def test_testar(self):
         S = self.S
-        self.assertEqual(S.testar_shopee(), {"ok": False, "msg": "Falta o App ID e a senha da Shopee em Mais › Integrações."})
+        self.assertEqual(S.testar_shopee(), {"ok": False, "msg": "Falta o App ID e a senha da Shopee em Mais › Configurações › Integrações."})
         S.grava_segredos({"shopee": {"app_id": "18300000001", "secret": "segredo"}})
         self.assertEqual(S.testar_shopee(), {"ok": True, "msg": "Pronta. Exemplo: Ração Golden Adulto Frango 10kg por R$ 129,90."})
         self.lojas.rotas["/shopee"] = lambda p: {"errors": [{"message": "x", "extensions": {"code": "10020"}}]}
@@ -300,7 +300,7 @@ class SitesDasLojas(Base):
         self.assertIsNone(S.site_pelo_brave("Supermercado Joinville", "Joinville", "chave-brave"))
         self.assertEqual(len(self.lojas.pedidos), n, "nome só com palavras genéricas: nem busca")
         S.grava_segredos({"brave": {"key": "errada"}})
-        self.assertEqual(S.testar_brave(), {"ok": False, "msg": "O Brave recusou a chave (401). Confira em Mais › Integrações."})
+        self.assertEqual(S.testar_brave(), {"ok": False, "msg": "O Brave recusou a chave (401). Confira em Mais › Configurações › Integrações."})
         self.lojas.rotas["/brave"] = lambda p: (429, {})
         self.assertEqual(S.testar_brave()["msg"], "O Brave pediu para esperar (limite de buscas do plano).")
 
@@ -365,7 +365,7 @@ class TesteDePreco(Base):
         self.assertEqual(st["passos"][0], "✗ O mapa não traz o site desta loja. Com a chave do Brave em Integrações (ou a IA ligada), o app procura o site.")
         st = self.prova("mercados", "Boi Dourado", {"social": "https://www.instagram.com/boidourado/"})
         self.assertEqual(st["instagram"], "boidourado")
-        self.assertIn("Tem Instagram (@boidourado): ligue o Instagram em Mais › Integrações para ler os encartes.", st["passos"])
+        self.assertIn("Tem Instagram (@boidourado): ligue o Instagram em Mais › Configurações › Integrações para ler os encartes.", st["passos"])
         # folheto achado nos sites de encartes; depois, já lido e guardado
         self.lojas.paginas["/kimbino/mercadinho/"] = (200, '<a href="/kimbino/mercadinho/ofertas-1234567/">x</a>', "text/html")
         st = self.prova("mercados", "Mercadinho", {})
@@ -380,7 +380,7 @@ class TesteDePreco(Base):
         S, b = self.S, self.lojas.base
         cfg = self.config()
         st = S.testa_marketplace(cfg, "shopee", "Shopee", {})
-        self.assertIn("A Shopee tem API de afiliados, que dá preço sem IA: ligue em Mais › Integrações.", st["passos"])
+        self.assertIn("A Shopee tem API de afiliados, que dá preço sem IA: ligue em Mais › Configurações › Integrações.", st["passos"])
         S.grava_segredos({"shopee": {"app_id": "1", "secret": "s"}})
         self.lojas.rotas["/shopee"] = lambda p: {"data": {"productOfferV2": {"nodes": [{"productName": "Café Pilão 500g", "priceMin": "19.9"}]}}}
         st = S.testa_marketplace(cfg, "shopee", "Shopee", {})

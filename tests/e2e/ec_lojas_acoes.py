@@ -5,7 +5,7 @@ import asyncio
 
 from playwright.async_api import async_playwright
 
-from base_e2e import CEP, SHOTS, App, HAFalso, check, espera, pagina, prod, resumo
+from base_e2e import CEP, SHOTS, App, HAFalso, abrir_mais, check, espera, pagina, prod, resumo
 
 
 def prepara(lojas):
@@ -28,8 +28,7 @@ async def main():
             b, pg = await pagina(p)
             await pg.goto(app.url)
             await pg.wait_for_timeout(1200)
-            await pg.click('.tabbar [data-view="mais"]')
-            await pg.click("#aba-lojas")
+            await abrir_mais(pg, "lojas")
             # ----- Encontrar lojas -----
             await pg.click("#acharLojas2")
             await espera(pg, "() => /Testei 2 lojas/.test(document.getElementById('lojasAcharMsg').textContent)", 30000)
@@ -66,7 +65,7 @@ async def main():
             check(await pg.text_content("#toast") == "Farmácia Bem Estar: veja em Como foi testado.", "o resumo do teste")
             await espera(pg, "() => /Tem Instagram/.test(document.getElementById('lojasCats').textContent)")
             det = (await linha(pg, "Farmácia Bem Estar")).locator("details.fonte-det")
-            check(await det.get_attribute("open") is not None and "Tem Instagram (@bemestar_farma): ligue o Instagram em Mais › Integrações" in await det.inner_text(),
+            check(await det.get_attribute("open") is not None and "Tem Instagram (@bemestar_farma): ligue o Instagram em Mais › Configurações › Integrações" in await det.inner_text(),
                   "Como foi testado abre sozinho, com o passo do Instagram")
             await pg.locator("#mp-lojas").screenshot(path=SHOTS + "/ecla-testar.png")
             # ----- Adicionar loja que não apareceu -----

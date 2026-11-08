@@ -2,6 +2,7 @@
 integrações (chaves nunca voltam para a página), Mercado Livre, código de barras, correção e acesso."""
 import json
 import os
+import re
 import socket
 import subprocess
 import sys
@@ -91,6 +92,26 @@ class Pagina(Servidor):
         st, fonte = self.pede("GET", "/fonts/barlow-400.woff")
         self.assertEqual(st, 200)
         self.assertEqual(fonte[:4], b"wOFF")
+
+    def test_mais_e_um_menu(self):
+        """1.3.0: Mais é um menu (Casa, Lojas, Configurações e Sobre por último); as abas são só as de Configurações, e
+        nenhum texto da página ou do servidor manda para o caminho antigo (Mais › Integrações, Mais › Opções)."""
+        st, html = self.pede("GET", "/")
+        self.assertEqual(st, 200)
+        menu = re.search(r'<nav id="maisMenu" aria-label="Mais">(.*?)</nav>', html, re.S).group(1)
+        self.assertEqual(re.findall(r'data-mais="(\w+)"', menu), ["casa", "lojas", "config", "sobre"])
+        self.assertEqual(re.findall(r'<span class="mb"><b>([^<]+)</b>', menu), ["Casa", "Lojas", "Configurações", "Sobre"])
+        self.assertEqual(menu.count('class="h-ic"'), 4, "cada linha com o ícone no quadradinho")
+        self.assertEqual(menu.count('class="chev"'), 4, "e a seta")
+        abas = re.search(r'<div class="mais-abas" id="maisAbas" role="tablist" aria-label="Seções de Configurações">(.*?)</div>', html, re.S).group(1)
+        self.assertEqual(re.findall(r'data-aba="(\w+)"', abas), ["integracoes", "dados", "aparencia", "opcoes"])
+        self.assertNotIn('id="aba-casa"', html)
+        self.assertNotIn('id="maisFim"', html)
+        with open(os.path.join(APP, "server.py"), encoding="utf-8") as f:
+            servidor_txt = f.read()
+        for velho in ("Mais › Integrações", "Mais › Opções", "Mais → IA do Home Assistant", "Mais → Lojas", "Salve o CEP em Mais antes"):
+            self.assertNotIn(velho, html, velho)
+            self.assertNotIn(velho, servidor_txt, velho)
 
     def test_rota_que_nao_existe(self):
         st, d = self.pede("GET", "/api/nao-existe")

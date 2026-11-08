@@ -6,12 +6,11 @@ import asyncio
 
 from playwright.async_api import async_playwright
 
-from base_e2e import CEP, SHOTS, App, HAFalso, check, espera, pagina, resumo
+from base_e2e import CEP, SHOTS, App, HAFalso, abrir_mais, check, espera, pagina, resumo
 
 
 async def mais(pg, aba):
-    await pg.click('.tabbar [data-view="mais"]')
-    await pg.click("#aba-" + aba)
+    await abrir_mais(pg, aba)
     await pg.wait_for_timeout(300)
 
 

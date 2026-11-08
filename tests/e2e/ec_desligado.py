@@ -7,7 +7,7 @@ import copy
 
 from playwright.async_api import async_playwright
 
-from base_e2e import CEP, SHOTS, App, HAFalso, check, espera, pagina, prod, resumo
+from base_e2e import CEP, SHOTS, App, HAFalso, abrir_mais, check, espera, pagina, prod, resumo
 
 BOV = "Açougue/Bovinos"
 TODAS = ["Lojas perto de casa.", "Site das lojas sem site.", "Site da loja.", "Busca do site.", "Páginas de produto.",
@@ -27,8 +27,7 @@ def antes(S):
 
 
 async def mais(pg, aba):
-    await pg.click('.tabbar [data-view="mais"]')
-    await pg.click("#aba-" + aba)
+    await abrir_mais(pg, aba)
     await pg.wait_for_timeout(300)
 
 
@@ -111,7 +110,7 @@ async def main():
             await carne.locator(".sim-btn").click()
             await pg.wait_for_timeout(800)
             vazio = await pg.locator("#wish > li.item", has_text="Carne moída").first.locator(".sim-vazio").inner_text()
-            check(vazio == "Similares ligados: vêm da busca direta nas lojas, desligada em Mais › Opções.", f"Similares sem busca direta: não promete a próxima busca ({vazio!r})")
+            check(vazio == "Similares ligados: vêm da busca direta nas lojas, desligada em Mais › Configurações › Opções.", f"Similares sem busca direta: não promete a próxima busca ({vazio!r})")
             check(await pg.locator("#wish > li.item", has_text="Carne moída").first.locator(".sim-vazio button").count() == 0, "e sem o Buscar agora")
             await pg.evaluate("document.getElementById('toast').hidden = true")
             await pg.locator("#wish > li.item", has_text="Carne moída").first.screenshot(path=SHOTS + "/ecdl-similares.png")

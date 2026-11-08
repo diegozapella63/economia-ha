@@ -6,7 +6,7 @@ import asyncio
 
 from playwright.async_api import async_playwright
 
-from base_e2e import CEP, SHOTS, App, Erro, HAFalso, categoria, check, espera, estado, pagina, png_codigo, resumo
+from base_e2e import CEP, SHOTS, App, Erro, HAFalso, abrir_mais, categoria, check, espera, estado, pagina, png_codigo, resumo
 
 IMG = png_codigo("7891000100103", modulo=2, altura=80, fundo=(400, 300))
 OFERTAS = {"versao": 2, "gerado_em": "2026-11-02T10:00:00-03:00", "lista": [], "categorias": [
@@ -121,8 +121,7 @@ async def main():
             check("Mercado Kuntze" in await pg.text_content("#filters"), "a loja do encarte entra nos filtros")
             await pg.locator("#v-ofertas").screenshot(path=SHOTS + "/ecia-encarte.png")
             # ----- prints da carteira de cupons -----
-            await pg.click('.tabbar [data-view="mais"]')
-            await pg.click("#aba-lojas")
+            await abrir_mais(pg, "lojas")
             await pg.set_input_files("#cupArq", [{"name": "cup.png", "mimeType": "image/png", "buffer": IMG}])
             await espera(pg, "() => !document.getElementById('cupBox').hidden")
             await pg.click("#cupLer")

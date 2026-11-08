@@ -102,7 +102,7 @@ class Falar(Cenario):
     def test_ia_desligada_e_fora_do_home_assistant(self):
         S = self.S
         self.config(usar_ia=False)
-        self.assertEqual(S.voz_status(), {"pronta": False, "motivo": "A IA está desligada em Mais › Integrações."})
+        self.assertEqual(S.voz_status(), {"pronta": False, "motivo": "A IA está desligada em Mais › Configurações › Integrações."})
         with self.assertRaisesRegex(S.ErroBusca, "A IA está desligada"):
             S.voz_texto(UM_SEGUNDO)
         self.config()

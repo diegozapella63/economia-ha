@@ -378,7 +378,7 @@ class Buscar(Rotas):
         self.assertEqual(self.pede("POST", "/api/buscar"), (202, {"ok": True, "ja_rodando": True}))
         S.BUSCA["rodando"] = False
         self.config(cep="")
-        self.assertEqual(self.pede("POST", "/api/buscar"), (400, {"erro": "Salve o CEP em Mais antes de buscar."}))
+        self.assertEqual(self.pede("POST", "/api/buscar"), (400, {"erro": "Salve o CEP em Mais › Casa antes de buscar."}))
 
     def test_buscar_itens(self):
         S = self.S

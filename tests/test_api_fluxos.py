@@ -114,7 +114,7 @@ class Buscar(Servidor):
         ha = self.ha
         st, d = self.pede("PUT", "/api/config", {"rev": 0, "categorias": ["mercados"], "lista": []})
         st, d = self.pede("POST", "/api/buscar")
-        self.assertEqual((st, d), (400, {"erro": "Salve o CEP em Mais antes de buscar."}))
+        self.assertEqual((st, d), (400, {"erro": "Salve o CEP em Mais › Casa antes de buscar."}))
         self.config(lista=[{"produto": "Coxinha da asa"}, {"produto": "Abacaxi"}], opcoes={"itens_sem_preco": False})
         solta = threading.Event()
 
@@ -393,7 +393,7 @@ class Integracoes(Servidor):
             self.assertNotIn(segredo, tudo)
             self.assertNotIn(segredo, self.ha.tudo_que_chegou(), "nem para o Home Assistant")
         st, d = self.pede("POST", "/api/integracoes/testar", bruto=b"[]")
-        self.assertEqual(d, {"ok": False, "msg": "Falta o App ID e a senha da Shopee em Mais › Integrações."}, "sem serviço: a Shopee")
+        self.assertEqual(d, {"ok": False, "msg": "Falta o App ID e a senha da Shopee em Mais › Configurações › Integrações."}, "sem serviço: a Shopee")
         for corpo in ({"google": None}, {"brave": None}, {"instagram": None}):
             self.pede("PUT", "/api/integracoes", corpo)
         st, d = self.pede("GET", "/api/integracoes")

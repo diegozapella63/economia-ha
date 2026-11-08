@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 
 from playwright.async_api import async_playwright
 
-from base_e2e import CEP, SHOTS, App, HAFalso, check, espera, pagina, resumo
+from base_e2e import CEP, SHOTS, App, HAFalso, abrir_mais, check, espera, pagina, resumo
 
 HOJE = (datetime.now(timezone.utc) - timedelta(hours=3)).date()
 
@@ -56,8 +56,7 @@ async def main():
             b, pg = await pagina(p)
             await pg.goto(app.url)
             await pg.wait_for_timeout(1200)
-            await pg.click('.tabbar [data-view="mais"]')
-            await pg.click("#aba-integracoes")
+            await abrir_mais(pg, "integracoes")
             await st(pg, "shSt", "Desligada")
             check(await pg.text_content("#gSt") == "Desligada: as lojas vêm só do OpenStreetMap." and await pg.text_content("#bSt") == "Desligado.", "começa tudo desligado")
             # ----- Shopee -----
@@ -95,8 +94,7 @@ async def main():
             # recarregar: tudo ligado, nenhuma chave volta para a página
             await pg.reload()
             await pg.wait_for_timeout(1000)
-            await pg.click('.tabbar [data-view="mais"]')
-            await pg.click("#aba-integracoes")
+            await abrir_mais(pg, "integracoes")
             await st(pg, "iSt", "Ligado")
             check(await pg.text_content("#shSt") == "Ligada. Os preços da Shopee vêm direto da Shopee.", "Shopee ligada")
             check(await pg.text_content("#gSt") == "Ligada: as lojas vêm do OpenStreetMap e do Google Maps.", "Google ligado")

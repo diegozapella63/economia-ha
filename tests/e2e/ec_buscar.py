@@ -33,7 +33,7 @@ async def main():
             b, pg = await pagina(p)
             await pg.goto(app.url)
             await pg.wait_for_timeout(1200)
-            check("Salve o CEP em Mais e toque em Buscar" in await pg.text_content("#bannerTxt"), "sem busca ainda: o exemplo, com o aviso")
+            check("Salve o CEP em Mais › Casa e toque em Buscar" in await pg.text_content("#bannerTxt"), "sem busca ainda: o exemplo, com o aviso")
             check(await pg.text_content("#syncText") == "Nenhuma busca ainda", "nenhuma busca ainda")
             await pg.click('.tabbar [data-view="lista"]')
             await pg.click("#buscar")

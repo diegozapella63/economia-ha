@@ -324,7 +324,7 @@ def nome_item(i):
     return str((i.get("produto") if isinstance(i, dict) else i) or "").strip()
 
 
-IA_DESLIGADA = "A IA está desligada. Para usar, ligue em Mais › Integrações › Usar IA."
+IA_DESLIGADA = "A IA está desligada. Para usar, ligue em Mais › Configurações › Integrações › Usar IA."
 OPCOES_PADRAO = {"itens_sem_preco": True, "encartes_auto": True, "lojas_diretas": True, "folhetos": True}
 
 
@@ -550,12 +550,12 @@ def opcoes():
 
 COMO_BUSCA = ("Na Anthropic, ligue a busca na web nas opções da tarefa de IA. "
               "No Google Gemini, a Pesquisa Google só funciona num assistente de conversa: ligue \"Enable Google Search tool\" "
-              "nele e escolha esse assistente em Mais → IA do Home Assistant → Para buscar ofertas.")
+              "nele e escolha esse assistente em Mais › Configurações › Integrações › Para buscar ofertas.")
 SEM_BUSCA = "A IA escolhida não usou a busca na web. " + COMO_BUSCA
 
 
 def ia_escolhida(uso):
-    """Entidade escolhida em Mais (busca ou fotos); em branco, a opção antiga do add-on ou a preferida do HA."""
+    """Entidade escolhida em Mais › Configurações › Integrações (busca ou fotos); em branco, a opção antiga do add-on ou a preferida do HA."""
     if uso == "conversa":
         return ia_da_conversa()
     ent = str(((ler_config().get("ia") or {}).get(uso)) or "").strip()
@@ -771,7 +771,7 @@ def _chamar_ai_task(nome, instrucoes, anexos=None, uso="busca"):
     entidade = ia_escolhida(uso)
     if entidade.startswith("conversation."):
         if anexos:
-            raise ErroBusca("Um assistente de conversa não lê imagens. Em Mais → IA do Home Assistant, escolha uma tarefa de IA para ler fotos.")
+            raise ErroBusca("Um assistente de conversa não lê imagens. Em Mais › Configurações › Integrações, escolha uma tarefa de IA para ler fotos.")
         return chamar_conversa(entidade, instrucoes)
     corpo = {"task_name": nome, "instructions": instrucoes}
     if anexos:
@@ -791,7 +791,7 @@ def _chamar_ai_task(nome, instrucoes, anexos=None, uso="busca"):
         corpo_erro = e.read().decode("utf-8", "ignore")[:300]
         if e.code in (400, 404) and ("not found" in corpo_erro.lower() or "ai_task" in corpo_erro.lower()):
             raise ErroBusca("Falta uma IA no Home Assistant. Configure uma integração de IA (Anthropic, OpenAI, Google Gemini...) "
-                            "em Configurações → Dispositivos e serviços e escolha-a em Mais → IA do Home Assistant.") from e
+                            "em Configurações → Dispositivos e serviços e escolha-a em Mais › Configurações › Integrações.") from e
         if e.code == 401:
             raise ErroBusca("O add-on não tem permissão para usar o Home Assistant. Reinstale a versão mais nova.") from e
         if e.code == 429 or e_cota(corpo_erro):
@@ -2527,9 +2527,9 @@ def ml_pede(caminho, dados=None, token=None):
             _ml["pausa"] = time.time() + 600
             raise ErroBusca("O Mercado Livre pediu para esperar (consultas demais). Tento de novo em 10 minutos.") from e
         if motivo == "invalid_grant":
-            raise ErroBusca("O Mercado Livre não aceitou a autorização (código usado, vencido ou revogado). Autorize de novo em Mais › Integrações.") from e
+            raise ErroBusca("O Mercado Livre não aceitou a autorização (código usado, vencido ou revogado). Autorize de novo em Mais › Configurações › Integrações.") from e
         if motivo == "invalid_client":
-            raise ErroBusca("O Mercado Livre recusou o App ID ou a chave secreta. Confira em Mais › Integrações.") from e
+            raise ErroBusca("O Mercado Livre recusou o App ID ou a chave secreta. Confira em Mais › Configurações › Integrações.") from e
         raise ErroBusca(f"O Mercado Livre respondeu com erro {e.code}" + (f": {msg}" if msg else "") + ".") from e
 
 
@@ -2732,7 +2732,7 @@ def shopee_pronta():
 def shopee_consulta(query):
     chaves = shopee_chaves()
     if not chaves:
-        raise ErroShopee("Falta o App ID e a senha da Shopee em Mais › Integrações.")
+        raise ErroShopee("Falta o App ID e a senha da Shopee em Mais › Configurações › Integrações.")
     app, senha = chaves
     corpo = json.dumps({"query": query}, separators=(",", ":"), ensure_ascii=False)
     ts = str(int(time.time()))
@@ -3556,7 +3556,7 @@ def graph_get(caminho, params, token, timeout=25):
             err = {}
         c, msg = err.get("code"), str(err.get("message") or "")
         if c == 190:
-            raise ErroBusca("A chave do Instagram venceu ou foi cancelada. Gere outra e cole em Mais › Integrações.") from e
+            raise ErroBusca("A chave do Instagram venceu ou foi cancelada. Gere outra e cole em Mais › Configurações › Integrações.") from e
         if c in (4, 17, 32, 613):
             raise ErroBusca("O Instagram pediu para esperar (limite de consultas). Tento de novo mais tarde.") from e
         if c == 110 or err.get("error_subcode") == 2207013 or "cannot find user" in msg.lower():
@@ -4896,7 +4896,7 @@ def quem_le(cfg, o_que):
     o Instagram também segue a opção Folhetos)."""
     if not ia_ligada(cfg):
         return f"; ler {o_que} precisa da IA."
-    return "; a IA lê na próxima busca." if opcao("folhetos", cfg) else "; Folhetos desligados em Mais › Opções."
+    return "; a IA lê na próxima busca." if opcao("folhetos", cfg) else "; Folhetos desligados em Mais › Configurações › Opções."
 
 
 def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto, forcar=False):
@@ -5045,7 +5045,7 @@ def testa_preco_loja(cat_id, nome, l, memo, cidade, cache_f, cfg, buscas_folheto
                 else:
                     st["passos"].append(f"✗ Instagram @{h}: nenhum post de oferta nos últimos {INSTA_DIAS} dias.")
         else:
-            st["passos"].append(f"Tem Instagram (@{h}): ligue o Instagram em Mais › Integrações para ler os encartes.")
+            st["passos"].append(f"Tem Instagram (@{h}): ligue o Instagram em Mais › Configurações › Integrações para ler os encartes.")
     if not st["como"]:
         guardados = [v for v in (cache_f.get("itens") or {}).values() if norm(v.get("loja", "")) == norm(nome) and v.get("r")]
         if guardados:
@@ -5109,7 +5109,7 @@ def brave_busca(q, chave, n=10):
             d = json.loads(r.read(3_000_000).decode("utf-8") or "{}")
     except urllib.error.HTTPError as e:
         if e.code in (401, 403, 422):
-            raise ErroBusca(f"O Brave recusou a chave ({e.code}). Confira em Mais › Integrações.") from e
+            raise ErroBusca(f"O Brave recusou a chave ({e.code}). Confira em Mais › Configurações › Integrações.") from e
         if e.code == 429:
             raise ErroBusca("O Brave pediu para esperar (limite de buscas do plano).") from e
         raise ErroBusca(f"O Brave respondeu com erro {e.code}.") from e
@@ -5300,7 +5300,7 @@ def testa_marketplace(cfg, mid, nome, memo):
             if nodes is not None:
                 st["passos"].append("✗ A API de afiliados da Shopee não trouxe produtos no teste.")
         else:
-            st["passos"].append("A Shopee tem API de afiliados, que dá preço sem IA: ligue em Mais › Integrações.")
+            st["passos"].append("A Shopee tem API de afiliados, que dá preço sem IA: ligue em Mais › Configurações › Integrações.")
     o = MKT_SITES.get(mid)
     if o:
         st["site"] = o.split("://", 1)[-1].replace("www.", "")
@@ -5500,7 +5500,7 @@ def buscar():
     BUSCA.update({"rodando": True, "erro": None, "avisos": [], "atual": 0, "total": len(cats), "etapa": None, "chamadas_ia": None})
     try:
         if not cfg.get("cep"):
-            raise ErroBusca("Salve o CEP em Mais antes de buscar.")
+            raise ErroBusca("Salve o CEP em Mais › Casa antes de buscar.")
         anterior = ler_json(OFERTAS, {}) or {}
         antigas = {c.get("id"): c for c in (anterior.get("categorias") or []) if isinstance(c, dict)}
         novas, parciais, falhas = [], [], []
@@ -5730,7 +5730,7 @@ def buscar_itens(itens):
                   "etapa": (itens[0] if len(itens) == 1 else f"{len(itens)} itens").lower()})
     try:
         if not cfg.get("cep"):
-            raise ErroBusca("Salve o CEP em Mais antes de buscar.")
+            raise ErroBusca("Salve o CEP em Mais › Casa antes de buscar.")
         resultado, rel, _ = busca_scripts(cfg, cats, itens, ler_folhetos=False)
         conta = {n: sum(len(p[n]["precos"]) for _, p in resultado if n in p) for n in itens}
         faltam = [n for n in itens if conta[n] < 2]
@@ -5970,7 +5970,7 @@ VOZ = voz.Voz(HA_API, HA_WS, None, lambda *a: log(" ".join(str(x) for x in a)), 
 
 def voz_status():
     if not ia_ligada():
-        return {"pronta": False, "motivo": "A IA está desligada em Mais › Integrações."}
+        return {"pronta": False, "motivo": "A IA está desligada em Mais › Configurações › Integrações."}
     VOZ.token = token_ha()
     if not VOZ.token and not VOZ_SIMULADA:
         return {"pronta": False, "motivo": "Fora do Home Assistant não dá para falar."}
@@ -6301,7 +6301,7 @@ def conversar(dado):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/1.2.0"
+    server_version = "EconomIA/1.3.0"
 
     def log_message(self, fmt, *args):
         pass
@@ -6671,7 +6671,7 @@ class Painel(BaseHTTPRequestHandler):
                 return self._json(202, {"ok": True, "ja_rodando": True})
             cfg = ler_json(CONFIG, {}) or {}
             if not cfg.get("cep"):
-                return self._json(400, {"erro": "Salve o CEP em Mais antes de buscar."})
+                return self._json(400, {"erro": "Salve o CEP em Mais › Casa antes de buscar."})
             BUSCA["rodando"] = True
         threading.Thread(target=alvo, args=args, daemon=True).start()
         self._json(202, {"ok": True})

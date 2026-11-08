@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 
 from playwright.async_api import async_playwright
 
-from base_e2e import CEP, SHOTS, App, HAFalso, categoria, check, espera, pagina, resumo
+from base_e2e import CEP, SHOTS, App, HAFalso, abrir_mais, categoria, check, espera, pagina, resumo
 
 HOJE = (datetime.now(timezone.utc) - timedelta(hours=3)).date()
 D = lambda n: (HOJE + timedelta(days=n)).isoformat()  # noqa: E731
@@ -51,8 +51,7 @@ async def main():
             a, c = await caixa(pg, 'section[aria-labelledby="h-ofertas"]'), await caixa(pg, 'section[aria-labelledby="h-cupons"]')
             check(abs(a["y"] - c["y"]) < 2 and c["x"] > a["x"] + a["width"] - 1, "Ofertas e Cupons lado a lado")
             await pg.screenshot(path=SHOTS + "/ecdk-ofertas.png")
-            await pg.click('#lado [data-lado="mais"]')
-            await pg.click("#aba-casa")
+            await abrir_mais(pg, "casa", computador=True)
             a, c = await caixa(pg, 'section[aria-labelledby="h-onde"]'), await caixa(pg, 'section[aria-labelledby="h-restr"]')
             check(abs(a["y"] - c["y"]) < 2 and c["x"] > a["x"], "Mais › Casa em duas colunas")
             # ações do alto

@@ -7,7 +7,7 @@ import asyncio
 
 from playwright.async_api import async_playwright
 
-from base_e2e import CEP, SHOTS, App, check, pagina, resumo
+from base_e2e import CEP, SHOTS, App, abrir_mais, check, pagina, resumo
 
 HEX = "(h) => { h = h.trim().replace('#', ''); return `rgb(${parseInt(h.slice(0, 2), 16)}, ${parseInt(h.slice(2, 4), 16)}, ${parseInt(h.slice(4, 6), 16)})`; }"
 
@@ -21,9 +21,7 @@ async def tocar(pg, sel):
 
 
 async def abrir_casa(pg, computador=False):
-    await pg.click('#lado [data-lado="mais"]' if computador else '.tabbar [data-view="mais"]')
-    await pg.wait_for_timeout(200)
-    await pg.click("#aba-casa")
+    await abrir_mais(pg, "casa", computador)
     await pg.wait_for_timeout(200)
 
 
@@ -37,8 +35,7 @@ async def main():
                 await pg.goto(app.url)
                 await pg.wait_for_timeout(1200)
                 if not escuro:
-                    await pg.click('.tabbar [data-view="mais"]')
-                    await pg.click("#aba-aparencia")
+                    await abrir_mais(pg, "aparencia")
                     await pg.click('#tema [data-v="claro"]')
                 await abrir_casa(pg)
                 cx = "#estoque"

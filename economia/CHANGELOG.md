@@ -1,5 +1,15 @@
 # Mudanças
 
+## 1.3.0
+
+- **Mais virou um menu, igual ao dos outros apps** (GerencIA, InventarIA): uma linha para cada coisa, com o ícone, o nome e o que tem, e cada uma abre a sua tela.
+  - **Casa** e **Lojas** ganharam tela própria.
+  - **Configurações** junta, em abas, **Integrações**, **Dados**, **Aparência** e **Opções**. A aba escolhida fica guardada.
+  - **Sobre** é a última linha do menu, fácil de achar.
+  - O **‹ Mais** no alto, o Voltar do celular e arrastar para a direita voltam para o menu. Aberta por um atalho (como **Preencher o perfil**), o Voltar volta para onde você estava.
+  - O ícone de **Mais**, embaixo e na barra lateral, agora são os três pontinhos, como nos outros apps.
+- Os avisos que mandam para outro lugar já dizem o caminho novo, como **Mais › Configurações › Integrações**.
+
 ## 1.2.0
 
 - **Caixas de seleção** (a distância, o espaço para estoque, o tipo de loja, as IAs, a lista do Home Assistant, a loja de um item) abrem uma janela no visual do app, de baixo para cima, com as opções em linhas e a atual marcada na cor do app, no tema escuro ou claro, e não mais a janela padrão do celular, como nos outros apps da família. O Voltar do celular, o X ou tocar fora fecham só ela.

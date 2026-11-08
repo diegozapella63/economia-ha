@@ -52,7 +52,7 @@ A busca começa pelo que não gasta IA (os sites das lojas, os folhetos e a Shop
 - **Integrações opcionais**: Google Places (as lojas pequenas), Brave Search (o site das lojas sem site), Mercado Livre (confere a categoria do produto), Instagram das lojas e Shopee Afiliados. As chaves ficam só no Home Assistant.
 - **Uso da IA**: quantas chamadas a busca, a leitura de fotos, o Falar e a Conversa fizeram por dia, erros de cota e tokens estimados, com o sensor `sensor.economia_ia_hoje` para painel e automação.
 - **Perfil da casa**: quem mora, pets, restrições e interesses decidem o que aparece.
-- **Mais em abas** (Casa, Lojas, Integrações, Dados, Aparência e Opções), com **Usar IA**, sensores opcionais, versões anteriores, exportação para Excel e JSON, tema claro ou escuro e 10 cores.
+- **Mais, um menu** como nos outros apps: Casa, Lojas, Configurações (Integrações, Dados, Aparência e Opções, com **Usar IA**, sensores opcionais, versões anteriores, exportação para Excel e JSON, tema claro ou escuro e 10 cores) e Sobre.
 
 Mais detalhes em [economia/DOCS.md](economia/DOCS.md).
 

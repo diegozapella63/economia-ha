@@ -141,7 +141,7 @@ class Busca(Cenario):
         S = self.S
         self.config(cep="", lista=LISTA)
         S.buscar()
-        self.assertEqual(S.BUSCA["erro"], "Salve o CEP em Mais antes de buscar.")
+        self.assertEqual(S.BUSCA["erro"], "Salve o CEP em Mais › Casa antes de buscar.")
         self.assertEqual(self.ha.chamadas_ia, [])
 
     def test_ia_desligada_so_os_sites(self):
@@ -358,7 +358,7 @@ class BuscarItens(Cenario):
         self.assertEqual(len(ha.chamadas_ia), n, "IA desligada: só os sites")
         self.config(cep="", lista=[])
         S.buscar_itens(["x"])
-        self.assertEqual(S.BUSCA["erro"], "Salve o CEP em Mais antes de buscar.")
+        self.assertEqual(S.BUSCA["erro"], "Salve o CEP em Mais › Casa antes de buscar.")
 
 
 class BuscaBordas(Cenario):

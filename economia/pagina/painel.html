@@ -607,7 +607,7 @@ h3{font-size:13px;font-weight:600}
 /* Usar IA desligado: some tudo o que usa IA */
 .sem-ia .so-ia{display:none!important}
 html:not(.sem-ia) .so-semia{display:none!important}
-/* etapa da busca desligada em Mais › Opções: some da ordem da busca */
+/* etapa da busca desligada em Mais › Configurações › Opções: some da ordem da busca */
 .sem-diretas .so-diretas,.sem-folhetos .so-folhetos,.sem-itens .so-itens{display:none!important}
 /* Escolher fotos, Colar mensagem e Falar numa linha só, em quadrinhos */
 .ler-tiles{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:8px}
@@ -615,7 +615,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
 .ler-tile:hover{border-color:var(--accent)}
 .ler-tile:active{transform:scale(.98)}
 .ler-tile svg{width:22px;height:22px;flex:none;fill:none;stroke:var(--accent);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-/* Mais em abas, presas no alto ao rolar */
+/* Mais › Configurações em abas, presas no alto ao rolar */
 .mais-abas{position:sticky;top:0;z-index:12;display:flex;gap:2px;padding:4px;border-radius:14px;background:color-mix(in srgb,var(--surface) 45%,var(--bg));border:1px solid var(--line);box-shadow:0 0 0 8px var(--bg);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .mais-abas::-webkit-scrollbar{display:none}
 .mais-abas button{flex:1 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:40px;padding:0 12px;border:0;border-radius:10px;background:none;color:var(--muted);font-size:15px;font-weight:500;white-space:nowrap}
@@ -626,23 +626,29 @@ html:not(.sem-ia) .so-semia{display:none!important}
 :root[data-theme="dark"] .mais-abas button[aria-selected="true"],:root[data-theme="dark"] .seg.temas button[aria-checked="true"]{background:color-mix(in srgb,var(--ink) 13%,var(--surface))}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .mais-abas button[aria-selected="true"],:root:not([data-theme="light"]) .seg.temas button[aria-checked="true"]{background:color-mix(in srgb,var(--ink) 13%,var(--surface))}}
 @media (max-width:600px){.mais-abas svg{display:none}.mais-abas button{padding:0 9px;font-size:14.5px}}
+@media (max-width:360px){.mais-abas button{padding:0 5px;font-size:14px}}
 .mais-painel{display:flex;flex-direction:column;gap:18px;min-height:60vh}
 .painel-lead{color:var(--muted);font-size:15px;max-width:64ch}
 .foot{margin:12px 0 0;text-align:center;color:var(--muted);font-size:13px;line-height:1.6}
 .foot b{font-family:var(--font-display);font-weight:600;font-size:19px;color:var(--ink)}
-/* Mais › Sobre: a última linha de Mais e a página, a mesma dos outros apps (a do CronologIA), nas cores e fontes daqui */
-.menu-row{display:flex;align-items:center;gap:14px;width:100%;min-height:68px;padding:12px 14px 12px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);text-align:left;-webkit-tap-highlight-color:transparent}
+/* Mais: um menu, como no GerencIA e no InventarIA. Cada função na sua linha e na sua tela (Casa, Lojas), depois
+   Configurações (em abas) e, por último, Sobre (a página dos outros apps, a do CronologIA, nas cores e fontes daqui) */
+.menu-list{margin:4px 0 0;padding:0;list-style:none;border-top:1px solid var(--line)}
+.menu-row{display:flex;align-items:center;gap:14px;width:100%;min-height:76px;padding:12px 4px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;color:var(--ink);text-align:left;-webkit-tap-highlight-color:transparent}
+.menu-row .h-ic{width:38px;height:38px;border-radius:11px}
+.menu-row .h-ic svg{width:21px;height:21px}
 .menu-row .mb,.sb-app .mb{flex:1;min-width:0;display:grid;gap:2px}
-.menu-row b{font-size:16px;font-weight:600;line-height:1.3}
+.menu-row b{font-size:17px;font-weight:600;line-height:1.3}
 .menu-row .mb > span,.sb-app .mb > span{color:var(--muted);font-size:14px;line-height:1.35}
-.menu-row .chev{flex:none;width:20px;height:20px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.menu-row:active{background:color-mix(in srgb,var(--ink) 6%,var(--surface))}
-@media (hover:hover){.menu-row:hover{border-color:var(--accent)}}
+.menu-row .chev{flex:none;width:18px;height:18px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.menu-row:active{background:var(--surface)}
+@media (hover:hover){.menu-row:hover{background:var(--surface)}.menu-row:hover b{color:var(--accent)}}
 .uplink{display:inline-flex;align-items:center;gap:4px;min-height:40px;margin:8px 0 -2px -8px;padding:6px 12px 6px 4px;border:0;border-radius:10px;background:none;color:var(--muted);font-size:15px;font-weight:500;-webkit-tap-highlight-color:transparent}
 .uplink svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .uplink:active{background:var(--surface);color:var(--ink)}
 @media (hover:hover){.uplink:hover{background:var(--surface);color:var(--ink)}}
-.na-sobre .cab .sync,.na-sobre #banner{display:none!important}
+/* no menu de Mais e em Sobre, sem a linha da busca e o aviso de exemplo */
+.na-menu .cab .sync,.na-menu #banner,.na-sobre .cab .sync,.na-sobre #banner{display:none!important}
 .sobre-topo{position:relative;overflow:hidden;text-align:center;padding:30px 20px 26px;border-radius:14px;border:1px solid var(--line);background:radial-gradient(120% 90% at 50% 0%,var(--accent-soft),transparent 70%),var(--surface)}
 .sb-raio{display:inline-grid;place-items:center;width:58px;height:58px;border-radius:18px;transform:rotate(-8deg);background:var(--accent);color:var(--on-accent);box-shadow:0 10px 24px -12px var(--accent)}
 .sb-raio svg{width:30px;height:30px;fill:currentColor;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
@@ -791,10 +797,9 @@ html:not(.sem-ia) .so-semia{display:none!important}
   .cab h1{grid-column:1;grid-row:2;font-size:46px}
   .cab .sync{grid-column:1;grid-row:3}
   .cab .uplink{grid-column:1;grid-row:2;justify-self:start}
-  .na-sobre .cab h1{grid-row:3}
-  .menu-row{border-width:1px 0;border-radius:0;background:none;padding-inline:0}
-  .menu-row:hover{border-color:var(--line)}
-  .menu-row:hover b{color:var(--accent)}
+  .na-tela .cab h1{grid-row:3}
+  .na-tela .cab .sync{grid-row:4}
+  .na-tela .top-acts{grid-row:1 / span 3}
   .cab-topo .mic-top{display:none!important}
   .top-acts{display:flex;grid-column:2;grid-row:1 / span 2;align-items:center;gap:8px}
   .top-acts .mic-top{margin:0;width:40px;height:40px}
@@ -1173,15 +1178,19 @@ html:not(.sem-ia) .so-semia{display:none!important}
 
   <!-- MAIS -->
   <section class="view" id="v-mais" aria-label="Mais" hidden>
-    <div class="mais-abas" id="maisAbas" role="tablist" aria-label="Seções de Mais">
-      <button type="button" role="tab" id="aba-casa" data-aba="casa" aria-controls="mp-casa" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Casa</span></button>
-      <button type="button" role="tab" id="aba-lojas" data-aba="lojas" aria-controls="mp-lojas" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 11v9h14v-9"/><path d="M10 20v-5h4v5"/></svg><span>Lojas</span></button>
+    <nav id="maisMenu" aria-label="Mais"><ul class="menu-list">
+      <li><button type="button" class="menu-row" id="menu-casa" data-mais="casa"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span><span class="mb"><b>Casa</b><span>CEP, quem mora, rotina e preferências.</span></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></li>
+      <li><button type="button" class="menu-row" id="menu-lojas" data-mais="lojas"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 11v9h14v-9"/><path d="M10 20v-5h4v5"/></svg></span><span class="mb"><b>Lojas</b><span>Perto de casa, clubes e cupons do app.</span></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></li>
+      <li><button type="button" class="menu-row" id="menu-config" data-mais="config"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></span><span class="mb"><b>Configurações</b><span>Integrações, dados, aparência e opções.</span></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></li>
+      <li><button type="button" class="menu-row" id="sobreBtn" data-mais="sobre"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span><span class="mb"><b>Sobre</b><span>CorrerIA Code, os apps e o GitHub.</span></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></li>
+    </ul></nav>
+    <div class="mais-abas" id="maisAbas" role="tablist" aria-label="Seções de Configurações">
       <button type="button" role="tab" id="aba-integracoes" data-aba="integracoes" aria-controls="mp-integracoes" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14v7M14 17.5h7"/></svg><span>Integrações</span></button>
       <button type="button" role="tab" id="aba-dados" data-aba="dados" aria-controls="mp-dados" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="5" rx="1"/><path d="M4.5 9v10a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1V9M10 13h4"/></svg><span>Dados</span></button>
       <button type="button" role="tab" id="aba-aparencia" data-aba="aparencia" aria-controls="mp-aparencia" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0 0 18c1.1 0 1.8-.8 1.8-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14.5" cy="7" r="1"/></svg><span>Aparência</span></button>
       <button type="button" role="tab" id="aba-opcoes" data-aba="opcoes" aria-controls="mp-opcoes" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="6"/><circle cx="16" cy="12" r="3"/></svg><span>Opções</span></button>
     </div>
-    <div class="mais-painel" id="mp-casa" role="tabpanel" aria-labelledby="aba-casa" hidden>
+    <div class="mais-painel" id="mp-casa" aria-label="Casa" hidden>
       <div class="cols even"><div class="col">
         <section class="panel" aria-labelledby="h-onde">
           <div class="sec-head"><h2 id="h-onde"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span>Onde</h2></div>
@@ -1247,7 +1256,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
         </section>
       </div></div>
     </div>
-    <div class="mais-painel" id="mp-lojas" role="tabpanel" aria-labelledby="aba-lojas" hidden>
+    <div class="mais-painel" id="mp-lojas" aria-label="Lojas" hidden>
       
       <div class="cols even" id="lojasSec"><div class="col">
         <section class="panel" aria-labelledby="h-lojas">
@@ -1489,10 +1498,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     </section>
     </div>
     <div class="mais-painel sb-pagina" id="mp-sobre" aria-label="Sobre" hidden></div>
-    <nav class="mais-fim" id="maisFim" aria-label="Sobre o app">
-      <button type="button" class="menu-row" id="sobreBtn"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span><span class="mb"><b>Sobre</b><span>CorrerIA Code, os apps e o GitHub.</span></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
-    </nav>
-    <p class="foot" id="maisPe"><b>EconomIA</b><br><span id="versaoTxt">v1.2.0</span></p>
+    <p class="foot" id="maisPe"><b>EconomIA</b><br><span id="versaoTxt">v1.3.0</span></p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -1504,7 +1510,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     <button type="button" class="tab" data-view="roteiro"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H16a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h7.5"/></svg>Roteiro</button>
     <button type="button" class="tab tab-main" id="buscar"><span class="pill"><svg class="ic-busca" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><svg class="ic-gira" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></span><span id="buscarTxt">Buscar</span></button>
     <button type="button" class="tab" data-view="ofertas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/></svg>Ofertas</button>
-    <button type="button" class="tab" data-view="mais"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Mais</button>
+    <button type="button" class="tab" data-view="mais"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 12h.01M12 12h.01M18.5 12h.01" stroke-width="3.2"/></svg>Mais</button>
   </div>
 </nav>
 
@@ -1593,8 +1599,20 @@ html:not(.sem-ia) .so-semia{display:none!important}
   var ui = lerLocal(KEY_UI) || {};
   var VIEWS = ['lista', 'roteiro', 'ofertas', 'mais'];
   var TITULOS = {lista:'Minha lista', roteiro:'Roteiro', ofertas:'Ofertas', mais:'Mais'};
+  // Mais é um menu: as telas (ui.maisTela; '' é o menu) e as abas de Configurações (ui.maisAba)
+  var MAIS_IDS = ['casa', 'lojas', 'config', 'sobre'];
+  var MAIS_TELAS = {casa:'Casa', lojas:'Lojas', config:'Configurações', sobre:'Sobre'};
+  var CONFIG_ABAS = ['integracoes', 'dados', 'aparencia', 'opcoes'];
+  // Até a 1.2, Mais era em abas (maisAba): Casa e Lojas viraram telas e o resto foi para Configurações. Quem abre o app
+  // atualizado em Mais volta no mesmo lugar, já no caminho novo.
+  if (!ui.menuMais){
+    var abaVelha = ui.maisAba;
+    if (ui.view === 'mais' && !ui.maisTela && abaVelha) ui.maisTela = abaVelha === 'casa' || abaVelha === 'lojas' ? abaVelha : 'config';
+    if (CONFIG_ABAS.indexOf(abaVelha) < 0) ui.maisAba = 'integracoes';
+    ui.menuMais = 1;
+  }
   var hash = (location.hash || '').slice(1);
-  if (hash === 'lojas' || ui.view === 'lojas'){ hash = ''; ui.view = 'mais'; ui.maisAba = 'lojas'; }  // Lojas fica em Mais › Lojas
+  if (hash === 'lojas' || ui.view === 'lojas'){ hash = ''; ui.view = 'mais'; ui.maisTela = 'lojas'; }  // Lojas fica em Mais › Lojas
   if (VIEWS.indexOf(hash) >= 0) ui.view = hash;
   if (VIEWS.indexOf(ui.view) < 0) ui.view = 'lista';
   function salvarUI(){ gravarLocal(KEY_UI, ui); }
@@ -1725,29 +1743,36 @@ html:not(.sem-ia) .so-semia{display:none!important}
   function nota(o){ return (naLista(o) ? 1000 : 0) + (interesse(o) ? 500 : 0) + pct(o) - (o.tipo === 'clube' && estado.clubes.indexOf(o.rede) < 0 ? 300 : 0); }
 
   // ---------- telas ----------
-  // tela: 'sobre' abre Mais › Sobre; sem ela, qualquer caminho (abas de baixo, barra lateral, arrastar, ‹ Mais) sai de lá
+  // Mais é um menu, como no GerencIA e no InventarIA: Casa e Lojas (as funções do app), Configurações (em abas) e, por
+  // último, Sobre, cada um na sua tela. tela: uma de MAIS_IDS abre a tela; sem ela, Mais abre no menu, e qualquer outro
+  // caminho (abas de baixo, barra lateral, arrastar, ‹ Mais) sai da tela.
+  var TELA_DE = null;  // a aba de baixo de onde um atalho abriu a tela (Preencher o perfil, Buscar sem CEP): o Voltar volta para ela
   function irPara(v, tela){
-    ui.view = v; ui.maisTela = v === 'mais' && tela === 'sobre' ? 'sobre' : ''; salvarUI();
-    var sobre = !!ui.maisTela;
-    $('screenTitle').textContent = sobre ? 'Sobre' : TITULOS[v];
+    var de = ui.view, antes = ui.view === 'mais' ? ui.maisTela : '';
+    ui.view = v; ui.maisTela = v === 'mais' && MAIS_IDS.indexOf(tela) >= 0 ? tela : ''; salvarUI();
+    var t = ui.maisTela, menu = v === 'mais' && !t, cls = document.documentElement.classList;
+    if (!t) TELA_DE = null;
+    else if (t !== antes) TELA_DE = antes || de === 'mais' ? null : de;  // do menu (ou de outra tela de Mais), o Voltar vai ao menu
+    $('screenTitle').textContent = t ? MAIS_TELAS[t] : TITULOS[v];
     VIEWS.forEach(function(x){ $('v-' + x).hidden = x !== v; });
     Array.prototype.forEach.call($('views').querySelectorAll('button[data-view]'), function(b){
       if (b.dataset.view === v) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
     });
-    document.documentElement.classList.toggle('na-sobre', sobre);
-    $('maisVolta').hidden = $('mp-sobre').hidden = !sobre;
-    $('maisAbas').hidden = $('maisFim').hidden = $('maisPe').hidden = sobre;
-    if (sobre) MAIS_ABAS.forEach(function(x){ $('mp-' + x).hidden = true; });
-    else if (v === 'mais') abaMais(ui.maisAba);
+    cls.toggle('na-menu', menu); cls.toggle('na-tela', !!t); cls.toggle('na-sobre', t === 'sobre');
+    $('maisVolta').hidden = !t;
+    $('maisMenu').hidden = !menu;
+    $('maisAbas').hidden = t !== 'config';
+    ['casa', 'lojas', 'sobre'].forEach(function(x){ $('mp-' + x).hidden = t !== x; });
+    if (t === 'config') abaConfig(ui.maisAba); else CONFIG_ABAS.forEach(function(x){ $('mp-' + x).hidden = true; });
+    $('maisPe').hidden = t === 'sobre';  // em Sobre, a versão está em Este app
     marcarTela();
     pintaLado();
   }
-  // Mais em abas, como nos outros apps: Casa, Lojas, Integrações, Dados, Aparência e Opções
-  var MAIS_ABAS = ['casa', 'lojas', 'integracoes', 'dados', 'aparencia', 'opcoes'];
-  function abaMais(k){
-    if (MAIS_ABAS.indexOf(k) < 0) k = 'casa';
+  // Configurações em abas, como nos outros apps: Integrações, Dados, Aparência e Opções (a aba fica guardada)
+  function abaConfig(k){
+    if (CONFIG_ABAS.indexOf(k) < 0) k = 'integracoes';
     ui.maisAba = k; salvarUI();
-    MAIS_ABAS.forEach(function(x){
+    CONFIG_ABAS.forEach(function(x){
       var b = $('aba-' + x), on = x === k;
       b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; $('mp-' + x).hidden = !on;
     });
@@ -1757,24 +1782,27 @@ html:not(.sem-ia) .so-semia{display:none!important}
     if (k === 'opcoes' && typeof carregaDiretas === 'function') carregaDiretas();
     if (k === 'integracoes' && typeof carregaShopee === 'function') carregaShopee();
   }
-  function irParaAba(k, alvo){
-    ui.maisAba = k; irPara('mais');
+  // abre uma tela de Mais (com a aba, em Configurações), no alto ou no quadro pedido
+  function abrirMais(tela, aba, alvo){
+    if (aba) ui.maisAba = aba;
+    irPara('mais', tela);
     if (alvo && $(alvo)) $(alvo).scrollIntoView({block:'start'}); else window.scrollTo(0, 0);
   }
+  $('maisMenu').addEventListener('click', function(e){ var b = e.target.closest('[data-mais]'); if (b) abrirMais(b.dataset.mais); });
   $('maisAbas').addEventListener('click', function(e){
     var b = e.target.closest('[data-aba]'); if (!b) return;
-    abaMais(b.dataset.aba);
+    abaConfig(b.dataset.aba);
     var topo = $('v-mais').getBoundingClientRect().top + window.scrollY - 8;
     if (window.scrollY > topo) window.scrollTo(0, topo);
   });
   $('maisAbas').addEventListener('keydown', function(e){
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-    var i = MAIS_ABAS.indexOf(ui.maisAba) + (e.key === 'ArrowRight' ? 1 : -1);
-    abaMais(MAIS_ABAS[(i + MAIS_ABAS.length) % MAIS_ABAS.length]); $('aba-' + ui.maisAba).focus(); e.preventDefault();
+    var i = CONFIG_ABAS.indexOf(ui.maisAba) + (e.key === 'ArrowRight' ? 1 : -1);
+    abaConfig(CONFIG_ABAS[(i + CONFIG_ABAS.length) % CONFIG_ABAS.length]); $('aba-' + ui.maisAba).focus(); e.preventDefault();
   });
   $('views').addEventListener('click', function(e){ var b = e.target.closest('button[data-view]'); if (b){ irPara(b.dataset.view); window.scrollTo(0, 0); } });
 
-  // ----- Mais › Sobre: a última linha de Mais. Quem faz os apps (CorrerIA Code), os apps da família, cada um com a sua
+  // ----- Mais › Sobre: a última linha do menu de Mais. Quem faz os apps (CorrerIA Code), os apps da família, cada um com a sua
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   var VERSAO = $('versaoTxt').textContent.replace(/^v/, '');
@@ -1815,9 +1843,9 @@ html:not(.sem-ia) .so-semia{display:none!important}
         + (aqui ? '<em class="sb-aqui">Este app · v' + VERSAO + '</em>' : '') + '</b><span>' + p[3] + '</span></span>' + svgSobre('fora', 'sb-ext'), 'sb-app' + (aqui ? ' aqui' : '')) + '</li>';
     }).join('') + '</ul></section>'
     + linkFora(GITHUB, svgSobre('fora') + 'Meu GitHub', 'btn sb-github');
-  $('sobreBtn').addEventListener('click', function(){ irPara('mais', 'sobre'); window.scrollTo(0, 0); });
   $('maisVolta').addEventListener('click', function(){ irPara('mais'); window.scrollTo(0, 0); });
-  // Sobre ocupa uma entrada no histórico ({tela:'sobre'}): o Voltar do celular volta para Mais. Saindo de outro jeito
+  // Uma tela de Mais (Casa, Lojas, Configurações, Sobre) ocupa uma entrada no histórico ({tela}), como no GerencIA: o
+  // Voltar do celular volta para o menu (ou para a aba de baixo do atalho que abriu a tela). Saindo de outro jeito
   // (‹ Mais, as abas de baixo, a barra lateral, arrastar), a entrada é desfeita, para o Voltar seguinte não cair nela.
   var TELA_VISTA = '';
   function histTela(){ try { return (history.state && history.state.tela) || ''; } catch(e){ return ''; } }
@@ -1834,7 +1862,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     if (!estado) return;
     var t = histTela(), agora = ui.view === 'mais' ? ui.maisTela : '';
     if (t && t !== agora){ try { history.back(); } catch(e){ /* ok */ } }  // uma entrada que sobrou: volta mais uma
-    else if (!t && agora){ TELA_VISTA = ''; irPara('mais'); window.scrollTo(0, 0); }
+    else if (!t && agora){ var de = TELA_DE; TELA_VISTA = ''; irPara(de || 'mais'); window.scrollTo(0, 0); }
   });
 
   // Arrastar para o lado troca de aba no celular, como no InventarIA, no GerencIA, no ResolvIA e no CronologIA:
@@ -1859,7 +1887,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     var t = ev.changedTouches[0], dx = t.clientX - s0.x, dy = t.clientY - s0.y;
     if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 2 || Date.now() - s0.at > 800) return;
     var d = dx < 0 ? 1 : -1, i = VIEWS.indexOf(ui.view), j = i + d;  // dedo para a esquerda: a próxima aba
-    if (ui.view === 'mais' && ui.maisTela && d < 0) j = i;  // em Mais › Sobre, para a direita volta para Mais
+    if (ui.view === 'mais' && ui.maisTela && d < 0) j = i;  // numa tela de Mais, para a direita volta para o menu
     else if (i < 0 || j < 0 || j >= VIEWS.length) return;
     irPara(VIEWS[j]); window.scrollTo(0, 0);
     var v = $('v-' + VIEWS[j]);
@@ -1879,7 +1907,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     var sp = semPrecos(CAT);
     $('semPrecos').hidden = !sp.length;
     $('semPrecos').innerHTML = sp.length ? '<span><b>Sem preços de:</b> ' + esc(sp.map(function(l){ return G[l.rede].nome; }).join(', ')) + '' + '.' + '</span><button type="button" class="linkbtn so-ia" data-enc="' + esc(sp.length === 1 ? G[sp[0].rede].nome : '') + '">Mandar encarte</button><button type="button" class="linkbtn" data-ir="lojasSec">Adicionar site</button>' : '';
-    $('catNote').textContent = CAT.id === 'petshops' && !petsTotal() ? 'Sem pets no seu perfil, as ofertas daqui ficam escondidas. Ajuste em Mais.' : (exemplo && CAT.aviso ? CAT.aviso : '');
+    $('catNote').textContent = CAT.id === 'petshops' && !petsTotal() ? 'Sem pets no seu perfil, as ofertas daqui ficam escondidas. Ajuste em Mais › Casa.' : (exemplo && CAT.aviso ? CAT.aviso : '');
     $('ofertasMeta').textContent = CAT.id === 'farmacias'
       ? ''
       : CAT.id === 'online'
@@ -1987,7 +2015,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     var act = b.dataset.act;
     if (act === 'menu'){ menuAberto = menuAberto === b.dataset.id ? null : b.dataset.id; pintaDeals(); return; }
     if (act === 'fechar'){ menuAberto = null; pintaDeals(); return; }
-    if (act === 'perfil'){ irParaAba('casa'); return; }
+    if (act === 'perfil'){ abrirMais('casa'); return; }
     if (act === 'esconder'){ estado.ocultas.push(b.dataset.id); menuAberto = null; salvar('Oferta escondida'); }
     if (act === 'nunca'){ if (estado.perfil.nunca.indexOf(b.dataset.tag) < 0) estado.perfil.nunca.push(b.dataset.tag); menuAberto = null; salvar('Você não vai mais ver ' + ROTULO_TAG[b.dataset.tag]); }
     if (act === 'mostrar'){ if (b.dataset.tag) tira(estado.perfil.nunca, b.dataset.tag); else tira(estado.ocultas, b.dataset.id); salvar('Volta a aparecer'); }
@@ -2169,8 +2197,8 @@ html:not(.sem-ia) .so-semia{display:none!important}
     if (!x.it.similares) return '';
     var info = itemDe(x.it.produto), b = info && info.base, best = p[0], k = 'sim|' + norm(x.it.produto);
     var todos = similaresDe(x.it);
-    // os similares só vêm da busca direta nas lojas: desligada em Mais › Opções, não há próxima busca que os traga
-    if (!todos.length && !estado.opcoes.lojas_diretas) return '<p class="i-sub sim-vazio">Similares ligados: vêm da busca direta nas lojas, desligada em Mais › Opções.</p>';
+    // os similares só vêm da busca direta nas lojas: desligada em Mais › Configurações › Opções, não há próxima busca que os traga
+    if (!todos.length && !estado.opcoes.lojas_diretas) return '<p class="i-sub sim-vazio">Similares ligados: vêm da busca direta nas lojas, desligada em Mais › Configurações › Opções.</p>';
     if (!todos.length) return '<p class="i-sub sim-vazio">Similares ligados: eles aparecem na próxima busca, vindos da mesma seção das lojas com busca no próprio site. '
       + '<button type="button" class="link" data-buscaitem="' + x.i + '"' + (buscaItem === x.it.produto ? ' disabled' : '') + '>' + (buscaItem === x.it.produto ? 'Buscando…' : 'Buscar agora') + '</button></p>';
     var ref = best && b ? best.v / Number(b.quantidade) : null;
@@ -2264,7 +2292,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       chip = '<span class="dchip warn">' + (bestAll.Q < ref.Q ? 'Compensa o menor' : 'Compensa, mas dura muito') + '</span>';
       linha = comoTxt(bestAll, b) + ' por ' + brl.format(bestAll.total) + ' (' + ondeTxt(bestAll.o) + ') · ' + porUn(bestAll.total, bestAll.Q, b);
       nota.push(bestAll.Q < ref.Q ? 'Sai ' + porUn(bestAll.total, bestAll.Q, b) + ', contra ' + porUn(ref.total, ref.Q, b) + ' no de ' + medidaTxt(ref.Q, b) + '.'
-        : 'Economiza ' + brl.format(economia(bestAll)) + ', mas no seu ritmo dura uns ' + tempoTxt(dura(bestAll.Q)) + ', mais do que você costuma guardar. Fique no de ' + medidaTxt(ref.Q, b) + ' ou mude o espaço para estoque em Mais.');
+        : 'Economiza ' + brl.format(economia(bestAll)) + ', mas no seu ritmo dura uns ' + tempoTxt(dura(bestAll.Q)) + ', mais do que você costuma guardar. Fique no de ' + medidaTxt(ref.Q, b) + ' ou mude o espaço para estoque em Mais › Casa.');
     } else {
       chip = '<span class="dchip">Tamanho de sempre</span>';
       linha = medidaTxt(ref.Q, b) + ' sai ' + porUn(ref.total, ref.Q, b) + ' (' + ondeTxt(ref.o) + ')';
@@ -2284,7 +2312,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   // loja com preço de clube melhor, mas você não marcou que é do clube
   function dicaClube(p, best){
     var c = p.filter(function(y){ return !y.socio && y.precoClube && y.precoClube < best.v - 0.004; }).sort(function(a, b){ return a.precoClube - b.precoClube; })[0];
-    return c ? '<p class="i-avulso num"><b>' + esc(G[c.id].nome) + '</b> tem preço de clube: <b>' + brl.format(c.precoClube) + '</b>. Se você for do clube, marque em Mais → Lojas.</p>' : '';
+    return c ? '<p class="i-avulso num"><b>' + esc(G[c.id].nome) + '</b> tem preço de clube: <b>' + brl.format(c.precoClube) + '</b>. Se você for do clube, marque em Mais › Lojas.</p>' : '';
   }
   function nomeCurto(prod){ var n = String(prod).split(' · ')[0]; return n.length > 24 ? n.slice(0, 23) + '…' : n; }
 
@@ -3127,7 +3155,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     var igual = estado.lista.filter(function(i){ return norm(i.produto) === norm(nome); })[0];
     if (igual){ igual.ean = ean; salvar('Código guardado em "' + igual.produto + '"'); }
     else { entraNaLista(nome); estado.lista[estado.lista.length - 1].ean = ean; salvar('Adicionado à lista'); }
-    // o código só é usado pela busca direta nas lojas (Mais › Opções)
+    // o código só é usado pela busca direta nas lojas (Mais › Configurações › Opções)
     $('addMsg').className = 'hint ok'; $('addMsg').textContent = igual ? 'O código ficou guardado em "' + igual.produto + '".' : '"' + nome + '" entrou na lista com o código de barras' + (estado.opcoes.lojas_diretas ? ': com ele, o mesmo produto é achado nas lojas com busca no site.' : '.');
     $('codNum').value = ''; $('codRes').hidden = true; codMsg(''); abreCod(false);
     pintaHist(); pintaLista(); pintaOfertasTela();
@@ -3443,9 +3471,9 @@ html:not(.sem-ia) .so-semia{display:none!important}
     var b = e.target.closest('[data-ir]'); if (!b) return;
     var ir = b.dataset.ir;
     if (ir === 'itens'){ $('wish').scrollIntoView({behavior:'smooth', block:'start'}); return; }
-    if (ir === 'lojasSec'){ irParaAba('lojas'); return; }
-    if (ir === 'importar'){ irParaAba('dados', 'h-imp'); return; }
-    if (ir === 'mais') ui.maisAba = 'casa';
+    if (ir === 'lojasSec'){ abrirMais('lojas'); return; }
+    if (ir === 'importar'){ abrirMais('config', 'dados', 'h-imp'); return; }
+    if (ir === 'mais'){ abrirMais('casa'); return; }  // Preencher o perfil
     if (b.dataset.cat){ ui.aba = b.dataset.cat; salvarUI(); filtro = 'todas'; pintaOfertasTela(); }
     irPara(ir); window.scrollTo(0, 0);
   });
@@ -3964,7 +3992,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     $('onEntrega').checked = estado.online.mercados_entrega;
     pintaEtapas();
   }
-  // a ordem da busca (fim de Mais › Lojas) mostra só as etapas ligadas em Mais › Opções
+  // a ordem da busca (fim de Mais › Lojas) mostra só as etapas ligadas em Mais › Configurações › Opções
   function pintaEtapas(){
     var r = document.documentElement, o = estado.opcoes;
     r.classList.toggle('sem-diretas', !o.lojas_diretas); r.classList.toggle('sem-folhetos', !o.folhetos); r.classList.toggle('sem-itens', !o.itens_sem_preco);
@@ -4030,7 +4058,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       pintaIntegSt();
     }).catch(function(){ shSt('Não consegui ler agora.'); });
   }
-  // o que o Instagram e a Shopee trazem, só quando acontece: o Instagram precisa da IA e dos folhetos (Mais › Opções);
+  // o que o Instagram e a Shopee trazem, só quando acontece: o Instagram precisa da IA e dos folhetos (Mais › Configurações › Opções);
   // a Shopee precisa da aba Online e, sem a API, da IA com a Shopee marcada em Compras online
   var INTEG = null;
   function pintaIntegSt(){
@@ -4498,7 +4526,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       : 'Última busca ' + quando(D.gerado_em) + resumoBusca();
     $('banner').hidden = !exemplo;
     $('bannerTxt').textContent = MODO === 'addon'
-      ? 'Salve o CEP em Mais e toque em Buscar, no menu de baixo, para trocar este exemplo pelas lojas e ofertas perto de você.'
+      ? 'Salve o CEP em Mais › Casa e toque em Buscar, no menu de baixo, para trocar este exemplo pelas lojas e ofertas perto de você.'
       : 'Algumas ofertas de farmácia são reais, de 18/10. O resto é ilustrativo. No Home Assistant, o botão Buscar traz as do seu CEP.';
   }
 
@@ -4519,7 +4547,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   var IC_LADO = {lista:'<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>',
     roteiro:'<circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H16a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h7.5"/>',
     ofertas:'<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/>',
-    mais:'<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
+    mais:'<path d="M5.5 12h.01M12 12h.01M18.5 12h.01" stroke-width="3.2"/>',
     busca:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>'};
   function pintaLado(){
     var el = $('lado'); if (!el || !estado || !D) return;
@@ -4538,7 +4566,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 1.2.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 1.3.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;
@@ -4551,7 +4579,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   var buscaT = null, buscaItem = null;
   function buscarItem(nome){
     if (MODO !== 'addon'){ toast('No Home Assistant, este botão procura o preço só deste item.'); return; }
-    if (!estado.cep){ irParaAba('casa'); toast('Salve o CEP antes de buscar.'); return; }
+    if (!estado.cep){ abrirMais('casa'); toast('Salve o CEP antes de buscar.'); return; }
     buscaItem = nome; pintaLista(); botaoBusca(true, 'Começando');
     fetch('api/buscar-itens', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({itens:[nome]})})
       .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
@@ -4602,7 +4630,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
   }
   $('buscar').addEventListener('click', function(){
     if (MODO !== 'addon'){ toast('No Home Assistant, este botão busca as ofertas do seu CEP na hora.'); return; }
-    if (!estado.cep){ irParaAba('casa'); toast('Salve o CEP antes de buscar.'); return; }
+    if (!estado.cep){ abrirMais('casa'); toast('Salve o CEP antes de buscar.'); return; }
     botaoBusca(true, 'Começando');
     fetch('api/buscar', {method:'POST'})
       .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })

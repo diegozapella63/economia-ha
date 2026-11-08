@@ -4,7 +4,7 @@ import asyncio
 
 from playwright.async_api import async_playwright
 
-from base_e2e import CEP, SHOTS, App, check, pagina, resumo
+from base_e2e import CEP, SHOTS, App, abrir_mais, check, pagina, resumo
 
 OFERTAS = {"versao": 2, "gerado_em": "2026-11-02T10:00:00-03:00", "categorias": [
     {"id": "farmacias", "nome": "Farmácias", "singular": "Farmácia",
@@ -29,9 +29,7 @@ def antes(S):
 
 
 async def abre_lojas(pg):
-    await pg.click('.tabbar [data-view="mais"]')
-    await pg.wait_for_timeout(300)
-    await pg.click("#aba-lojas")
+    await abrir_mais(pg, "lojas")
     await pg.wait_for_timeout(500)
 
 

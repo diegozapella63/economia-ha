@@ -29,6 +29,9 @@ esperar (espera-se a condição: `Cenario.espera`, `espera()` nas visuais), semp
 - `ha_falso.py`: o Home Assistant falso (REST e WebSocket): estados, `ai_task.generate_data` com roteiro por tarefa
   (resposta, função ou `Erro`), assistentes de conversa, listas de tarefas (`todo.*`), fala para texto (`/api/stt`),
   assistentes de voz pelo WebSocket, token conferido e tudo o que chegou guardado para conferir.
+- `e2e/base_e2e.py`: o servidor do add-on num processo com as lojas falsas (`App`), o Chromium (`pagina`), `check`,
+  `espera` e `abrir_mais(pg, onde)`, que abre Mais e a linha da tela (casa, lojas, config, sobre) ou Configurações numa
+  aba (integracoes, dados, aparencia, opcoes).
 
 ## Unitários e integração
 
@@ -72,8 +75,9 @@ esperar (espera-se a condição: `Cenario.espera`, `espera()` nas visuais), semp
   (ping, pedaços, mensagens grandes, wss, cada erro), contra um servidor de soquete com roteiro.
 - `test_privacidade.py`: o e-mail do dono nunca sai, cada chave só vai para o serviço dela, as chaves não ficam no
   config.json nem no arquivo exportado, as fotos saem da pasta de mídia.
-- `test_api.py`: página e fontes, estado, config, integrações (chaves nunca voltam), Mercado Livre do começo ao fim,
-  código de barras, correção, acesso só pelo Home Assistant (servidor num processo).
+- `test_api.py`: página e fontes, Mais como menu (as linhas, as abas de Configurações, nenhum texto com o caminho
+  antigo), estado, config, integrações (chaves nunca voltam), Mercado Livre do começo ao fim, código de barras, correção,
+  acesso só pelo Home Assistant (servidor num processo).
 - `test_api_fluxos.py`: os fluxos pela API com o Home Assistant falso (busca, leitura, sincronizar, Falar, integrações)
   e o `main()`, com o servidor num processo.
 - `test_api_rotas.py`: cada rota no mesmo processo, com os casos de sucesso e de erro (corpo inválido ou grande, IA
@@ -85,20 +89,25 @@ esperar (espera-se a condição: `Cenario.espera`, `espera()` nas visuais), semp
   "Quis dizer…?", Comprei hoje, histórico, limpar.
 - `e2e/ec_codigo.py`: código de barras por foto (deitada, em pé, de ponta-cabeça, borrada, com ruído, pequena, EAN-8,
   UPC-A) e por número, loja, Open Food Facts, balança, número errado, item com o código.
-- `e2e/ec_integracoes.py`: Mercado Livre em Mais › Integrações, do salvar ao apagar.
-- `e2e/ec_integracoes_chaves.py`: Shopee, Google, Brave e Instagram em Mais › Integrações (salvar, testar, apagar,
-  chave que nunca volta para a página), Usar IA e a escolha das IAs.
+- `e2e/ec_integracoes.py`: Mercado Livre em Mais › Configurações › Integrações, do salvar ao apagar.
+- `e2e/ec_integracoes_chaves.py`: Shopee, Google, Brave e Instagram em Mais › Configurações › Integrações (salvar,
+  testar, apagar, chave que nunca volta para a página), Usar IA e a escolha das IAs.
 - `e2e/ec_lojas.py`: Mais › Lojas: abas, procurar, só sem fonte, inativas, clube, loja sem localização.
 - `e2e/ec_lojas_acoes.py`: Encontrar lojas, Testar agora, Como foi testado, adicionar e ignorar loja.
 - `e2e/ec_ofertas.py`: Ofertas e cupons por categoria, filtros, cupom que vence, online com frete.
 - `e2e/ec_roteiro.py`: o roteiro de compras por loja, distância e total.
 - `e2e/ec_buscar.py`: o Buscar com o andamento, a cota, o erro e os avisos.
 - `e2e/ec_ler_ia.py`: Ler com IA (mensagem, foto, cupons, encarte) e o Falar com microfone falso do Chromium.
-- `e2e/ec_dados.py`: Mais › Dados: exportar (downloads), importar, versões e restaurar.
+- `e2e/ec_dados.py`: Mais › Configurações › Dados: exportar (downloads), importar, versões e restaurar.
 - `e2e/ec_aparencia.py`: tema claro e escuro, sem IA, estados vazios e textos sem inglês.
 - `e2e/ec_tamanhos.py`: os tamanhos do item, a base e o preço por quilo ou litro.
-- `e2e/ec_sobre.py`: Mais › Sobre, a última linha de Mais: os textos, os 7 links para o GitHub, a versão em Este app, o
-  Voltar, o ‹ Mais e arrastar de volta para Mais, recarregar em Sobre; 390 px escuro, 320 px claro e o computador.
+- `e2e/ec_mais.py`: Mais é um menu (Casa, Lojas, Configurações e Sobre por último): as linhas (ícone, título, o que tem,
+  seta, alinhadas, nada cortado), cada tela com o ‹ Mais e só o painel dela, as abas de Configurações (só a aba aberta,
+  as setas do teclado, a aba guardada, as quatro cabendo em 320 px), o ‹ Mais, o Voltar, arrastar e o Mais de baixo
+  voltando ao menu, recarregar na mesma tela, o atalho Preencher o perfil (o Voltar volta para a Minha lista), quem vinha
+  das abas da 1.2 e o endereço #lojas; 390 px escuro, 320 px claro e o computador.
+- `e2e/ec_sobre.py`: Mais › Sobre, a última linha do menu de Mais: os textos, os 7 links para o GitHub, a versão em Este
+  app, o Voltar, o ‹ Mais e arrastar de volta para o menu, recarregar em Sobre; 390 px escuro, 320 px claro e o computador.
 - `e2e/ec_selecao.py`: as caixas de seleção (`economia/pagina/selectsheet.js`, igual nos outros apps): tocar abre a
   janela do app (não a do celular), título, opções, a atual marcada, cores do app no escuro e no claro; escolher grava;
   Voltar, X e tocar fora fecham só ela; no computador, no meio e pelo teclado.

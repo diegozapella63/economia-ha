@@ -134,7 +134,7 @@ class Instagram(Base):
     def test_erro_do_instagram(self):
         self.lojas.rotas["/graph/99"] = lambda p: (400, {"error": {"code": 190}})
         st = self.prova("Boi", {"social": "https://www.instagram.com/boi/"}, cat="mercados")
-        self.assertIn("✗ Instagram @boi: A chave do Instagram venceu ou foi cancelada. Gere outra e cole em Mais › Integrações..", st["passos"])
+        self.assertIn("✗ Instagram @boi: A chave do Instagram venceu ou foi cancelada. Gere outra e cole em Mais › Configurações › Integrações..", st["passos"])
 
     def test_instagram_cadastrado_a_mao(self):
         self.posts = [{"id": "1", "media_type": "IMAGE", "caption": "Promoção", "media_url": self.b + "/x.jpg", "timestamp": self.quando(1)}]
@@ -144,11 +144,11 @@ class Instagram(Base):
         self.assertTrue(st["passos"][-1].endswith("; ler o post precisa da IA."))
 
     def test_post_novo_com_folhetos_desligados(self):
-        """Folhetos desligados em Mais › Opções: a busca não lê o Instagram, então o passo não diz que a IA vai ler."""
+        """Folhetos desligados em Mais › Configurações › Opções: a busca não lê o Instagram, então o passo não diz que a IA vai ler."""
         self.posts = [{"id": "1", "media_type": "IMAGE", "caption": "Ofertas da semana", "media_url": self.b + "/x.jpg", "timestamp": self.quando(1)}]
         st = self.prova("Boi", {"social": "https://www.instagram.com/boi/"}, cat="mercados", cfg=self.config(opcoes={"folhetos": False}))
         self.assertEqual(st["como"], "instagram_novo")
-        self.assertTrue(st["passos"][-1].endswith("; Folhetos desligados em Mais › Opções."), st["passos"])
+        self.assertTrue(st["passos"][-1].endswith("; Folhetos desligados em Mais › Configurações › Opções."), st["passos"])
         self.assertEqual(self.S.busca_instagram(self.config(opcoes={"folhetos": False}), ["mercados"], {}), [], "e a busca não lê mesmo")
 
 
@@ -168,7 +168,7 @@ class Folhetos(Base):
         cfg = self.config(opcoes={"folhetos": False})
         st = self.prova("Mercadinho", {}, cat="mercados", cfg=cfg)
         self.assertEqual(st["como"], "folheto_novo")
-        self.assertEqual(st["passos"][-1], "✓ Tem folheto da semana no Kimbino; Folhetos desligados em Mais › Opções.")
+        self.assertEqual(st["passos"][-1], "✓ Tem folheto da semana no Kimbino; Folhetos desligados em Mais › Configurações › Opções.")
         self.assertEqual(self.S.busca_folhetos(cfg, [{"nome": "Mercadinho", "categoria": "mercados"}]), ([], {}), "e a busca não lê mesmo")
         st = self.prova("Mercadinho", {}, cat="mercados", cfg=self.config(usar_ia=False), forcar=True)
         self.assertEqual(st["passos"][-1], "✓ Tem folheto da semana no Kimbino; ler o folheto precisa da IA.")

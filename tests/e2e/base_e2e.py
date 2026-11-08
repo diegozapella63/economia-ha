@@ -116,6 +116,21 @@ async def espera(pg, js, ms=15000):
     await pg.wait_for_function(js, timeout=ms)
 
 
+CONFIG_ABAS = ("integracoes", "dados", "aparencia", "opcoes")
+
+
+async def abrir_mais(pg, onde, computador=False):
+    """Mais é um menu (1.3.0): abre Mais pela barra de baixo (no computador, pela lateral) e a linha da tela (casa, lojas,
+    config ou sobre). Uma aba de Configurações (integracoes, dados, aparencia, opcoes) abre Configurações nessa aba."""
+    await pg.click('#lado [data-lado="mais"]' if computador else '.tabbar [data-view="mais"]')
+    # vindo de outra tela de Mais, a entrada dela no histórico é desfeita (history.back): espera antes de abrir a nova
+    await espera(pg, "() => !(history.state && history.state.tela) && !document.getElementById('maisMenu').hidden")
+    tela = "config" if onde in CONFIG_ABAS else onde
+    await pg.click(f'#maisMenu [data-mais="{tela}"]')
+    if tela == "config":
+        await pg.click("#aba-" + onde)
+
+
 async def pagina(p, largura=412, altura=892, escuro=True, args=None, permissoes=None, toque=True):
     b = await p.chromium.launch(args=args or [])
     ctx = await b.new_context(viewport={"width": largura, "height": altura}, device_scale_factor=2,
