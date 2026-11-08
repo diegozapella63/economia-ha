@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.4.2
+
+- **Mais › Sobre**: a **CorrerIA** (o contato no WhatsApp) entra na lista dos apps.
+
 ## 1.4.1
 
 - **Loja cujo site barra programas** (como a Droga Raia, que responde "erro 403"): em **Mais › Lojas › Como foi testado**, o último passo agora diz que o preço dela vem da busca na web da IA, que pesquisa em seu nome, como o Google e o Claude fazem. O EconomIA não força a entrada no site.

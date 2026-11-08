@@ -106,7 +106,7 @@ esperar (espera-se a condição: `Cenario.espera`, `espera()` nas visuais), semp
   as setas do teclado, a aba guardada, as quatro cabendo em 320 px), o ‹ Mais, o Voltar, arrastar e o Mais de baixo
   voltando ao menu, recarregar na mesma tela, o atalho Preencher o perfil (o Voltar volta para a Minha lista), quem vinha
   das abas da 1.2 e o endereço #lojas; 390 px escuro, 320 px claro e o computador.
-- `e2e/ec_sobre.py`: Mais › Sobre, a última linha do menu de Mais: os textos, os 7 links para o GitHub, a versão em Este
+- `e2e/ec_sobre.py`: Mais › Sobre, a última linha do menu de Mais: os textos, os 8 links para o GitHub, a versão em Este
   app, o Voltar, o ‹ Mais e arrastar de volta para o menu, recarregar em Sobre; 390 px escuro, 320 px claro e o computador.
 - `e2e/ec_selecao.py`: as caixas de seleção (`economia/pagina/selectsheet.js`, igual nos outros apps): tocar abre a
   janela do app (não a do celular), título, opções, a atual marcada, cores do app no escuro e no claro; escolher grava;

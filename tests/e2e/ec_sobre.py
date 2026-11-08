@@ -1,5 +1,5 @@
 # EconomIA 1.1.0 (1.3.0: Mais é um menu): Mais › Sobre, a última linha do menu de Mais. CorrerIA Code (desenvolvimento
-# de softwares) e por que o nome, os seis apps da família, cada um com a sua linha e o GitHub (este marcado com a versão),
+# de softwares) e por que o nome, os sete apps da família, cada um com a sua linha e o GitHub (este marcado com a versão),
 # e Meu GitHub. A mesma página do CronologIA, nas cores e fontes daqui. O Voltar do celular, o ‹ Mais e arrastar para a
 # direita voltam para o menu; de 320 px ao computador, claro e escuro, nada passando da borda.
 import asyncio
@@ -16,7 +16,8 @@ APPS = [("CronologIA", "cronologia-ha", "Agenda da família, remédios, rotinas 
         ("GerencIA", "gerencia-ha", "Finanças da casa: caixa, cartões e investimentos."),
         ("InventarIA", "inventario-ha", "Inventário da casa: cômodos, itens e valores."),
         ("EconomIA", "economia-ha", "Lista de compras com o melhor preço perto de casa."),
-        ("MemorIA", "memoria-ha", "Cadernos de anotação que abrem na hora certa.")]
+        ("MemorIA", "memoria-ha", "Cadernos de anotação que abrem na hora certa."),
+        ("CorrerIA", "correria-ha", "O contato no WhatsApp: os apps respondem por lá.")]
 POR_QUE = ("Porque eu sou um programador sem tempo: vivo na correria. Então eu uso a IA para rodar tudo isso aqui. "
            "Ela escreve, testa e publica; eu dou as ideias e reclamo dos botões tortos.")
 INFO = '<circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path>'  # o ícone de informação (Lucide)
@@ -113,16 +114,16 @@ async def main():
                       f"{tag}: Por que CorrerIA?")
                 check((await pg.locator("#os-apps h2").inner_text()).strip() == "Os apps", f"{tag}: Os apps")
                 linhas = await pg.evaluate("[...document.querySelectorAll('#os-apps .sb-app')].map(a => [a.querySelector('.sb-wm').textContent, a.getAttribute('href'), a.querySelector('.mb > span').textContent])")
-                check([tuple(x) for x in linhas] == [(n, f"{GH}/{r}", t) for n, r, t in APPS], f"{tag}: os seis apps, na ordem, cada um com a sua linha e o GitHub ({linhas})")
+                check([tuple(x) for x in linhas] == [(n, f"{GH}/{r}", t) for n, r, t in APPS], f"{tag}: os sete apps, na ordem, cada um com a sua linha e o GitHub ({linhas})")
                 wms = await pg.evaluate("[...document.querySelectorAll('#os-apps .sb-wm')].map(w => w.innerHTML)")
                 check(wms == [f"{n[:-2]}<span>IA</span>" for n, _, _ in APPS], f"{tag}: o IA de cada nome na cor de destaque, sem espaço no meio")
-                check(await pg.locator("#os-apps .sb-app .h-ic svg").count() == 6, f"{tag}: cada app com o seu ícone")
+                check(await pg.locator("#os-apps .sb-app .h-ic svg").count() == 7, f"{tag}: cada app com o seu ícone")
                 aqui = pg.locator("#os-apps .sb-app.aqui")
                 check(await aqui.count() == 1 and await aqui.get_attribute("href") == f"{GH}/economia-ha"
                       and [x.strip() for x in await pg.locator("#os-apps .sb-aqui").all_inner_texts()] == [f"Este app · v{VERSAO}"],
                       f"{tag}: o EconomIA marcado, Este app · v{VERSAO}")
                 links = await pg.evaluate("[...document.querySelectorAll('#mp-sobre a')].map(a => [a.getAttribute('href'), a.target, a.rel])")
-                check(links == [[f"{GH}/{r}", "_blank", "noopener"] for _, r, _ in APPS] + [[GH, "_blank", "noopener"]], f"{tag}: os 7 links abrem fora ({links})")
+                check(links == [[f"{GH}/{r}", "_blank", "noopener"] for _, r, _ in APPS] + [[GH, "_blank", "noopener"]], f"{tag}: os 8 links abrem fora ({links})")
                 gh = pg.locator("#mp-sobre a.sb-github")
                 check((await gh.inner_text()).strip() == "Meu GitHub" and "btn" in await gh.get_attribute("class"), f"{tag}: Meu GitHub")
                 gb, pb = await gh.bounding_box(), await pg.locator("#os-apps").bounding_box()
