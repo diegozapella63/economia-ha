@@ -48,7 +48,7 @@ class Busca(Cenario):
 
     def test_busca_completa(self):
         S, ha = self.S, self.ha
-        self.config(raio_km=5, categorias=["mercados", "farmacias"], lista=LISTA, email="diego@exemplo.com.br")
+        self.config(raio_km=5, categorias=["mercados", "farmacias"], lista=LISTA, email="davi@exemplo.com.br")
         self.ofertas({"categorias": [categoria("farmacias", [("farm-antiga", "Farmácia Antiga", 1.0)])], "lista": []})
         ha.responde_ia("EconomIA: mercados", self.foto(pagina_mercados))
         ha.responde_ia("EconomIA: farmacias", self.foto(Erro(500, "Internal Server Error")))

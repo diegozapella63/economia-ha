@@ -17,7 +17,7 @@ class Base(Cenario):
         self.erro = None
         self.validade = {"expires_at": 0}
         self.lojas.rotas["/graph/me/accounts"] = lambda p: self.resp(p, {"data": [{"name": "Página sem IG"}, {"name": "Minha página",
-                                                                                   "instagram_business_account": {"id": IG, "username": "diegocasa"}}]})
+                                                                                   "instagram_business_account": {"id": IG, "username": "davicasa"}}]})
         self.lojas.rotas["/graph/debug_token"] = lambda p: self.resp(p, {"data": self.validade})
         self.lojas.rotas["/graph/" + IG] = self.discovery
         for n in ("p1", "c1", "c2"):
@@ -54,7 +54,7 @@ class Base(Cenario):
         return self.resp(p, {"business_discovery": {"username": h, "media": {"data": self.contas[h]}}, "id": IG})
 
     def chave(self, ig=True):
-        self.S.grava_segredos({"instagram": dict({"token": TOKEN}, **({"ig_id": IG, "usuario": "diegocasa"} if ig else {}))})
+        self.S.grava_segredos({"instagram": dict({"token": TOKEN}, **({"ig_id": IG, "usuario": "davicasa"} if ig else {}))})
 
 
 class Conta(Base):
@@ -65,8 +65,8 @@ class Conta(Base):
         self.chave(ig=False)
         self.assertEqual(S.insta_chave(), (TOKEN, None))
         r = S.testar_instagram()
-        self.assertEqual(r, {"ok": True, "msg": "Pronta: conta @diegocasa. Consigo ler os posts das contas comerciais das lojas. A chave não vence."})
-        self.assertEqual(S.segredos()["instagram"], {"token": TOKEN, "ig_id": IG, "usuario": "diegocasa"}, "a conta fica guardada")
+        self.assertEqual(r, {"ok": True, "msg": "Pronta: conta @davicasa. Consigo ler os posts das contas comerciais das lojas. A chave não vence."})
+        self.assertEqual(S.segredos()["instagram"], {"token": TOKEN, "ig_id": IG, "usuario": "davicasa"}, "a conta fica guardada")
         self.assertTrue(S.insta_pronto())
         fim = int(datetime(2027, 1, 15, 15, tzinfo=timezone.utc).timestamp())
         self.validade = {"expires_at": fim}

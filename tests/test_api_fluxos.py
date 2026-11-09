@@ -258,11 +258,11 @@ class IasEListas(Servidor):
             self.ha.token = antes
 
     def test_usuario_do_ingress_nao_sai_do_add_on(self):
-        st, e = self.pede("GET", "/api/estado", cab={"X-Remote-User-Display-Name": "Diego", "X-Remote-User-Name": "diego.zapella@exemplo.com.br"})
-        self.assertEqual(e["usuario"], "Diego")
-        st, e = self.pede("GET", "/api/estado", cab={"X-Remote-User-Name": "diego"})
-        self.assertEqual(e["usuario"], "diego")
-        self.pede("POST", "/api/sincronizar-lista", cab={"X-Remote-User-Name": "diego.zapella@exemplo.com.br"})
+        st, e = self.pede("GET", "/api/estado", cab={"X-Remote-User-Display-Name": "Davi", "X-Remote-User-Name": "davi.souza@exemplo.com.br"})
+        self.assertEqual(e["usuario"], "Davi")
+        st, e = self.pede("GET", "/api/estado", cab={"X-Remote-User-Name": "davi"})
+        self.assertEqual(e["usuario"], "davi")
+        self.pede("POST", "/api/sincronizar-lista", cab={"X-Remote-User-Name": "davi.souza@exemplo.com.br"})
         self.assertNotIn("@exemplo.com.br", self.ha.tudo_que_chegou())
 
 

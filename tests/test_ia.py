@@ -336,7 +336,7 @@ class Pedidos(Cenario):
 
     def test_nunca_vai_o_email(self):
         S = self.S
-        cfg = self.cfg(email="diego.zapella@exemplo.com.br", usuario="diego.zapella@exemplo.com.br")
+        cfg = self.cfg(email="davi.souza@exemplo.com.br", usuario="davi.souza@exemplo.com.br")
         textos = [S.instrucoes_para(c, cfg) for c in ("farmacias", "mercados", "petshops", "online")]
         textos += [S.instrucoes_focada(cfg, ["Leite integral"], ["mercados", "online"]), S.instrucoes_leitura("leite", 0, cfg),
                    S.instrucoes_encarte({"nome": "Giassi", "site": None}, "", 1, cfg), S.instrucoes_cupons(1, ["Giassi"])]

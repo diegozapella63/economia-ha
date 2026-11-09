@@ -8,7 +8,7 @@ import os
 
 from apoio import Cenario, categoria
 
-EMAIL = "diego.zapella@exemplo.com.br"
+EMAIL = "davi.souza@exemplo.com.br"
 CHAVES = {"brave": "chave-brave-secreta", "google": "chave-google-secreta", "shopee": "senha-shopee-secreta", "instagram": "token-instagram-secreto"}
 
 
@@ -48,7 +48,7 @@ class Privacidade(Cenario):
         saiu = self.tudo_que_saiu()
         self.assertIn("Leite integral", saiu, "a conferência vê o que sai")
         self.assertNotIn(EMAIL, saiu)
-        self.assertNotIn("diego.zapella", saiu.lower())
+        self.assertNotIn("davi.souza", saiu.lower())
         self.assertNotIn("@exemplo.com.br", saiu.lower())
 
     def test_cada_chave_so_vai_para_o_seu_servico(self):
