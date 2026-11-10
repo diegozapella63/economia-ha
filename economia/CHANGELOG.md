@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.11.1
+
+- **Tema**: **Automático** agora se chama **Sistema** (segue o claro ou escuro do Home Assistant, como antes). O nome cabe ao lado do ícone e é o mesmo em todos os apps da família.
+
 ## 1.11.0
 
 - **Não mostrar › Nunca “palavra”**: esconde qualquer oferta com essa palavra, em qualquer loja e tamanho, como "energético"; dá para trocar a palavra antes. As palavras ficam em **Mais › Casa › Nunca mostrar**, junto das categorias: dá para escrever outra ali ou tirar com um toque. Elas também valem na Conversa e no CorrerIA.

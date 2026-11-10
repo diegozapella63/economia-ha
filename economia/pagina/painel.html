@@ -1738,14 +1738,14 @@ input.field,select.field{min-height:var(--altura)}
   if (VIEWS.indexOf(hash) >= 0) ui.view = hash;
   if (VIEWS.indexOf(ui.view) < 0) ui.view = 'lista';
   function salvarUI(){ gravarLocal(KEY_UI, ui); }
-  // tema: Automático segue o aparelho; Claro e Escuro fixam
+  // tema: Sistema segue o aparelho; Claro e Escuro fixam
   function aplicaTema(t){
     var r = document.documentElement;
     if (t === 'claro') r.setAttribute('data-theme', 'light');
     else if (t === 'escuro') r.setAttribute('data-theme', 'dark');
     else if (t === 'auto') r.removeAttribute('data-theme');
   }
-  aplicaTema(ui.tema || 'auto');  // o tema vale só no aparelho e começa em Automático
+  aplicaTema(ui.tema || 'auto');  // o tema vale só no aparelho e começa em Sistema
   var CORES = [{id:'vermelho', nome:'Vermelho', sw:'#FF5A4F'}, {id:'coral', nome:'Coral', sw:'#FF8A65'}, {id:'laranja', nome:'Laranja', sw:'#FFA23E'}, {id:'ouro', nome:'Ouro', sw:'#F2C14E'}, {id:'verde', nome:'Verde', sw:'#8BD45F'}, {id:'menta', nome:'Menta', sw:'#4ED3A6'}, {id:'turquesa', nome:'Turquesa', sw:'#3CCBDA'}, {id:'azul', nome:'Azul', sw:'#62B5FF'}, {id:'indigo', nome:'Índigo', sw:'#8F9BFF'}, {id:'lilas', nome:'Lilás', sw:'#B99BFF'}, {id:'rosa', nome:'Rosa', sw:'#FF77A9'}, {id:'grafite', nome:'Grafite', sw:'#B5B9C2'}];
   // nomes de antes: os da paleta da família; uma cor que não está nela vira a mais próxima (Magenta é Rosa)
   var CORES_VELHAS = {amarelo:'ouro', roxo:'lilas', magenta:'rosa', cinza:'grafite'};
@@ -4389,7 +4389,7 @@ input.field,select.field{min-height:var(--altura)}
     var ic = {auto:'<rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
       claro:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
       escuro:'<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>'};
-    $('tema').innerHTML = [['auto', 'Automático'], ['claro', 'Claro'], ['escuro', 'Escuro']].map(function(t){
+    $('tema').innerHTML = [['auto', 'Sistema'], ['claro', 'Claro'], ['escuro', 'Escuro']].map(function(t){
       return '<button type="button" role="radio" data-v="' + t[0] + '" aria-checked="' + (atual === t[0]) + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + ic[t[0]] + '</svg><span>' + t[1] + '</span></button>';
     }).join('');
   }

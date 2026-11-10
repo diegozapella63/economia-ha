@@ -1,4 +1,4 @@
-# EconomIA 0.19.0: Mais › Aparência (1.9.0: o tema no aparelho, de começo Automático, e a cor do app da casa toda, na paleta da família; 1.4.0: a Cor do dia, ligada de começo, e a
+# EconomIA 0.19.0: Mais › Aparência (1.9.0: o tema no aparelho, de começo Sistema, e a cor do app da casa toda, na paleta da família; 1.4.0: a Cor do dia, ligada de começo, e a
 # troca da cor na virada do dia com o app aberto), Mais › Opções (busca direta com as lojas do
 # CEP, folhetos, itens sem preço, encartes), Usar IA (desligada some tudo o que gasta IA, para todos os aparelhos),
 # Sensores no Home Assistant (o sensor aparece e some no HA falso) e a Lista do Home Assistant (escolher a lista, o item
@@ -40,14 +40,14 @@ async def main():
             await pg.add_init_script("if (!sessionStorage.getItem('ec-t')) { localStorage.setItem('ofertas-bairro:ui', JSON.stringify({cor: 'magenta', corDia: false})); sessionStorage.setItem('ec-t', '1'); }")
             await pg.goto(app.url)
             await pg.wait_for_timeout(1500)
-            # ----- Aparência (1.9.0: o tema no aparelho, começando em Automático; a cor do app da casa toda; a paleta da família) -----
+            # ----- Aparência (1.9.0: o tema no aparelho, começando em Sistema; a cor do app da casa toda; a paleta da família) -----
             check(app.config_salva().get("cor") == "rosa" and app.config_salva().get("cor_dia") is False,
                   f"na primeira vez, a casa adota a cor deste aparelho (Magenta de antes vira Rosa) ({app.config_salva().get('cor')}, {app.config_salva().get('cor_dia')})")
             check(await pg.get_attribute("html", "data-cor") == "rosa", "e pinta com ela")
             await mais(pg, "aparencia")
             temas = [t.strip() for t in await pg.locator("#tema button").all_inner_texts()]
-            check(temas == ["Automático", "Claro", "Escuro"] and await pg.get_attribute('#tema [data-v="auto"]', "aria-checked") == "true", "temas, Automático de começo")
-            check(await pg.get_attribute("html", "data-theme") is None, "Automático segue o aparelho")
+            check(temas == ["Sistema", "Claro", "Escuro"] and await pg.get_attribute('#tema [data-v="auto"]', "aria-checked") == "true", "temas, Sistema de começo")
+            check(await pg.get_attribute("html", "data-theme") is None, "Sistema segue o aparelho")
             nomes = [t.strip() for t in await pg.locator("#cores button").all_inner_texts()]
             check(nomes == PALETA, f"as 12 cores da família, na ordem ({nomes})")
             await pg.click("#corDia")
@@ -72,11 +72,11 @@ async def main():
             await pg.wait_for_timeout(1000)
             check(await pg.get_attribute("html", "data-theme") == "light" and await pg.get_attribute("html", "data-cor") == outra, "o tema e a cor ficam depois de recarregar")
             check(not await pg.is_checked("#corDia") and await pg.evaluate(MARCADA) == [outra], "a Cor do dia continua desligada")
-            # outro aparelho: a cor da casa, o tema dele (Automático)
+            # outro aparelho: a cor da casa, o tema dele (Sistema)
             b2, p3 = await pagina(p)
             await p3.goto(app.url)
             await p3.wait_for_timeout(1200)
-            check(await p3.get_attribute("html", "data-cor") == outra and await p3.get_attribute("html", "data-theme") is None, "em outro aparelho, a cor da casa e o tema Automático")
+            check(await p3.get_attribute("html", "data-cor") == outra and await p3.get_attribute("html", "data-theme") is None, "em outro aparelho, a cor da casa e o tema Sistema")
             await b2.close()
             # uma cor de antes no config.json vira a da paleta
             st = app.api("GET", "/api/estado")
@@ -95,7 +95,7 @@ async def main():
             await pg.click("#corDia")
             check(await pg.get_attribute("html", "data-cor") == outra and await pg.evaluate(MARCADA) == [outra], "desligar volta para a última cor escolhida")
             await pg.click('#tema [data-v="auto"]')
-            check(await pg.get_attribute("html", "data-theme") is None, "Automático segue o aparelho")
+            check(await pg.get_attribute("html", "data-theme") is None, "Sistema segue o aparelho")
             await pg.click('#tema [data-v="escuro"]')
             await pg.click('#cores [data-v="verde"]')
             check(await pg.get_attribute("html", "data-cor") == "verde", "Verde")
