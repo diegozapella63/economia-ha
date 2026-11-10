@@ -31,6 +31,15 @@ FACES = (("Barlow", "barlow", 400), ("Barlow", "barlow", 500), ("Barlow", "barlo
          ("Barlow Condensed", "barlow-condensed", 500), ("Barlow Condensed", "barlow-condensed", 600), ("Barlow Condensed", "barlow-condensed", 700))
 
 
+CONFIG = os.path.join(RAIZ, "economia", "config.yaml")
+
+
+def versao():
+    """A versão fica num lugar só, o economia/config.yaml; a página do add-on recebe no lugar do __VERSAO__."""
+    import re
+    return re.search(r'^version:\s*"?([\d.]+)', open(CONFIG, encoding="utf-8").read(), re.M).group(1)
+
+
 def montar(fonte_txt):
     if fonte_txt.count(GOOGLE_FONTS) != 1:
         raise SystemExit("A fonte precisa ter exatamente um <link> do Google Fonts (Barlow e Barlow Condensed).")
@@ -45,6 +54,9 @@ def montar(fonte_txt):
     if s.count(TAG_CAIXAS) != 1 or "</script" in caixas:
         raise SystemExit("A fonte precisa carregar o selectsheet.js uma vez, antes do script da página.")
     s = s.replace(TAG_CAIXAS, "<script>\n" + caixas.rstrip("\n") + "\n</script>")
+    if s.count("'__VERSAO__'") != 1:
+        raise SystemExit("A fonte precisa ter a versão uma vez, como '__VERSAO__'.")
+    s = s.replace("'__VERSAO__'", "'" + versao() + "'")
     return CABECALHO + "\n" + s.rstrip("\n") + "\n\n</html>\n"
 
 

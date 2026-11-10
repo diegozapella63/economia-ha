@@ -131,7 +131,7 @@ async def abrir_mais(pg, onde, computador=False):
         await pg.click("#aba-" + onde)
 
 
-async def pagina(p, largura=412, altura=892, escuro=True, args=None, permissoes=None, toque=True):
+async def pagina(p, largura=390, altura=844, escuro=True, args=None, permissoes=None, toque=True):
     b = await p.chromium.launch(args=args or [])
     ctx = await b.new_context(viewport={"width": largura, "height": altura}, device_scale_factor=2,
                               color_scheme="dark" if escuro else "light", has_touch=toque, permissions=permissoes or [],

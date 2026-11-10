@@ -63,7 +63,7 @@ async def main():
             check(await pg.locator("#chat").is_visible() and await pg.locator("#chatFundo").is_visible(), "abre a conversa por cima")
             check(await bolha.get_attribute("aria-expanded") == "true", "o balão diz que a conversa está aberta")
             caixa = await pg.locator("#chat").bounding_box()
-            check(caixa["x"] == 0 and caixa["width"] == 412 and abs(caixa["y"] + caixa["height"] - 892) < 1 and caixa["height"] < 892 * 0.9,
+            check(caixa["x"] == 0 and caixa["width"] == 390 and abs(caixa["y"] + caixa["height"] - 844) < 1 and caixa["height"] < 844 * 0.9,
                   f"no celular, sobe de baixo ({caixa})")
             check(await pg.text_content(".chat-vazio") == "Pergunte sobre a lista, as ofertas ou o que quiser. A IA sugere; você confirma.", "o texto da conversa vazia")
             sug = await pg.locator("#chatSug button").all_text_contents()

@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.9.1
+
+- Nada muda na tela. A versão do app agora é escrita num lugar só, e os testes conferem tudo na largura de um celular (390 px).
+
 ## 1.9.0
 
 O EconomIA fica igual aos outros apps da família:

@@ -163,7 +163,7 @@ async def main():
             check(await pao.count() == 1 and "VEIO DO HOME ASSISTANT" in (await pao.inner_text()).upper(), "o item da lista do HA entrou na Minha lista")
             check(not pg.erros, f"sem erros na página {pg.erros}")
             # ----- Cor do dia na virada do dia, com o app aberto (relógio de mentira: 8/11 é índigo, 9/11 é lilás) -----
-            ctx = await b.new_context(viewport={"width": 412, "height": 892}, device_scale_factor=2, color_scheme="dark", has_touch=True,
+            ctx = await b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, color_scheme="dark", has_touch=True,
                                       timezone_id="America/Sao_Paulo")
             p2 = await ctx.new_page()
             p2.erros = []

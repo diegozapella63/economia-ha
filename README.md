@@ -80,7 +80,7 @@ docs/                         imagens deste README e detalhes técnicos
 OFERTAS_ALLOW_ALL=1 OFERTAS_DATA=/tmp/economia OFERTAS_PORT=8099 \
   python3 economia/app/server.py                       # abre em http://127.0.0.1:8099
 python3 tools/montar_pagina.py                         # depois de mexer em economia/pagina/painel.html
-python3 -m unittest discover -s tests -p "test_*.py"   # testes unitários e de integração
+tests/run.sh                                           # testes unitários e de integração (--cobertura: a cobertura)
 tests/e2e/run.sh                                       # testes visuais (Playwright)
 python3 tools/prints_readme.py                         # refaz as imagens deste README
 ```

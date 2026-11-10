@@ -108,7 +108,7 @@ async def main():
             check("achada" in (await linha.get_attribute("class")), "a oferta do Destaque fica marcada")
             await pg.wait_for_timeout(900)
             caixa = await linha.bounding_box()
-            check(0 < caixa["y"] < 892 - caixa["height"], f"e aparece na tela ({caixa})")
+            check(0 < caixa["y"] < 844 - caixa["height"], f"e aparece na tela ({caixa})")
             check(await pg.locator('#deals [data-act="avaliar"]').count() == len(await deals(pg)), "cada oferta tem Vale a pena?")
             acts = [x.strip() for x in await linha.locator(".d-acts .hide-btn").all_inner_texts()]
             check(acts == ["Comparar preço", "Vale a pena?", "Não mostrar"], f"Comparar preço, Vale a pena? e Não mostrar ({acts})")

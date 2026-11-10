@@ -254,3 +254,34 @@ class ItemDaLista(Base):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Versao(Base):
+    """1.9.1: a versão fica só no economia/config.yaml."""
+
+    def test_le_do_config_yaml(self):
+        import os
+        import re
+        raiz = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        with open(os.path.join(raiz, "economia", "config.yaml"), encoding="utf-8") as f:
+            esperado = re.search(r'^version:\s*"?([\d.]+)', f.read(), re.M).group(1)
+        self.assertEqual(self.S.VERSAO, esperado)
+        self.assertEqual(self.S.Painel.server_version, "EconomIA/" + esperado)
+        with open(os.path.join(raiz, "economia", "app", "www", "index.html"), encoding="utf-8") as f:
+            self.assertIn("var VERSAO = '" + esperado + "';", f.read(), "a página montada tem a mesma versão")
+
+    def test_no_conteiner_e_sem_arquivo(self):
+        import os
+        import tempfile
+        from unittest import mock
+        pasta = tempfile.mkdtemp()
+        try:
+            with open(os.path.join(pasta, "config.yaml"), "w", encoding="utf-8") as f:
+                f.write('name: EconomIA\nversion: "7.8.9"\n')
+            falso = os.path.join(pasta, "server.py")
+            with mock.patch.object(self.S.os.path, "abspath", lambda p: falso if p == self.S.__file__ else os.path.realpath(p)):
+                self.assertEqual(self.S.ler_versao(), "7.8.9", "no contêiner, o config.yaml ao lado do server.py")
+                os.remove(os.path.join(pasta, "config.yaml"))
+                self.assertEqual(self.S.ler_versao(), "0", "sem o arquivo, não quebra")
+        finally:
+            limpa(pasta)

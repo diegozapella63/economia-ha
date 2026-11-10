@@ -74,6 +74,24 @@ import voz
 
 DATA = os.environ.get("OFERTAS_DATA", "/data")
 WWW = os.path.join(os.path.dirname(os.path.abspath(__file__)), "www")
+
+
+def ler_versao():
+    """A versão fica num lugar só, o config.yaml do add-on: no contêiner, ao lado do server.py (o Dockerfile copia);
+    no computador, na pasta de cima."""
+    aqui = os.path.dirname(os.path.abspath(__file__))
+    for arq in (os.path.join(aqui, "config.yaml"), os.path.join(aqui, "..", "config.yaml")):
+        try:
+            with open(arq, encoding="utf-8") as f:
+                m = re.search(r'^version:\s*"?([\d.]+)', f.read(), re.M)
+            if m:
+                return m.group(1)
+        except OSError:
+            pass
+    return "0"
+
+
+VERSAO = ler_versao()
 PORT = int(os.environ.get("OFERTAS_PORT", "8099"))
 CONFIG = os.path.join(DATA, "config.json")
 OFERTAS = os.path.join(DATA, "ofertas.json")
@@ -6762,7 +6780,7 @@ def publicar_correria(cfg=None):
                 os.remove(CORRERIA_ARQ)
             return
         url, ip_url = correria_endereco()
-        corpo = {"app": "economia", "nome": "EconomIA", "assunto": CORRERIA_ASSUNTO, "versao": Painel.server_version.split("/", 1)[1],
+        corpo = {"app": "economia", "nome": "EconomIA", "assunto": CORRERIA_ASSUNTO, "versao": VERSAO,
                  "url": url, "ip_url": ip_url, "chave": correria_chave(), "ferramentas": "/api/integracao/ferramentas", "gravado_em": agora()}
         os.makedirs(SHARE, exist_ok=True)
         tmp = CORRERIA_ARQ + ".tmp"
@@ -6994,7 +7012,7 @@ def usar_ferramenta(nome, argumentos, cliente="CorrerIA"):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/1.9.0"
+    server_version = "EconomIA/" + VERSAO
 
     def log_message(self, fmt, *args):
         pass

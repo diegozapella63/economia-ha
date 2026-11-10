@@ -4,16 +4,18 @@ Três camadas, rodando a cada push no GitHub (aba Actions):
 
 | Camada | Onde | Como rodar | O que confere |
 |---|---|---|---|
-| Unitários | `tests/test_*.py` | `python3 -m unittest discover -s tests -p "test_*.py"` | cada parte do servidor (`economia/app/server.py` e `voz.py`), sem Home Assistant de verdade e sem internet |
+| Unitários | `tests/test_*.py` | `tests/run.sh` (o mesmo que `python3 -m unittest discover -s tests -p "test_*.py"`) | cada parte do servidor (`economia/app/server.py` e `voz.py`), sem Home Assistant de verdade e sem internet |
 | Integração | `tests/test_api*.py` (no mesmo comando) | idem | o servidor pela API HTTP, num processo ou no mesmo, contra lojas e Home Assistant falsos |
-| Visuais | `tests/e2e/ec_*.py` | `tests/e2e/run.sh` | a página no Chromium (Playwright): clica, digita, confere e grava capturas |
+| Visuais | `tests/e2e/ec_*.py` | `tests/e2e/run.sh` (ou `tests/e2e/run.sh ec_lista ...`) | a página no Chromium (Playwright), num celular de 390 px (as de computador e de tamanhos, na largura delas): clica, digita, confere e grava capturas |
 
 Só Python 3 para as duas primeiras (uns 60 segundos), e nada de internet: os pedidos para fora vão para um proxy que
 não existe, e tudo o que o app consulta é falso e local. As visuais precisam de `pip install playwright` e
 `python3 -m playwright install chromium`; as capturas ficam em `$E2E_TMP/shots`.
 
-Cobertura de linhas (sem dependências): `TZ=America/Sao_Paulo python3 tools/cobertura.py --linhas` mostra o % de cada
-arquivo e as linhas que nenhum teste roda.
+Cobertura de linhas (sem dependências): `tests/run.sh --cobertura` (o mesmo que `TZ=America/Sao_Paulo python3
+tools/cobertura.py --linhas`) mostra o % de cada arquivo do servidor e as linhas que nenhum teste roda. Na 1.9.1: 98,1% do
+`server.py` e 98,9% do `voz.py`. A página (`economia/pagina/painel.html`) não tem cobertura medida: o Playwright em
+Python não dá a cobertura do JavaScript, e ela é conferida pelos visuais, tela a tela.
 
 Regras: nada de relógio real além do que o app já usa (o GitHub roda com `TZ=America/Sao_Paulo`), nada de `sleep` para
 esperar (espera-se a condição: `Cenario.espera`, `espera()` nas visuais), sempre portas livres.

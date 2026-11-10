@@ -120,7 +120,7 @@ Com `config.usar_ia` em `false`, nenhuma chamada de IA sai: `/api/buscar`, `/api
 
 O contrato é o mesmo dos outros apps (AGENTS.md do CorrerIA). Com `correria: true` na configuração (**Mais › Configurações ›
 Integrações › CorrerIA**, desligado por padrão e sem depender da IA), `publicar_correria` grava `share/economia/correria.json`
-(`OFERTAS_SHARE`, modo 600, de uma vez): `app: "economia"`, `nome`, `assunto`, `versao` (a do `server_version`), `url`
+(`OFERTAS_SHARE`, modo 600, de uma vez): `app: "economia"`, `nome`, `assunto`, `versao` (a do `config.yaml`, `VERSAO`), `url`
 (`http://<nome do contêiner>:8099`; `OFERTAS_URL_INTERNA` troca), `ip_url`, `chave` (própria, em `/data/correria.key`) e
 `ferramentas: "/api/integracao/ferramentas"`. Sem `rota`: a conversa fica com a IA do CorrerIA. Grava no `main()` e quando
 o PUT `/api/config` liga ou desliga; desligado, o arquivo some. A rota (`Painel._ferramentas`) não passa pelo ingress: vale
@@ -493,7 +493,7 @@ Com o app aberto, `confereCorDoDia` (a cada minuto, no `focus` e ao voltar a fic
 A mesma página dos outros apps (o `about.js` do CronologIA), em JavaScript puro na fonte da página: `PRODUTOS` (nome,
 repositório, ícone e a linha de cada app, na ordem), `IC_SOBRE` (ícones do Lucide escritos à mão), `marcaNome` (o "IA"
 do nome num `<span>`, sem espaço) e `linkFora` (`target="_blank" rel="noopener"`) montam `#mp-sobre` uma vez. "Este app"
-fica no `economia-ha`, com a versão lida do `#versaoTxt` (não é um quinto lugar para mudar a versão). É a última linha
+fica no `economia-ha`, com a versão lida do `#versaoTxt` (a do `config.yaml`, que o `tools/montar_pagina.py` põe no lugar do `'__VERSAO__'`). É a última linha
 do menu de Mais e segue as regras das outras telas de Mais (acima).
 
 ## Comparar preço (1.5.0)

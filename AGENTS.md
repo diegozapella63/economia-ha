@@ -27,9 +27,9 @@ e CorrerIA (os apps no WhatsApp, no Claude e no Gemini: com a opção ligada, us
 ## Rodar e testar
 
 ```bash
-python3 -m unittest discover -s tests -p "test_*.py"     # unitários e integração (529, ~1 min, só Python)
-tests/e2e/run.sh                                          # visuais (20 telas; pip install playwright; python3 -m playwright install chromium)
-python3 tools/cobertura.py --linhas                       # cobertura de linhas (99%; o GitHub exige 97%)
+tests/run.sh                                              # unitários e integração (550, ~1 min, só Python)
+tests/e2e/run.sh                                          # visuais (21 telas a 390 px; pip install playwright; python3 -m playwright install chromium)
+tests/run.sh --cobertura                                  # cobertura de linhas do servidor (98%; o GitHub exige 97%)
 python3 tools/montar_pagina.py --conferir                 # a página do add-on está em dia com a fonte?
 python3 tools/prints_readme.py                            # refaz as imagens do README (docs/*.png), com o exemplo embutido
 ```
@@ -50,13 +50,14 @@ Toda mudança de comportamento vem com teste. Bug corrigido ganha o teste que o 
 
 ## Lançar uma versão (sempre que algo muda para o usuário)
 
-1. Versão nova nos **quatro** lugares: `economia/config.yaml` (`version`), `server.py` (`server_version = "EconomIA/x.y.z"`),
-   e na fonte da página: `<span id="versaoTxt">vx.y.z</span>` e `'<p class="side-foot">EconomIA x.y.z'`.
+1. Versão nova num lugar só: `economia/config.yaml` (`version`). O servidor lê de lá (o Dockerfile copia o config.yaml para
+   `/app`) e o `tools/montar_pagina.py` põe na página do add-on, no lugar do `'__VERSAO__'` da fonte.
 2. `economia/CHANGELOG.md`: entrada nova no alto, em português, dizendo o que muda para quem usa.
 3. `docs/tecnico.md`: a seção técnica do que mudou (nomes de funções, arquivos, regras). `economia/DOCS.md` quando muda
    algo que o usuário vê.
 4. `python3 tools/montar_pagina.py`, depois os testes (unitários, integração e visuais) todos passando.
-5. Commit com mensagem `x.y.z: resumo em português` e push no `main`. O Home Assistant oferece a atualização sozinho.
+5. Commit com mensagem `EconomIA x.y.z: resumo em português` (como nos outros apps da família), `git pull --rebase` e push no
+   `main`. O Home Assistant oferece a atualização sozinho.
 
 ## Regras que não mudam
 
@@ -86,7 +87,7 @@ Toda mudança de comportamento vem com teste. Bug corrigido ganha o teste que o 
   Integrações, Dados, Aparência e Opções) e, por último, **Sobre**, cada um na sua tela. A tela aberta fica em
   `ui.maisTela` e ocupa uma entrada no histórico: o Voltar do celular, o ‹ Mais e arrastar para a direita voltam ao menu.
   Nada de misturar uma função do app com as configurações (veja "Mais: o menu" em `docs/tecnico.md`).
-- Celular primeiro (412 px), e no computador a barra lateral a partir de 1000 px.
+- Celular primeiro (390 px, a referência da família; nada sai da tela em 320 px), e no computador a barra lateral a partir de 1000 px.
 - A página precisa funcionar também sem o add-on (modo exemplo), sem erros no console.
 - **Inativos no fim, recolhidos**: o que está inativo, cancelado, encerrado, arquivado ou ignorado de propósito (por uma opção, como Nunca considerar) fica numa seção no fim da lista, recolhida por padrão, com o nome e a contagem (ex.: **Arquivados (3)**); abre num toque. Vale para todos os apps da família. Aqui: `<details class="inativas">`, aberto só até sair do app: as **Inativas (N)** de Mais › Lojas, as **Escondidas (N)** das Ofertas (`#dealsInat`) e os cupons **Vencidos (N)** (`#ticketsInat`).
 - **Caixas de seleção no visual do app**: nenhuma janela nativa do celular. Toda caixa de seleção abre pelo selectsheet.js; sugestões de texto (no lugar do `<datalist>`) e horários (sem AM/PM) também no visual do app; a caixa fechada igual aos outros campos (altura, cantos, seta), no claro e no escuro. Aqui: `select.field` (com a seta do app) e `data-sug="<nome>"` no campo, com as sugestões em `SUG_FONTES[nome]` (a lista `.sug-box` embaixo dele), nunca `list=`.
@@ -101,7 +102,7 @@ Toda mudança de comportamento vem com teste. Bug corrigido ganha o teste que o 
 - **Dados**: Exportar › Backup na pasta share › Importar › Versões anteriores › Onde ficam os dados › Começar do zero.
 - **Aparência**: o tema vale no aparelho (começa em Automático); a cor do app vale para a casa toda; uma paleta só, de 12 cores (Vermelho, Coral, Laranja, Ouro, Verde, Menta, Turquesa, Azul, Índigo, Lilás, Rosa, Grafite); a Cor do dia é a mesma em todos os apps (as 11 sem o Grafite, pelo número do dia).
 
-Aqui: a ação principal do meio é o **Buscar** (não há outra aba Buscar); Integrações põe as integrações próprias (Shopee, Google, Brave, Mercado Livre, Instagram, Lista do Home Assistant) entre o Uso da IA e os Sensores, e o Falar fica dentro da IA do Home Assistant (**Para falar**); a cor da casa em `config.json` (`cor`, `cor_dia`; `corDaCasa()` na página, com a cópia do aparelho em `ofertas-bairro:ui` só para o script do `<head>`); a paleta em `CORES` (as regras `:root[data-cor]` geradas das 12 cores); a Conversa ocupa uma entrada no histórico no celular (`histChat`, `fechaChat(depois)`).
+Aqui não há aviso no celular ainda (o **Avisar no celular** da rotina fica de fora da tela até existir; quando entrar, é o componente da família: Quem recebe, Testar no meu celular, o horário e o A cada, como no GerencIA). O `config.yaml` não tem `panel_admin`: fica como está, no padrão do Home Assistant (o painel só para administradores), até o dono decidir outra coisa. A ação principal do meio é o **Buscar** (não há outra aba Buscar); Integrações põe as integrações próprias (Shopee, Google, Brave, Mercado Livre, Instagram, Lista do Home Assistant) entre o Uso da IA e os Sensores, e o Falar fica dentro da IA do Home Assistant (**Para falar**); a cor da casa em `config.json` (`cor`, `cor_dia`; `corDaCasa()` na página, com a cópia do aparelho em `ofertas-bairro:ui` só para o script do `<head>`); a paleta em `CORES` (as regras `:root[data-cor]` geradas das 12 cores); a Conversa ocupa uma entrada no histórico no celular (`histChat`, `fechaChat(depois)`).
 
 ## Ideias combinadas e ainda não feitas
 

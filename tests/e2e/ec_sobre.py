@@ -179,7 +179,8 @@ async def main():
                 if pc:
                     side = (await pg.locator("#lado .side-foot").inner_text()).strip()
                     check(side.startswith(f"EconomIA {VERSAO}"), f"{tag}: a mesma versão na barra lateral ({side})")
-                check(f'server_version = "EconomIA/{VERSAO}"' in ler("economia", "app", "server.py"), f"{tag}: a mesma versão no servidor")
+                check('server_version = "EconomIA/" + VERSAO' in ler("economia", "app", "server.py") and "var VERSAO = '__VERSAO__';" in ler("economia", "pagina", "painel.html"),
+                      f"{tag}: a versão só no config.yaml (o servidor lê; a página recebe no montar_pagina.py)")
                 check(not pg.erros, f"{tag}: sem erros na página {pg.erros}")
                 await b.close()
 

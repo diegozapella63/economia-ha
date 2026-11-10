@@ -102,6 +102,7 @@ async def main():
             await abre_dados(pg)
             await pg.set_input_files("#impArq", [{"name": "minha-lista.xlsx", "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "buffer": x}])
             await espera(pg, "() => /novo/.test(document.getElementById('impMsg').textContent)")
+            await espera(pg, "() => document.getElementById('toast').textContent === 'Lista importada'")  # gravado no servidor
             lista = {i["produto"]: i for i in app.config_salva()["lista"]}
             check("Arroz 5 kg" in lista and lista["Arroz 5 kg"]["compras"] == ["2026-10-01", "2026-10-15"] and len(lista) == 2, f"a planilha traz os itens e as datas de compra ({list(lista)})")
             await pg.set_input_files("#impArq", [{"name": "outra.xlsx", "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "buffer": b"nao e planilha"}])
