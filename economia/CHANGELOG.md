@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.17.1
+
+- **Ofertas**: as dos itens da sua lista voltam a vir primeiro, com **Está na sua lista** (na 1.17.0 elas saíam do alto).
+
 ## 1.17.0
 
 - **Listas prontas**: saiu o **Todas**. No lugar dele, **Nenhuma** mostra só os itens que não estão em lista nenhuma. Tirar um item de uma lista (sem outra) leva ele para Nenhuma, e apagar uma lista também. O **Limpar lista** fica em Nenhuma e tira só os itens dela.

@@ -2434,7 +2434,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.17.0';
+  var VERSAO = '1.17.1';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -3150,8 +3150,8 @@ dialog.ss-wrap::backdrop{background:transparent}
   // lista nenhuma ('' em ui.listaAtual; no roteiro, NENHUMA).
   function listasOn(){ return !!estado.opcoes.listas; }
   function listaAtual(){ var id = ui.listaAtual || ''; return listasOn() && estado.listas.some(function(l){ return l.id === id; }) ? id : ''; }
-  function naLista(it, id){ return id && id !== NENHUMA ? arr(it.listas).indexOf(id) >= 0 : !arr(it.listas).length; }
-  function naListaAtual(it){ return !listasOn() || naLista(it, listaAtual()); }
+  function emLista(it, id){ return id && id !== NENHUMA ? arr(it.listas).indexOf(id) >= 0 : !arr(it.listas).length; }
+  function naListaAtual(it){ return !listasOn() || emLista(it, listaAtual()); }
   function nomeLista(id){ var l = estado.listas.filter(function(x){ return x.id === id; })[0]; return l ? l.nome : id === NENHUMA || id === '' ? 'Nenhuma' : ''; }
   var LISTA_ED = null;  // o que está aberto embaixo da barra: {novo: true}, {renomear: id}, {apagar: id} ou {mover: id, alvo, sel}
   function linhaListas(x){
@@ -3165,7 +3165,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     var on = listasOn(), a = listaAtual();
     $('listasWrap').hidden = !on;
     if (!on){ $('listasBar').innerHTML = ''; $('listasExtra').innerHTML = ''; return; }
-    var n = function(id){ return estado.lista.filter(function(it){ return naLista(it, id); }).length; };
+    var n = function(id){ return estado.lista.filter(function(it){ return emLista(it, id); }).length; };
     $('listasBar').innerHTML = '<button type="button" class="pick" data-la="" aria-pressed="' + !a + '"><span>Nenhuma</span> <small class="num">' + n('') + '</small></button>'
       + estado.listas.map(function(l){ return '<button type="button" class="pick" data-la="' + esc(l.id) + '" aria-pressed="' + (a === l.id) + '"><span>' + esc(l.nome) + '</span> <small class="num">' + n(l.id) + '</small></button>'; }).join('')
       + (estado.listas.length < 20 ? '<button type="button" class="pick lista-nova" data-lnova="1">+ Nova</button>' : '');
@@ -3188,7 +3188,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // Mover itens (1.17.0): da lista aberta para outra (ou, de uma lista pronta, para Nenhuma, que só tira dela)
   function alvosMover(de){ return estado.listas.filter(function(l){ return l.id !== de; }).map(function(l){ return l.id; }).concat(de ? [''] : []); }
   function pintaMover(ed){
-    var its = estado.lista.filter(function(it){ return naLista(it, ed.mover); }), alvos = alvosMover(ed.mover), k = Object.keys(ed.sel).filter(function(p){ return ed.sel[p]; }).length;
+    var its = estado.lista.filter(function(it){ return emLista(it, ed.mover); }), alvos = alvosMover(ed.mover), k = Object.keys(ed.sel).filter(function(p){ return ed.sel[p]; }).length;
     return '<div class="lista-mover"><h3>Mover para</h3><div class="listas-bar" role="group" aria-label="Mover para">' + alvos.map(function(id){
         return '<button type="button" class="pick" data-lmalvo="' + esc(id) + '" aria-pressed="' + (ed.alvo === id) + '"><span>' + esc(nomeLista(id)) + '</span></button>';
       }).join('') + '</div>'
@@ -3208,11 +3208,11 @@ dialog.ss-wrap::backdrop{background:transparent}
     if (b.dataset.lmover){ var al = alvosMover(listaAtual()); LISTA_ED = {mover:listaAtual(), alvo:al.length === 1 ? al[0] : null, sel:{}}; pintaListas(); return; }
     if (b.dataset.lmalvo != null && LISTA_ED){ LISTA_ED.alvo = b.dataset.lmalvo; pintaListas(); return; }
     if (b.dataset.lmtodos && LISTA_ED){
-      var de = LISTA_ED.mover, todas = estado.lista.filter(function(it){ return naLista(it, de); }), marcar = todas.some(function(it){ return !LISTA_ED.sel[norm(it.produto)]; });
+      var de = LISTA_ED.mover, todas = estado.lista.filter(function(it){ return emLista(it, de); }), marcar = todas.some(function(it){ return !LISTA_ED.sel[norm(it.produto)]; });
       todas.forEach(function(it){ LISTA_ED.sel[norm(it.produto)] = marcar; }); pintaListas(); return;
     }
     if (b.dataset.lmok && LISTA_ED){
-      var ed = LISTA_ED, movidos = estado.lista.filter(function(it){ return naLista(it, ed.mover) && ed.sel[norm(it.produto)]; });
+      var ed = LISTA_ED, movidos = estado.lista.filter(function(it){ return emLista(it, ed.mover) && ed.sel[norm(it.produto)]; });
       movidos.forEach(function(it){
         var ls = arr(it.listas).filter(function(id){ return id !== ed.mover; });
         if (ed.alvo && ls.indexOf(ed.alvo) < 0) ls.push(ed.alvo);
@@ -4351,7 +4351,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // principal: os da lista aberta (o cupom do Início); senão, os das listas escolhidas no Roteiro (nenhuma: todos)
   function itensDoRoteiro(principal){
     var ls = listasOn() ? estado.roteiro.listas : [];
-    return estado.lista.filter(function(it){ return principal ? naListaAtual(it) : !ls.length || ls.some(function(id){ return naLista(it, id); }); }).map(function(it){ var p = precosDe(it.produto), es = escolhaDe(it, p); return {it:it, r:ritmo(it.compras), p:es ? [es.y] : p, n:vezesDe(it, es)}; })
+    return estado.lista.filter(function(it){ return principal ? naListaAtual(it) : !ls.length || ls.some(function(id){ return emLista(it, id); }); }).map(function(it){ var p = precosDe(it.produto), es = escolhaDe(it, p); return {it:it, r:ritmo(it.compras), p:es ? [es.y] : p, n:vezesDe(it, es)}; })
       .filter(function(x){ return estado.roteiro.escopo !== 'acabando' || (x.r.dias != null && x.r.dias <= 7); });
   }
   function avaliaPlano(itens, combo, online){
