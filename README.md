@@ -35,6 +35,7 @@ A busca começa pelo que não gasta IA (os sites das lojas, os folhetos e a Shop
 - **Minha lista** única para farmácias, mercados, pet shops e online, com um ícone por item e o ritmo de compra de cada um ("deve acabar em 6 dias"). O **Histórico** põe de volta, com um toque, o que já esteve na lista.
 - **Código de barras**: foto ou números do código, e o produto entra na lista; o mesmo produto é achado nas lojas mesmo com outro nome.
 - **Sugestões ao digitar**: o nome do item sugere o que já esteve na lista e os nomes que as lojas usam, sem marca e sem tamanho.
+- **Listas prontas** (opcional): Compra semanal, Compra mensal…, com a tela e o Roteiro na lista escolhida; quantidade e lista resumida.
 - **"Quis dizer…?"**: corrige o nome escrito errado pelas palavras dos produtos das lojas.
 - **Melhor tamanho**: compara o preço por litro, quilo ou unidade (1 L, galão de 5 L, 5 × 1 L, kits online com frete) e diz quanto tempo dura no seu ritmo.
 - **Sua escolha e similares**: o ✓ fixa a loja ou o tamanho que você prefere, mesmo que não seja o mais barato, e **Similares** mostra até 3 produtos parecidos mais em conta pelo preço do quilo ou do litro.

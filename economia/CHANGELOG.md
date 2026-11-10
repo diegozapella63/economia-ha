@@ -1,5 +1,10 @@
 # Mudanças
 
+## 1.15.0
+
+- **Listas prontas**, como Compra semanal e Compra mensal: ligue em **Mais › Configurações › Opções › Listas** (vem desligado). No alto da Minha lista, uma barra com **Todas**, cada lista e **+ Nova** troca de lista num toque. A tela toda segue a lista aberta, com os itens e o Cupom de economia. Um item pode estar em mais de uma lista, e o nome de cada lista no item põe ou tira ele dela. No **Roteiro**, você escolhe quais listas entram.
+- Os botões de cada item ficam em duas colunas do mesmo tamanho: o **−** e o **+**, **Comprei hoje** e **Similares**.
+
 ## 1.14.1
 
 - A **quantidade** de cada item continua depois de fechar e abrir o app (voltava para 1).

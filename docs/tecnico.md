@@ -317,6 +317,11 @@ Onde é usado:
 - `relatorio.sugestoes`: os itens sem preço, em `mesclar_resultado` e na busca completa.
 - `busca_direta` e `busca_sites`: tentam o nome corrigido quando o escrito não casa nada.
 
+## Quantidade e listas prontas
+
+- **Quantidade**: `lista[].qtd` (2 a 99; sem o campo, 1). `qtdDe(it)` na página; `vezesDe(it, es)` dá 1 quando a escolha é uma embalagem ou um similar. Multiplica o preço do cartão, a economia, o cupom (`oportunidades`), o roteiro (`itensDoRoteiro` põe `n` em cada item; `avaliaPlano`, `economiaPlano`) e a duração no melhor tamanho (`dura(Q) = Q / (q0 × N) × ritmo`). No servidor, `qtd_item`; vai como `quantidade` no `dados_lista` (Exportar, Conversa, CorrerIA) e volta no Importar (coluna Quantidade).
+- **Listas prontas** (`opcoes.listas`, desligado de começo): `listas: [{id, nome}]` (até 20), `lista[].listas: [id]` e `roteiro.listas: [id]` (vazio: todas), no config.json. A lista aberta é do aparelho (`ui.listaAtual`). `naListaAtual(it)` filtra a Minha lista e o cupom (`oportunidades`, e `calculaRoteiro(true)` para o roteiro do cupom); o Roteiro usa `roteiro.listas`. `entraNaLista` põe o item novo na lista aberta. Apagar uma lista tira o id dos itens e do roteiro.
+
 ## Sugestões ao digitar
 
 `sugestoes_nomes(q, limite=8)` (rota `GET /api/sugestoes?q=`) tira do vocabulário os nomes genéricos que começam pelo texto:

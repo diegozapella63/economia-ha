@@ -26,7 +26,7 @@ Como nos outros apps (InventarIA, GerencIA, ResolvIA e CronologIA), **Mais** é 
 
 - **Casa**: CEP e distância, o que acompanhar, quem mora, a rotina de compras, restrições, interesses e o que nunca mostrar.
 - **Lojas**: as lojas perto de casa, com o clube de cada uma, Encontrar lojas e Testar agora; cupons do app; compras online; e como o EconomIA busca os preços.
-- **Configurações**, em abas: **Integrações** (na ordem dos outros apps: CorrerIA; IA do Home Assistant, com Usar IA e Para falar; Uso da IA; Shopee Afiliados, Google Places, Brave Search, Mercado Livre, Instagram e Lista do Home Assistant; e Sensores no Home Assistant), **Dados** (Exportar, Backup na pasta share, Importar, Versões anteriores, Onde ficam os dados e Começar do zero), **Aparência** (tema, cor do app e Cor do dia) e **Opções** (as etapas da busca que dá para desligar). A aba escolhida fica guardada.
+- **Configurações**, em abas: **Integrações** (na ordem dos outros apps: CorrerIA; IA do Home Assistant, com Usar IA e Para falar; Uso da IA; Shopee Afiliados, Google Places, Brave Search, Mercado Livre, Instagram e Lista do Home Assistant; e Sensores no Home Assistant), **Dados** (Exportar, Backup na pasta share, Importar, Versões anteriores, Onde ficam os dados e Começar do zero), **Aparência** (tema, cor do app e Cor do dia) e **Opções** (as **Listas** e as etapas da busca que dá para desligar). A aba escolhida fica guardada.
 - **Sobre**, a última linha: CorrerIA Code, quem faz os apps, os apps da família, cada um com o link para o GitHub dele (o EconomIA marcado como **Este app**, com a versão), e **Meu GitHub**.
 
 Numa tela de Mais, o **‹ Mais** no alto, o Voltar do celular e arrastar para a direita voltam para o menu. Aberta por um atalho de outra tela (como **Preencher o perfil**, na Minha lista), o Voltar do celular volta para onde você estava.
@@ -62,6 +62,18 @@ Com a tela de 1000 pixels ou mais, as abas de baixo viram uma **barra lateral** 
 Em **Minha lista → Escolher fotos**, tire ou escolha quantas fotos precisar, até 8 (print de conversa, lista escrita à mão, embalagem que acabou). Dá para tirar uma foto da lista. Quando terminar, toque em **Digitalizar com IA**: a IA do Home Assistant devolve os itens, você confere, ajusta o nome se quiser e adiciona. Se a lista veio em texto, use **Colar mensagem**.
 
 Para ler fotos, a IA escolhida precisa aceitar imagens (a Anthropic aceita). A foto fica um instante na pasta de mídia do Home Assistant, só para a IA ler, e é apagada em seguida.
+
+## Listas prontas
+
+Ligue em **Mais › Configurações › Opções › Listas** (vem desligado). No alto da Minha lista aparece uma barra com **Todas**, cada lista (com quantos itens tem) e **+ Nova**: crie, por exemplo, **Compra semanal** e **Compra mensal**, e troque de uma para outra com um toque. A lista aberta fica guardada no aparelho.
+
+- Continua uma lista só de produtos, com os preços e o histórico de cada um; as listas dizem o que entra em cada compra. Um item pode estar em mais de uma.
+- A tela toda segue a lista aberta: os itens, o Cupom de economia e as oportunidades.
+- O que você adiciona com uma lista aberta entra nela. Um item que já está em Todas também: é só escrever o nome (ele aparece nas sugestões). Em Todas, cada item mostra o nome de cada lista: um toque põe ou tira o item dela.
+- Numa lista, **tirar desta lista** tira o item só dela, e ele continua em Todas; **Limpar lista** fica só em Todas.
+- **Renomear** e **Apagar lista** ficam embaixo da barra, com a lista aberta. Apagar uma lista não apaga os itens.
+- No **Roteiro**, escolha quais listas entram: **Todas**, ou uma ou mais listas.
+- Desligar a opção esconde as listas, sem apagar: ligue de novo e elas voltam.
 
 ## Quantidade
 

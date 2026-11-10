@@ -444,12 +444,18 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .i-others{display:flex;flex-wrap:wrap;gap:6px}
 .i-others li{flex:1 1 auto;font-size:12.5px;padding:0;border:1px solid var(--line);border-radius:8px;color:var(--muted);min-width:0;max-width:100%;overflow:hidden;white-space:nowrap;text-align:center}
 .i-others b{color:var(--ink);font-weight:600}
-.i-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+/* os botões do item em duas colunas iguais: o − e o + do mesmo tamanho do Comprei hoje e do Similares */
+.i-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:8px}
+.i-actions > .qtd,.i-actions > .ic-btn{width:100%;min-width:0;justify-content:center;align-self:stretch}
+.i-actions > .ic-btn{padding-top:7px;padding-bottom:7px}
+.i-actions > .rm{justify-self:center}
+.i-actions > .chip,.i-actions > .i-foot{grid-column:1/-1;justify-self:end;margin-left:0}
+.i-actions > .chip{justify-self:start}
 .i-foot{font-size:12px;color:var(--muted);margin-left:auto}
 .i-foot .i-rebusca{font-size:12px;margin-left:2px;white-space:nowrap}
 /* o − e o + do tamanho dos outros botões da linha (Comprei hoje, Similares) */
-.qtd{display:inline-flex;align-items:stretch;align-self:stretch;border:1px solid var(--line);border-radius:8px}
-.qtd .qtd-b{border:0;background:none;min-width:40px;min-height:0;font-size:18px;line-height:1;padding:0;color:var(--accent)}
+.qtd{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:8px}
+.qtd .qtd-b{border:0;background:none;flex:1 1 0;min-width:36px;min-height:0;font-size:18px;line-height:1;padding:0;color:var(--accent)}
 .qtd b{display:flex;align-items:center;justify-content:center}
 .qtd .qtd-b:disabled{color:var(--line);cursor:default}
 .qtd b{min-width:22px;font-size:15px}
@@ -464,6 +470,23 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .i-mini-v.sem b{font-size:14px;font-weight:500;color:var(--muted)}
 .i-mini .soon-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none}
 .item .i-head[data-fechar]{cursor:pointer}
+/* as listas prontas: uma barra que rola de lado, no alto da Minha lista e no Roteiro */
+.listas-wrap{margin:0 0 14px}
+.listas-bar{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 0}
+.listas-bar::-webkit-scrollbar{display:none}
+.listas-bar .pick{flex:none;padding:6px 16px;white-space:nowrap;gap:6px}
+.listas-bar .pick small{color:var(--muted);font-weight:500}
+.listas-bar .pick[aria-pressed="true"] small{color:inherit}
+.listas-bar .lista-nova{color:var(--accent);border-style:dashed}
+.lista-form{margin-top:10px}
+.lista-form .field{flex:1}
+.listas-acoes{margin:8px 2px 0;font-size:13px;color:var(--muted)}
+.listas-wrap .confirma{margin-top:10px}
+.i-listas{display:flex;flex-wrap:wrap;gap:6px}
+.i-listas .lst-b{color:var(--muted)}
+.i-listas .lst-b[aria-pressed="true"]{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.i-listas .lst-b[aria-pressed="true"]::before{content:"✓\00a0"}
+.rot-listas{flex-basis:100%}
 .rm{background:none;border:0;color:var(--muted);font-size:12px;text-decoration:underline;padding:0;flex:none}
 .i-online{display:flex;flex-direction:column;align-items:flex-start;gap:4px;border-top:1px dashed var(--line);padding-top:8px;font-size:13px;color:var(--muted)}
 .i-nota{color:var(--ink);font-weight:600}
@@ -1199,6 +1222,7 @@ input.field,select.field{min-height:var(--altura)}
 
   <!-- MINHA LISTA -->
   <section class="view" id="v-lista" aria-label="Minha lista" hidden>
+    <div class="listas-wrap" id="listasWrap" hidden><div class="listas-bar" id="listasBar" role="group" aria-label="Listas"></div><div id="listasExtra"></div></div>
     <section class="hero" aria-label="Oportunidades de economia">
       <div class="recibo-wrap">
         <div class="recibo" id="recibo">
@@ -1281,6 +1305,7 @@ input.field,select.field{min-height:var(--altura)}
       <div class="rot-ctrl">
         <div class="group"><h3>Paradas, no máximo</h3><div class="seg" id="rotParadas" role="group" aria-label="Paradas, no máximo"></div></div>
         <div class="group"><h3>O que comprar</h3><div class="seg" id="rotEscopo" role="group" aria-label="O que comprar"></div></div>
+        <div class="group rot-listas" id="rotListasG" hidden><h3>Listas</h3><div class="listas-bar" id="rotListas" role="group" aria-label="Listas do roteiro"></div></div>
         <label class="set-line" id="rotOnlineRow"><input type="checkbox" class="switch" id="rotOnline"><span>Pedir online o que sair mais barato com frete</span></label>
       </div>
       <div id="rotRes" aria-live="polite"></div>
@@ -1627,6 +1652,10 @@ input.field,select.field{min-height:var(--altura)}
       <div class="set-row so-ia">
         <div><h3 class="set-t"><label for="opFolhetos">Folhetos dos sites de encartes</label></h3><p class="sec-meta">Kimbino, Portafolhetos, Seus Folhetos e Catálogos Ofertas, lidos uma vez pela IA.</p></div>
         <input type="checkbox" class="switch" id="opFolhetos">
+      </div>
+      <div class="set-row">
+        <div><h3 class="set-t"><label for="opListas">Listas</label></h3><p class="sec-meta">Listas prontas, como Compra semanal e Compra mensal, no alto da Minha lista. O Roteiro escolhe quais entram.</p></div>
+        <input type="checkbox" class="switch" id="opListas">
       </div>
       <div class="set-row so-ia">
         <div><h3 class="set-t"><label for="opItens">Procurar de novo os itens sem preço</label></h3><p class="sec-meta">Uma última pergunta só sobre o que ficou sem preço.</p></div>
@@ -2159,6 +2188,10 @@ dialog.ss-wrap::backdrop{background:transparent}
   function normaliza(c){
     c = c && typeof c === 'object' ? JSON.parse(JSON.stringify(c)) : {};
     var p = c.perfil || {}, r = c.cotidiano || {}, l = c.lojas || {}, sy = c.sync || {}, on = c.online || null, ro = c.roteiro || {};
+    // as listas prontas (Compra semanal, Compra mensal…): {id, nome}; cada item diz em quais está (listas: [id])
+    var listas = arr(c.listas).filter(function(x){ return x && /^[a-z0-9-]{1,40}$/.test(String(x.id || '')) && String(x.nome || '').trim(); })
+      .map(function(x){ return {id:String(x.id), nome:String(x.nome).trim().slice(0, 30)}; }).slice(0, 20), idsListas = {};
+    listas.forEach(function(x){ idsListas[x.id] = true; });
     var cats = arr(c.categorias).slice();
     if (!on && cats.length && cats.indexOf('online') < 0) cats.push('online');  // quem já usava ganha a aba Online
     on = on || {};
@@ -2172,6 +2205,7 @@ dialog.ss-wrap::backdrop{background:transparent}
       lojas: {ignorar: arr(l.ignorar), manter: arr(l.manter), adicionar: arr(l.adicionar), folhetos: arr(l.folhetos).filter(function(f){ return f && f.nome; }).map(function(f){ return {nome:String(f.nome), categoria:f.categoria || 'mercados'}; })},
       lista: arr(c.lista).map(function(i){ return typeof i === 'string' ? {produto:i, compras:[]} : {produto:String(i.produto || ''), compras:arr(i.compras), origem:i.origem === 'ha' ? 'ha' : undefined,
         similares:i.similares ? true : undefined, ean:/^\d{8,14}$/.test(String(i.ean || '')) ? String(i.ean) : undefined, qtd:qtdDe(i) > 1 ? qtdDe(i) : undefined,
+        listas:arr(i.listas).filter(function(id){ return idsListas[id]; }).length ? arr(i.listas).filter(function(id, k, a){ return idsListas[id] && a.indexOf(id) === k; }) : undefined,
         escolha:i.escolha && i.escolha.rede ? {rede:String(i.escolha.rede), q:Number(i.escolha.q) || null, obs:String(i.escolha.obs || '').slice(0, 120), sim:i.escolha.sim ? true : undefined} : undefined}; }).filter(function(i){ return i.produto; }),
       // itens que saíram da lista, com as compras, para voltar com um toque
       historico: arr(c.historico).filter(function(i){ return i && i.produto; }).map(function(i){ return {produto:String(i.produto).slice(0, 120), compras:arr(i.compras).filter(function(d){ return /^\d{4}-\d{2}-\d{2}$/.test(d); }), saiu:String(i.saiu || ''), ean:/^\d{8,14}$/.test(String(i.ean || '')) ? String(i.ean) : undefined}; }).slice(-300),
@@ -2181,7 +2215,9 @@ dialog.ss-wrap::backdrop{background:transparent}
       ia: {busca:String((c.ia || {}).busca || ''), fotos:String((c.ia || {}).fotos || ''), voz:String((c.ia || {}).voz || '')},
       clubes: arr(c.clubes),
       cupons_meus: arr(c.cupons_meus).filter(function(k){ return k && k.beneficio && k.rede; }),
-      roteiro: {paradas:Math.min(4, Math.max(1, Math.round(Number(ro.paradas)) || 2)), escopo:ro.escopo === 'acabando' ? 'acabando' : 'tudo', online:ro.online !== false},
+      roteiro: {paradas:Math.min(4, Math.max(1, Math.round(Number(ro.paradas)) || 2)), escopo:ro.escopo === 'acabando' ? 'acabando' : 'tudo', online:ro.online !== false,
+        listas:arr(ro.listas).filter(function(id){ return idsListas[id]; })},
+      listas: listas,
       ocultas: arr(c.ocultas),
       // a cor do app, da casa toda (1.9.0): null até a casa ter uma (a primeira vez adota a do aparelho)
       cor: typeof c.cor === 'string' ? c.cor : null,
@@ -2189,7 +2225,8 @@ dialog.ss-wrap::backdrop{background:transparent}
       usar_ia: c.usar_ia !== false,
       sensores: c.sensores === true,
       correria: c.correria === true,
-      opcoes: {itens_sem_preco:(c.opcoes || {}).itens_sem_preco !== false, encartes_auto:(c.opcoes || {}).encartes_auto !== false, lojas_diretas:(c.opcoes || {}).lojas_diretas !== false, folhetos:(c.opcoes || {}).folhetos !== false}
+      opcoes: {itens_sem_preco:(c.opcoes || {}).itens_sem_preco !== false, encartes_auto:(c.opcoes || {}).encartes_auto !== false, lojas_diretas:(c.opcoes || {}).lojas_diretas !== false, folhetos:(c.opcoes || {}).folhetos !== false,
+        listas:(c.opcoes || {}).listas === true}
     };
   }
 
@@ -2360,7 +2397,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.14.1';
+  var VERSAO = '1.15.0';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -3007,7 +3044,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   function entraNaLista(nome){  // item novo ou de volta do histórico, com as compras de antes
     var k = norm(nome), h = estado.historico.filter(function(x){ return norm(x.produto) === k; })[0];
     estado.historico = estado.historico.filter(function(x){ return norm(x.produto) !== k; });
-    estado.lista.push({produto:h ? h.produto : nome, compras:h ? h.compras.slice().sort() : [], ean:h && h.ean ? h.ean : undefined});
+    estado.lista.push({produto:h ? h.produto : nome, compras:h ? h.compras.slice().sort() : [], ean:h && h.ean ? h.ean : undefined, listas:listaAtual() ? [listaAtual()] : undefined});
     return !!h;
   }
   var HIST_ABERTO = false;
@@ -3069,19 +3106,88 @@ dialog.ss-wrap::backdrop{background:transparent}
     for (var i = 0; i < ICONES_ITEM.length && !ic; i++) if (ICONES_ITEM[i][0].test(n)) ic = ICONES_ITEM[i][1];
     return '<span class="i-ic" aria-hidden="true">' + (ic || ICONE_CAT[cat] || '🛒') + '</span>';
   }
+  // ===== Listas prontas (Mais › Configurações › Opções › Listas; desligadas de começo): Compra semanal, Compra mensal…
+  // Uma lista só de produtos (os preços e o histórico de cada um); as listas são atalhos no alto da Minha lista, e um item
+  // pode estar em mais de uma. A tela toda (a lista, o cupom de economia) segue a lista aberta, que fica no aparelho.
+  function listasOn(){ return !!estado.opcoes.listas; }
+  function listaAtual(){ var id = ui.listaAtual || ''; return listasOn() && estado.listas.some(function(l){ return l.id === id; }) ? id : ''; }
+  function naListaAtual(it){ var a = listaAtual(); return !a || arr(it.listas).indexOf(a) >= 0; }
+  function nomeLista(id){ var l = estado.listas.filter(function(x){ return x.id === id; })[0]; return l ? l.nome : ''; }
+  var LISTA_ED = null;  // o que está aberto embaixo da barra: {novo: true}, {renomear: id} ou {apagar: id}
+  function linhaListas(x){
+    if (!listasOn() || !estado.listas.length) return '';
+    return '<div class="i-listas" role="group" aria-label="Listas de ' + esc(x.it.produto) + '">' + estado.listas.map(function(l){
+      var on = arr(x.it.listas).indexOf(l.id) >= 0;
+      return '<button type="button" class="ghost lst-b" data-lst="' + x.i + '" data-id="' + esc(l.id) + '" aria-pressed="' + on + '">' + esc(l.nome) + '</button>';
+    }).join('') + '</div>';
+  }
+  function pintaListas(){
+    var on = listasOn(), a = listaAtual();
+    $('listasWrap').hidden = !on;
+    if (!on){ $('listasBar').innerHTML = ''; $('listasExtra').innerHTML = ''; return; }
+    var n = function(id){ return estado.lista.filter(function(it){ return !id || arr(it.listas).indexOf(id) >= 0; }).length; };
+    $('listasBar').innerHTML = '<button type="button" class="pick" data-la="" aria-pressed="' + !a + '"><span>Todas</span> <small class="num">' + n('') + '</small></button>'
+      + estado.listas.map(function(l){ return '<button type="button" class="pick" data-la="' + esc(l.id) + '" aria-pressed="' + (a === l.id) + '"><span>' + esc(l.nome) + '</span> <small class="num">' + n(l.id) + '</small></button>'; }).join('')
+      + (estado.listas.length < 20 ? '<button type="button" class="pick lista-nova" data-lnova="1">+ Nova</button>' : '');
+    var ed = LISTA_ED, h = '';
+    if (ed && (ed.novo || ed.renomear)){
+      h = '<form class="row-form lista-form" id="listaForm"><input class="field" id="listaNome" maxlength="30" autocomplete="off" placeholder="Ex.: Compra semanal" aria-label="Nome da lista" value="' + esc(ed.renomear ? nomeLista(ed.renomear) : '') + '">'
+        + '<button class="btn" type="submit">' + (ed.novo ? 'Criar' : 'Salvar') + '</button><button type="button" class="ghost big" data-lx="1">Cancelar</button></form>';
+    } else if (ed && ed.apagar){
+      h = '<div class="confirma"><p>Apagar a lista ' + esc(nomeLista(ed.apagar)) + '? Os itens continuam em Todas.</p><div class="row-form"><button type="button" class="btn perigo" data-lapagar="' + esc(ed.apagar) + '">Apagar</button><button type="button" class="ghost big" data-lx="1">Cancelar</button></div></div>';
+    } else if (a){
+      h = '<p class="listas-acoes"><button type="button" class="link" data-lren="' + esc(a) + '">Renomear</button> · <button type="button" class="link" data-ldel="' + esc(a) + '">Apagar lista</button></p>';
+    }
+    $('listasExtra').innerHTML = h;
+    if (ed && (ed.novo || ed.renomear)) setTimeout(function(){ var i = $('listaNome'); if (i) i.focus(); }, 0);
+  }
+  $('listasWrap').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.la != null){ ui.listaAtual = b.dataset.la; salvarUI(); LISTA_ED = null; RES_ABERTO = {}; pintaLista(); return; }
+    if (b.dataset.lnova){ LISTA_ED = {novo:true}; pintaListas(); return; }
+    if (b.dataset.lren){ LISTA_ED = {renomear:b.dataset.lren}; pintaListas(); return; }
+    if (b.dataset.ldel){ LISTA_ED = {apagar:b.dataset.ldel}; pintaListas(); return; }
+    if (b.dataset.lx){ LISTA_ED = null; pintaListas(); return; }
+    if (b.dataset.lapagar){
+      var id = b.dataset.lapagar, nome = nomeLista(id);
+      estado.listas = estado.listas.filter(function(l){ return l.id !== id; });
+      estado.lista.forEach(function(it){ if (it.listas){ it.listas = it.listas.filter(function(x){ return x !== id; }); if (!it.listas.length) delete it.listas; } });
+      estado.roteiro.listas = estado.roteiro.listas.filter(function(x){ return x !== id; });
+      if (ui.listaAtual === id){ ui.listaAtual = ''; salvarUI(); }
+      LISTA_ED = null; salvar('Lista ' + nome + ' apagada'); pintaLista(); return;
+    }
+  });
+  $('listasWrap').addEventListener('submit', function(e){
+    if (e.target.id !== 'listaForm') return;
+    e.preventDefault();
+    var nome = $('listaNome').value.trim().slice(0, 30), ed = LISTA_ED || {};
+    if (!nome){ $('listaNome').focus(); return; }
+    if (estado.listas.some(function(l){ return norm(l.nome) === norm(nome) && l.id !== ed.renomear; })){ toast('Já tem uma lista ' + nome + '.'); return; }
+    if (ed.renomear){
+      estado.listas.forEach(function(l){ if (l.id === ed.renomear) l.nome = nome; });
+      LISTA_ED = null; salvar('Lista renomeada'); pintaLista(); return;
+    }
+    var id = (norm(nome).replace(/\s+/g, '-').slice(0, 24) || 'lista') + '-' + Date.now().toString(36).slice(-4);
+    estado.listas.push({id:id, nome:nome});
+    ui.listaAtual = id; salvarUI(); LISTA_ED = null;
+    salvar('Lista ' + nome + ' criada'); pintaLista();
+  });
   function pintaLista(){
-    var itens = estado.lista.map(function(it, i){ var r = ritmo(it.compras); return {it:it, i:i, r:r}; })
+    pintaListas();
+    var aberta = listaAtual();
+    var itens = estado.lista.map(function(it, i){ var r = ritmo(it.compras); return {it:it, i:i, r:r}; }).filter(function(x){ return naListaAtual(x.it); })
       .sort(function(a, b){
         var x = a.r.dias == null ? 9999 : a.r.dias, y = b.r.dias == null ? 9999 : b.r.dias;
         return x - y || a.i - b.i;
       });
-    $('limpar').hidden = !itens.length;
+    $('limpar').hidden = !itens.length || !!aberta;  // numa lista pronta, nada de limpar: ela é para usar de novo
     if (!itens.length) $('limparConf').hidden = true;
     pintaRoteiro();
     $('visLista').hidden = itens.length < 2;
     var resumida = ui.lista === 'resumida' && itens.length >= 2;
     [].forEach.call($('visLista').querySelectorAll('button'), function(b){ b.setAttribute('aria-pressed', String((b.dataset.vis === 'resumida') === resumida)); });
-    if (!itens.length){ pintaHero(); $('wish').innerHTML = '<li class="empty">Sua lista está vazia. Adicione o que você compra sempre.</li>'; return; }
+    if (!itens.length){ pintaHero(); $('wish').innerHTML = '<li class="empty">' + (aberta ? 'Nada em ' + esc(nomeLista(aberta)) + ' ainda. Adicione aqui, ou toque no nome dela num item de Todas.'
+      : 'Sua lista está vazia. Adicione o que você compra sempre.') + '</li>'; return; }
     pintaHero();
     // o que vale para vários itens é dito uma vez só, aqui em cima, e não em cada cartão
     var semCompra = itens.some(function(x){ return !arr(x.it.compras).length; });
@@ -3095,7 +3201,7 @@ dialog.ss-wrap::backdrop{background:transparent}
       var p = precosDe(x.it.produto), soon = x.r.dias != null && x.r.dias <= 3;
       if (resumida && !RES_ABERTO[norm(x.it.produto)]) return linhaResumida(x, p, soon);
       var N = qtdDe(x.it);
-      var acoes = '<div class="i-actions">' + seletorQtd(x) + '<button type="button" class="ghost ic-btn" data-comprei="' + x.i + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.3 14.2l2 2 3.6-3.7"/></svg>Comprei hoje</button><button type="button" class="ghost ic-btn sim-btn" data-sim="' + x.i + '" aria-pressed="' + !!x.it.similares + '" title="Mostrar produtos parecidos, da mesma seção da loja, que saem mais em conta">' + SVG_SIM + 'Similares</button><button type="button" class="rm" data-rm="' + x.i + '">remover</button>' + (x.it.origem === 'ha' ? '<span class="chip">Veio do Home Assistant</span>' : '');
+      var acoes = linhaListas(x) + '<div class="i-actions">' + seletorQtd(x) + '<button type="button" class="ghost ic-btn" data-comprei="' + x.i + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.3 14.2l2 2 3.6-3.7"/></svg>Comprei hoje</button><button type="button" class="ghost ic-btn sim-btn" data-sim="' + x.i + '" aria-pressed="' + !!x.it.similares + '" title="Mostrar produtos parecidos, da mesma seção da loja, que saem mais em conta">' + SVG_SIM + 'Similares</button><button type="button" class="rm" data-rm="' + x.i + '">' + (aberta ? 'tirar desta lista' : 'remover') + '</button>' + (x.it.origem === 'ha' ? '<span class="chip">Veio do Home Assistant</span>' : '');
       if (!p.length){
         var procurou = arr((D.relatorio || {}).sem_preco).map(norm).indexOf(norm(x.it.produto)) >= 0;
         var buscando = buscaItem === x.it.produto;
@@ -3234,6 +3340,18 @@ dialog.ss-wrap::backdrop{background:transparent}
       var it = estado.lista[Number(b.dataset.comprei)], hoje = hojeSP();
       if (it.compras.indexOf(hoje) < 0) it.compras.push(hoje);
       salvar('Compra registrada'); pintaLista(); return;
+    }
+    if (b.dataset.rm != null && listaAtual()){  // numa lista pronta, sai só dela: continua em Todas
+      var ir = estado.lista[Number(b.dataset.rm)]; if (!ir) return;
+      ir.listas = arr(ir.listas).filter(function(id){ return id !== listaAtual(); }); if (!ir.listas.length) delete ir.listas;
+      salvar('"' + ir.produto + '" saiu de ' + nomeLista(listaAtual()) + '; continua em Todas'); pintaLista(); return;
+    }
+    if (b.dataset.lst != null){
+      var il = estado.lista[Number(b.dataset.lst)]; if (!il) return;
+      var tem = arr(il.listas).indexOf(b.dataset.id) >= 0;
+      il.listas = tem ? arr(il.listas).filter(function(id){ return id !== b.dataset.id; }) : arr(il.listas).concat([b.dataset.id]);
+      if (!il.listas.length) delete il.listas;
+      salvar((tem ? '"' + il.produto + '" saiu de ' : '"' + il.produto + '" entrou em ') + nomeLista(b.dataset.id)); pintaLista(); return;
     }
     if (b.dataset.rm != null){
       var nome = estado.lista[Number(b.dataset.rm)].produto;
@@ -3431,8 +3549,9 @@ dialog.ss-wrap::backdrop{background:transparent}
   SUG_FONTES.itens = function(inp){
     var q = norm(inp.value), noLista = {};
     if (q.length < 2) return [];
-    estado.lista.forEach(function(i){ noLista[norm(i.produto)] = true; });
-    var meus = HIST_ABERTO ? [] : ordemHist().map(function(x){ return x.produto; });  // com o Histórico aberto, ele já mostra os da pessoa
+    estado.lista.filter(naListaAtual).forEach(function(i){ noLista[norm(i.produto)] = true; });
+    var deTodas = listaAtual() ? estado.lista.filter(function(i){ return !naListaAtual(i); }).map(function(i){ return i.produto; }) : [];
+    var meus = deTodas.concat(HIST_ABERTO ? [] : ordemHist().map(function(x){ return x.produto; }));  // com o Histórico aberto, ele já mostra os da pessoa
     var k = q; while (k && !SUG_NOMES[k]) k = k.slice(0, -1);
     return meus.concat(k ? SUG_NOMES[k] : []).filter(function(v){ return !noLista[norm(v)]; });
   };
@@ -3902,7 +4021,13 @@ dialog.ss-wrap::backdrop{background:transparent}
     e.preventDefault();
     var nome = $('novoItem').value.trim(), msg = $('addMsg');
     if (nome.length < 3){ msg.className = 'hint err'; msg.textContent = 'Escreva o nome do produto, com tamanho ou dosagem se tiver.'; return; }
-    if (estado.lista.some(function(i){ return norm(i.produto) === norm(nome); })){ msg.className = 'hint err'; msg.textContent = 'Esse produto já está na lista.'; return; }
+    var jaTem = estado.lista.filter(function(i){ return norm(i.produto) === norm(nome); })[0];
+    if (jaTem && listaAtual() && !naListaAtual(jaTem)){  // já está em Todas: entra na lista aberta
+      jaTem.listas = arr(jaTem.listas).concat([listaAtual()]); $('novoItem').value = ''; sugFechar();
+      msg.className = 'hint ok'; msg.textContent = '"' + jaTem.produto + '" entrou em ' + nomeLista(listaAtual()) + '.';
+      salvar('Adicionado a ' + nomeLista(listaAtual())); pintaLista(); return;
+    }
+    if (jaTem){ msg.className = 'hint err'; msg.textContent = 'Esse produto já está na lista.'; return; }
     var voltou = entraNaLista(nome); $('novoItem').value = ''; sugFechar();
     msg.className = 'hint ok'; msg.textContent = '"' + nome + '" ' + (voltou ? 'voltou para a lista, com as compras de antes.' : 'entrou na lista.'); pintaHist();
     salvar('Adicionado à lista'); pintaLista(); pintaOfertasTela();
@@ -4143,8 +4268,10 @@ dialog.ss-wrap::backdrop{background:transparent}
   // ===== Roteiro de compras: em até N lojas, onde comprar cada item =====
   var rotVer = null;  // plano que a pessoa tocou para ver (null = o recomendado)
   function distLoja(id){ var l = LOJA[id]; return l && l.distancia_km != null ? l.distancia_km : 5; }
-  function itensDoRoteiro(){
-    return estado.lista.map(function(it){ var p = precosDe(it.produto), es = escolhaDe(it, p); return {it:it, r:ritmo(it.compras), p:es ? [es.y] : p, n:vezesDe(it, es)}; })
+  // principal: os da lista aberta (o cupom do Início); senão, os das listas escolhidas no Roteiro (nenhuma: todos)
+  function itensDoRoteiro(principal){
+    var ls = listasOn() ? estado.roteiro.listas : [];
+    return estado.lista.filter(function(it){ return principal ? naListaAtual(it) : !ls.length || arr(it.listas).some(function(id){ return ls.indexOf(id) >= 0; }); }).map(function(it){ var p = precosDe(it.produto), es = escolhaDe(it, p); return {it:it, r:ritmo(it.compras), p:es ? [es.y] : p, n:vezesDe(it, es)}; })
       .filter(function(x){ return estado.roteiro.escopo !== 'acabando' || (x.r.dias != null && x.r.dias <= 7); });
   }
   function avaliaPlano(itens, combo, online){
@@ -4196,8 +4323,8 @@ dialog.ss-wrap::backdrop{background:transparent}
     });
     return Math.max(0, Math.round(e * 100) / 100);
   }
-  function calculaRoteiro(){
-    var ro = estado.roteiro, itens = itensDoRoteiro(), comPreco = itens.filter(function(x){ return x.p.length; });
+  function calculaRoteiro(principal){
+    var ro = estado.roteiro, itens = itensDoRoteiro(principal), comPreco = itens.filter(function(x){ return x.p.length; });
     var out = {itens:itens, comPreco:comPreco, semPreco:itens.filter(function(x){ return !x.p.length; })};
     if (!comPreco.length) return out;
     var online = ro.online && estado.categorias.indexOf('online') >= 0;
@@ -4230,11 +4357,16 @@ dialog.ss-wrap::backdrop{background:transparent}
     $('rotEscopo').innerHTML = [['tudo', 'Lista toda'], ['acabando', 'Acabando']].map(function(t){ return '<button type="button" data-v="' + t[0] + '" aria-pressed="' + (ro.escopo === t[0]) + '">' + t[1] + '</button>'; }).join('');
     $('rotOnline').checked = ro.online;
     $('rotOnlineRow').hidden = estado.categorias.indexOf('online') < 0;
+    var ls = listasOn() ? estado.listas : [];
+    $('rotListasG').hidden = !ls.length;
+    $('rotListas').innerHTML = !ls.length ? '' : '<button type="button" class="pick" data-rl="" aria-pressed="' + !ro.listas.length + '"><span>Todas</span></button>'
+      + ls.map(function(l){ return '<button type="button" class="pick" data-rl="' + esc(l.id) + '" aria-pressed="' + (ro.listas.indexOf(l.id) >= 0) + '"><span>' + esc(l.nome) + '</span></button>'; }).join('');
   }
   function pintaRoteiro(){
     pintaRotCtrl();
     var el = $('rotRes');
     if (!estado.lista.length){ el.innerHTML = '<p class="empty">Adicione itens à lista para montar o roteiro.</p>'; return; }
+    if (!itensDoRoteiro().length && estado.roteiro.escopo !== 'acabando'){ el.innerHTML = '<p class="empty">Nenhum item nas listas escolhidas.</p>'; return; }
     var c = calculaRoteiro();
     if (!c.itens.length){ el.innerHTML = '<p class="empty">Nada acaba nos próximos 7 dias. Escolha "Lista toda" para montar o roteiro com tudo.</p>'; return; }
     if (!c.porK){ el.innerHTML = '<p class="empty">Os preços aparecem depois da próxima busca. Aí o roteiro fica pronto.</p>'; return; }
@@ -4281,19 +4413,26 @@ dialog.ss-wrap::backdrop{background:transparent}
   $('rotParadas').addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; estado.roteiro.paradas = Number(b.dataset.v); rotVer = null; salvar(); pintaRoteiro(); pintaHero(); });
   $('rotEscopo').addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; estado.roteiro.escopo = b.dataset.v; rotVer = null; salvar(); pintaRoteiro(); pintaHero(); });
   $('rotOnline').addEventListener('change', function(){ estado.roteiro.online = this.checked; rotVer = null; salvar(); pintaRoteiro(); pintaHero(); });
+  // as listas do roteiro: Todas, ou uma ou mais listas prontas (um toque põe ou tira)
+  $('rotListas').addEventListener('click', function(e){
+    var b = e.target.closest('[data-rl]'); if (!b) return;
+    var id = b.dataset.rl, ls = estado.roteiro.listas;
+    estado.roteiro.listas = !id ? [] : ls.indexOf(id) >= 0 ? ls.filter(function(x){ return x !== id; }) : ls.concat([id]);
+    rotVer = null; salvar(); pintaRoteiro();
+  });
   $('rotRes').addEventListener('click', function(e){ var b = e.target.closest('[data-rotk]'); if (!b) return; rotVer = Number(b.dataset.rotk); pintaRoteiro(); });
 
   // ===== Abertura: oportunidades de economia =====
   function oportunidades(){
     var o = {total:0, itens:[], acabando:0, acabandoNomes:[], paraVoce:0, cupom:null, tam:[], rot:null};
-    estado.lista.forEach(function(it){
+    estado.lista.filter(naListaAtual).forEach(function(it){  // a lista aberta (com as listas ligadas)
       var p = precosDe(it.produto), r = ritmo(it.compras), mt = p.length ? melhorTamanho(it, r, p) : null;
       var n = qtdDe(it);
       if (p.length > 1 && p[1].v - p[0].v > 0.004){ o.total += (p[1].v - p[0].v) * n; o.itens.push({nome:nomeCurto(it.produto), e:(p[1].v - p[0].v) * n}); }  // em relação à segunda opção
       if (r.dias != null && r.dias <= 3){ o.acabando++; o.acabandoNomes.push(nomeCurto(it.produto)); }
       if (mt && mt.economia > 0) o.tam.push({nome:nomeCurto(it.produto), e:mt.economia});
     });
-    var c = estado.lista.length ? calculaRoteiro() : {};
+    var c = estado.lista.filter(naListaAtual).length ? calculaRoteiro(true) : {};
     if (c.rec && c.rec.pl.ids.length) o.rot = {n:c.rec.pl.ids.length, ids:c.rec.pl.ids, online:c.rec.pl.online.length > 0, eco:economiaPlano(c.rec.pl), total:c.rec.pl.total};
     D.categorias.forEach(function(c){
       if (estado.categorias.indexOf(c.id) < 0) return;
@@ -4877,7 +5016,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     $('sensoresTxt').innerHTML = estado.sensores
       ? 'Ligado: <code>sensor.economia_ia_hoje</code>.'
       : 'Desligado.';
-    $('opItens').checked = estado.opcoes.itens_sem_preco; $('opEncartes').checked = estado.opcoes.encartes_auto;
+    $('opItens').checked = estado.opcoes.itens_sem_preco; $('opEncartes').checked = estado.opcoes.encartes_auto; $('opListas').checked = estado.opcoes.listas;
     $('opDiretas').checked = estado.opcoes.lojas_diretas; $('opFolhetos').checked = estado.opcoes.folhetos;
     $('onEntrega').checked = estado.online.mercados_entrega;
     pintaEtapas();
@@ -4924,6 +5063,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     estado.sensores = this.checked; salvar(this.checked ? 'Sensores ligados' : 'Sensores desligados'); pintaAjustes(); pintaUso();
   });
   $('opItens').addEventListener('change', function(){ estado.opcoes.itens_sem_preco = this.checked; salvar('Opção salva'); pintaEtapas(); });
+  $('opListas').addEventListener('change', function(){ estado.opcoes.listas = this.checked; salvar(this.checked ? 'Listas ligadas' : 'Listas desligadas'); pintaLista(); });
   $('opEncartes').addEventListener('change', function(){ estado.opcoes.encartes_auto = this.checked; salvar('Opção salva'); });
   $('opDiretas').addEventListener('change', function(){ estado.opcoes.lojas_diretas = this.checked; salvar(this.checked ? 'Busca direta ligada' : 'Busca direta desligada'); pintaEtapas(); pintaLista(); });
   $('opFolhetos').addEventListener('change', function(){ estado.opcoes.folhetos = this.checked; salvar(this.checked ? 'Folhetos ligados' : 'Folhetos desligados'); pintaEtapas(); });
