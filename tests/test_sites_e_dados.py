@@ -149,6 +149,85 @@ class Versoes(Base):
             S.restaurar_versao("config-20200101-000000-auto.json")
 
 
+class Dados19(Base):
+    """1.9.0: Backup na pasta share, Começar do zero e a planilha do Exportar no Importar."""
+
+    def test_backup_lista_restaura_e_guarda_os_dez_mais_recentes(self):
+        S = self.S
+        S.gravar_config({"cep": "1", "lista": [{"produto": "Café"}], "usar_ia": False})
+        S.gravar_json(S.OFERTAS, {"gerado_em": "x", "categorias": []})
+        open(os.path.join(S.DATA, "segredos.json"), "w").write('{"google": {"key": "segredo"}}')
+        self.assertTrue(S.share_ok())
+        nome = S.criar_backup()
+        b = S.listar_backups()
+        self.assertEqual(b[0]["nome"], nome)
+        self.assertGreater(b[0]["tamanho"], 0)
+        with zipfile.ZipFile(os.path.join(S.SHARE, nome)) as z:
+            self.assertEqual(sorted(z.namelist()), ["config.json", "ofertas.json"], "sem as chaves das integrações")
+        S.gravar_config({"cep": "2", "lista": []})
+        os.remove(S.OFERTAS)
+        novo = S.restaurar_backup(nome)
+        self.assertEqual((novo["cep"], novo["lista"][0]["produto"]), ("1", "Café"))
+        self.assertTrue(os.path.exists(S.OFERTAS), "o resultado da busca volta junto")
+        self.assertTrue(any(v["nome"].endswith("-restaurar.json") for v in S.listar_versoes()), "antes, uma versão do que existia")
+        for i in range(12):
+            open(os.path.join(S.SHARE, f"economia-202601{i % 9 + 1:02d}-1200{i:02d}.zip"), "w").close()
+        open(os.path.join(S.SHARE, "economia-20261399-000000.zip"), "w").close()  # uma data que não existe: fica de fora
+        S.criar_backup()
+        self.assertEqual(len(S.listar_backups()), S.MAX_BACKUPS)
+        with self.assertRaisesRegex(S.ErroBusca, "Backup não encontrado."):
+            S.restaurar_backup("../config.json")
+        open(os.path.join(S.SHARE, "economia-20200101-000000.zip"), "w").write("não é zip")
+        with self.assertRaisesRegex(S.ErroBusca, "não parece um backup"):
+            S.restaurar_backup("economia-20200101-000000.zip")
+
+    def test_sem_pasta_share(self):
+        S = self.S
+        S.SHARE = os.path.join(S.DATA, "arquivo")
+        open(S.SHARE, "w").close()  # um arquivo no lugar da pasta: não dá para gravar
+        self.assertFalse(S.share_ok())
+        self.assertEqual(S.listar_backups(), [])
+        with self.assertRaisesRegex(S.ErroBusca, "share não está disponível"):
+            S.criar_backup()
+
+    def test_zerar_deixa_so_os_ajustes(self):
+        S = self.S
+        S.gravar_config({"cep": "1", "lista": [{"produto": "Café"}], "historico": [{"produto": "Pão"}], "perfil": {"adultos": 3},
+                         "usar_ia": False, "sensores": True, "cor": "azul", "cor_dia": False, "opcoes": {"folhetos": False}})
+        S.gravar_json(S.OFERTAS, {"categorias": []})
+        novo = S.zerar()
+        self.assertEqual({k for k in novo if k not in ("rev", "atualizado_em")}, {"usar_ia", "sensores", "cor", "cor_dia", "opcoes"})
+        self.assertFalse(os.path.exists(S.OFERTAS))
+        v = S.listar_versoes()
+        self.assertEqual((v[0]["motivo"], v[0]["itens"]), ("antes de começar do zero", 1), "uma versão antes, que traz tudo de volta")
+
+    def test_cor_da_casa_so_mexe_na_cor(self):
+        S = self.S
+        S.gravar_config({"cep": "1", "lista": [{"produto": "Café"}]})
+        rev = S.gravar_cor("magenta", False)
+        c = S.ler_config()
+        self.assertEqual((c["cor"], c["cor_dia"], c["rev"], c["cep"]), ("rosa", False, rev, "1"), "Magenta de antes é Rosa; o resto fica")
+        S.gravar_cor("nada", True)
+        self.assertEqual((S.ler_config()["cor"], S.ler_config()["cor_dia"]), ("rosa", True), "uma cor fora da paleta não muda a cor")
+        S.gravar_cor(None, None)
+        self.assertNotIn("cor", S.ler_config())
+
+    def test_planilha_do_exportar_volta_no_importar(self):
+        S = self.S
+        S.gravar_config({"lista": [{"produto": "Leite integral", "compras": ["2026-10-01", "2026-10-11"]}, {"produto": "Café & Cia"}, {"produto": "ab"}]})
+        corpo, _ = S.exportar("xlsx")
+        d = S.ler_planilha(corpo)
+        self.assertEqual(d["lista"], [{"produto": "Leite integral", "compras": ["2026-10-01", "2026-10-11"]}, {"produto": "Café & Cia", "compras": []}])
+        with self.assertRaisesRegex(S.ErroBusca, "não parece a planilha"):
+            S.ler_planilha(b"isto nao e um zip")
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w") as z:  # outra planilha (texto compartilhado), sem a coluna Produto
+            z.writestr("xl/worksheets/sheet1.xml", '<worksheet><sheetData><row r="1"><c r="A1" t="s"><v>0</v></c></row></sheetData></worksheet>')
+            z.writestr("xl/sharedStrings.xml", "<sst><si><t>Nome</t></si></sst>")
+        with self.assertRaisesRegex(S.ErroBusca, "coluna Produto"):
+            S.ler_planilha(buf.getvalue())
+
+
 class UsoDaIA(Base):
     def test_conta_chamadas_tokens_e_erros(self):
         S = self.S

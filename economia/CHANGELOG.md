@@ -1,5 +1,15 @@
 # Mudanças
 
+## 1.9.0
+
+O EconomIA fica igual aos outros apps da família:
+
+- **Dados**, na ordem dos outros apps: **Exportar**, **Backup na pasta share** (novo: **Criar backup** grava um `.zip` em `share/economia`, com **Restaurar**), **Importar** (agora também a planilha do Exportar), **Versões anteriores**, **Onde ficam os dados** e **Começar do zero** (novo: apaga a lista, o histórico, o perfil, as lojas e as ofertas, com uma confirmação em vermelho; os ajustes continuam e uma cópia fica em Versões anteriores).
+- **Aparência**: o tema começa em **Automático** para quem nunca escolheu (antes era Escuro) e vale só no aparelho. A **cor do app** passa a valer para a casa toda: na primeira vez, fica a deste aparelho.
+- **Cores**: as 12 cores da família, com os mesmos nomes dos outros apps. Amarelo vira Ouro, Roxo vira Lilás, Magenta vira Rosa e Cinza vira Grafite; chegam Laranja, Turquesa, Índigo e Menta. A **Cor do dia** é a mesma em todos os apps.
+- **Integrações** na ordem dos outros apps: **CorrerIA**, **IA do Home Assistant**, **Uso da IA**, as integrações daqui e, por último, **Sensores no Home Assistant**.
+- **Conversa**: o Voltar do celular fecha a conversa, como nos outros apps.
+
 ## 1.8.0
 
 - **Ofertas**: as ofertas escondidas (pelo perfil, por **Nunca mostrar** ou por **Só esta oferta**) ficam no fim da lista, em **Escondidas (N)**, recolhidas. Um toque abre, com o motivo de cada uma e o **Mostrar de novo**. A faixa "Escondidas pelo perfil" do alto saiu.

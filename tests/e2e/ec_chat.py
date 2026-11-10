@@ -127,7 +127,20 @@ async def main():
             check(await pg.locator("#v-lista").is_visible() and "Picanha kg" in await pg.text_content("#v-lista"), "a lista atrás já mostra a picanha")
             # ----- Abrir Ofertas: fecha a conversa no celular -----
             await pg.click(".cm-acao >> nth=3")
+            await pg.wait_for_timeout(400)
             check(await pg.locator("#chat").is_hidden() and await pg.text_content("#screenTitle") == "Ofertas", "Abrir Ofertas fecha a conversa e abre a tela")
+            # 1.9.0: o Voltar do celular fecha só a Conversa, como nos outros apps (a tela de baixo continua)
+            hist = await pg.evaluate("history.length")
+            await bolha.click()
+            check(await pg.evaluate("history.state && history.state.chat") is True, "aberta, a Conversa ocupa uma entrada no histórico")
+            await pg.go_back()
+            await pg.wait_for_timeout(400)
+            check(await pg.locator("#chat").is_hidden() and await pg.text_content("#screenTitle") == "Ofertas", "o Voltar do celular fecha a Conversa e fica em Ofertas")
+            await bolha.click()
+            await pg.click("#chatFechar")
+            await pg.wait_for_timeout(400)
+            check(await pg.locator("#chat").is_hidden() and not await pg.evaluate("!!(history.state && history.state.chat)") and await pg.evaluate("history.length") <= hist + 2,
+                  "o X fecha e desfaz a entrada")
             # ----- a próxima pergunta leva o que foi feito e a tela -----
             await bolha.click()
             check(await pg.locator(".cm-acao").count() == 4 and await pg.is_enabled(".cm-acao >> nth=3"), "a conversa continua; Abrir fica sempre ativo")

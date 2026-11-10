@@ -1,6 +1,7 @@
 # EconomIA 0.19.0: Mais › Dados: baixar a planilha, o JSON da lista e o das ofertas (nome do arquivo com a data e o
 # conteúdo), Versões anteriores (cópia automática e antes de limpar; Restaurar pede confirmação e guarda a de antes),
-# Importar lista (itens novos, datas juntadas, arquivo inválido, nada novo).
+# Importar lista (itens novos, datas juntadas, arquivo inválido, nada novo; 1.9.0: a planilha do Exportar), Backup na pasta
+# share, Começar do zero e a ordem das seções.
 import asyncio
 import io
 import json
@@ -91,6 +92,54 @@ async def main():
             check(await pg.text_content("#impMsg") == "Não achei itens novos nesse arquivo.", "importar de novo não duplica")
             vs = app.api("GET", "api/versoes")["versoes"]
             check(any(v["motivo"] == "antes de importar" for v in vs), "guarda uma cópia antes de importar")
+            # ----- 1.9.0: as seções na ordem da família -----
+            secoes = [t.strip() for t in await pg.locator("#mp-dados .set-head h2").all_inner_texts()]
+            check(secoes == ["Exportar", "Backup na pasta share", "Importar", "Versões anteriores", "Onde ficam os dados", "Começar do zero"], f"Dados na ordem da família ({secoes})")
+            # ----- 1.9.0: a planilha do Exportar volta no Importar -----
+            app.api("PUT", "api/config", dict(app.api("GET", "api/estado")["config"], lista=[{"produto": "Bolacha"}]))
+            await pg.reload()
+            await pg.wait_for_timeout(1200)
+            await abre_dados(pg)
+            await pg.set_input_files("#impArq", [{"name": "minha-lista.xlsx", "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "buffer": x}])
+            await espera(pg, "() => /novo/.test(document.getElementById('impMsg').textContent)")
+            lista = {i["produto"]: i for i in app.config_salva()["lista"]}
+            check("Arroz 5 kg" in lista and lista["Arroz 5 kg"]["compras"] == ["2026-10-01", "2026-10-15"] and len(lista) == 2, f"a planilha traz os itens e as datas de compra ({list(lista)})")
+            await pg.set_input_files("#impArq", [{"name": "outra.xlsx", "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "buffer": b"nao e planilha"}])
+            await espera(pg, "() => /planilha/.test(document.getElementById('impMsg').textContent)")
+            check(await pg.text_content("#impMsg") == "Esse arquivo não parece a planilha do EconomIA.", "outro arquivo: explica")
+            # ----- 1.9.0: Backup na pasta share -----
+            await espera(pg, "() => /Nenhum backup/.test(document.getElementById('bkMsg').textContent)")
+            await pg.click("#bkCriar")
+            await espera(pg, "() => document.querySelectorAll('#bkLista li').length === 1")
+            bks = app.api("GET", "api/backups")
+            check(bks["disponivel"] and len(bks["backups"]) == 1 and bks["backups"][0]["nome"].startswith("economia-"), f"Criar backup grava em share/economia ({bks})")
+            app.api("PUT", "api/config", dict(app.api("GET", "api/estado")["config"], lista=[]))
+            await pg.locator("#bkLista [data-bk]").click()
+            check("Voltar para este backup?" in await pg.locator("#bkLista li").inner_text(), "Restaurar pede confirmação")
+            await pg.locator("#bkLista [data-bk-sim]").click()
+            await espera(pg, "() => /Backup restaurado/.test(document.getElementById('toast').textContent)")
+            check(len(app.config_salva()["lista"]) == 2, "o backup traz a lista de volta")
+            await pg.locator("#mp-dados section[aria-labelledby='h-bk']").screenshot(path=SHOTS + "/ecd-backup.png")
+            # ----- 1.9.0: Começar do zero, com a confirmação em vermelho e uma versão antes -----
+            app.api("PUT", "api/config", dict(app.api("GET", "api/estado")["config"], usar_ia=False, cor="azul", cor_dia=False))
+            await pg.reload()
+            await pg.wait_for_timeout(1200)
+            await abre_dados(pg)
+            await pg.click("#zeroBtn")
+            txt = await pg.text_content("#zeroTxt")
+            check(await pg.locator("#zeroConf").is_visible() and "Saem 2 itens da lista" in txt and "Versões anteriores" in txt, f"pede confirmação, com o que sai ({txt})")
+            await pg.locator("#mp-dados section[aria-labelledby='h-zero']").screenshot(path=SHOTS + "/ecd-zerar.png")
+            await pg.click("#zeroNao")
+            check(await pg.locator("#zeroConf").is_hidden() and len(app.config_salva()["lista"]) == 2, "Cancelar não apaga")
+            await pg.click("#zeroBtn")
+            await pg.click("#zeroSim")
+            await espera(pg, "() => /Tudo apagado/.test(document.getElementById('toast').textContent)")
+            c = app.config_salva()
+            check(not c.get("lista") and not c.get("cep") and c.get("usar_ia") is False and c.get("cor") == "azul", "apaga a lista e o CEP; os ajustes ficam")
+            vs = app.api("GET", "api/versoes")["versoes"]
+            check(vs[0]["motivo"] == "antes de começar do zero" and vs[0]["itens"] == 2, "uma versão antes, com tudo")
+            await pg.click('.tabbar [data-view="lista"]')
+            check(await pg.locator("#wish > li.item").count() == 0, "a Minha lista fica vazia")
             check(not pg.erros, f"sem erros na página {pg.erros}")
             await b.close()
 

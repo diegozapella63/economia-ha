@@ -26,7 +26,7 @@ Como nos outros apps (InventarIA, GerencIA, ResolvIA e CronologIA), **Mais** é 
 
 - **Casa**: CEP e distância, o que acompanhar, quem mora, a rotina de compras, restrições, interesses e o que nunca mostrar.
 - **Lojas**: as lojas perto de casa, com o clube de cada uma, Encontrar lojas e Testar agora; cupons do app; compras online; e como o EconomIA busca os preços.
-- **Configurações**, em abas: **Integrações** (IA do Home Assistant, com Usar IA e Para falar; Shopee Afiliados, Google Places, Brave Search, Mercado Livre e Instagram; Uso da IA, Lista do Home Assistant e Sensores no Home Assistant), **Dados** (Exportar, Importar, Versões anteriores e onde ficam os dados), **Aparência** (tema, cor do app e Cor do dia) e **Opções** (as etapas da busca que dá para desligar). A aba escolhida fica guardada.
+- **Configurações**, em abas: **Integrações** (na ordem dos outros apps: CorrerIA; IA do Home Assistant, com Usar IA e Para falar; Uso da IA; Shopee Afiliados, Google Places, Brave Search, Mercado Livre, Instagram e Lista do Home Assistant; e Sensores no Home Assistant), **Dados** (Exportar, Backup na pasta share, Importar, Versões anteriores, Onde ficam os dados e Começar do zero), **Aparência** (tema, cor do app e Cor do dia) e **Opções** (as etapas da busca que dá para desligar). A aba escolhida fica guardada.
 - **Sobre**, a última linha: CorrerIA Code, quem faz os apps, os apps da família, cada um com o link para o GitHub dele (o EconomIA marcado como **Este app**, com a versão), e **Meu GitHub**.
 
 Numa tela de Mais, o **‹ Mais** no alto, o Voltar do celular e arrastar para a direita voltam para o menu. Aberta por um atalho de outra tela (como **Preencher o perfil**, na Minha lista), o Voltar do celular volta para onde você estava.
@@ -225,6 +225,15 @@ Pela CorrerIA dá para ver a lista com o preço mais barato de cada item, pergun
 
 ## Dados
 
-Em **Mais › Configurações › Dados** você exporta a lista para Excel ou JSON e as ofertas da última busca, importa uma lista e volta para uma das **Versões anteriores**: o app guarda uma cópia da lista, do perfil e dos ajustes a cada 10 minutos de uso e antes de importar, restaurar ou limpar a lista, e fica com as 3 mais recentes. Em **Mais › Aparência**, o tema (automático, claro ou escuro) e a **cor do app**, guardados em cada aparelho. Com a **Cor do dia** ligada (vem assim), a cor muda sozinha todo dia; escolher uma cor desliga.
+Em **Mais › Configurações › Dados**, na ordem dos outros apps:
+
+- **Exportar**: a lista para Excel ou JSON e as ofertas da última busca.
+- **Backup na pasta share**: **Criar backup** grava um `.zip` com a lista, o perfil, os ajustes e a última busca em `share/economia` (os 10 mais recentes), que você acessa pela rede (por exemplo com o app Samba). Os backups aparecem logo abaixo, com **Restaurar**. As chaves das integrações ficam de fora.
+- **Importar**: o `.json` ou a planilha (Excel) do Exportar. Itens repetidos não duplicam, e as datas de compra novas entram.
+- **Versões anteriores**: uma cópia da lista, do perfil e dos ajustes a cada 10 minutos de uso e antes de importar, restaurar, limpar a lista ou começar do zero; ficam as 3 mais recentes.
+- **Onde ficam os dados**: em arquivos JSON dentro do app, no backup do Home Assistant.
+- **Começar do zero**: **Apagar tudo** tira a lista, o histórico, o perfil, as lojas, os cupons e as ofertas da última busca, depois de uma confirmação em vermelho. A IA, as integrações, as opções e a cor continuam, e uma cópia fica em **Versões anteriores**.
+
+Em **Mais › Configurações › Aparência**: o **tema** (Automático, Claro ou Escuro) vale só para o aparelho e começa em **Automático**, que segue o do Home Assistant. A **cor do app** vale para a casa toda, em todos os aparelhos: são as 12 cores da família (Vermelho, Coral, Laranja, Ouro, Verde, Menta, Turquesa, Azul, Índigo, Lilás, Rosa e Grafite). Com a **Cor do dia** ligada (vem assim), a cor muda sozinha todo dia, a mesma em todos os apps da família; escolher uma cor desliga. Quem tinha uma cor escolhida só no aparelho passa a ter essa cor na casa toda (Amarelo agora é Ouro, Roxo é Lilás, Magenta é Rosa e Cinza é Grafite).
 
 Tudo o que você preenche fica guardado só no Home Assistant e entra nos backups dele.

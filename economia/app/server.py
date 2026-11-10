@@ -30,6 +30,11 @@ Rotas:
 - GET  /api/lojas-mapa/teste   andamento do teste de preço das lojas
 - POST /api/ler-encarte   {"imagens": [...], "loja", "categoria"}: a IA lê o encarte ou o print de preços e junta ao resultado
 - POST /api/versoes/guardar {"motivo"} | /api/versoes/restaurar {"nome"}
+- GET  /api/backups   backups em share/economia (os 10 mais recentes) e se a pasta está disponível
+- POST /api/backup | /api/backup/restaurar {"nome"}   cria um backup (config.json e a busca) | volta a um deles
+- POST /api/zerar   Começar do zero: guarda uma versão e deixa só os ajustes
+- POST /api/cor {"cor", "cor_dia"}   a cor do app, da casa toda (só esses dois campos)
+- POST /api/importar/planilha {"xlsx": base64}   lê a planilha do Exportar → {"lista": [{"produto", "compras"}]}
 - GET  /api/busca    andamento da busca
 - GET  /api/exportar/lista.xlsx | lista.json   exporta a lista
 - GET  /api/todos    listas de tarefas do Home Assistant
@@ -353,7 +358,8 @@ def sensores_ligados(cfg=None):
 
 # ---------- versões anteriores do config.json ----------
 _versao = {"ultima": 0.0}
-MOTIVOS_VERSAO = {"auto": "automática", "importar": "antes de importar", "restaurar": "antes de restaurar", "limpar": "antes de limpar a lista"}
+MOTIVOS_VERSAO = {"auto": "automática", "importar": "antes de importar", "restaurar": "antes de restaurar", "limpar": "antes de limpar a lista",
+                  "zerar": "antes de começar do zero"}
 
 
 def guardar_versao(motivo="auto", forcar=False):
@@ -397,6 +403,159 @@ def restaurar_versao(nome):
         novo = gravar_config(d)
     log(f"versão restaurada: {nome}")
     return novo
+
+
+# ---------- Mais › Configurações › Dados: backup na pasta share, começar do zero e a planilha no Importar (1.9.0) ----------
+MAX_BACKUPS = 10
+# o que vai no backup: a configuração (lista, perfil, lojas, ajustes) e o resultado da busca; as chaves das integrações
+# (segredos.json) e a do CorrerIA ficam de fora, como nas versões
+ARQ_BACKUP = ("config.json", "ofertas.json", "comparacoes.json")
+BACKUP_RE = re.compile(r"^economia-(\d{8})-(\d{6})\.zip$")
+# no Começar do zero ficam só os ajustes (IA, integrações, opções, sensores, a cor); a lista, o perfil, as lojas e o resto saem
+FICA_NO_ZERO = ("usar_ia", "ia", "sensores", "correria", "opcoes", "sync", "cor", "cor_dia")
+
+
+def share_ok():
+    try:
+        os.makedirs(SHARE, exist_ok=True)
+        return os.access(SHARE, os.W_OK)
+    except OSError:
+        return False
+
+
+def listar_backups():
+    if not os.path.isdir(SHARE):
+        return []
+    out = []
+    for nome in sorted((f for f in os.listdir(SHARE) if BACKUP_RE.match(f)), reverse=True):
+        m = BACKUP_RE.match(nome)
+        try:
+            quando = datetime.strptime(m.group(1) + m.group(2), "%Y%m%d%H%M%S").isoformat()
+        except ValueError:
+            continue  # um nome parecido, mas com uma data que não existe
+        out.append({"nome": nome, "quando": quando, "tamanho": os.path.getsize(os.path.join(SHARE, nome))})
+    return out
+
+
+def criar_backup():
+    """share/economia/economia-AAAAMMDD-HHMMSS.zip com a configuração e o resultado da busca; ficam os 10 mais recentes."""
+    if not share_ok():
+        raise ErroBusca("A pasta share não está disponível para o app.")
+    nome = f"economia-{datetime.now().strftime('%Y%m%d-%H%M%S')}.zip"
+    final = os.path.join(SHARE, nome)
+    tmp = final + ".tmp"
+    with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
+        for arq in ARQ_BACKUP:
+            if os.path.exists(os.path.join(DATA, arq)):
+                z.write(os.path.join(DATA, arq), arq)
+    os.replace(tmp, final)
+    for velho in [b["nome"] for b in listar_backups()][MAX_BACKUPS:]:
+        try:
+            os.remove(os.path.join(SHARE, velho))
+        except OSError:
+            pass
+    log(f"backup criado: {nome}")
+    return nome
+
+
+def restaurar_backup(nome):
+    """Volta a configuração e o resultado da busca de um backup da pasta share (antes, uma versão do que existe hoje)."""
+    if not BACKUP_RE.match(str(nome or "")) or not os.path.exists(os.path.join(SHARE, nome)):
+        raise ErroBusca("Backup não encontrado.")
+    try:
+        with zipfile.ZipFile(os.path.join(SHARE, nome)) as z:
+            dados = {arq: z.read(arq) for arq in ARQ_BACKUP if arq in z.namelist()}
+        cfg = json.loads(dados["config.json"].decode("utf-8"))
+    except (zipfile.BadZipFile, KeyError, ValueError, OSError):
+        raise ErroBusca("Esse arquivo não parece um backup do EconomIA.")
+    if not isinstance(cfg, dict):
+        raise ErroBusca("Esse arquivo não parece um backup do EconomIA.")
+    with _cfg_trava:
+        guardar_versao("restaurar", forcar=True)
+        cfg["rev"] = int(ler_config().get("rev") or 0)
+        novo = gravar_config(cfg)
+        for arq in ("ofertas.json", "comparacoes.json"):
+            if arq in dados:
+                with open(os.path.join(DATA, arq), "wb") as f:
+                    f.write(dados[arq])
+    log(f"backup restaurado: {nome}")
+    return novo
+
+
+CORES_APP = ("vermelho", "coral", "laranja", "ouro", "verde", "menta", "turquesa", "azul", "indigo", "lilas", "rosa", "grafite")
+CORES_VELHAS = {"amarelo": "ouro", "roxo": "lilas", "magenta": "rosa", "cinza": "grafite"}
+
+
+def gravar_cor(cor, cor_dia):
+    """A cor do app, da casa toda (1.9.0): só cor e cor_dia no config.json, sem mexer no resto. Devolve a revisão nova."""
+    cor = CORES_VELHAS.get(cor, cor)
+    with _cfg_trava:
+        cfg = ler_config()
+        if cor in CORES_APP:
+            cfg["cor"] = cor
+        elif cor is None:
+            cfg.pop("cor", None)
+        if isinstance(cor_dia, bool):
+            cfg["cor_dia"] = cor_dia
+        return gravar_config(cfg)["rev"]
+
+
+def zerar():
+    """Começar do zero: guarda uma versão e apaga a lista, o histórico, o perfil, as lojas, os cupons e as ofertas da busca."""
+    with _cfg_trava:
+        guardar_versao("zerar", forcar=True)
+        atual = ler_config()
+        novo = {k: atual[k] for k in FICA_NO_ZERO if k in atual}
+        novo["rev"] = int(atual.get("rev") or 0)
+        novo = gravar_config(novo)
+        for arq in ("ofertas.json", "comparacoes.json"):
+            try:
+                os.remove(os.path.join(DATA, arq))
+            except OSError:
+                pass
+    log("começar do zero: a lista, o perfil e as ofertas saíram")
+    return novo
+
+
+def ler_planilha(dado):
+    """A planilha do Exportar (Excel): os itens (a coluna Produto) e as datas de compra, para o Importar."""
+    try:
+        with zipfile.ZipFile(io.BytesIO(dado)) as z:
+            xml = z.read("xl/worksheets/sheet1.xml").decode("utf-8")
+            comp = z.read("xl/sharedStrings.xml").decode("utf-8") if "xl/sharedStrings.xml" in z.namelist() else ""
+    except (zipfile.BadZipFile, KeyError, OSError):
+        raise ErroBusca("Esse arquivo não parece a planilha do EconomIA.")
+    textos = [html_mod.unescape(re.sub(r"<[^>]+>", "", t)) for t in re.findall(r"<si>(.*?)</si>", comp, re.S)]
+    linhas = []
+    for linha in re.findall(r"<row[^>]*>(.*?)</row>", xml, re.S):
+        cel = {}
+        for ref, attrs, corpo in re.findall(r'<c r="([A-Z]+)\d+"([^>]*)>(.*?)</c>', linha, re.S):
+            if 't="inlineStr"' in attrs:
+                v = html_mod.unescape(re.sub(r"<[^>]+>", "", corpo))
+            elif 't="s"' in attrs:
+                m = re.search(r"<v>(\d+)</v>", corpo)
+                v = textos[int(m.group(1))] if m and int(m.group(1)) < len(textos) else ""
+            else:
+                m = re.search(r"<v>(.*?)</v>", corpo, re.S)
+                v = m.group(1) if m else ""
+            cel[ref] = v.strip()
+        linhas.append(cel)
+    if not linhas:
+        raise ErroBusca("A planilha está vazia.")
+    cab = {v.lower(): k for k, v in linhas[0].items()}
+    col, datas = cab.get("produto"), cab.get("datas de compra")
+    if not col:
+        raise ErroBusca("A planilha não tem a coluna Produto.")
+    itens = []
+    for cel in linhas[1:]:
+        nome = cel.get(col, "")
+        if len(nome) < 3:
+            continue
+        compras = []
+        for d in re.findall(r"(\d{2})/(\d{2})/(\d{4})", cel.get(datas, "") if datas else ""):
+            compras.append(f"{d[2]}-{d[1]}-{d[0]}")
+        itens.append({"produto": nome[:120], "compras": compras})
+    return {"lista": itens}
 
 
 def aplicar_diario(cfg, d):
@@ -6835,7 +6994,7 @@ def usar_ferramenta(nome, argumentos, cliente="CorrerIA"):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/1.8.0"
+    server_version = "EconomIA/1.9.0"
 
     def log_message(self, fmt, *args):
         pass
@@ -6967,6 +7126,8 @@ class Painel(BaseHTTPRequestHandler):
             self._json(200, {"lojas": folhetos_painel(ler_config())})
         elif rota == "/api/lojas-diretas":
             self._json(200, {"lojas": lojas_diretas_status(ler_config())})
+        elif rota == "/api/backups":
+            self._json(200, {"disponivel": share_ok(), "backups": listar_backups()})
         elif rota == "/api/versoes":
             self._json(200, {"versoes": listar_versoes()})
         elif rota == "/api/exportar/ofertas.json":
@@ -7189,6 +7350,29 @@ class Painel(BaseHTTPRequestHandler):
                 return self._json(200, {"nome": guardar_versao(str(dado.get("motivo") or "auto"), forcar=True)})
             except OSError as e:
                 return self._json(500, {"erro": f"Não consegui guardar a cópia ({e})."})
+        if urllib.parse.urlsplit(self.path).path == "/api/backup":
+            try:
+                criar_backup()
+            except (ErroBusca, OSError) as e:
+                return self._json(400, {"erro": str(e)})
+            return self._json(200, {"ok": True, "disponivel": True, "backups": listar_backups()})
+        if urllib.parse.urlsplit(self.path).path == "/api/backup/restaurar":
+            dado = self._corpo() or {}
+            try:
+                return self._json(200, {"ok": True, "config": restaurar_backup(dado.get("nome"))})
+            except ErroBusca as e:
+                return self._json(400, {"erro": str(e)})
+        if urllib.parse.urlsplit(self.path).path == "/api/cor":
+            dado = self._corpo() or {}
+            return self._json(200, {"ok": True, "rev": gravar_cor(dado.get("cor"), dado.get("cor_dia"))})
+        if urllib.parse.urlsplit(self.path).path == "/api/zerar":
+            return self._json(200, {"ok": True, "config": zerar()})
+        if urllib.parse.urlsplit(self.path).path == "/api/importar/planilha":
+            dado = self._corpo(limite=MAX_BODY * 4) or {}
+            try:
+                return self._json(200, ler_planilha(base64.b64decode(str(dado.get("xlsx") or ""), validate=False)))
+            except (ErroBusca, ValueError) as e:
+                return self._json(400, {"erro": str(e)})
         if urllib.parse.urlsplit(self.path).path == "/api/versoes/restaurar":
             dado = self._corpo() or {}
             try:

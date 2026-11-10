@@ -457,11 +457,32 @@ Como no GerencIA e no InventarIA, Mais é um menu (`#maisMenu`, `.menu-list` com
 - O ícone de Mais (barra de baixo e lateral) são os três pontinhos, como nos outros apps; a linha de Configurações usa
   o ícone dos controles deslizantes, como no GerencIA e no InventarIA.
 
+## Dados, Aparência e Integrações na ordem da família (1.9.0)
+
+- **Dados**: Exportar › Backup na pasta share › Importar › Versões anteriores › Onde ficam os dados › Começar do zero.
+  `criar_backup` grava `SHARE/economia-AAAAMMDD-HHMMSS.zip` com `ARQ_BACKUP` (`config.json`, `ofertas.json`,
+  `comparacoes.json`; sem `segredos.json` nem `correria.key`) e fica com os `MAX_BACKUPS` = 10 mais recentes
+  (`GET /api/backups`, `POST /api/backup`); `restaurar_backup` guarda uma versão antes (`POST /api/backup/restaurar`).
+  `zerar` (`POST /api/zerar`) guarda a versão `zerar` e deixa só `FICA_NO_ZERO` (IA, sensores, CorrerIA, opções, a
+  sincronização e a cor), apagando também o `ofertas.json` e o `comparacoes.json`; a página volta ao exemplo. O
+  Importar aceita a planilha do Exportar: `ler_planilha` (`POST /api/importar/planilha {"xlsx": base64}`) lê a coluna
+  Produto e as Datas de compra (texto em linha ou compartilhado) e devolve `{lista}`, que segue pelo mesmo `importa`.
+- **Aparência**: o tema (`ui.tema`, no aparelho) começa em `auto`. A cor do app é da casa: `config.json` `cor` e
+  `cor_dia` (null até a casa ter uma; `corDaCasa()` adota a do aparelho na primeira vez; a cor vai por `POST /api/cor`, `gravar_cor`, que grava só esses dois campos, sem mexer no resto), e
+  o aparelho guarda uma cópia em `ofertas-bairro:ui` só para o script do `<head>`. `CORES` é a paleta da família (12, na
+  ordem do CronologIA); `corDaPaleta` troca os nomes de antes (`CORES_VELHAS`: amarelo › ouro, roxo › lilás, magenta ›
+  rosa, cinza › grafite); `data-cor` vai sempre no `<html>` (o Verde também).
+- **Integrações**: CorrerIA › IA do Home Assistant (com o Para falar) › Uso da IA › Shopee, Google, Brave, Mercado
+  Livre, Instagram e a Lista do Home Assistant › Sensores.
+- **Conversa**: no celular, `abreChat` põe uma entrada `{chat: true}` no histórico; o Voltar do celular (`popstate`)
+  fecha só a Conversa; fechada de outro jeito, `fechaChat(depois)` desfaz a entrada e roda `depois` (o Abrir de uma
+  tela) quando o histórico voltou.
+
 ## Cor do dia (1.4.0)
 
 Como no InventarIA, no GerencIA, no ResolvIA e no CronologIA: em Mais › Configurações › Aparência, a chave `#corDia`
 (`ui.corDia`, guardada no aparelho em `ofertas-bairro:ui`; ligada até ser `false`) troca a cor do app a cada dia.
-`corDoDia()` pega uma de `CORES_DIA` (as `CORES` sem o cinza, na ordem) pelo número do dia na data local
+`corDoDia()` pega uma de `CORES_DIA` (as `CORES` sem o Grafite, na ordem; 1.9.0: as 11 da família) pelo número do dia na data local
 (`numeroDoDia`: `Date.UTC` do ano, mês e dia ÷ 86400000), a mesma o dia todo; amanhã, a seguinte. `corAtual()` é a do
 dia ou, desligada, `ui.cor` (verde de começo), e é a etiqueta marcada em `#cores`. Escolher uma cor grava `ui.cor` e
 `ui.corDia = false`. O script do `<head>` faz a mesma conta (com a lista das cores escrita nele) antes de pintar a tela.
