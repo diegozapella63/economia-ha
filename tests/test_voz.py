@@ -43,11 +43,11 @@ class Falar(Cenario):
         S, ha = self.S, self.ha
         self.config()
         st = S.voz_status()
-        self.assertEqual(st["opcoes"], [{"id": "pipeline:p1", "nome": "Assistente: Casa (Home Assistant Cloud)", "preferido": True},
-                                        {"id": "stt.faster_whisper", "nome": "Fala para texto: Faster Whisper", "preferido": False}],
-                         "o assistente sem fala para texto fica de fora; a entidade que o assistente usa não repete")
+        self.assertEqual(st["opcoes"], [{"id": "stt.home_assistant_cloud", "nome": "Home Assistant Cloud", "preferido": True},
+                                        {"id": "stt.faster_whisper", "nome": "Faster Whisper", "preferido": False}],
+                         "uma linha por motor (como no GerencIA): o assistente sem fala para texto fica de fora")
         self.assertEqual({k: st[k] for k in ("pronta", "motor", "idioma", "usando", "escolha", "escolha_sumiu")},
-                         {"pronta": True, "motor": "stt.home_assistant_cloud", "idioma": "pt-BR", "usando": "pipeline:p1", "escolha": "",
+                         {"pronta": True, "motor": "stt.home_assistant_cloud", "idioma": "pt-BR", "usando": "stt.home_assistant_cloud", "escolha": "",
                           "escolha_sumiu": False})
         self.assertEqual(ha.ws_comandos, [{"id": 1, "type": "assist_pipeline/pipeline/list"}])
         self.assertTrue(ha.pedidos_de("/api/websocket", "WS"))
@@ -56,13 +56,16 @@ class Falar(Cenario):
         self.assertEqual((st["usando"], st["motor"], st["escolha"]), ("stt.faster_whisper", "stt.faster_whisper", "stt.faster_whisper"))
         self.config(ia={"voz": "stt.sumiu"})
         st = S.voz_status()
-        self.assertEqual((st["usando"], st["escolha_sumiu"]), ("pipeline:p1", True), "a escolhida sumiu: vale a preferida")
+        self.assertEqual((st["usando"], st["escolha_sumiu"]), ("stt.home_assistant_cloud", True), "a escolhida sumiu: vale a preferida")
+        self.config(ia={"voz": "pipeline:p1"})
+        st = S.voz_status()
+        self.assertEqual((st["usando"], st["escolha_sumiu"]), ("stt.home_assistant_cloud", False), "a escolha de antes (um assistente) vale o motor dele")
 
     def test_audio_para_texto(self):
         S, ha = self.S, self.ha
         self.config(ia={"voz": "stt.faster_whisper"})
         r = S.voz_texto(UM_SEGUNDO)
-        self.assertEqual(r, {"texto": "leite integral e café", "nome": "Fala para texto: Faster Whisper"})
+        self.assertEqual(r, {"texto": "leite integral e café", "nome": "Faster Whisper"})
         p = ha.pedidos_de("/api/stt/")[-1]
         self.assertEqual(p[1], "/api/stt/stt.faster_whisper")
         self.assertEqual(p[2]["X-Speech-Content"], "format=wav; codec=pcm; sample_rate=16000; bit_rate=16; channel=1; language=pt-BR")
@@ -122,8 +125,8 @@ class Voz(Cenario):
         ha.estados["stt.faster_whisper"] = estado("stt.faster_whisper", "unknown", friendly_name="Faster Whisper")
         ha.pipelines = {"pipelines": [{"id": "p1", "name": "", "stt_engine": "stt.faster_whisper", "language": "en-US"}], "preferred_pipeline": None}
         ops = self.voz().opcoes()
-        self.assertEqual(ops, [{"id": "pipeline:p1", "nome": "Assistente: sem nome (Faster Whisper)", "engine": "stt.faster_whisper",
-                                "language": "en-US", "preferido": False}], "sem stt_language: o idioma do assistente")
+        self.assertEqual(ops, [{"id": "stt.faster_whisper", "nome": "Faster Whisper", "idioma": "en-US", "assistentes": [], "preferido": False}],
+                         "sem stt_language: o idioma do assistente; assistente sem nome não aparece")
         v = self.voz()
         v.token = "outro"
         self.assertEqual(v.opcoes(), [], "token recusado: nada, sem quebrar")
@@ -138,7 +141,7 @@ class Voz(Cenario):
         ha = self.ha
         ha.estados["stt.a"] = estado("stt.a", "unknown")
         v = self.voz()
-        self.assertEqual([o["nome"] for o in v.opcoes()], ["Fala para texto: stt.a"], "sem nome: o id")
+        self.assertEqual([o["nome"] for o in v.opcoes()], ["stt.a"], "sem nome: o id")
         ha.estados.pop("stt.a")
         self.assertEqual(len(v.opcoes()), 1, "guardado")
         v.cache = (v.cache[0] - 61, v.cache[1])
@@ -159,7 +162,7 @@ class Voz(Cenario):
         with self.assertRaisesRegex(voz.ErroVoz, r"não aceitou o áudio \(400\)"):
             v.texto(UM_SEGUNDO)
         self.assertIsNone(v.cache, "erro: as opções são lidas de novo")
-        v.cache = (9e18, [{"id": "stt.a", "nome": "A", "engine": "stt.a", "language": "pt-BR", "preferido": False}])
+        v.cache = (9e18, ([], None, [{"entity_id": "stt.a", "attributes": {"friendly_name": "A"}}]))
         v.rest = "http://127.0.0.1:9/api"
         with self.assertRaisesRegex(voz.ErroVoz, "Sem resposta da fala para texto do Home Assistant"):
             v.texto(UM_SEGUNDO)
@@ -362,7 +365,7 @@ class FalaSimulada(Cenario):
             S.gravar_config({"cep": "1"})
             st = S.voz_status()
             self.assertTrue(st["pronta"])
-            self.assertEqual([o["id"] for o in st["opcoes"]], ["pipeline:simulado", "stt.simulada_2"])
+            self.assertEqual([o["id"] for o in st["opcoes"]], ["stt.simulada", "stt.outra_simulada"])
             self.assertIn("leite integral", S.voz_texto(UM_SEGUNDO)["texto"])
         finally:
             limpa(pasta)

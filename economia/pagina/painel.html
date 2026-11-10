@@ -208,6 +208,21 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:34px;text-ove
 .ghost:hover{border-color:var(--accent);color:var(--accent)}
 .ghost.big{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;font-size:14.5px;text-decoration:none;cursor:pointer}
 .ghost.big svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+/* botão cheio com ícone (Criar backup, Apagar tudo): o ícone do tamanho do texto, como no Baixar JSON */
+.btn:has(>svg){display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.btn>svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+/* Configurações › Dados: os botões no padrão da família (o modelo é o GerencIA): na largura do cartão no celular
+   (250 px no computador), da mesma altura, com o ícone ao lado do texto; o cheio é a ação principal, o de borda é o
+   neutro e o vermelho de borda é o Apagar tudo */
+#mp-dados .row-form > .btn,#mp-dados .row-form > .ghost.big,#mp-dados .opts .ghost.big{flex:1 1 100%;width:100%;min-height:50px;justify-content:center;
+  border-radius:12px;padding:12px 18px;font-size:15px;box-sizing:border-box}
+#mp-dados .ghost.big{background:color-mix(in srgb,var(--ink) 4%,var(--surface));border:1px solid var(--line);color:var(--ink);font-weight:500}
+#mp-dados .btn{font-weight:600}
+#mp-dados .btn.perigo{background:transparent;border:1.5px solid color-mix(in srgb,var(--deal) 55%,transparent);color:var(--deal)}
+#mp-dados .opts li{flex-wrap:wrap}
+@media (min-width:1000px){#mp-dados .row-form > .btn,#mp-dados .row-form > .ghost.big,#mp-dados .opts .ghost.big{flex:none;width:250px}}
+#mp-dados .confirma .row-form > .btn,#mp-dados .confirma .row-form > .ghost.big{flex:1 1 0;width:auto;min-width:0} /* Apagar tudo e Cancelar lado a lado, do mesmo tamanho */
+#mp-dados .confirma .btn.perigo{background:var(--deal);border-color:transparent;color:var(--surface)} /* na confirmação, o Apagar tudo é o cheio */
 .hint{font-size:12.5px;color:var(--muted)}
 .hint.ok{color:var(--accent)}
 .hint.err{color:var(--deal)}
@@ -1494,8 +1509,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     </section>
     <section class="panel settings" aria-labelledby="h-imp">
       <div class="set-head"><h2 id="h-imp"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"/></svg></span>Importar</h2><p class="sec-meta">O .json ou a planilha (Excel) do Exportar. Itens repetidos não duplicam.</p></div>
-      <div class="set-row">
-        <div><h3 class="set-t">Importar lista</h3></div>
+      <div class="row-form">
         <label class="ghost big" for="impArq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"/></svg>Escolher arquivo</label>
         <input type="file" id="impArq" accept=".json,.xlsx,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
       </div>
@@ -3004,10 +3018,12 @@ html:not(.sem-ia) .so-semia{display:none!important}
     var ok = vozPronta();
     [].forEach.call(document.querySelectorAll('.so-voz'), function(el){ el.hidden = !ok; });
     var el = $('vozSt'), v = VOZ_ST, sel = $('iaVoz'), ops = arr(v && v.opcoes);
+    // a escolha como o servidor entende (uma de antes, de um assistente, vira o motor dele: voz.py, igual ao do GerencIA)
+    var escolhida = (v && v.selecionada) || estado.ia.voz || '';
     sel.innerHTML = '<option value="">Padrão do Home Assistant</option>'
       + ops.map(function(o){ return '<option value="' + esc(o.id) + '">' + esc(o.nome + (o.preferido ? ' · preferido' : '')) + '</option>'; }).join('')
-      + (estado.ia.voz && !ops.some(function(o){ return o.id === estado.ia.voz; }) ? '<option value="' + esc(estado.ia.voz) + '">' + esc(estado.ia.voz) + ' (não existe mais)</option>' : '');
-    sel.value = estado.ia.voz || '';
+      + (escolhida && !ops.some(function(o){ return o.id === escolhida; }) ? '<option value="' + esc(escolhida) + '">' + esc(escolhida) + ' (não existe mais)</option>' : '');
+    sel.value = escolhida;
     sel.disabled = !ops.length;
     el.className = 'ia-st' + (v && v.pronta ? ' ok' : v && v.pronta === false ? ' erro' : '');
     el.textContent = !v ? 'Verificando o assistente de voz…'
@@ -3017,9 +3033,9 @@ html:not(.sem-ia) .so-semia{display:none!important}
   function carregaVoz(){
     if (!iaOn()){ VOZ_ST = null; pintaVoz(); return; }
     if (MODO !== 'addon'){
-      var ops = [{id:'pipeline:01', nome:'Assistente: Home Assistant (Home Assistant Cloud)', preferido:true}, {id:'stt.google_generative_ai_stt', nome:'Fala para texto: Google Generative AI STT', preferido:false}];
+      var ops = [{id:'stt.home_assistant_cloud', nome:'Home Assistant Cloud', preferido:true}, {id:'stt.google_generative_ai_stt', nome:'Google Generative AI STT', preferido:false}];
       var u = ops.filter(function(o){ return o.id === estado.ia.voz; })[0] || ops[0];
-      VOZ_ST = {pronta:true, nome:u.nome, opcoes:ops, escolha:estado.ia.voz}; pintaVoz(); return;
+      VOZ_ST = {pronta:true, nome:u.nome, opcoes:ops, escolha:estado.ia.voz, selecionada:u.id === estado.ia.voz ? u.id : ''}; pintaVoz(); return;
     }
     fetch('api/voz/status', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){ VOZ_ST = j; pintaVoz(); })
       .catch(function(){ VOZ_ST = {pronta:false, motivo:'Não consegui falar com o add-on.'}; pintaVoz(); });

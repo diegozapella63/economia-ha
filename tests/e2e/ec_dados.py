@@ -110,6 +110,15 @@ async def main():
             check(await pg.text_content("#impMsg") == "Esse arquivo não parece a planilha do EconomIA.", "outro arquivo: explica")
             # ----- 1.9.0: Backup na pasta share -----
             await espera(pg, "() => /Nenhum backup/.test(document.getElementById('bkMsg').textContent)")
+            # 1.10.0: os botões de Dados no padrão da família (o do GerencIA): na largura do cartão no celular, da mesma
+            # altura, com o ícone de 18 px ao lado do texto (antes, o ícone dos cheios ocupava o botão inteiro)
+            medidas = {}
+            for sel in ("#expXlsx", "#bkCriar", 'label[for="impArq"]', "#verBtn", "#zeroBtn"):
+                medidas[sel] = await pg.eval_on_selector(sel, "b => { const r = b.getBoundingClientRect(), i = b.querySelector('svg').getBoundingClientRect(), c = b.closest('section').getBoundingClientRect(); return [Math.round(r.height), Math.round(r.width), Math.round(c.width), i.width, i.height, Math.abs((i.top + i.height / 2) - (r.top + r.height / 2)) < 2] }")
+            for sel, (h, w, cw, iw, ih, meio) in medidas.items():
+                check(48 <= h <= 56 and w >= cw - 60 and iw == 18 and ih == 18 and meio, f"{sel}: na largura do cartão, de uma linha, ícone de 18 px ao lado do texto ({h}x{w} de {cw})")
+            check(len({m[0] for m in medidas.values()}) == 1, f"todos da mesma altura ({[m[0] for m in medidas.values()]})")
+            await pg.locator("#bkCriar").screenshot(path=SHOTS + "/ecd-criar-backup.png")
             await pg.click("#bkCriar")
             await espera(pg, "() => document.querySelectorAll('#bkLista li').length === 1")
             bks = app.api("GET", "api/backups")

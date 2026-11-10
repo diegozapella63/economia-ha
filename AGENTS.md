@@ -59,6 +59,17 @@ Toda mudança de comportamento vem com teste. Bug corrigido ganha o teste que o 
 5. Commit com mensagem `EconomIA x.y.z: resumo em português` (como nos outros apps da família), `git pull --rebase` e push no
    `main`. O Home Assistant oferece a atualização sozinho.
 
+## Arquivos iguais em todos os apps
+
+A lista dos arquivos que são iguais nos apps da família fica em `tools/iguais.py` (ele também é igual em todos):
+`python3 tools/iguais.py` confere os daqui com os dos apps ao lado (`../resolvia-ha`, ...), e o GitHub confere a cada
+push (job **Arquivos iguais aos dos outros apps**, que baixa os outros apps). Mudou um arquivo da lista? Copie para os
+outros apps do grupo e publique todos. Um arquivo que passa a ser igual entra em `GRUPOS`, aqui e nas cópias.
+
+`share/<app>/integracao.json` começa igual em todos os apps: `app` (o id, como no `correria.json`), `nome`, `versao` e
+`gravado_em` (ISO 8601 com o fuso), depois os campos de cada app. O ResolvIA e o CronologIA ainda gravam o nome em
+`app` (as versões de antes conferem por ele) e quem lê aceita os dois; o id entra numa próxima versão.
+
 ## Regras que não mudam
 
 - **Dados pessoais só dentro do Home Assistant** (`/data`). O GitHub tem só o código. Nunca mandar o e-mail do dono

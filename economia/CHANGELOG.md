@@ -1,5 +1,10 @@
 # Mudanças
 
+## 1.10.0
+
+- **Mais › Configurações › Dados**: os botões no padrão dos outros apps da família: na largura do cartão, da mesma altura, com o ícone pequeno ao lado do texto (o ícone do Criar backup e do Apagar tudo ocupava o botão inteiro). **Apagar tudo** fica vermelho, e na confirmação ele e o Cancelar ficam lado a lado.
+- **Falar › Para falar**: a lista é a mesma do GerencIA, uma linha por fala para texto, com o nome do Home Assistant. Quem tinha escolhido um assistente continua com a fala para texto dele.
+
 ## 1.9.1
 
 - Nada muda na tela. A versão do app agora é escrita num lugar só, e os testes conferem tudo na largura de um celular (390 px).

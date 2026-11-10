@@ -410,10 +410,10 @@ class Falar(Servidor):
     def test_status_e_audio(self):
         self.config()
         st, d = self.pede("GET", "/api/voz/status")
-        self.assertEqual((d["pronta"], d["usando"], d["opcoes"]), (True, "pipeline:p1", [{"id": "pipeline:p1", "nome": "Assistente: Casa (Home Assistant Cloud)",
-                                                                                        "preferido": True}]))
+        self.assertEqual((d["pronta"], d["usando"], d["opcoes"]), (True, "stt.home_assistant_cloud", [{"id": "stt.home_assistant_cloud", "nome": "Home Assistant Cloud",
+                                                                                                    "preferido": True}]))
         st, d = self.pede("POST", "/api/voz", bruto=b"\0\1" * 16000, cab={"Content-Type": "application/octet-stream"})
-        self.assertEqual((st, d), (200, {"texto": "leite integral e café", "nome": "Assistente: Casa (Home Assistant Cloud)"}))
+        self.assertEqual((st, d), (200, {"texto": "leite integral e café", "nome": "Home Assistant Cloud"}))
         st, d = self.pede("POST", "/api/voz", bruto=b"\0" * 100)
         self.assertEqual((st, d), (400, {"erro": "Não ouvi nada. Toque no microfone e fale."}))
         st, d = self.pede("POST", "/api/voz", bruto=b"")

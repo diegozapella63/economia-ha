@@ -6339,7 +6339,8 @@ def comeca_encarte(dado):
 
 
 # ---------- Falar: o áudio vai para a fala para texto do Home Assistant ----------
-VOZ = voz.Voz(HA_API, HA_WS, None, lambda *a: log(" ".join(str(x) for x in a)), simulada=VOZ_SIMULADA)
+VOZ = voz.Voz(HA_API, HA_WS, None, lambda *a: log(" ".join(str(x) for x in a)), simulada=VOZ_SIMULADA,
+              texto_simulado="Compra leite integral, dois pacotes de café de 500 gramas e detergente")
 
 
 def voz_status():
