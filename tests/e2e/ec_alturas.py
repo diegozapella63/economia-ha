@@ -1,0 +1,46 @@
+# EconomIA 1.11.0: uma altura só, a mesma em todos os apps da família (50 px): botões, campos, caixas de seleção, botões
+# de escolha (as abas de Configurações, o Tema) e as escolhas em botões na Minha lista, em Casa, em Lojas e nas quatro
+# abas de Configurações, no celular (390 e 320 px) e no computador. Ficam de fora os botões só com ícone, os quadrinhos
+# da IA, os botões pequenos das linhas da lista (Comprei hoje, remover), os preços das lojas, os interruptores e as cores.
+import asyncio
+
+from playwright.async_api import async_playwright
+
+from base_e2e import CEP, App, abrir_mais, categoria, check, pagina, resumo, shot
+
+H = 50
+CONTROLES = ".btn, .ghost.big, input.field, select.field, .seg, .pick, .mais-abas, .side-busca"
+MEDIR = """(sel) => [...document.querySelectorAll(sel)].filter(e => e.offsetParent && e.getBoundingClientRect().width > 4 && !e.closest('.ler-tiles, .tabbar, #lado'))
+  .map(e => [e.offsetHeight, (e.className || e.tagName) + ' ' + (e.textContent || e.placeholder || '').replace(/\\s+/g, ' ').trim().slice(0, 30)])"""
+OFERTAS = {"versao": 2, "gerado_em": "2026-11-01T10:00:00-03:00", "categorias": [categoria("mercados", [("merc-giassi", "Giassi", 1.0), ("merc-fort", "Fort", 2.0)])],
+           "lista": [{"produto": "Arroz 5 kg", "precos": {"merc-giassi": 24.9, "merc-fort": 22.9}}]}
+
+
+async def conferir(pg, onde):
+    hs = await pg.evaluate(MEDIR, CONTROLES)
+    fora = [x for x in hs if x[0] != H]
+    check(hs and not fora, f"{onde}: {len(hs)} controles, todos com {H} px {fora[:4]}")
+
+
+async def main():
+    cfg = {"cep": CEP, "raio_km": 5, "categorias": ["mercados"], "lista": [{"produto": "Arroz 5 kg"}, {"produto": "Bolacha"}]}
+    with App(cfg, buscar=False, antes=lambda S: S.gravar_json(S.OFERTAS, OFERTAS)) as app:
+        async with async_playwright() as p:
+            for largura, altura in ((390, 844), (320, 700), (1280, 860)):
+                pc = largura >= 1000
+                b, pg = await pagina(p, largura, altura, toque=not pc)
+                await pg.goto(app.url)
+                await pg.wait_for_timeout(1200)
+                await pg.click('#lado [data-lado="lista"]' if pc else '.tabbar [data-view="lista"]')
+                await pg.wait_for_timeout(400)
+                await conferir(pg, f"{largura} px › Minha lista")
+                for onde in ("casa", "lojas", "integracoes", "dados", "aparencia", "opcoes"):
+                    await abrir_mais(pg, onde, computador=pc)
+                    await pg.wait_for_timeout(400)
+                    await conferir(pg, f"{largura} px › {onde}")
+                await shot(pg, f"alturas-{largura}")
+                await b.close()
+    resumo()
+
+
+asyncio.run(main())

@@ -478,6 +478,41 @@ Como no GerencIA e no InventarIA, Mais é um menu (`#maisMenu`, `.menu-list` com
   fecha só a Conversa; fechada de outro jeito, `fechaChat(depois)` desfaz a entrada e roda `depois` (o Abrir de uma
   tela) quando o histórico voltou.
 
+## Nunca mostrar uma palavra (1.11.0)
+
+`perfil.nunca_produtos` (até 100 palavras, como a pessoa escreveu): uma oferta com uma delas no começo de uma palavra do
+nome (sem acento, maiúscula ou minúscula) fica escondida, em qualquer loja e tamanho. Na página, `termoNunca(o)` (em
+`escondida`, motivo `tipo: 'termo'`, com **Mostrar de novo**), `palavraDe(produto)` (a sugestão: a primeira palavra com
+três letras ou mais e sem números), o menu do Não mostrar (**Nunca “palavra”** abre `.termo-form` com o campo `#termoIn`)
+e Mais › Casa › Nunca mostrar (`#pNuncaProd`, um toque tira; `#fNuncaProd` acrescenta). No servidor, `nunca_produto(cfg,
+produto)`, a mesma regra, tira as ofertas da Conversa e das ferramentas do CorrerIA (`_ofertas_vivas`).
+
+## Comparar só o mesmo produto (1.11.0)
+
+`outro_produto(oferta, nome)`: em `comparar_precos`, o preço cujo `obs` (o nome do produto na loja) é outro produto fica de
+fora. É outro quando o "N em 1" não bate (a oferta tem e o produto não, ou é outro número; `palavras_produto` junta o
+"4 em 1" numa palavra) ou quando o nome tem 2 palavras ou mais que a oferta não tem e falta nele alguma palavra da
+oferta (o "Creme de Barbear Nivea Men Sensitive" para o "Creme Nivea Men 4 em 1"). Palavras a mais sozinhas ("de Oliva",
+"Rosto Barba Mãos") não bastam.
+
+## Câmera do código de barras (1.11.0)
+
+**Tirar foto** (`#codFoto`) abre `#codCamUI`, a câmera em tela cheia (`getUserMedia`, a de trás), com uma entrada no
+histórico (`{cam: true}`, para o Voltar do celular); o X e o Esc fecham (`fechaCam`). Com o `BarcodeDetector` do navegador,
+lê o vídeo a cada 300 ms e, achando um EAN válido, fecha e procura; o botão do meio tira a foto e vai pelo leitor próprio
+(`leFotoCodigo`, o mesmo da foto escolhida). Sem `isSecureContext` ou sem câmera, explica (https ou o app do celular) e
+abre a escolha da foto (`#codArq`, sem `capture`: no app do Home Assistant, o seletor com `capture` abria a galeria).
+`tests/e2e/ec_camera.py` confere com a câmera de teste do Chromium.
+
+## Uma altura só (1.11.0)
+
+Botões (`.btn`, `.ghost.big`), campos (`input.field`, `select.field`), botões de escolha (`.seg`, as abas de
+Configurações em `.mais-abas`, o Tema em `.seg.temas`, com o ícone ao lado) e as escolhas em botões (`.pick`) têm a altura
+da família, 50 px (`--altura`, no fim do `<style>` do `painel.html`), a mesma dos outros apps. Ficam de fora os botões só
+com ícone, os quadrinhos da IA (`.ler-tile`), os botões pequenos das linhas da lista (Comprei hoje, remover), os preços
+das lojas, os interruptores e as cores. `tests/e2e/ec_alturas.py` confere na Minha lista, em Casa, Lojas e nas quatro abas
+de Configurações, em 390, 320 e 1280 px.
+
 ## Cor do dia (1.4.0)
 
 Como no InventarIA, no GerencIA, no ResolvIA e no CronologIA: em Mais › Configurações › Aparência, a chave `#corDia`

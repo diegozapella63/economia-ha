@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 
 from playwright.async_api import async_playwright
 
-from base_e2e import CEP, SHOTS, App, categoria, check, espera, pagina, resumo
+from base_e2e import CEP, SHOTS, App, abrir_mais, categoria, check, espera, pagina, resumo
 
 HOJE = (datetime.now(timezone.utc) - timedelta(hours=3)).date()
 D = lambda n: (HOJE + timedelta(days=n)).isoformat()  # noqa: E731
@@ -144,6 +144,43 @@ async def main():
             await pg.wait_for_timeout(800)
             check(app.config_salva().get("ocultas") == ["o-dipirona"], "Só esta oferta: o id fica em ocultas")
             check("Dipirona 1 g · 10 comprimidos" not in await deals(pg) and "Dipirona 1 g · 10 comprimidos" in (await escondidas(pg))[2], "e ela vai para as escondidas")
+            # 1.11.0: Nunca uma palavra (em qualquer loja e tamanho), trocando a palavra antes; fica em Mais › Casa › Nunca mostrar
+            await pg.locator("#deals .deal", has_text="Cerveja").locator('[data-act="menu"]').click()
+            termo = pg.locator('#deals [data-act="termo"]')
+            check((await termo.inner_text()).strip() == "Nunca “cerveja”", f"a palavra sugerida é a do produto ({await termo.inner_text()})")
+            await termo.click()
+            campo = pg.locator("#termoIn")
+            check(await campo.input_value() == "cerveja" and await pg.evaluate("document.activeElement.id") == "termoIn", "dá para trocar a palavra, com o teclado já nela")
+            await pg.locator("#deals .termo-form").screenshot(path=SHOTS + "/eco-nunca-palavra.png")
+            await campo.fill("Heineken")
+            await campo.press("Enter")
+            await pg.wait_for_timeout(800)
+            check(app.config_salva()["perfil"].get("nunca_produtos") == ["Heineken"], "a palavra fica em Nunca mostrar")
+            check("Cerveja Heineken 350 ml" not in await deals(pg) and "Cerveja Heineken 350 ml" in (await escondidas(pg))[2], "a oferta some e vai para as escondidas")
+            await pg.click("#dealsInat summary")
+            mt = pg.locator("#dealsInat .deal.muted", has_text="Cerveja")
+            check("Você pediu para nunca mostrar “Heineken”" in await mt.inner_text(), "com o motivo")
+            await pg.click("#dealsInat summary")
+            await abrir_mais(pg, "casa")
+            chips = [t.strip() for t in await pg.locator("#pNuncaProd .nunca-t").all_inner_texts()]
+            check(chips == ["Heineken"], f"em Mais › Casa › Nunca mostrar ({chips})")
+            await pg.fill("#nuncaProdIn", "  ")
+            await pg.press("#nuncaProdIn", "Enter")
+            await pg.wait_for_timeout(300)
+            check(app.config_salva()["perfil"]["nunca_produtos"] == ["Heineken"], "vazio não entra")
+            await pg.fill("#nuncaProdIn", "Energético")
+            await pg.press("#nuncaProdIn", "Enter")
+            await pg.wait_for_timeout(800)
+            check(app.config_salva()["perfil"]["nunca_produtos"] == ["Heineken", "Energético"] and await pg.input_value("#nuncaProdIn") == "", "e dá para escrever uma aqui")
+            await pg.evaluate("document.getElementById('h-nunca').scrollIntoView({block: 'start'})")
+            await pg.wait_for_timeout(3000)  # o aviso some
+            await pg.locator("#h-nunca").locator("xpath=ancestor::section[1]").screenshot(path=SHOTS + "/eco-nunca-casa.png")
+            await pg.locator('#pNuncaProd [data-termo="Heineken"]').click()
+            await pg.wait_for_timeout(800)
+            check(app.config_salva()["perfil"]["nunca_produtos"] == ["Energético"], "um toque tira a palavra")
+            await pg.click('.tabbar [data-view="ofertas"]')
+            await pg.wait_for_timeout(500)
+            check("Cerveja Heineken 350 ml" in await deals(pg), "e a oferta volta")
             # cupons e validade
             t = pg.locator("#tickets .ticket")
             textos = [x.replace("\xa0", " ").upper() for x in await t.all_inner_texts()]  # os selos são em maiúsculas

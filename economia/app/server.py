@@ -6034,6 +6034,38 @@ def tamanho_da_oferta(o):
     return medida(t.get("quantidade"), t.get("unidade")) or tamanho_nome(str(o.get("produto") or "").replace(" · ", " "))
 
 
+N_EM_1 = re.compile(r"\b(\d)\s*(?:em|in)\s*(\d)\b", re.I)  # "4 em 1", "2in1": o produto é outro com outro número
+
+
+def palavras_produto(t):
+    """As palavras que dizem qual é o produto (sem tamanho, números e palavras vazias), com o "4 em 1" numa palavra só."""
+    return [w for w in palavras_busca(N_EM_1.sub(r"\1em\2", str(t or ""))) if len(w) >= 3]
+
+
+def nunca_produto(cfg, produto):
+    """A oferta tem uma das palavras que a pessoa nunca quer ver ("energético", em Mais › Casa › Nunca mostrar), no
+    começo de uma palavra do nome, em qualquer loja e tamanho? A mesma regra do termoNunca da página (1.11.0)."""
+    n = " " + norm(produto or "") + " "
+    termos = ((cfg.get("perfil") or {}).get("nunca_produtos") or []) if isinstance(cfg, dict) else []
+    return any(t and (" " + t) in n for t in (norm(x) for x in termos if isinstance(x, str)))
+
+
+def outro_produto(oferta, nome):
+    """O produto achado numa loja é outro, não o da oferta? Comparar preço só junta o mesmo produto (1.11.0: o "Creme Nivea
+    Men 4 em 1" não é o "Creme de Barbear Nivea Men Sensitive"). É outro quando o "N em 1" não bate (a oferta tem e o
+    produto não, ou é outro número), ou quando o nome tem 2 palavras ou mais que a oferta não tem e falta nele alguma
+    palavra da oferta. Palavras a mais sozinhas (o "de Oliva" do azeite, "Rosto Barba Mãos") não bastam."""
+    po, pn = palavras_produto(oferta), palavras_produto(nome)
+    if not po or not pn:
+        return False
+    n_em_1 = [{w for w in ws if re.fullmatch(r"\dem\d", w)} for ws in (po, pn)]
+    if n_em_1[0] and n_em_1[0] != n_em_1[1]:
+        return True
+    so_oferta = [w for w in po if not palavra_bate(w, pn)]
+    so_nome = [w for w in pn if not palavra_bate(w, po)]
+    return len(so_nome) >= 2 and len(so_oferta) >= 1
+
+
 def comparar_precos(ent, nomes, o, loja):
     """Os preços das outras lojas para o produto da oferta, do mais barato para o mais caro (no máximo 6, um por loja).
     "equivale" é o preço no tamanho da oferta (outro tamanho vale pelo preço por quilo, litro ou unidade); medidas
@@ -6051,6 +6083,8 @@ def comparar_precos(ent, nomes, o, loja):
         total = valor_total(v)
         if not total or norm(nome) in propria or rid[5:] in propria:
             continue
+        if isinstance(v, dict) and v.get("obs") and outro_produto(o.get("produto"), v["obs"]):
+            continue  # o que a loja tem é outro produto (outro tipo ou outra versão), não este
         equiv = total
         if tam and med and med[0] and med[1]:
             if med[1] != tam[1]:
@@ -6564,7 +6598,7 @@ def contexto_chat(tela, cfg=None, of=None):
             continue
         for o in c.get("ofertas") or []:
             if isinstance(o, dict) and acompanha(o.get("rede")) and numero(o.get("preco_oferta")) and o.get("produto") \
-                    and (o.get("id") or f'{o.get("rede")}|{o.get("produto")}') not in ocultas:
+                    and (o.get("id") or f'{o.get("rede")}|{o.get("produto")}') not in ocultas and not nunca_produto(cfg, o.get("produto")):
                 ofertas.append(o)
         for k in c.get("cupons") or []:
             if isinstance(k, dict) and acompanha(k.get("rede")) and k.get("status") == "confirmado" and k.get("beneficio") \
@@ -6860,7 +6894,7 @@ def _ofertas_vivas(cfg, of):
             continue
         for o in c.get("ofertas") or []:
             if isinstance(o, dict) and o.get("produto") and numero(o.get("preco_oferta")) and acompanha(o.get("rede")) \
-                    and (o.get("id") or f'{o.get("rede")}|{o.get("produto")}') not in ocultas:
+                    and (o.get("id") or f'{o.get("rede")}|{o.get("produto")}') not in ocultas and not nunca_produto(cfg, o.get("produto")):
                 ofertas.append(dict(o, _loja=info[o["rede"]]["nome"], _cat=c.get("id")))
         for k in c.get("cupons") or []:
             if isinstance(k, dict) and acompanha(k.get("rede")) and k.get("status") == "confirmado" and k.get("beneficio") \

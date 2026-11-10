@@ -872,6 +872,39 @@ html:not(.sem-ia) .so-semia{display:none!important}
 @media (prefers-reduced-motion:no-preference){
   .btn,.copy,.ghost,.pick,.filters button,.cats button,.tab,.seg button{transition:filter .15s,border-color .15s,color .15s,background .15s}
 }
+.nunca-prod{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.nunca-prod:empty{display:none}
+.nunca-t{display:inline-flex;align-items:center;gap:8px;min-height:var(--altura,50px);padding:0 12px 0 14px;border:1px solid var(--accent);border-radius:10px;background:var(--accent-soft);color:var(--ink);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.nunca-t svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;flex:none}
+.nunca-prod-t{margin-top:14px}
+.termo-form{gap:8px}
+.termo-form label{flex:1 1 100%;font-weight:600;color:var(--ink)}
+.termo-form .field{flex:1 1 140px}
+.cod-gal{display:inline-block;margin-top:4px}
+.cam{position:fixed;inset:0;z-index:90;background:#000;color:#fff;display:flex;flex-direction:column}
+.cam[hidden]{display:none}
+.cam video{flex:1;min-height:0;width:100%;object-fit:cover;background:#000}
+.cam-guia{position:absolute;left:10%;right:10%;top:36%;height:20%;border:3px solid rgba(255,255,255,.92);border-radius:16px;box-shadow:0 0 0 100vmax rgba(0,0,0,.35);pointer-events:none}
+.cam-dica{position:absolute;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 24px);margin:0;text-align:center;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.cam-barra{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding:16px 20px calc(16px + env(safe-area-inset-bottom,0px));background:#000}
+.cam-x{justify-self:start;width:50px;height:50px;border-radius:50%;border:0;background:rgba(255,255,255,.16);color:#fff;display:grid;place-items:center;cursor:pointer}
+.cam-x svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.cam-disparo{width:74px;height:74px;border-radius:50%;border:4px solid #fff;background:rgba(255,255,255,.28);cursor:pointer}
+.cam-gal{justify-self:end;display:inline-flex;align-items:center;min-height:50px;padding:0 14px;border:1px solid rgba(255,255,255,.45);border-radius:12px;color:#fff;font-weight:600;cursor:pointer}
+body.com-cam{overflow:hidden}
+/* uma altura só, a mesma em todos os apps da família (50 px): botões, campos, caixas de seleção, botões de escolha (as
+   abas de Configurações, o Tema) e as escolhas em botões. Ficam de fora os botões só com ícone, os quadrinhos da IA, os
+   botões pequenos das linhas da lista (Comprei hoje, remover), os preços das lojas, os interruptores e as cores. */
+:root{--altura:50px}
+.btn,.ghost.big,.side-busca,.cm-acao,.pick{min-height:var(--altura)}
+.btn,.ghost.big{display:inline-flex;align-items:center;justify-content:center;gap:8px}
+@media (min-width:1000px){.top-acts .btn,.top-acts .ghost.big{min-height:var(--altura)}}
+input.field,select.field{min-height:var(--altura)}
+.seg{min-height:var(--altura);align-items:stretch}
+.seg button{padding-top:0;padding-bottom:0}
+.seg.temas button{flex-direction:row;gap:7px;min-height:0;padding:0 6px}
+.seg.temas svg{width:18px;height:18px;flex:none}
+@media (max-width:380px){.seg.temas svg{display:none}}
 </style>
 
 <script type="application/json" id="dados">
@@ -1171,12 +1204,13 @@ html:not(.sem-ia) .so-semia{display:none!important}
         <h3>Código de barras</h3>
         <p class="hint">Tire uma foto do código, de perto e reto, ou digite os números que ficam embaixo dele.</p>
         <div class="cod-row">
-          <label class="btn cod-foto" for="codArq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Tirar foto</label>
+          <button type="button" class="btn cod-foto" id="codFoto"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Tirar foto</button>
           <input class="field" id="codNum" inputmode="numeric" autocomplete="off" placeholder="Ex.: 7891000100103" aria-label="Números do código de barras">
           <button type="button" class="ghost big" id="codProcura">Procurar</button>
         </div>
-        <input type="file" id="codArq" class="arq" accept="image/*" capture="environment">
+        <input type="file" id="codArq" class="arq" accept="image/*">
         <p class="hint" id="codMsg" aria-live="polite"></p>
+        <label class="linkbtn cod-gal" for="codArq" id="codGal" hidden>Escolher a foto</label>
         <div class="cod-res" id="codRes" hidden>
           <label for="codNome">Nome do item na lista<input class="field" id="codNome" autocomplete="off"></label>
           <button type="button" class="btn" id="codPor">Pôr na lista</button>
@@ -1300,6 +1334,9 @@ html:not(.sem-ia) .so-semia{display:none!important}
           <div class="sec-head"><h2 id="h-nunca"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c5 0 9 4.5 10 7a13 13 0 0 1-2.7 3.9M6.6 6.6C4.4 8 2.8 10.2 2 12c1 2.5 5 7 10 7a9.6 9.6 0 0 0 4.4-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></span>Nunca mostrar</h2></div>
           <p class="sec-meta">O "Não mostrar" das ofertas também adiciona aqui.</p>
           <div class="picks" id="pNunca"></div>
+          <p class="sec-meta nunca-prod-t">Produtos, em qualquer loja e em qualquer tamanho:</p>
+          <div class="nunca-prod" id="pNuncaProd"></div>
+          <form class="row-form" id="fNuncaProd"><input class="field" id="nuncaProdIn" placeholder="Ex.: energético" maxlength="40" autocomplete="off" aria-label="Produto para nunca mostrar" enterkeyhint="done"><button type="submit" class="btn">Adicionar</button></form>
         </section>
       </div></div>
     </div>
@@ -1576,6 +1613,17 @@ html:not(.sem-ia) .so-semia{display:none!important}
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <!-- 1.11.0: a câmera do próprio app (o seletor de arquivo do celular, no app do Home Assistant, abre a galeria) -->
+  <div class="cam" id="codCamUI" role="dialog" aria-modal="true" aria-label="Foto do código de barras" hidden>
+    <video id="codVideo" playsinline muted autoplay></video>
+    <div class="cam-guia" aria-hidden="true"></div>
+    <p class="cam-dica">Aponte para o código de barras, de perto e reto.</p>
+    <div class="cam-barra">
+      <button type="button" class="cam-x" id="codCamX" aria-label="Fechar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <button type="button" class="cam-disparo" id="codCamFoto" aria-label="Tirar a foto"></button>
+      <label class="cam-gal" for="codArq" id="codCamGal">Escolher foto</label>
+    </div>
+  </div>
 </div>
 
 <nav class="tabbar" id="views" aria-label="Telas">
@@ -1666,7 +1714,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
 
   // ---------- estado ----------
   var D, estado, G = {}, LOJA = {}, GEMEA = {}, MODO = 'exemplo', exemplo = true, usuario = null;
-  var CAT, filtro = 'todas', menuAberto = null;
+  var CAT, filtro = 'todas', menuAberto = null, termoAberto = null;
   var KEY = 'ofertas-bairro:v3', KEY_UI = 'ofertas-bairro:ui';
   function lerLocal(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } }
   function gravarLocal(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch(e){ return false; } }
@@ -1752,7 +1800,8 @@ html:not(.sem-ia) .so-semia{display:none!important}
         escolha:i.escolha && i.escolha.rede ? {rede:String(i.escolha.rede), q:Number(i.escolha.q) || null, obs:String(i.escolha.obs || '').slice(0, 120), sim:i.escolha.sim ? true : undefined} : undefined}; }).filter(function(i){ return i.produto; }),
       // itens que saíram da lista, com as compras, para voltar com um toque
       historico: arr(c.historico).filter(function(i){ return i && i.produto; }).map(function(i){ return {produto:String(i.produto).slice(0, 120), compras:arr(i.compras).filter(function(d){ return /^\d{4}-\d{2}-\d{2}$/.test(d); }), saiu:String(i.saiu || ''), ean:/^\d{8,14}$/.test(String(i.ean || '')) ? String(i.ean) : undefined}; }).slice(-300),
-      perfil: {adultos:n0(p.adultos, 1), criancas:n0(p.criancas, 0), bebes:n0(p.bebes, 0), pets:petsDe(p.pets), restricoes:arr(p.restricoes), interesses:arr(p.interesses), nunca:arr(p.nunca)},
+      perfil: {adultos:n0(p.adultos, 1), criancas:n0(p.criancas, 0), bebes:n0(p.bebes, 0), pets:petsDe(p.pets), restricoes:arr(p.restricoes), interesses:arr(p.interesses), nunca:arr(p.nunca),
+        nunca_produtos:arr(p.nunca_produtos).map(function(t){ return String(t).trim().slice(0, 40); }).filter(function(t){ return norm(t); }).slice(0, 100)},
       cotidiano: {mercado:arr(r.mercado), farmacia:arr(r.farmacia), avisar:r.avisar || 'vespera', estoque:['pouco', 'normal', 'bastante'].indexOf(r.estoque) >= 0 ? r.estoque : 'normal'},
       ia: {busca:String((c.ia || {}).busca || ''), fotos:String((c.ia || {}).fotos || ''), voz:String((c.ia || {}).voz || '')},
       clubes: arr(c.clubes),
@@ -1824,11 +1873,33 @@ html:not(.sem-ia) .so-semia{display:none!important}
   }
   function catAtiva(id){ return G[id] && estado.categorias.indexOf(G[id].cat) >= 0; }
   function idOf(o){ return o.id || (o.rede + '|' + o.produto); }
+  // 1.11.0: as palavras que a pessoa nunca quer ver ("energético"): em qualquer loja e em qualquer tamanho, no começo de
+  // uma palavra do produto (sem acento, maiúscula ou minúscula). A mesma regra do nunca_produto do servidor.
+  function termoNunca(o){
+    var n = ' ' + norm(o.produto || '') + ' ', ts = estado.perfil.nunca_produtos;
+    for (var i = 0; i < ts.length; i++){ var t = norm(ts[i]); if (t && n.indexOf(' ' + t) >= 0) return ts[i]; }
+    return null;
+  }
+  // a palavra que o Nunca mostrar sugere: a primeira do produto com três letras ou mais e sem números (Energético 473 ml → energético)
+  function palavraDe(prod){
+    var ws = String(prod || '').split(/\s+/);
+    for (var i = 0; i < ws.length; i++){ var w = ws[i].replace(/[.,;:!?()]/g, ''); if (w.length >= 3 && !/\d/.test(w)) return w.toLowerCase(); }
+    return (norm(prod).split(' ')[0] || '').slice(0, 40);
+  }
+  function nuncaProduto(t){
+    t = String(t || '').trim().slice(0, 40);
+    if (!norm(t)) return false;
+    if (!estado.perfil.nunca_produtos.some(function(x){ return norm(x) === norm(t); })) estado.perfil.nunca_produtos.push(t);
+    return true;
+  }
+  function tiraNunca(t){ estado.perfil.nunca_produtos = estado.perfil.nunca_produtos.filter(function(x){ return norm(x) !== norm(t); }); }
 
   // por que uma oferta fica escondida (null = aparece)
   function escondida(o){
     var t = arr(o.tags), p = estado.perfil;
     if (estado.ocultas.indexOf(idOf(o)) >= 0) return {txt:'Você escondeu esta oferta', tipo:'oferta'};
+    var tn = termoNunca(o);
+    if (tn) return {txt:'Você pediu para nunca mostrar “' + tn + '”', tipo:'termo', termo:tn};
     for (var i = 0; i < p.nunca.length; i++) if (t.indexOf(p.nunca[i]) >= 0) return {txt:'Você pediu para não mostrar ' + ROTULO_TAG[p.nunca[i]], tipo:'nunca', tag:p.nunca[i]};
     if (t.indexOf('bebe') >= 0 && p.criancas + p.bebes === 0) return {txt:'Não há crianças no seu perfil', tipo:'perfil'};
     if (t.indexOf('pet') >= 0){
@@ -2144,17 +2215,23 @@ html:not(.sem-ia) .so-semia{display:none!important}
     if (oc){
       acao = oc.tipo === 'perfil'
         ? '<button type="button" class="hide-btn" data-act="perfil">Ajustar no perfil</button>'
-        : '<button type="button" class="hide-btn" data-act="mostrar" data-id="' + esc(id) + '"' + (oc.tag ? ' data-tag="' + oc.tag + '"' : '') + '>Mostrar de novo</button>';
+        : '<button type="button" class="hide-btn" data-act="mostrar" data-id="' + esc(id) + '"' + (oc.tag ? ' data-tag="' + oc.tag + '"' : '') + (oc.termo ? ' data-termo="' + esc(oc.termo) + '"' : '') + '>Mostrar de novo</button>';
     } else {
       acao = '<button type="button" class="hide-btn" data-act="comparar" data-id="' + esc(id) + '"' + (comparando === id ? ' disabled' : '') + '>' + (comparando === id ? 'Comparando…' : 'Comparar preço') + '</button>'
         + '<button type="button" class="hide-btn so-ia" data-act="avaliar" data-id="' + esc(id) + '">Vale a pena?</button>'
         + '<button type="button" class="hide-btn" data-act="menu" data-id="' + esc(id) + '" aria-expanded="' + (menuAberto === id) + '">Não mostrar</button>';
     }
     var menu = '';
-    if (!oc && menuAberto === id){
-      var tp = tagPrincipal(o);
+    if (!oc && menuAberto === id && termoAberto === id){
+      // Nunca mostrar uma palavra: dá para trocar a palavra antes de esconder
+      menu = '<form class="hide-menu termo-form" data-id="' + esc(id) + '"><label for="termoIn">Nunca mostrar ofertas com</label>'
+        + '<input class="field" id="termoIn" value="' + esc(palavraDe(o.produto)) + '" maxlength="40" autocomplete="off" enterkeyhint="done">'
+        + '<button type="submit" class="btn">Esconder</button><button type="button" class="hide-btn" data-act="fechar">Cancelar</button></form>';
+    } else if (!oc && menuAberto === id){
+      var tp = tagPrincipal(o), pal = palavraDe(o.produto);
       menu = '<div class="hide-menu"><span>Esconder:</span>'
         + '<button type="button" class="ghost" data-act="esconder" data-id="' + esc(id) + '">Só esta oferta</button>'
+        + (pal ? '<button type="button" class="ghost" data-act="termo" data-id="' + esc(id) + '">Nunca “' + esc(pal) + '”</button>' : '')
         + (tp ? '<button type="button" class="ghost" data-act="nunca" data-tag="' + tp + '">Nada de ' + esc(ROTULO_TAG[tp]) + '</button>' : '')
         + '<button type="button" class="hide-btn" data-act="fechar">Cancelar</button></div>';
     }
@@ -2206,16 +2283,26 @@ html:not(.sem-ia) .so-semia{display:none!important}
     var b = e.target.closest('button[data-act]'); if (!b) return;
     var act = b.dataset.act;
     if (act === 'comparar'){ comparar(b.dataset.id); return; }
-    if (act === 'menu'){ menuAberto = menuAberto === b.dataset.id ? null : b.dataset.id; pintaDeals(); return; }
-    if (act === 'fechar'){ menuAberto = null; pintaDeals(); return; }
+    if (act === 'menu'){ menuAberto = menuAberto === b.dataset.id ? null : b.dataset.id; termoAberto = null; pintaDeals(); return; }
+    if (act === 'fechar'){ menuAberto = termoAberto = null; pintaDeals(); return; }
+    if (act === 'termo'){ termoAberto = b.dataset.id; pintaDeals(); var ti = $('termoIn'); if (ti){ ti.focus(); ti.select(); } return; }
     if (act === 'perfil'){ abrirMais('casa'); return; }
     if (act === 'avaliar'){ var oa = ofertasDaAba().filter(function(o){ return idOf(o) === b.dataset.id; })[0]; if (oa) avaliaOferta(oa); return; }
     if (act === 'esconder'){ estado.ocultas.push(b.dataset.id); menuAberto = null; salvar('Oferta escondida'); }
     if (act === 'nunca'){ if (estado.perfil.nunca.indexOf(b.dataset.tag) < 0) estado.perfil.nunca.push(b.dataset.tag); menuAberto = null; salvar('Você não vai mais ver ' + ROTULO_TAG[b.dataset.tag]); }
-    if (act === 'mostrar'){ if (b.dataset.tag) tira(estado.perfil.nunca, b.dataset.tag); else tira(estado.ocultas, b.dataset.id); salvar('Volta a aparecer'); }
+    if (act === 'mostrar'){ if (b.dataset.termo) tiraNunca(b.dataset.termo); else if (b.dataset.tag) tira(estado.perfil.nunca, b.dataset.tag); else tira(estado.ocultas, b.dataset.id); salvar('Volta a aparecer'); }
     pintaOfertasTela(); pintaPerfil();
   }
   $('deals').addEventListener('click', acaoOferta);
+  $('deals').addEventListener('submit', function(e){
+    var f = e.target.closest('.termo-form'); if (!f) return;
+    e.preventDefault();
+    var t = $('termoIn').value.trim();
+    if (!nuncaProduto(t)){ toast('Escreva uma palavra do produto.'); return; }
+    menuAberto = termoAberto = null;
+    salvar('Você não vai mais ver ofertas com “' + t + '”');
+    pintaOfertasTela(); pintaPerfil();
+  });
   $('dealsInat').addEventListener('click', acaoOferta);
   $('dealsInat').addEventListener('toggle', function(e){ if (e.target.dataset && e.target.dataset.inat === 'ofertas') OCULTAS_ABERTO = e.target.open; }, true);
 
@@ -3393,13 +3480,66 @@ html:not(.sem-ia) .so-semia{display:none!important}
   $('histBtn').addEventListener('click', function(){ if (HIST_ABERTO && COD.aberto) abreCod(false); });
   $('codArq').addEventListener('change', function(){
     var f = this.files && this.files[0]; this.value = '';
+    if (CAM) fechaCam();
     if (!f) return;
+    leFotoCodigo(f);
+  });
+  function leFotoCodigo(f){
     $('codRes').hidden = true; codMsg('Lendo o código na foto…');
     lerCodigoFoto(f).then(function(ean){
       if (!ean){ codMsg('Não consegui ler o código nessa foto. Tente de mais perto, com o código reto e com luz, ou digite os números.', 'err'); return; }
       $('codNum').value = ean; procuraCodigo(ean);
     });
+  }
+  // Tirar foto (1.11.0): a câmera do próprio app, em tela cheia, que lê o código sozinha quando ele entra no quadro (o
+  // leitor do navegador, quando existe) ou na foto do botão. Sem https (ou sem câmera), explica e oferece escolher a foto.
+  var CAM = null;  // {stream, timer, ocupado}
+  function camPode(){ return !!(window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia); }
+  function eanDe(rs){ return (rs || []).map(function(x){ var c = String(x.rawValue || ''); return c.length === 12 ? '0' + c : c; }).filter(eanValido)[0] || null; }
+  $('codFoto').addEventListener('click', function(){
+    if (!camPode()){
+      codMsg('A câmera só abre com o Home Assistant num endereço com https (como o do Home Assistant Cloud) ou no app do celular.');
+      $('codGal').hidden = false; $('codArq').click(); return;
+    }
+    $('codGal').hidden = true; codMsg('');
+    navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}, width:{ideal:1920}, height:{ideal:1080}}, audio:false}).then(function(st){
+      CAM = {stream:st, timer:null, ocupado:false};
+      var v = $('codVideo'); v.srcObject = st;
+      try { var pr = v.play(); if (pr && pr.catch) pr.catch(function(){}); } catch(e){ /* toca sozinho */ }
+      $('codCamUI').hidden = false; document.body.classList.add('com-cam');
+      try { history.pushState({cam:true}, ''); } catch(e){ /* ok */ }
+      var det = null;
+      if ('BarcodeDetector' in window){ try { det = new window.BarcodeDetector({formats:['ean_13', 'ean_8', 'upc_a']}); } catch(e){ det = null; } }
+      if (det) CAM.timer = setInterval(function(){
+        if (!CAM || CAM.ocupado || v.readyState < 2) return;
+        CAM.ocupado = true;
+        det.detect(v).then(function(rs){ if (!CAM) return; CAM.ocupado = false; var e = eanDe(rs); if (e){ fechaCam(); $('codNum').value = e; procuraCodigo(e); } })
+          .catch(function(){ if (CAM) CAM.ocupado = false; });
+      }, 300);
+    }).catch(function(err){
+      codMsg(err && err.name === 'NotAllowedError' ? 'A câmera não foi liberada para o app. Libere nas permissões do app do Home Assistant, ou escolha a foto.' : 'Não deu para abrir a câmera. Escolha a foto.', 'err');
+      $('codGal').hidden = false;
+    });
   });
+  // fecha a câmera; pelo Voltar do celular a entrada no histórico já saiu, pelo X sai aqui
+  function fechaCam(peloVoltar){
+    var c = CAM; if (!c) return;
+    CAM = null;
+    clearInterval(c.timer);
+    try { c.stream.getTracks().forEach(function(t){ t.stop(); }); } catch(e){ /* ok */ }
+    $('codVideo').srcObject = null; $('codCamUI').hidden = true; document.body.classList.remove('com-cam');
+    if (!peloVoltar){ try { if (history.state && history.state.cam) history.back(); } catch(e){ /* ok */ } }
+  }
+  $('codCamX').addEventListener('click', function(){ fechaCam(); });
+  $('codCamFoto').addEventListener('click', function(){
+    var v = $('codVideo'), W = v.videoWidth, H = v.videoHeight;
+    if (!W || !H) return;
+    var cv = document.createElement('canvas'); cv.width = W; cv.height = H; cv.getContext('2d').drawImage(v, 0, 0, W, H);
+    fechaCam();
+    cv.toBlob(function(bl){ if (bl) leFotoCodigo(bl); }, 'image/jpeg', 0.92);
+  });
+  window.addEventListener('popstate', function(){ if (CAM && !(history.state && history.state.cam)) fechaCam(true); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && CAM) fechaCam(); });
   $('codProcura').addEventListener('click', function(){ procuraCodigo($('codNum').value); });
   $('codNum').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); procuraCodigo(this.value); } });
   function procuraCodigo(txt){
@@ -4215,6 +4355,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     picks('pRestr', RESTR, p.restricoes);
     picks('pInt', INTERESSES.map(function(t){ return {id:t, nome:cap(ROTULO_TAG[t])}; }), p.interesses);
     picks('pNunca', NUNCA.map(function(t){ return {id:t, nome:cap(ROTULO_TAG[t])}; }), p.nunca);
+    $('pNuncaProd').innerHTML = p.nunca_produtos.map(function(t){ return '<button type="button" class="nunca-t" data-termo="' + esc(t) + '" aria-label="Voltar a mostrar ' + esc(t) + '"><span>' + esc(t) + '</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>'; }).join('');
     picks('pMkt', MKT, estado.online.marketplaces);
     picks('pAss', ASS, estado.online.assinaturas);
     picks('dMercado', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.mercado);
@@ -4832,6 +4973,17 @@ html:not(.sem-ia) .so-semia{display:none!important}
   }
   var ALVO = {pMkt:function(){ return estado.online.marketplaces; }, pAss:function(){ return estado.online.assinaturas; }, pRestr:function(){ return estado.perfil.restricoes; }, pInt:function(){ return estado.perfil.interesses; },
     pNunca:function(){ return estado.perfil.nunca; }, dMercado:function(){ return estado.cotidiano.mercado; }, dFarmacia:function(){ return estado.cotidiano.farmacia; }};
+  $('pNuncaProd').addEventListener('click', function(e){
+    var b = e.target.closest('[data-termo]'); if (!b) return;
+    tiraNunca(b.dataset.termo); salvar('“' + b.dataset.termo + '” volta a aparecer'); pintaPerfil(); pintaOfertasTela();
+  });
+  $('fNuncaProd').addEventListener('submit', function(e){
+    e.preventDefault();
+    var inp = $('nuncaProdIn'), t = inp.value.trim();
+    if (!nuncaProduto(t)){ toast('Escreva uma palavra do produto.'); return; }
+    inp.value = '';
+    salvar('Você não vai mais ver ofertas com “' + t + '”'); pintaPerfil(); pintaOfertasTela();
+  });
   $('v-mais').addEventListener('click', function(e){
     var b = e.target.closest('.pick'); if (!b) return;
     var grupo = b.parentNode.id; if (!ALVO[grupo]) return;

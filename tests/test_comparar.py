@@ -90,6 +90,31 @@ class Comparar(Cenario):
         self.assertEqual(r, [{"loja": "Giassi", "preco": 18.0, "equivale": 18.0, "carrinho": True, "obs": "Pilão 500 g"}],
                          "frete no carrinho e o que é cada preço")
 
+    def test_outro_produto_fica_de_fora(self):
+        """1.11.0: o Comparar só junta o mesmo produto. O "Creme Nivea Men 4 em 1" não é o "Creme de Barbear Nivea Men
+        Sensitive" (que custava menos e aparecia como mais barato)."""
+        S = self.S
+        o = {"rede": "farm-floresta", "produto": "Creme Nivea Men 4 em 1, 30g", "preco_oferta": 19.99}
+        ent = {"base": {"quantidade": 0.03, "unidade": "kg"}, "precos": {
+            "farm-paguemenos": {"preco": 13.49, "obs": "Creme de Barbear Nivea Men Sensitive 65g"},
+            "farm-popular": {"preco": 17.5, "obs": "Nivea Men Creme 4 em 1 Rosto Barba Mãos e Corpo 30g"},
+            "farm-catarinense": {"preco": 15.3, "obs": "Creme Nivea Men 2 em 1 30g"}}, "tamanhos": []}
+        r = S.comparar_precos(ent, {"farm-paguemenos": "Pague Menos", "farm-popular": "Preço Popular", "farm-catarinense": "Catarinense"}, o, "Floresta")
+        self.assertEqual([p["loja"] for p in r], ["Preço Popular"], "o creme de barbear e o 2 em 1 são outros produtos")
+
+    def test_regra_do_outro_produto(self):
+        S = self.S
+        mesmo = [("Creme Nivea Men 4 em 1, 30g", "Creme Nivea Men 4 em 1 30g"), ("Azeite Gallo Extra Virgem 500ml", "Azeite de Oliva Extra Virgem Gallo 500ml"),
+                 ("Sabonete Dove Original 90g", "Sabonete em Barra Dove Cremoso Original 90g"), ("Shampoo Seda 325ml", "Shampoo Seda 2 em 1 325ml"),
+                 ("Café 500 g", "Pilão 500 g"), ("Desodorante Rexona Men Active Dry Aerosol 150ml", "Desodorante Aerossol Rexona Men Active 150ml"), ("", "Qualquer")]
+        for a, b in mesmo:
+            self.assertFalse(S.outro_produto(a, b), f"{a} × {b}: o mesmo (ou não dá para dizer)")
+        outros = [("Creme Nivea Men 4 em 1, 30g", "Creme de Barbear Nivea Men Sensitive 65g"), ("Creme Nivea Men 4 em 1", "Creme Nivea Men 2in1"),
+                  ("Shampoo Seda Ceramidas 325ml", "Shampoo Seda Cachos Definidos 325ml"), ("Creme Nivea Men 4 em 1", "Nivea 30 g")]
+        for a, b in outros:
+            self.assertTrue(S.outro_produto(a, b), f"{a} × {b}: outro produto")
+        self.assertEqual(S.palavras_produto("Creme Nivea Men 4 em 1, 30g"), ["creme", "nivea", "men", "4em1"])
+
     def test_a_ia_so_quando_faltam_precos(self):
         S, ha = self.S, self.ha
         self.config(categorias=["mercados", "online"])

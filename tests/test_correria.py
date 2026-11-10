@@ -84,6 +84,20 @@ class Ferramentas(Cenario):
         with self.assertRaisesRegex(self.S.ErroFerramenta, 'Falta "produto"'):
             self.usa("preco")
 
+    def test_ofertas_sem_as_palavras_de_nunca_mostrar(self):
+        """1.11.0: uma palavra em Mais › Casa › Nunca mostrar ("cerveja") tira a oferta de qualquer loja, também das
+        ferramentas; só no começo de uma palavra do nome, sem acento e maiúscula ou minúscula."""
+        self.prepara(perfil={"nunca_produtos": ["CERVEJA", "", 7, "pão"]})
+        t = self.usa("ofertas")
+        self.assertNotIn("Cerveja", t)
+        self.assertIn("Picanha", t, "o resto continua")
+        S = self.S
+        self.assertTrue(S.nunca_produto({"perfil": {"nunca_produtos": ["energético"]}}, "Energético Lata 473 ml"))
+        self.assertTrue(S.nunca_produto({"perfil": {"nunca_produtos": ["Energetico"]}}, "Bebida ENERGÉTICA? não: Kit ENERGÉTICO 2 un"))
+        self.assertFalse(S.nunca_produto({"perfil": {"nunca_produtos": ["getico"]}}, "Energético Lata"), "no começo de uma palavra")
+        self.assertFalse(S.nunca_produto({"perfil": {}}, "Energético"))
+        self.assertFalse(S.nunca_produto(None, "Energético"))
+
     def test_ofertas_e_filtros(self):
         S = self.S
         t = self.usa("ofertas")

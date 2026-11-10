@@ -1,5 +1,12 @@
 # Mudanças
 
+## 1.11.0
+
+- **Não mostrar › Nunca “palavra”**: esconde qualquer oferta com essa palavra, em qualquer loja e tamanho, como "energético"; dá para trocar a palavra antes. As palavras ficam em **Mais › Casa › Nunca mostrar**, junto das categorias: dá para escrever outra ali ou tirar com um toque. Elas também valem na Conversa e no CorrerIA.
+- **Comparar preço** só junta o mesmo produto: um creme de barbear não aparece mais como "mais barato" que um creme 4 em 1.
+- **Código de barras › Tirar foto**: abre a câmera do próprio app, em tela cheia, que lê o código sozinha quando ele entra no quadro (no app do Home Assistant abria a galeria).
+- **Uma altura só**: botões, campos, caixas de seleção, botões de escolha (as abas de Configurações, o Tema) e as escolhas em botões têm a mesma altura, a mesma de todos os apps da família. O **Adicionar** da Minha lista e os botões de Integrações também. O Tema ficou com o ícone ao lado do nome.
+
 ## 1.10.0
 
 - **Mais › Configurações › Dados**: os botões no padrão dos outros apps da família: na largura do cartão, da mesma altura, com o ícone pequeno ao lado do texto (o ícone do Criar backup e do Apagar tudo ocupava o botão inteiro). **Apagar tudo** fica vermelho, e na confirmação ele e o Cancelar ficam lado a lado.
