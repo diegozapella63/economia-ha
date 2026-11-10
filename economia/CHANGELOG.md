@@ -1,5 +1,13 @@
 # Mudanças
 
+## 1.17.0
+
+- **Listas prontas**: saiu o **Todas**. No lugar dele, **Nenhuma** mostra só os itens que não estão em lista nenhuma. Tirar um item de uma lista (sem outra) leva ele para Nenhuma, e apagar uma lista também. O **Limpar lista** fica em Nenhuma e tira só os itens dela.
+- **Mover itens**, embaixo da barra das listas: escolha a lista de destino, marque os itens (ou **Marcar todos**) e toque em **Mover**.
+- No **Roteiro**, as listas que entram são cada lista e **Nenhuma**; de começo, todas, e ao menos uma fica marcada.
+- Ao escrever em Nenhuma um item que já está numa lista, o app diz em qual.
+- O **Roteiro | Compra rápida** cabe numa linha em telas estreitas.
+
 ## 1.16.0
 
 - **Compra rápida**, no **Roteiro**: escolha **Compra rápida** no alto e escreva o que precisa agora (pão, leite, pilha…), com as sugestões de sempre. Os itens não entram na sua lista. O app diz **aonde ir**: uma loja física só, a mais perto que tem tudo, a não ser que outra com os mesmos itens saia bem mais barata (aí ele diz quanto). Mostra o preço de cada item lá, **Como chegar** no Maps, o que falta lá e onde tem, e as outras lojas para comparar num toque. Nada de loja online: quem compra agora não espera a entrega.

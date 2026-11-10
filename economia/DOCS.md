@@ -65,14 +65,16 @@ Para ler fotos, a IA escolhida precisa aceitar imagens (a Anthropic aceita). A f
 
 ## Listas prontas
 
-Ligue em **Mais › Configurações › Opções › Listas** (vem desligado). No alto da Minha lista aparece uma barra com **Todas**, cada lista (com quantos itens tem) e **+ Nova**: crie, por exemplo, **Compra semanal** e **Compra mensal**, e troque de uma para outra com um toque. A lista aberta fica guardada no aparelho.
+Ligue em **Mais › Configurações › Opções › Listas** (vem desligado). No alto da Minha lista aparece uma barra com **Nenhuma**, cada lista (com quantos itens tem) e **+ Nova**: crie, por exemplo, **Compra semanal** e **Compra mensal**, e troque de uma para outra com um toque. A lista aberta fica guardada no aparelho.
 
 - Continua uma lista só de produtos, com os preços e o histórico de cada um; as listas dizem o que entra em cada compra. Um item pode estar em mais de uma.
 - A tela toda segue a lista aberta: os itens, o Cupom de economia e as oportunidades.
-- O que você adiciona com uma lista aberta entra nela. Um item que já está em Todas também: é só escrever o nome (ele aparece nas sugestões). Em Todas, cada item mostra o nome de cada lista: um toque põe ou tira o item dela.
-- Numa lista, **tirar desta lista** tira o item só dela, e ele continua em Todas; **Limpar lista** fica só em Todas.
-- **Renomear** e **Apagar lista** ficam embaixo da barra, com a lista aberta. Apagar uma lista não apaga os itens.
-- No **Roteiro**, escolha quais listas entram: **Todas**, ou uma ou mais listas.
+- **Nenhuma** mostra só os itens que não estão em lista nenhuma (não há "Todas": cada item está numa lista ou em Nenhuma).
+- O que você adiciona com uma lista aberta entra nela. Um item que já existe também: é só escrever o nome (ele aparece nas sugestões). Cada item mostra o nome de cada lista: um toque põe ou tira o item dela.
+- Numa lista, **tirar desta lista** tira o item só dela; sem outra lista, ele vai para Nenhuma. **Limpar lista** fica só em Nenhuma e tira só os itens dela.
+- **Mover itens**, embaixo da barra: escolha para qual lista, marque os itens (ou **Marcar todos**) e toque em **Mover**. Eles saem da lista aberta e entram na outra; de uma lista, dá para mover para Nenhuma.
+- **Renomear** e **Apagar lista** ficam embaixo da barra, com a lista aberta. Apagar uma lista não apaga os itens: os que só estavam nela vão para Nenhuma.
+- No **Roteiro**, escolha quais entram: cada lista e Nenhuma (de começo, todas; ao menos uma fica).
 - Desligar a opção esconde as listas, sem apagar: ligue de novo e elas voltam.
 
 ## Quantidade
