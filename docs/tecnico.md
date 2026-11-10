@@ -317,6 +317,18 @@ Onde é usado:
 - `relatorio.sugestoes`: os itens sem preço, em `mesclar_resultado` e na busca completa.
 - `busca_direta` e `busca_sites`: tentam o nome corrigido quando o escrito não casa nada.
 
+## Sugestões ao digitar
+
+`sugestoes_nomes(q, limite=8)` (rota `GET /api/sugestoes?q=`) tira do vocabulário os nomes genéricos que começam pelo texto:
+
+- **Índice:** os nomes pela primeira palavra (`_por_primeira`), refeito quando o vocabulário muda (`prim_de` é o `stats`).
+- **Completa e estende:** a última palavra digitada pode estar pela metade ("sab" → sabonete, sabao); o nome ganha uma palavra, passando pelas de ligação (`LIGA_SUG`: "sabao em" → "sabao em po").
+- **Corta:** na marca (`vocab()["marcas"]`; desde a 1.12.0 também as de 2 e 3 palavras, "tio zeca"), na embalagem (`EMBALAGEM_SUG`) e em palavra de uma letra; completar a palavra digitada com uma marca, não.
+- **Ordem:** pelo número de nomes vistos, no mínimo 2 (um nome visto uma vez pode ser estranho); o empate, em ordem alfabética.
+- **Escrita:** com o acento das lojas (`formas`, ou `CURTAS_SUG` para as palavras de menos de 4 letras: pó, chá, pão) e a primeira letra maiúscula.
+
+Na página, `SUG_FONTES.itens` junta o histórico (`ordemHist`, sem o que já está na lista; com o Histórico aberto, só as das lojas) e as do servidor, guardadas por texto (`SUG_NOMES`, até 60): enquanto a resposta não vem, valem as do começo do texto. O pedido espera 180 ms sem digitar e só sai do que a pessoa digitou (`isTrusted`). A lista entra depois da linha do campo (`.row-form`) e rola até aparecer inteira acima da barra de baixo.
+
 ## Código de barras
 
 - **Leitura na página:** `lerCodigoFoto` usa o `BarcodeDetector` do navegador quando existe. Sem ele, `decodificaEAN`:

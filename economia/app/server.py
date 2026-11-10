@@ -2079,9 +2079,9 @@ def aprende_nomes(nomes, marcas=()):
                 v["set"].add(t)
                 v["nomes"].append(t)
                 v["mudou"] = True
-        for m in marcas:
-            m = norm(m)
-            if len(m) >= 2 and len(m.split()) == 1 and m not in v["marcas"]:
+        for m in marcas:  # "omo" e, desde a 1.12.0, as de mais palavras ("tio joao"), que as sugestões ao digitar deixam de fora
+            m = " ".join(norm(m).split())
+            if len(m) >= 2 and len(m.split()) <= 3 and m not in v["marcas"]:
                 v["marcas"].add(m)
                 v["mudou"] = True
         if len(v["nomes"]) > MAX_NOMES_VOCAB:
@@ -2183,6 +2183,77 @@ def corrige_texto(t):
         return novo[:1].upper() + novo[1:] if orig[:1].isupper() else novo
     out = re.sub(r"[^\W\d_]+", troca, str(t or ""))
     return out if mudou and norm(out) != norm(t) else None
+
+
+# Sugestões ao digitar o nome de um item: os nomes genéricos (sem marca e sem tamanho) que abrem os nomes de produto vistos
+# nas lojas. "arroz" → arroz branco, arroz integral, arroz parboilizado…, do mais comum para o menos comum. Uma palavra de
+# ligação ("sabão em", "arroz tipo") não fecha o nome; a marca e a embalagem cortam.
+LIGA_SUG = {"de", "da", "do", "das", "dos", "em", "com", "para", "pra", "sem", "e", "a", "o", "ao", "na", "no", "tipo"}
+EMBALAGEM_SUG = {"pacote", "pct", "pc", "un", "und", "unid", "unidade", "unidades", "cx", "caixa", "lata", "garrafa", "pet", "sache",
+                 "embalagem", "frasco", "pote", "bandeja", "fardo", "kit", "leve", "pague", "gratis", "promocao", "oferta", "cada",
+                 "pack", "display", "economica", "economico", "tamanho", "familia"}
+CURTAS_SUG = {"po": "pó", "cha": "chá", "pao": "pão", "mao": "mão", "pe": "pé", "pes": "pés"}  # as formas só guardam palavras de 4 letras ou mais
+
+
+def _por_primeira():
+    """Os nomes do vocabulário pela primeira palavra (refeito quando o vocabulário muda)."""
+    v = vocab()
+    stats_vocab()
+    if v.get("prim_de") is not v["stats"]:
+        idx = {}
+        for n in v["nomes"]:
+            idx.setdefault(n.split(" ", 1)[0], []).append(n)
+        v.update(prim_idx=idx, prim_de=v["stats"])
+    return v["prim_idx"]
+
+
+def _marca_em(ws, j, marcas):
+    return ws[j] in marcas or " ".join(ws[j:j + 2]) in marcas or " ".join(ws[j:j + 3]) in marcas
+
+
+def sugestoes_nomes(q, limite=8):
+    """Os nomes genéricos que começam pelo que foi digitado, com acento e a primeira letra maiúscula, do mais visto para o
+    menos visto: a palavra que está sendo digitada completa ("sab" → Sabonete, Sabão) e o nome ganha uma palavra
+    ("sabão" → Sabão em pó, Sabão líquido)."""
+    qs = [w for w in norm(re.sub(UNIDADE_NOME, " ", str(q or ""))).split() if not w.isdigit()][:4]
+    if not qs or len("".join(qs)) < 2:
+        return []
+    v = vocab()
+    idx, marcas, k, parcial = _por_primeira(), v["marcas"], len(qs), qs[-1]
+    primeiras = [f for f in idx if f.startswith(parcial)] if k == 1 else ([qs[0]] if qs[0] in idx else [])
+    conta = {}
+    for f in primeiras:
+        for n in idx[f]:
+            ws = n.split()
+            if len(ws) < k or any(ws[i] != qs[i] for i in range(k - 1)) or not ws[k - 1].startswith(parcial):
+                continue
+            if ws[k - 1] != parcial and _marca_em(ws, k - 1, marcas):
+                continue  # a palavra completa vira uma marca ("ti" → Tio João): marca a pessoa escreve inteira
+            if ws[k - 1] != parcial:  # completa a palavra que está sendo digitada
+                t = " ".join(ws[:k])
+                conta[t] = conta.get(t, 0) + 1
+            ext, j = [], k
+            while j < len(ws) and j < k + 3:  # e ganha uma palavra (com as de ligação no meio: "sabão em pó")
+                w = ws[j]
+                if len(w) < 2 or w in EMBALAGEM_SUG or _marca_em(ws, j, marcas):
+                    break
+                ext.append(w)
+                j += 1
+                if w not in LIGA_SUG:
+                    break
+            if ext and ext[-1] not in LIGA_SUG:
+                t = " ".join(ws[:k] + ext)
+                conta[t] = conta.get(t, 0) + 1
+    formas = v.get("formas") or {}
+    out = []
+    for t, c in sorted(conta.items(), key=lambda x: (-x[1], x[0])):
+        if c < 2:
+            break  # visto uma vez só: pode ser um nome estranho de uma loja
+        s = " ".join(formas.get(w) or CURTAS_SUG.get(w) or w for w in t.split())
+        out.append(s[:1].upper() + s[1:])
+        if len(out) >= limite:
+            break
+    return out
 
 
 def associadas(w):
@@ -7164,6 +7235,9 @@ class Painel(BaseHTTPRequestHandler):
         elif rota == "/api/corrigir":
             t = (urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("texto") or [""])[0][:120]
             self._json(200, {"texto": corrige_texto(t)})
+        elif rota == "/api/sugestoes":
+            t = (urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("q") or [""])[0][:80]
+            self._json(200, {"nomes": sugestoes_nomes(t)})
         elif rota == "/api/produto-por-codigo":
             ean = (urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("ean") or [""])[0]
             try:

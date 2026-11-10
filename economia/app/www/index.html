@@ -1201,7 +1201,7 @@ input.field,select.field{min-height:var(--altura)}
     <section class="panel" aria-labelledby="h-lista">
       <div class="sec-head"><h2 id="h-lista"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg></span>Itens da lista</h2><button type="button" class="rm" id="limpar" hidden>Limpar lista</button></div>
       <form class="row-form" id="addForm" novalidate>
-        <input class="field" id="novoItem" name="novoItem" placeholder="Ex.: Lysoform, Café 500 g, Atorvastatina 20 mg" aria-label="Produto para acompanhar">
+        <input class="field" id="novoItem" name="novoItem" data-sug="itens" autocomplete="off" placeholder="Ex.: Lysoform, Café 500 g, Atorvastatina 20 mg" aria-label="Produto para acompanhar">
         <button class="btn" type="submit">Adicionar</button>
         <button type="button" class="ghost big hist-btn" id="histBtn" aria-expanded="false" aria-controls="histBox" aria-label="Histórico: itens que já estiveram na lista" title="Histórico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></svg><span class="n" id="histN" hidden></span></button>
         <button type="button" class="ghost big hist-btn" id="codBtn" aria-expanded="false" aria-controls="codBox" aria-label="Pôr na lista pelo código de barras" title="Código de barras"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8v8M10 8v8M13 8v8M16.5 8v8"/></svg></button>
@@ -2341,7 +2341,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.11.1';
+  var VERSAO = '1.12.0';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -3304,7 +3304,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   function sugFechar(){ if (SUG){ if (SUG.box.parentNode) SUG.box.parentNode.removeChild(SUG.box); SUG = null; } }
   function sugMostrar(inp){
     var fonte = SUG_FONTES[inp.dataset.sug], q = norm(inp.value), vistos = {};
-    var ops = (fonte ? fonte() : []).filter(function(v){
+    var ops = (fonte ? fonte(inp) : []).filter(function(v){
       var k = norm(v);
       if (!k || vistos[k] || k === q || (q && k.indexOf(q) < 0)) return false;
       vistos[k] = true; return true;
@@ -3312,12 +3312,16 @@ dialog.ss-wrap::backdrop{background:transparent}
     if (!ops.length){ sugFechar(); return; }
     if (!SUG || SUG.inp !== inp || !SUG.box.parentNode){
       sugFechar();
-      var box = document.createElement('div'), lab = inp.closest('label') || inp;
+      var box = document.createElement('div'), lab = inp.closest('label, .row-form') || inp;
       box.className = 'sug-box'; box.setAttribute('role', 'listbox'); box.setAttribute('aria-label', 'Sugestões');
-      lab.parentNode.insertBefore(box, lab.nextSibling);  // embaixo do campo (ou do rótulo dele)
+      lab.parentNode.insertBefore(box, lab.nextSibling);  // embaixo do campo (ou do rótulo dele, ou da linha com os botões)
       SUG = {inp:inp, box:box};
     }
     SUG.box.innerHTML = ops.map(function(v){ return '<button type="button" class="sug-op" role="option" data-sugv="' + esc(v) + '">' + esc(v) + '</button>'; }).join('');
+    // a lista aparece inteira, acima da barra de baixo e do teclado: rola só o que falta, sem tirar o campo da tela
+    var r = SUG.box.getBoundingClientRect(), bar = document.querySelector('.tabbar'), fim = bar && bar.getClientRects().length ? bar.getBoundingClientRect().top : innerHeight;  // a barra é fixa (sem offsetParent)
+    var falta = Math.min(r.bottom + 8 - fim, inp.getBoundingClientRect().top - 12);
+    if (falta > 0) window.scrollBy(0, falta);
   }
   function ehSug(e){ return e.target && e.target.matches && e.target.matches('input[data-sug]'); }
   document.addEventListener('focusin', function(e){ if (ehSug(e)) sugMostrar(e.target); });
@@ -3344,6 +3348,33 @@ dialog.ss-wrap::backdrop{background:transparent}
     $('encPrev').innerHTML = encSel.map(function(u, i){ return '<div class="foto-th"><img src="' + u + '" alt="Foto ' + (i + 1) + '"><button type="button" class="foto-rm" data-i="' + i + '" aria-label="Tirar a foto ' + (i + 1) + '">×</button></div>'; }).join('')
       + (encSel.length && encSel.length < MAX_FOTOS ? '<label class="foto-add" for="encArq">' + ICO_MAIS + 'Mais fotos</label>' : '');
   }
+  // as sugestões do nome do item, a partir de 2 letras: primeiro o que já esteve na lista (do que mais compra para o que
+  // menos compra), depois os nomes genéricos dos produtos vistos nas lojas (sem marca e sem tamanho: "arroz" → Arroz
+  // integral, Arroz parboilizado…), que o servidor tira do vocabulário aprendido. Guardados por texto digitado: enquanto a
+  // resposta não vem, valem os do começo do texto (o filtro de sempre tira os que não combinam mais).
+  var SUG_NOMES = {}, SUG_NOMES_N = [], SUG_T = null;
+  SUG_FONTES.itens = function(inp){
+    var q = norm(inp.value), noLista = {};
+    if (q.length < 2) return [];
+    estado.lista.forEach(function(i){ noLista[norm(i.produto)] = true; });
+    var meus = HIST_ABERTO ? [] : ordemHist().map(function(x){ return x.produto; });  // com o Histórico aberto, ele já mostra os da pessoa
+    var k = q; while (k && !SUG_NOMES[k]) k = k.slice(0, -1);
+    return meus.concat(k ? SUG_NOMES[k] : []).filter(function(v){ return !noLista[norm(v)]; });
+  };
+  function buscaSugNomes(inp){
+    var q = norm(inp.value);
+    if (MODO !== 'addon' || q.length < 2 || SUG_NOMES[q]) return;
+    clearTimeout(SUG_T);
+    SUG_T = setTimeout(function(){
+      fetch('api/sugestoes?q=' + encodeURIComponent(inp.value.trim()), {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
+        SUG_NOMES[q] = arr(j && j.nomes); SUG_NOMES_N.push(q);
+        if (SUG_NOMES_N.length > 60) delete SUG_NOMES[SUG_NOMES_N.shift()];
+        if (document.activeElement === inp && norm(inp.value) === q) sugMostrar(inp);
+      }).catch(function(){});
+    }, 180);
+  }
+  // só o que a pessoa digita (a sugestão escolhida também avisa o input, mas não abre outras)
+  $('novoItem').addEventListener('input', function(e){ if (e.isTrusted) buscaSugNomes(this); });
   // as sugestões do campo da loja: as lojas do tipo da aba (na aba Online, os mercados)
   SUG_FONTES.encLojas = function(){
     var cat = CAT && CAT.id !== 'online' ? CAT : D.categorias.filter(function(c){ return c.id === 'mercados'; })[0];
@@ -3797,7 +3828,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     var nome = $('novoItem').value.trim(), msg = $('addMsg');
     if (nome.length < 3){ msg.className = 'hint err'; msg.textContent = 'Escreva o nome do produto, com tamanho ou dosagem se tiver.'; return; }
     if (estado.lista.some(function(i){ return norm(i.produto) === norm(nome); })){ msg.className = 'hint err'; msg.textContent = 'Esse produto já está na lista.'; return; }
-    var voltou = entraNaLista(nome); $('novoItem').value = '';
+    var voltou = entraNaLista(nome); $('novoItem').value = ''; sugFechar();
     msg.className = 'hint ok'; msg.textContent = '"' + nome + '" ' + (voltou ? 'voltou para a lista, com as compras de antes.' : 'entrou na lista.'); pintaHist();
     salvar('Adicionado à lista'); pintaLista(); pintaOfertasTela();
     if (!voltou) perguntaCorrecao(nome);

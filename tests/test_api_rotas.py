@@ -107,6 +107,13 @@ class Estado(Rotas):
     def test_corrigir_sem_vocabulario(self):
         self.assertEqual(self.pede("GET", "/api/corrigir?texto=leite")[1], {"texto": None})
 
+    def test_sugestoes_ao_digitar(self):
+        self.assertEqual(self.pede("GET", "/api/sugestoes?q=sab%C3%A3o")[1], {"nomes": []}, "sem vocabulário, nenhuma")
+        self.S.aprende_nomes(["Sabão em Pó Marca Um 1kg", "Sabão em Pó Marca Dois 2kg", "Sabão Líquido Marca Um 1L"], ["Marca Um", "Marca Dois"])
+        self.S.grava_vocab()  # como depois de uma busca: o vocabulário novo refaz as contas
+        self.assertEqual(self.pede("GET", "/api/sugestoes?q=sab%C3%A3o")[1], {"nomes": ["Sabão em pó"]}, "visto duas vezes; o líquido, uma")
+        self.assertEqual(self.pede("GET", "/api/sugestoes")[1], {"nomes": []}, "sem o texto")
+
     def test_produto_por_codigo_com_erro(self):
         S = self.S
         S.produto_por_ean = lambda e, c: (_ for _ in ()).throw(RuntimeError("caiu"))

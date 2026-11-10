@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.12.0
+
+- **Sugestões ao digitar** o nome do item: a partir de 2 letras, aparecem logo abaixo o que já esteve na sua lista e os nomes que as lojas usam, sem marca e sem tamanho, do mais comum para o menos comum ("arroz" → Arroz branco, Arroz integral, Arroz parboilizado…). Toque numa para pôr no campo.
+
 ## 1.11.1
 
 - **Tema**: **Automático** agora se chama **Sistema** (segue o claro ou escuro do Home Assistant, como antes). O nome cabe ao lado do ícone e é o mesmo em todos os apps da família.

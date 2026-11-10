@@ -93,6 +93,10 @@ Aceita mais de um produto? Escreva com "ou": "Coxinha da asa ou asinha" busca os
 
 Toque no botão de código de barras, ao lado do Adicionar, e em **Tirar foto**: a câmera abre aqui dentro, em tela cheia, e lê o código sozinha quando ele entra no quadro (ou toque no botão do meio para tirar a foto). Também dá para digitar os números que ficam embaixo dele. A câmera só abre com o Home Assistant num endereço com https (como o do Home Assistant Cloud) ou no app do celular; sem isso, o app explica e abre a escolha da foto. O EconomIA procura o produto nas lojas com busca no site e, se não achar, no Open Food Facts. Confira o nome e toque em **Pôr na lista**. O item fica com o código, o que ajuda a achar exatamente o mesmo produto nas lojas, mesmo com outro nome. Código de balança ou da própria loja (os que começam com 2) só vale naquela loja.
 
+### Sugestões ao digitar
+
+A partir de 2 letras, o nome do item mostra sugestões logo abaixo: primeiro o que já esteve na sua lista (do que você mais compra para o que menos compra), depois os nomes que as lojas usam, sem marca e sem tamanho, do mais comum para o menos comum. "arroz" sugere *Arroz branco*, *Arroz integral*, *Arroz parboilizado*…; "sab" sugere *Sabonete*, *Sabão*, *Sabão em pó*… Toque numa para pôr no campo e, se quiser, complete com a marca ou o tamanho. Os nomes vêm dos produtos que as lojas já mostraram nas buscas: quanto mais você busca, mais sugestões aparecem.
+
 ### Quis dizer…?
 
 Se uma palavra do item não aparece em nenhum produto que as lojas já mostraram, o EconomIA sugere a mais parecida ("Álcool de lompeza" → "Álcool de limpeza"). Toque na sugestão para trocar. Se você não trocar, a busca tenta o nome corrigido sozinha quando o escrito não acha nada.
