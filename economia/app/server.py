@@ -6835,7 +6835,7 @@ def usar_ferramenta(nome, argumentos, cliente="CorrerIA"):
 
 # ---------- HTTP ----------
 class Painel(BaseHTTPRequestHandler):
-    server_version = "EconomIA/1.7.1"
+    server_version = "EconomIA/1.8.0"
 
     def log_message(self, fmt, *args):
         pass

@@ -1,5 +1,6 @@
-# EconomIA 0.19.0: a tela Ofertas: categorias, resumo (melhor cupom, destaque, escondidas), filtro por loja, ordem (o que
-# está na lista primeiro), "Não mostrar" (só esta oferta ou o tipo inteiro) e "Mostrar de novo", escondidas pelo perfil,
+# EconomIA 0.19.0: a tela Ofertas: categorias, resumo (melhor cupom e destaque), filtro por loja, ordem (o que
+# está na lista primeiro), "Não mostrar" (só esta oferta ou o tipo inteiro) e "Mostrar de novo", escondidas pelo perfil
+# (1.8.0: no fim, em Escondidas (N), recolhidas até um toque; os cupons vencidos também, em Vencidos (N)),
 # receita, clube, cupons com a validade (vence em, não confirmado, vencido, até) e o Copiar, "Sem preços de", Online
 # com frete, prazo e os mercados da região, pet shops só para o pet da casa e a categoria vazia.
 import asyncio
@@ -46,6 +47,15 @@ async def deals(pg):
     return [t.strip() for t in await pg.locator("#deals .d-prod").all_inner_texts()]
 
 
+async def escondidas(pg):
+    """Escondidas (N) no fim das ofertas: o título (ou None), se está aberta e os produtos dela."""
+    d = pg.locator("#dealsInat details.inativas")
+    if not await d.count():
+        return None, False, []
+    return ((await d.locator("summary").inner_text()).strip(), await d.evaluate("(e) => e.open"),
+            [t.strip() for t in await d.evaluate("(e) => [...e.querySelectorAll('.d-prod')].map((x) => x.textContent)")])
+
+
 async def main():
     cfg = {"cep": CEP, "raio_km": 5, "categorias": ["farmacias", "mercados", "petshops", "online"],
            "lista": [{"produto": "Protetor solar Nivea FPS 50"}], "clubes": ["farm-panvel"],
@@ -69,7 +79,11 @@ async def main():
             check(await pg.text_content("#sumCupom") == "PANVEL20", "melhor cupom: o confirmado de maior valor, dentro da validade")
             check("Panvel · R$ 20 de desconto · vence em 2 dias" in await pg.text_content("#sumCupomS"), f"cupom com loja e validade ({await pg.text_content('#sumCupomS')})")
             check(await pg.text_content("#sumTop") == "−25%", f"destaque: −25% ({await pg.text_content('#sumTop')})")
-            check(await pg.text_content("#sumHid") == "1", "1 escondida pelo perfil")
+            tit, aberta, prods = await escondidas(pg)
+            check(tit == "Escondidas (1)" and not aberta and prods == ["Fralda Pampers Confort Sec G"], f"a escondida pelo perfil no fim, recolhida, com o nome e a contagem ({tit}, {aberta}, {prods})")
+            check(await pg.locator("#factHid, #sumHid").count() == 0, "sem a faixa das escondidas no alto")
+            fim = await pg.evaluate("() => [document.querySelector('#deals').getBoundingClientRect().bottom, document.querySelector('#dealsInat').getBoundingClientRect().top]")
+            check(fim[1] >= fim[0], f"depois das outras ofertas ({fim})")
             # receita, clube, preço atual
             dip = pg.locator("#deals .deal", has_text="Dipirona")
             check("Sem receita" in await dip.inner_text(), "remédio sem receita marcado")
@@ -109,37 +123,49 @@ async def main():
             await pg.click('#deals [data-act="nunca"]')
             await pg.wait_for_timeout(800)
             check("alcool" in app.config_salva()["perfil"]["nunca"], "gravado em Nunca mostrar")
-            check("Cerveja Heineken 350 ml" not in await deals(pg) and await pg.text_content("#sumHid") == "2", "some e conta nas escondidas")
-            await pg.click("#toggleHid")
-            muted = pg.locator("#deals .deal.muted", has_text="Cerveja")
+            tit, aberta, prods = await escondidas(pg)
+            check("Cerveja Heineken 350 ml" not in await deals(pg) and tit == "Escondidas (2)" and "Cerveja Heineken 350 ml" in prods, f"some e conta nas escondidas ({tit}, {prods})")
+            await pg.click("#dealsInat summary")
+            check((await escondidas(pg))[1], "um toque abre as escondidas")
+            await pg.locator("#dealsInat").screenshot(path=SHOTS + "/eco-escondidas.png")
+            muted = pg.locator("#dealsInat .deal.muted", has_text="Cerveja")
             check(await muted.count() == 1 and "Você pediu para não mostrar bebidas alcoólicas" in await muted.inner_text(), "escondida aparece apagada, com o motivo")
-            fralda = pg.locator("#deals .deal.muted", has_text="Fralda")
+            fralda = pg.locator("#dealsInat .deal.muted", has_text="Fralda")
             check("Não há crianças no seu perfil" in await fralda.inner_text() and await fralda.locator('[data-act="perfil"]').count() == 1, "a do perfil: Ajustar no perfil")
             await muted.locator('[data-act="mostrar"]').click()
             await pg.wait_for_timeout(800)
             check("alcool" not in app.config_salva()["perfil"]["nunca"], "Mostrar de novo tira de Nunca mostrar")
-            await pg.click("#toggleHid")
+            check("Cerveja Heineken 350 ml" in await deals(pg) and (await escondidas(pg))[:2] == ("Escondidas (1)", True), "volta para as ofertas; as escondidas continuam abertas")
+            await pg.click("#dealsInat summary")
+            check(not (await escondidas(pg))[1], "outro toque recolhe")
             # Só esta oferta
             await pg.locator("#deals .deal", has_text="Dipirona").locator('[data-act="menu"]').click()
             await pg.click('#deals [data-act="esconder"]')
             await pg.wait_for_timeout(800)
             check(app.config_salva().get("ocultas") == ["o-dipirona"], "Só esta oferta: o id fica em ocultas")
-            check("Dipirona 1 g · 10 comprimidos" not in await deals(pg), "e ela some")
+            check("Dipirona 1 g · 10 comprimidos" not in await deals(pg) and "Dipirona 1 g · 10 comprimidos" in (await escondidas(pg))[2], "e ela vai para as escondidas")
             # cupons e validade
             t = pg.locator("#tickets .ticket")
             textos = [x.replace("\xa0", " ").upper() for x in await t.all_inner_texts()]  # os selos são em maiúsculas
-            check(len(textos) == 5 and "SEU CUPOM" in textos[0] and "JÁ ESTÁ NO APP DA LOJA" in textos[0], f"o seu cupom do app primeiro ({textos[:1]})")
+            check(len(textos) == 4 and "SEU CUPOM" in textos[0] and "JÁ ESTÁ NO APP DA LOJA" in textos[0], f"o seu cupom do app primeiro ({textos[:1]})")
             chip = lambda cod: next((x for x in textos if cod in x), "")  # noqa: E731
             check("VENCE EM 2 DIAS" in chip("PANVEL20"), "vence em 2 dias")
             check("NÃO CONFIRMADO" in chip("NISSEI10"), "cupom a testar: não confirmado")
-            check("VENCIDO" in chip("VELHO"), "vencido")
+            # 1.8.0: o vencido no fim, em Vencidos (1), recolhido até um toque
+            venc = pg.locator("#ticketsInat details.inativas")
+            check(chip("VELHO") == "" and await venc.count() == 1 and (await venc.locator("summary").inner_text()).strip() == "Vencidos (1)" and not await venc.evaluate("(e) => e.open"),
+                  "o vencido fora dos outros, em Vencidos (1), recolhido")
+            await venc.locator("summary").click()
+            v = (await venc.locator(".ticket").inner_text()).replace("\xa0", " ").upper()
+            check(await venc.evaluate("(e) => e.open") and "VELHO" in v and "VENCIDO" in v, f"um toque mostra o vencido ({v[:60]})")
+            await venc.locator("summary").click()
             fim = (HOJE + timedelta(days=60))
             check(f"ATÉ {fim:%d/%m/%Y}" in chip("NATAL"), f"longe: a data ({chip('NATAL')[-30:]})")
             await pg.locator('#tickets .copy[data-code="PANVEL20"]').click()
             await espera(pg, "() => /Copiado|Selecionado/.test(document.querySelector('#tickets .copy[data-code=\"PANVEL20\"]').textContent)")
             check(True, "Copiar o código")
             forma = await pg.locator("#tickets .chip.deal").evaluate_all("es => es.map(e => [getComputedStyle(e).display, Math.round(e.getBoundingClientRect().height)])")
-            check(len(forma) == 2 and all(d in ("flex", "inline-flex") and h < 30 for d, h in forma), f"o selo de validade urgente é um selo, não uma linha de oferta ({forma})")
+            check(len(forma) == 1 and all(d in ("flex", "inline-flex") and h < 30 for d, h in forma), f"o selo de validade urgente é um selo, não uma linha de oferta ({forma})")
             await pg.locator("#tickets").screenshot(path=SHOTS + "/eco-cupons.png")
             # Online: frete, prazo, loja oficial, mercado da região
             await pg.click('#cats [data-cat="online"]')
@@ -155,7 +181,7 @@ async def main():
             # Pet shops: só o do gato da casa; Mercados sem ofertas
             await pg.click('#cats [data-cat="petshops"]')
             check(await deals(pg) == ["Ração Golden Gatos Castrados 10 kg"], f"pet shop: só a ração de gato ({await deals(pg)})")
-            check(await pg.text_content("#sumHid") == "1", "a de cachorro escondida")
+            check((await escondidas(pg))[::2] == ("Escondidas (1)", ["Ração Pedigree Cães Adultos 15 kg"]), f"a de cachorro escondida ({await escondidas(pg)})")
             await pg.click('#cats [data-cat="mercados"]')
             check("Nenhuma oferta encontrada ainda" in await pg.text_content("#deals"), "categoria sem ofertas")
             check(await pg.locator("#resumo").is_hidden(), "sem nada: o resumo some")

@@ -99,14 +99,16 @@ esperar (espera-se a condição: `Cenario.espera`, `espera()` nas visuais), semp
   testar, apagar, chave que nunca volta para a página), Usar IA e a escolha das IAs.
 - `e2e/ec_lojas.py`: Mais › Lojas: abas, procurar, só sem fonte, inativas, clube, loja sem localização.
 - `e2e/ec_lojas_acoes.py`: Encontrar lojas, Testar agora, Como foi testado, adicionar e ignorar loja.
-- `e2e/ec_ofertas.py`: Ofertas e cupons por categoria, filtros, cupom que vence, online com frete.
+- `e2e/ec_ofertas.py`: Ofertas e cupons por categoria, filtros, cupom que vence, online com frete; as escondidas no fim, em
+  Escondidas (N), e os cupons vencidos em Vencidos (N), recolhidos até um toque.
 - `e2e/ec_comparar.py`: Comparar preço numa oferta (busca de verdade contra as lojas falsas): mais barato em outra loja,
   menor preço, não achado, "Comparando…", o aviso no fim, depois de recarregar; 390 px e 320 px.
 - `e2e/ec_correria.py`: Integrações › CorrerIA: ligar (o arquivo), uma ferramenta grava e a página avisa "pela
   CorrerIA", o último uso, recarregar e desligar (o arquivo some e a rota fecha).
 - `e2e/ec_roteiro.py`: o roteiro de compras por loja, distância e total.
 - `e2e/ec_buscar.py`: o Buscar com o andamento, a cota, o erro e os avisos.
-- `e2e/ec_ler_ia.py`: Ler com IA (mensagem, foto, cupons, encarte) e o Falar com microfone falso do Chromium.
+- `e2e/ec_ler_ia.py`: Ler com IA (mensagem, foto, cupons, encarte) e o Falar com microfone falso do Chromium; no encarte,
+  as lojas sugeridas no visual do app, embaixo do campo (sem `<datalist>`).
 - `e2e/ec_dados.py`: Mais › Configurações › Dados: exportar (downloads), importar, versões e restaurar.
 - `e2e/ec_aparencia.py`: tema claro e escuro, a Cor do dia (ligada de começo, escolher uma cor desliga, a troca na virada do dia com relógio de mentira), sem IA, estados vazios e textos sem inglês.
 - `e2e/ec_tamanhos.py`: os tamanhos do item, a base e o preço por quilo ou litro.
@@ -119,7 +121,8 @@ esperar (espera-se a condição: `Cenario.espera`, `espera()` nas visuais), semp
   app, o Voltar, o ‹ Mais e arrastar de volta para o menu, recarregar em Sobre; 390 px escuro, 320 px claro e o computador.
 - `e2e/ec_selecao.py`: as caixas de seleção (`economia/pagina/selectsheet.js`, igual nos outros apps): tocar abre a
   janela do app (não a do celular), título, opções, a atual marcada, cores do app no escuro e no claro; escolher grava;
-  Voltar, X e tocar fora fecham só ela; no computador, no meio e pelo teclado.
+  Voltar, X e tocar fora fecham só ela; no computador, no meio e pelo teclado; fechada, igual aos outros campos (altura,
+  cantos, borda) e com a seta do app.
 - `e2e/ec_desligado.py`: com a opção ou a integração desligada, nada promete o que não acontece: Rotina de compras sem
   Avisar no celular, Compras online só com a aba Online, a ordem da busca sem as etapas desligadas, Similares e código de
   barras sem a busca direta, Lista do Home Assistant sem sincronizar, Instagram e Shopee, loja adicionada sem IA.

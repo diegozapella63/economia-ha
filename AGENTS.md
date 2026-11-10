@@ -88,6 +88,8 @@ Toda mudança de comportamento vem com teste. Bug corrigido ganha o teste que o 
   Nada de misturar uma função do app com as configurações (veja "Mais: o menu" em `docs/tecnico.md`).
 - Celular primeiro (412 px), e no computador a barra lateral a partir de 1000 px.
 - A página precisa funcionar também sem o add-on (modo exemplo), sem erros no console.
+- **Inativos no fim, recolhidos**: o que está inativo, cancelado, encerrado, arquivado ou ignorado de propósito (por uma opção, como Nunca considerar) fica numa seção no fim da lista, recolhida por padrão, com o nome e a contagem (ex.: **Arquivados (3)**); abre num toque. Vale para todos os apps da família. Aqui: `<details class="inativas">`, aberto só até sair do app: as **Inativas (N)** de Mais › Lojas, as **Escondidas (N)** das Ofertas (`#dealsInat`) e os cupons **Vencidos (N)** (`#ticketsInat`).
+- **Caixas de seleção no visual do app**: nenhuma janela nativa do celular. Toda caixa de seleção abre pelo selectsheet.js; sugestões de texto (no lugar do `<datalist>`) e horários (sem AM/PM) também no visual do app; a caixa fechada igual aos outros campos (altura, cantos, seta), no claro e no escuro. Aqui: `select.field` (com a seta do app) e `data-sug="<nome>"` no campo, com as sugestões em `SUG_FONTES[nome]` (a lista `.sug-box` embaixo dele), nunca `list=`.
 
 ## Ideias combinadas e ainda não feitas
 

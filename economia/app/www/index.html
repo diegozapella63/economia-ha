@@ -191,6 +191,13 @@ h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute
 
 /* campos */
 .field{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 11px;min-width:0}
+/* a caixa de seleção fechada igual aos outros campos, com a seta do app (abre pelo selectsheet.js, nunca a janela do celular) */
+select.field{appearance:none;-webkit-appearance:none;padding-right:34px;text-overflow:ellipsis;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 52%,calc(100% - 13px) 52%;background-size:5px 5px;background-repeat:no-repeat}
+/* sugestões no visual do app, logo abaixo do campo (no lugar do <datalist>) */
+.sug-box{display:flex;flex-direction:column;margin-top:-4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.sug-op{font:inherit;font-size:15px;text-align:left;color:var(--ink);background:transparent;border:0;border-top:1px solid var(--line);padding:11px 12px;min-height:44px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.sug-op:first-child{border-top:0}
+.sug-op:hover,.sug-op:active,.sug-op:focus-visible{background:var(--accent-soft);outline:none}
 .mono{font-family:var(--font-mono);letter-spacing:.04em}
 .row-form{display:flex;gap:8px;flex-wrap:wrap}
 .row-form .field{flex:1 1 200px}
@@ -453,6 +460,8 @@ li.escolhida{border-color:var(--accent) !important}
 .testando::before{content:"";display:inline-block;width:10px;height:10px;margin-right:6px;border-radius:50%;border:2px solid var(--accent);border-right-color:transparent;vertical-align:-1px}
 @media (prefers-reduced-motion:no-preference){.testando::before{animation:gira .8s linear infinite}}
 .inativas{margin-top:6px;border-top:1px dashed var(--line);padding-top:6px}
+#dealsInat .inativas,#ticketsInat .inativas{margin-top:10px}
+#ticketsInat .tickets{margin-top:4px}
 .fonte-det{flex-basis:100%;font-size:13px}
 .fonte-det > summary{cursor:pointer;color:var(--accent);font-weight:600;list-style:none;padding:2px 0}
 .fonte-det > summary::-webkit-details-marker{display:none}
@@ -600,10 +609,6 @@ h3{font-size:13px;font-weight:600}
 .i-best .por{font-size:28px;font-weight:700}
 .rot-total .por{font-size:40px;font-weight:700;line-height:1}
 .fact .v{font-size:clamp(26px,8vw,40px);font-weight:700;line-height:1}
-/* Escondidas pelo perfil: uma faixa fina embaixo dos quadros, e não mais um quadro */
-#factHid{flex-basis:100%;flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px 12px;padding-block:8px}
-#factHid .k{flex:0 1 auto}
-#factHid .v{font-size:22px}
 .t-ben{font-family:var(--font-display);font-size:25px;font-weight:600;line-height:1.1}
 .ticket.login .t-ben,.ticket.testar .t-ben{font-size:21px}
 .off{font-family:var(--font-display);font-size:17px;font-weight:700}
@@ -1091,8 +1096,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
       <input type="file" id="encArq" class="arq" accept="image/*" multiple>
       <div class="foto-box" id="encBox" hidden>
         <div class="fotos" id="encPrev"></div>
-        <label class="enc-loja"><span>De qual loja?</span><input class="field" id="encLoja" list="encLojas" autocomplete="off" placeholder="Ex.: Komprão, Koch, Atacadão"></label>
-        <datalist id="encLojas"></datalist>
+        <label class="enc-loja"><span>De qual loja?</span><input class="field" id="encLoja" data-sug="encLojas" autocomplete="off" placeholder="Ex.: Komprão, Koch, Atacadão"></label>
         <div class="row-form"><button type="button" class="btn" id="encLer">Ler com IA</button><button type="button" class="ghost big" id="encFechar">Fechar</button></div>
         <p class="hint" id="encMsg" aria-live="polite">Foto ou print do encarte, do app da loja ou da etiqueta na gôndola.</p>
       </div>
@@ -1100,7 +1104,6 @@ html:not(.sem-ia) .so-semia{display:none!important}
     <div class="summary" id="resumo" aria-label="Resumo">
       <div class="fact" id="factCupom"><span class="k">Melhor cupom agora</span><span class="v num" id="sumCupom">—</span><span class="s" id="sumCupomS"></span></div>
       <button type="button" class="fact fact-btn" id="factTop" aria-label="Destaque para você: ver a oferta"><span class="k">Destaque para você<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span><span class="v num" id="sumTop">—</span><span class="s" id="sumTopS"></span></button>
-      <div class="fact" id="factHid"><span class="k">Escondidas pelo perfil</span><span class="v num" id="sumHid">0</span><button type="button" class="linkbtn" id="toggleHid">Ver quais são</button></div>
     </div>
     <div class="cols">
       <section class="panel" aria-labelledby="h-ofertas">
@@ -1108,10 +1111,12 @@ html:not(.sem-ia) .so-semia{display:none!important}
         <p class="sec-meta" id="ofertasMeta"></p>
         <div class="filters" id="filters" role="group" aria-label="Filtrar por loja"></div>
         <ul class="deals" id="deals"></ul>
+        <div id="dealsInat"></div>
       </section>
       <section class="panel" aria-labelledby="h-cupons">
         <div class="sec-head"><h2 id="h-cupons"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M14 7v2M14 11v2M14 15v2"/></svg></span>Cupons e clubes</h2></div>
         <div class="tickets" id="tickets"></div>
+        <div id="ticketsInat"></div>
       </section>
     </div>
   </section>
@@ -1537,7 +1542,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
     </section>
     </div>
     <div class="mais-painel sb-pagina" id="mp-sobre" aria-label="Sobre" hidden></div>
-    <p class="foot" id="maisPe"><b>EconomIA</b><br><span id="versaoTxt">v1.7.1</span></p>
+    <p class="foot" id="maisPe"><b>EconomIA</b><br><span id="versaoTxt">v1.8.0</span></p>
   </section>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -2350,13 +2355,9 @@ dialog.ss-wrap::backdrop{background:transparent}
     TOP_ID = top ? idOf(top) : null;
     $('sumTop').textContent = top ? (top.preco_normal ? '−' + pct(top) + '%' : brl.format(top.preco_oferta)) : '—';
     $('sumTopS').textContent = top ? top.produto.split(' · ')[0] + ' · ' + G[top.rede].nome + (porQue(top) ? ' · ' + porQue(top).toLowerCase() : '') : 'Nada por enquanto';
-    var esc_ = lista.length - vis.length;
-    $('sumHid').textContent = String(esc_);
-    $('toggleHid').hidden = esc_ === 0;
-    $('toggleHid').textContent = ui.verOcultas ? 'Esconder de novo' : 'Ver quais são';
-    // quadro vazio não ocupa espaço: sem cupom, sem destaque ou sem nada escondido, ele some
-    $('factCupom').hidden = !cup; $('factTop').hidden = !top; $('factHid').hidden = esc_ === 0;
-    $('resumo').hidden = !cup && !top && esc_ === 0;
+    // quadro vazio não ocupa espaço: sem cupom ou sem destaque, ele some (as escondidas ficam no fim das ofertas)
+    $('factCupom').hidden = !cup; $('factTop').hidden = !top;
+    $('resumo').hidden = !cup && !top;
   }
   var TOP_ID = null;
   // tocar no Destaque leva à oferta: Todas as lojas, a linha no meio da tela, piscando
@@ -2371,12 +2372,11 @@ dialog.ss-wrap::backdrop{background:transparent}
     li.classList.remove('achada'); void li.offsetWidth; li.classList.add('achada');
     setTimeout(function(){ li.classList.remove('achada'); }, 2600);
   });
-  $('toggleHid').addEventListener('click', function(){ ui.verOcultas = !ui.verOcultas; salvarUI(); pintaResumo(); pintaFiltros(); pintaDeals(); });
 
   function regional(id){ return !!(LOJA[id] && LOJA[id].regional); }
-  function comOferta(){  // as lojas que têm oferta para mostrar (as escondidas contam só com "Ver quais são")
+  function comOferta(){  // as lojas que têm oferta para mostrar (as escondidas não contam)
     var tem = {};
-    ofertasDaAba().forEach(function(o){ if (ui.verOcultas || !escondida(o)) tem[o.rede] = true; });
+    ofertasDaAba().forEach(function(o){ if (!escondida(o)) tem[o.rede] = true; });
     return tem;
   }
   function pintaFiltros(){
@@ -2400,14 +2400,18 @@ dialog.ss-wrap::backdrop{background:transparent}
   function pintaDeals(){
     var base = ofertasDaAba().filter(function(o){ return filtro === 'todas' || o.rede === filtro; });
     var vis = base.filter(function(o){ return !escondida(o); }).sort(function(a, b){ return nota(b) - nota(a); });
-    var ocu = ui.verOcultas ? base.filter(function(o){ return escondida(o); }) : [];
-    if (!vis.length && !ocu.length){
+    // as escondidas (pelo perfil, por Nunca mostrar ou só esta oferta) no fim, em Escondidas (N), recolhidas até um toque
+    var ocu = base.filter(function(o){ return escondida(o); });
+    $('dealsInat').innerHTML = ocu.length ? '<details class="inativas" data-inat="ofertas"' + (OCULTAS_ABERTO ? ' open' : '') + '><summary>Escondidas (' + ocu.length + ')</summary><ul class="deals">'
+      + ocu.map(function(o){ return linhaOferta(o, escondida(o)); }).join('') + '</ul></details>' : '';
+    if (!vis.length){
       var n = filtro !== 'todas' && G[filtro] ? G[filtro].nota : '';
       $('deals').innerHTML = '<li class="empty">' + esc(n || (base.length ? 'Todas as ofertas daqui foram escondidas pelo seu perfil.' : 'Nenhuma oferta encontrada ainda nas lojas que você acompanha.')) + '</li>';
       return;
     }
-    $('deals').innerHTML = vis.map(function(o){ return linhaOferta(o, null); }).join('') + ocu.map(function(o){ return linhaOferta(o, escondida(o)); }).join('');
+    $('deals').innerHTML = vis.map(function(o){ return linhaOferta(o, null); }).join('');
   }
+  var OCULTAS_ABERTO = false, VENCIDOS_ABERTO = false;  // abertas só até sair do app
   function linhaOferta(o, oc){
     var tipo = o.tipo || 'promo', id = idOf(o);
     var rec = o.receita === 'tarja' ? '<span class="tarja">Tarja vermelha · com receita</span>' : o.receita === 'mip' ? '<span class="tarja mip">Sem receita</span>' : '';
@@ -2484,7 +2488,7 @@ dialog.ss-wrap::backdrop{background:transparent}
       })
       .catch(function(){ solta(); mostraBusca({erro:'Sem conexão com o Home Assistant. Tente de novo.'}); });
   }
-  $('deals').addEventListener('click', function(e){
+  function acaoOferta(e){
     var b = e.target.closest('button[data-act]'); if (!b) return;
     var act = b.dataset.act;
     if (act === 'comparar'){ comparar(b.dataset.id); return; }
@@ -2496,16 +2500,21 @@ dialog.ss-wrap::backdrop{background:transparent}
     if (act === 'nunca'){ if (estado.perfil.nunca.indexOf(b.dataset.tag) < 0) estado.perfil.nunca.push(b.dataset.tag); menuAberto = null; salvar('Você não vai mais ver ' + ROTULO_TAG[b.dataset.tag]); }
     if (act === 'mostrar'){ if (b.dataset.tag) tira(estado.perfil.nunca, b.dataset.tag); else tira(estado.ocultas, b.dataset.id); salvar('Volta a aparecer'); }
     pintaOfertasTela(); pintaPerfil();
-  });
+  }
+  $('deals').addEventListener('click', acaoOferta);
+  $('dealsInat').addEventListener('click', acaoOferta);
+  $('dealsInat').addEventListener('toggle', function(e){ if (e.target.dataset && e.target.dataset.inat === 'ofertas') OCULTAS_ABERTO = e.target.open; }, true);
 
   function meusCupons(cat){
     return estado.cupons_meus.filter(function(k){ return G[k.rede] && (!cat || G[k.rede].cat === cat) && (!k.valido_ate || diasAte(k.valido_ate) >= 0); })
       .map(function(k){ return {rede:k.rede, codigo:k.codigo || null, beneficio:k.beneficio, condicao:k.condicao || (k.produto ? 'Em ' + k.produto : 'Da sua conta no app'), valido_ate:k.valido_ate || null, status:'confirmado', meu:true}; });
   }
   function pintaCupons(){
-    var lista = meusCupons(CAT.id).concat(arr(CAT.cupons).filter(function(c){ return acompanha(c.rede); }));
-    if (!lista.length){ $('tickets').innerHTML = '<p class="empty">Nenhum cupom das lojas que você acompanha.</p>'; return; }
-    $('tickets').innerHTML = lista.map(function(c, i){
+    var todos = meusCupons(CAT.id).concat(arr(CAT.cupons).filter(function(c){ return acompanha(c.rede); }));
+    // os vencidos no fim, em Vencidos (N), recolhidos até um toque
+    var vencido = function(c){ return !!c.valido_ate && diasAte(c.valido_ate) < 0; };
+    var lista = todos.filter(function(c){ return !vencido(c); }), venc = todos.filter(vencido);
+    var tiquete = function(c, i){
       var v = validade(c);
       var stub = c.codigo
         ? '<code class="code" id="code-' + i + '">' + esc(c.codigo) + '</code><button type="button" class="copy" data-code="' + esc(c.codigo) + '" data-target="code-' + i + '">Copiar</button>'
@@ -2513,8 +2522,12 @@ dialog.ss-wrap::backdrop{background:transparent}
       return '<article class="ticket ' + esc(c.status) + '">'
         + '<div class="t-main"><p class="t-rede">' + esc(G[c.rede].nome) + (c.meu ? ' <span class="chip selo">Seu cupom</span>' : '') + '</p><p class="t-ben num">' + esc(c.beneficio) + '</p><p class="t-cond num">' + esc(c.condicao) + (fonteLink(c.fonte) ? ' · ' + fonteLink(c.fonte) : '') + '</p></div>'
         + '<div class="stub">' + stub + '<span class="chip ' + v.k + '">' + esc(v.t) + '</span></div></article>';
-    }).join('');
+    };
+    $('ticketsInat').innerHTML = venc.length ? '<details class="inativas" data-inat="cupons"' + (VENCIDOS_ABERTO ? ' open' : '') + '><summary>Vencidos (' + venc.length + ')</summary><div class="tickets">'
+      + venc.map(function(c, i){ return tiquete(c, lista.length + i); }).join('') + '</div></details>' : '';
+    $('tickets').innerHTML = lista.length ? lista.map(tiquete).join('') : '<p class="empty">' + (venc.length ? 'Nenhum cupom válido agora.' : 'Nenhum cupom das lojas que você acompanha.') + '</p>';
   }
+  $('ticketsInat').addEventListener('toggle', function(e){ if (e.target.dataset && e.target.dataset.inat === 'cupons') VENCIDOS_ABERTO = e.target.open; }, true);
   document.addEventListener('click', function(e){
     var b = e.target.closest('.copy'); if (!b) return;
     function volta(){ setTimeout(function(){ b.textContent = 'Copiar'; }, 1600); }
@@ -3127,15 +3140,58 @@ dialog.ss-wrap::backdrop{background:transparent}
       .then(function(j){ esperaLeitura(j.id, 0); })
       .catch(function(e){ b.disabled = false; msg.className = 'hint err'; msg.textContent = e.message; });
   }
+  // ===== Sugestões no visual do app, no lugar da lista do celular (<datalist>, que no Android abre fora do padrão): o campo
+  // com data-sug="<nome>" mostra logo abaixo até 6 sugestões de SUG_FONTES[nome]() que combinam com o que foi digitado
+  // (sem acento). Tocar numa preenche o campo (com os eventos input e change de sempre); sair do campo ou escolher fecha.
+  var SUG_FONTES = {}, SUG = null;
+  function sugFechar(){ if (SUG){ if (SUG.box.parentNode) SUG.box.parentNode.removeChild(SUG.box); SUG = null; } }
+  function sugMostrar(inp){
+    var fonte = SUG_FONTES[inp.dataset.sug], q = norm(inp.value), vistos = {};
+    var ops = (fonte ? fonte() : []).filter(function(v){
+      var k = norm(v);
+      if (!k || vistos[k] || k === q || (q && k.indexOf(q) < 0)) return false;
+      vistos[k] = true; return true;
+    }).slice(0, 6);
+    if (!ops.length){ sugFechar(); return; }
+    if (!SUG || SUG.inp !== inp || !SUG.box.parentNode){
+      sugFechar();
+      var box = document.createElement('div'), lab = inp.closest('label') || inp;
+      box.className = 'sug-box'; box.setAttribute('role', 'listbox'); box.setAttribute('aria-label', 'Sugestões');
+      lab.parentNode.insertBefore(box, lab.nextSibling);  // embaixo do campo (ou do rótulo dele)
+      SUG = {inp:inp, box:box};
+    }
+    SUG.box.innerHTML = ops.map(function(v){ return '<button type="button" class="sug-op" role="option" data-sugv="' + esc(v) + '">' + esc(v) + '</button>'; }).join('');
+  }
+  function ehSug(e){ return e.target && e.target.matches && e.target.matches('input[data-sug]'); }
+  document.addEventListener('focusin', function(e){ if (ehSug(e)) sugMostrar(e.target); });
+  document.addEventListener('input', function(e){ if (ehSug(e)) sugMostrar(e.target); });
+  document.addEventListener('focusout', function(e){ if (SUG && e.target === SUG.inp) setTimeout(function(){ if (SUG && document.activeElement !== SUG.inp) sugFechar(); }, 150); });
+  document.addEventListener('keydown', function(e){ if (SUG && e.key === 'Escape' && e.target === SUG.inp) sugFechar(); });
+  // tocar na sugestão não tira o foco do campo; a escolha entra no clique (a lista some só depois, sem o toque cair no que estava embaixo)
+  document.addEventListener('pointerdown', function(e){ if (e.target.closest && e.target.closest('.sug-op')) e.preventDefault(); }, true);
+  document.addEventListener('mousedown', function(e){ if (e.target.closest && e.target.closest('.sug-op')) e.preventDefault(); }, true);
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('.sug-op'); if (!b || !SUG) return;
+    var inp = SUG.inp;
+    inp.value = b.dataset.sugv;
+    sugFechar();
+    inp.dispatchEvent(new Event('input', {bubbles:true}));
+    inp.dispatchEvent(new Event('change', {bubbles:true}));
+    sugFechar();
+  });
+
   // ===== Encarte ou print de preços: a IA lê e os preços entram nas ofertas e na lista
   var encSel = [], encT = null;
   function pintaEnc(){
     $('encBox').hidden = !encSel.length;
     $('encPrev').innerHTML = encSel.map(function(u, i){ return '<div class="foto-th"><img src="' + u + '" alt="Foto ' + (i + 1) + '"><button type="button" class="foto-rm" data-i="' + i + '" aria-label="Tirar a foto ' + (i + 1) + '">×</button></div>'; }).join('')
       + (encSel.length && encSel.length < MAX_FOTOS ? '<label class="foto-add" for="encArq">' + ICO_MAIS + 'Mais fotos</label>' : '');
-    var cat = CAT && CAT.id !== 'online' ? CAT : D.categorias.filter(function(c){ return c.id === 'mercados'; })[0];
-    $('encLojas').innerHTML = cat ? arr(cat.redes).map(function(r){ return '<option value="' + esc(r.nome) + '">'; }).join('') : '';
   }
+  // as sugestões do campo da loja: as lojas do tipo da aba (na aba Online, os mercados)
+  SUG_FONTES.encLojas = function(){
+    var cat = CAT && CAT.id !== 'online' ? CAT : D.categorias.filter(function(c){ return c.id === 'mercados'; })[0];
+    return cat ? arr(cat.redes).map(function(r){ return r.nome; }) : [];
+  };
   $('encArq').addEventListener('change', function(){
     var inp = this, arqs = [].slice.call(inp.files || []).slice(0, MAX_FOTOS - encSel.length);
     if (!arqs.length){ inp.value = ''; return; }
@@ -3146,7 +3202,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     }, function(){ inp.value = ''; $('encMsg').className = 'hint err'; $('encMsg').textContent = 'Não consegui abrir essa imagem.'; });
   });
   $('encPrev').addEventListener('click', function(e){ var b = e.target.closest('.foto-rm'); if (!b) return; encSel.splice(Number(b.dataset.i), 1); pintaEnc(); });
-  $('encFechar').addEventListener('click', function(){ clearTimeout(encT); encSel = []; $('encLoja').value = ''; pintaEnc(); });
+  $('encFechar').addEventListener('click', function(){ clearTimeout(encT); encSel = []; $('encLoja').value = ''; sugFechar(); pintaEnc(); });
   document.addEventListener('click', function(e){
     var b = e.target.closest('[data-enc]'); if (!b) return;
     if (b.dataset.enc) $('encLoja').value = b.dataset.enc;
@@ -5077,7 +5133,7 @@ dialog.ss-wrap::backdrop{background:transparent}
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
     }).join('') + '</div>';
-    el.innerHTML = h + '<p class="side-foot">EconomIA 1.7.1' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
+    el.innerHTML = h + '<p class="side-foot">EconomIA 1.8.0' + (MODO !== 'addon' ? ' · exemplo' : '') + '</p>';
   }
   $('lado').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;

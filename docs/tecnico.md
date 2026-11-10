@@ -16,7 +16,12 @@ gera `economia/app/www/index.html` com as fontes embutidas e o `economia/pagina/
 lugar do `<script src="selectsheet.js">`). O `selectsheet.js` é o mesmo arquivo em todos os apps da família (ResolvIA,
 CronologIA, MemorIA, GerencIA e InventarIA): as caixas de seleção abrem uma janela no visual do app em vez da janela
 do celular (a escolha entra na própria `<select>`, com os eventos `input` e `change`), com a cor de `--accent` e o
-fundo e o texto de `--surface` e `--ink`; ao mudar, copie para os outros. Os testes estão em `tests/` (veja `tests/README.md`) e as
+fundo e o texto de `--surface` e `--ink`; ao mudar, copie para os outros. Fechada, `select.field` tem `appearance: none` e a
+seta do app (um `background-image`), com a altura e os cantos dos outros campos. Sugestões de texto, no lugar do
+`<datalist>` (que no Android abre a lista do celular): o campo com `data-sug="<nome>"` mostra embaixo dele (`.sug-box`)
+até 6 de `SUG_FONTES[nome]()` que combinam com o que foi digitado (`norm`, sem acento); tocar preenche (no `click`, com o
+`pointerdown` barrado para o campo não perder o foco) e dispara `input` e `change`. Hoje: `#encLoja` (as lojas do tipo
+da aba, `SUG_FONTES.encLojas`). Os testes estão em `tests/` (veja `tests/README.md`) e as
 instruções para quem continua o projeto, em `AGENTS.md`.
 
 Tipografia: Barlow (texto) e Barlow Condensed (títulos e números), embutidas em `economia/app/www/fonts` como WOFF (subconjunto latino, licença SIL OFL em `fonts/OFL.txt`), para funcionar sem internet.
@@ -109,7 +114,7 @@ Com `config.usar_ia` em `false`, nenhuma chamada de IA sai: `/api/buscar`, `/api
 
 ### Ofertas: lojas que aparecem e o Destaque
 
-`acompanha(id)` na página: além de `lojas.ignorar`/`manter` e do raio, na aba Online o marketplace fora de `online.marketplaces` (`mktDe(nome)`) e os mercados da região com `online.mercados_entrega` desligado não contam. Ligar uma dessas lojas em Mais › Lojas (`setAcompanha`) liga também o marketplace na busca ou os mercados da região; desligar tira o marketplace da busca. Os botões de loja (`pintaFiltros`) mostram só as lojas com oferta para mostrar (`comOferta`; as escondidas contam com "Ver quais são"), e somem com menos de 2. O **Destaque para você** é um botão: volta o filtro para Todas e rola até a linha (`li[data-oferta]`), que pisca (`.achada`).
+`acompanha(id)` na página: além de `lojas.ignorar`/`manter` e do raio, na aba Online o marketplace fora de `online.marketplaces` (`mktDe(nome)`) e os mercados da região com `online.mercados_entrega` desligado não contam. Ligar uma dessas lojas em Mais › Lojas (`setAcompanha`) liga também o marketplace na busca ou os mercados da região; desligar tira o marketplace da busca. Os botões de loja (`pintaFiltros`) mostram só as lojas com oferta para mostrar (`comOferta`; as escondidas não contam), e somem com menos de 2. As escondidas (`escondida(o)`: perfil, `perfil.nunca` e `ocultas`) ficam fora de `#deals`, no fim, em `#dealsInat` (`<details class="inativas">` **Escondidas (N)**, recolhido; aberto só até sair do app, em `OCULTAS_ABERTO`), com as mesmas ações (`acaoOferta`); os cupons vencidos (`valido_ate` antes de hoje), em `#ticketsInat` (**Vencidos (N)**, `VENCIDOS_ABERTO`). É a regra dos apps da família: inativos no fim, recolhidos, com o nome e a contagem, como as **Inativas (N)** de Mais › Lojas. O **Destaque para você** é um botão: volta o filtro para Todas e rola até a linha (`li[data-oferta]`), que pisca (`.achada`).
 
 ### CorrerIA (o WhatsApp, o Claude e o Gemini)
 

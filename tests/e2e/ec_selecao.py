@@ -1,4 +1,4 @@
-# EconomIA 1.2.0: as caixas de seleção (economia/pagina/selectsheet.js, o mesmo arquivo dos outros apps; no add-on,
+# EconomIA 1.2.0 (1.8.0: fechada, igual aos outros campos, com a seta do app): as caixas de seleção (economia/pagina/selectsheet.js, o mesmo arquivo dos outros apps; no add-on,
 # embutido na página) não abrem a janela padrão do celular: abrem uma janela no visual do app, de baixo para cima, com
 # as opções em linhas e a atual marcada na cor do app, no escuro e no claro. Escolher entra na própria caixa (o app
 # ouve o change de sempre e grava); o Voltar do celular, o X e tocar fora fecham só ela, e o Voltar seguinte é o do
@@ -38,6 +38,14 @@ async def main():
                     await abrir_mais(pg, "aparencia")
                     await pg.click('#tema [data-v="claro"]')
                 await abrir_casa(pg)
+                # 1.8.0: fechada, a caixa é igual aos outros campos (altura, cantos, borda, letra) e tem a seta do app
+                forma = "(e) => { const c = getComputedStyle(e); return [Math.round(e.getBoundingClientRect().height), c.borderTopLeftRadius, c.borderTopWidth, c.fontSize, c.appearance, c.backgroundImage.includes('gradient')]; }"
+                raio, cep = await pg.locator("#raio").evaluate(forma), await pg.locator("#cep").evaluate(forma)
+                check(raio[:4] == cep[:4] and raio[4] == "none" and raio[5], f"{tag}: fechada, igual ao campo do CEP, com a seta do app ({raio} / {cep})")
+                caixas = await pg.evaluate("() => [...document.querySelectorAll('select')].filter((s) => getComputedStyle(s).appearance !== 'none').map((s) => s.id)")
+                check(caixas == [], f"{tag}: nenhuma caixa com a seta do celular ({caixas})")
+                await pg.locator("#raio").scroll_into_view_if_needed()
+                await pg.screenshot(path=f"{SHOTS}/ecselecao-fechada-{tag}.png")
                 cx = "#estoque"
                 check(await pg.locator(cx).evaluate("(s) => getComputedStyle(s).pointerEvents") == "none", f"{tag}: a caixa nunca recebe o toque (a janela do celular não abre)")
                 opts = [o.strip() for o in await pg.locator(f"{cx} option").all_inner_texts()]

@@ -1,5 +1,12 @@
 # Mudanças
 
+## 1.8.0
+
+- **Ofertas**: as ofertas escondidas (pelo perfil, por **Nunca mostrar** ou por **Só esta oferta**) ficam no fim da lista, em **Escondidas (N)**, recolhidas. Um toque abre, com o motivo de cada uma e o **Mostrar de novo**. A faixa "Escondidas pelo perfil" do alto saiu.
+- **Cupons**: os vencidos ficam no fim, em **Vencidos (N)**, recolhidos até um toque.
+- **Encarte ou print de preços**: as lojas sugeridas para **De qual loja?** aparecem logo abaixo do campo, no visual do app, e não mais na lista do celular. Tocar numa preenche o campo.
+- **Caixas de seleção**: fechadas, ficam iguais aos outros campos, com a mesma altura, os mesmos cantos e a seta do app.
+
 ## 1.7.1
 
 - **Mais › Configurações › Integrações**: o que você começava a digitar logo ao abrir a aba (o App ID da Shopee, uma chave) podia ser apagado. Agora fica.
