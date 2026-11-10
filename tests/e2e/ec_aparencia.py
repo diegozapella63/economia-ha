@@ -110,7 +110,8 @@ async def main():
                 await pg.click(sw)
                 await pg.wait_for_timeout(500)
             op = app.config_salva()["opcoes"]
-            check(op == {"itens_sem_preco": False, "encartes_auto": False, "lojas_diretas": False, "folhetos": False}, f"as opções desligadas ficam salvas ({op})")
+            check(op == {"itens_sem_preco": False, "encartes_auto": False, "lojas_diretas": False, "folhetos": False, "listas": False},
+                  f"as opções desligadas ficam salvas; as Listas (1.15.0) já vêm desligadas ({op})")
             await pg.locator("#mp-opcoes").screenshot(path=SHOTS + "/ecap-opcoes.png")
             # ----- Usar IA -----
             await mais(pg, "integracoes")
