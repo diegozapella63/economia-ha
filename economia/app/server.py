@@ -6882,6 +6882,14 @@ def correria_chave():
     return chave
 
 
+def atalho(host=None):
+    """Mais › Configurações › Opções › Atalho no celular: o caminho do painel do app no Home Assistant (/app/<slug>, desde
+    o 2026.2), pelo nome do contêiner: a1b2c3d4-ofertas-do-bairro -> /app/a1b2c3d4_ofertas_do_bairro. OFERTAS_HOST faz o
+    papel do nome nos testes; fora do Home Assistant, None (o cartão não aparece)."""
+    h = host or os.environ.get("OFERTAS_HOST") or socket.gethostname()
+    return "/app/" + h.replace("-", "_") if re.fullmatch(r"[a-z0-9]+-ofertas-do-bairro", h or "") else None
+
+
 def correria_endereco():
     """Onde o CorrerIA acha este app na rede interna do Home Assistant: o nome do contêiner (e o IP, de reserva)."""
     url = os.environ.get("OFERTAS_URL_INTERNA")
@@ -7230,6 +7238,7 @@ class Painel(BaseHTTPRequestHandler):
                 "sync": SYNC,
                 "uso_ia": uso_resumo(),
                 "correria": {"ligada": correria_ligada(), "ultimo": CORRERIA_USO["ultimo"]},
+                "atalho": atalho(),
             })
         elif rota == "/api/todos":
             try:

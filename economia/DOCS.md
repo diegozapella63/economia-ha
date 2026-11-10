@@ -53,6 +53,8 @@ Arraste para o lado para trocar de aba: Minha lista ⇄ Roteiro ⇄ Ofertas ⇄ 
 
 As caixas de seleção (como a distância ou o espaço para estoque) têm a mesma altura e os mesmos cantos dos outros campos, com a seta do app, e abrem uma janela de baixo para cima com as opções; a atual vem marcada. O Voltar do celular, o **X** ou tocar fora fecham sem mudar nada. No computador, a janela abre no meio da tela, e dá para escolher com as setas e Enter.
 
+**Atalho no celular** (Mais › Configurações › Opções, por último): para abrir o EconomIA direto da tela inicial do celular (Android), toque em **Copiar** embaixo do **Caminho** (algo como `/app/a1b2c3d4_ofertas_do_bairro`). No app do Home Assistant, abra **Configurações › Aplicativo complementar › Gerenciar atalhos** e, em **Atalho fixado**, escolha o tipo **Painel**, cole o caminho e dê um nome. Fora do Home Assistant o cartão não aparece.
+
 ## No computador
 
 Com a tela de 1000 pixels ou mais, as abas de baixo viram uma **barra lateral** com Minha lista (com o número de itens acabando), Roteiro, Ofertas, Mais, o botão **Buscar ofertas** e as ofertas por tipo de loja. No alto à direita ficam **Conversa**, **Falar**, **Ler com IA** e **Adicionar item**. As seções ficam direto na página, com título grande e ícone, e o cupom de economia fica ao lado das oportunidades. No celular e no tablet nada muda.

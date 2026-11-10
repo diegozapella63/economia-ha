@@ -538,6 +538,10 @@ li.escolhida{border-color:var(--accent) !important}
 .passos li{position:relative;padding-left:2em;font-size:14px;line-height:1.5;color:var(--muted);counter-increment:passo}
 .passos li::before{content:counter(passo);position:absolute;left:0;top:.1em;width:1.45em;height:1.45em;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
 .passos li b{color:var(--ink);font-weight:600}
+/* Opções › Atalho no celular: o caminho na largura toda (inteiro também em 320 px), o Copiar embaixo */
+.copiar{display:grid;gap:8px;margin:16px 0 4px}
+.copiar label{font-size:13px;font-weight:600;color:var(--muted)}
+.copiar .field{width:100%;font-size:14px;letter-spacing:0}
 .i-det > div + div{margin-top:10px}
 .i-sub{font-size:13px;color:var(--muted)}
 .ghost.ic-btn{display:inline-flex;align-items:center;gap:7px}
@@ -1691,6 +1695,14 @@ input.field,select.field{min-height:var(--altura)}
         <input type="checkbox" class="switch" id="opEncartes">
       </div>
     </section>
+      <section class="panel settings" id="opAtalho" aria-labelledby="h-opatalho" hidden>
+      <div class="set-head"><h2 id="h-opatalho"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg></span>Atalho no celular</h2><p class="sec-meta">Um ícone na tela inicial do celular que abre o EconomIA direto.</p></div>
+      <ol class="passos">
+        <li>No app do Home Assistant: <b>Configurações › Aplicativo complementar › Gerenciar atalhos</b>.</li>
+        <li>Em <b>Atalho fixado</b>, escolha o tipo <b>Painel</b> e cole o <b>Caminho</b> abaixo.</li>
+      </ol>
+      <div class="copiar"><label for="opAtalhoC">Caminho</label><input class="field mono" id="opAtalhoC" type="text" readonly><button type="button" class="ghost big" id="opAtalhoCopiar"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>Copiar</button></div>
+    </section>
     </div>
     <div class="mais-painel sb-pagina" id="mp-sobre" aria-label="Sobre" hidden></div>
     <p class="foot" id="maisPe"><b>EconomIA</b><br><span id="versaoTxt"></span></p>
@@ -1913,6 +1925,21 @@ input.field,select.field{min-height:var(--altura)}
 
   // ---------- salvar ----------
   var toastT;
+  // Opções › Atalho no celular: só dentro do Home Assistant (o servidor diz o caminho do painel); em http não há área de
+  // transferência, então o Copiar deixa o texto selecionado para tocar e segurar
+  function pintaAtalho(c){
+    var sec = document.getElementById('opAtalho'), inp = document.getElementById('opAtalhoC');
+    if (!sec || !inp) return;
+    sec.hidden = !c; inp.value = c || '';
+  }
+  document.addEventListener('click', function(e){
+    if (!e.target.closest || !e.target.closest('#opAtalhoCopiar')) return;
+    var inp = document.getElementById('opAtalhoC');
+    var falhou = function(){ inp.focus(); inp.select(); toast('Toque e segure no texto para copiar'); };
+    try {
+      navigator.clipboard.writeText(inp.value).then(function(){ toast('Caminho copiado'); }, falhou);
+    } catch (err) { falhou(); }
+  });
   function toast(msg){
     var t = $('toast'); t.textContent = msg; t.hidden = false;
     clearTimeout(toastT); toastT = setTimeout(function(){ t.hidden = true; }, Math.min(9000, Math.max(2200, String(msg).length * 55)));
@@ -5650,6 +5677,7 @@ input.field,select.field{min-height:var(--altura)}
     .then(function(api){
       clearTimeout(limite);
       MODO = 'addon'; usuario = api.usuario || null; COMP = api.comparacoes || {}; CORRERIA_ST = api.correria || null;
+      pintaAtalho(api.atalho);
       D = api.ofertas && api.ofertas.categorias ? api.ofertas : EX; exemplo = D === EX; indexa();
       estado = normaliza(api.config || (exemplo ? EX.config_exemplo : null)); iniciar();
     })

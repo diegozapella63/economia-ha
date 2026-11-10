@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.18.0
+
+- **Atalho no celular**, em **Mais › Configurações › Opções**: o caminho do EconomIA no Home Assistant, com **Copiar**, e como criar um ícone na tela inicial do celular que abre o app direto (no app do Home Assistant: Configurações › Aplicativo complementar › Gerenciar atalhos). O mesmo vale em todos os apps da família.
+
 ## 1.17.1
 
 - **Ofertas**: as dos itens da sua lista voltam a vir primeiro, com **Está na sua lista** (na 1.17.0 elas saíam do alto).
