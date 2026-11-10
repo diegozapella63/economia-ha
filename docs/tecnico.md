@@ -40,7 +40,7 @@ O botão **Buscar** chama `ai_task.generate_data` pela API do Home Assistant (`h
 | PUT | `/api/ofertas` | Grava `ofertas.json` (precisa ter `categorias`). |
 | POST | `/api/chat` | Conversa: `{mensagens: [{de: "eu" ou "ia", texto}], tela}` → `{resposta, acoes}`. Ver "Conversa com a IA". |
 | POST | `/api/buscar` | Começa a busca agora, uma categoria por vez, pela ação `ai_task.generate_data` do HA. No fim, faz uma pergunta só sobre os itens que ficaram sem preço. |
-| POST | `/api/buscar-itens` | `{itens: ["Pó lava louça"]}` (até 8 itens da lista): busca só esses itens e junta ao `ofertas.json` atual. |
+| POST | `/api/buscar-itens` | `{itens: ["Pó lava louça"]}` (até 8 itens da lista): busca só esses itens e junta ao `ofertas.json` atual. Com `rapida: true` (Compra rápida), itens fora da lista também (de 2 a 80 letras; o da lista vai com o nome de lá), só nas lojas físicas. |
 | GET | `/api/busca` | Andamento: `{rodando, etapa, atual, total, erro, avisos, terminou_em}`. |
 | GET | `/api/exportar/lista.xlsx` | Lista em Excel: loja mais barata, preços, economia e datas de compra. |
 | GET | `/api/exportar/lista.json` | A mesma lista em JSON. |
@@ -321,6 +321,13 @@ Onde é usado:
 
 - **Quantidade**: `lista[].qtd` (2 a 99; sem o campo, 1). `qtdDe(it)` na página; `vezesDe(it, es)` dá 1 quando a escolha é uma embalagem ou um similar. Multiplica o preço do cartão, a economia, o cupom (`oportunidades`), o roteiro (`itensDoRoteiro` põe `n` em cada item; `avaliaPlano`, `economiaPlano`) e a duração no melhor tamanho (`dura(Q) = Q / (q0 × N) × ritmo`). No servidor, `qtd_item`; vai como `quantidade` no `dados_lista` (Exportar, Conversa, CorrerIA) e volta no Importar (coluna Quantidade).
 - **Listas prontas** (`opcoes.listas`, desligado de começo): `listas: [{id, nome}]` (até 20), `lista[].listas: [id]` e `roteiro.listas: [id]` (vazio: todas), no config.json. A lista aberta é do aparelho (`ui.listaAtual`). `naListaAtual(it)` filtra a Minha lista e o cupom (`oportunidades`, e `calculaRoteiro(true)` para o roteiro do cupom); o Roteiro usa `roteiro.listas`. `entraNaLista` põe o item novo na lista aberta. Apagar uma lista tira o id dos itens e do roteiro.
+
+## Compra rápida (1.16.0)
+
+- **Na página:** o Roteiro tem dois modos (`#rotModo`, `ui.rotModo`: `roteiro` ou `rapida`); `pintaRoteiro` mostra `#rotPlano` ou `#rapida` e chama `pintaRapida`. Os itens ficam no aparelho (`ui.rapida: [{nome}]`, até 10), fora do config.json; o nome igual a um da lista (sem acento e sem caixa) vira o da lista. As sugestões (`SUG_FONTES.rapida`): os da lista (primeiro os com preço numa loja física), o histórico e os nomes do servidor, sem os que já estão na compra.
+- **A conta (`calculaRapida`):** os preços de cada item são os de `precosDe` sem os online (`precosFisicos`: nem `online`, nem loja da categoria Online). Cada loja soma os itens que tem. Vence a que tem mais itens; entre as que têm o mesmo tanto, a mais perto (`distLoja`), a não ser que a mais barata saia pelo menos `max(R$ 5, 10%)` a menos (a nota diz quanto). O Compare mostra até 4 lojas; os itens sem preço em loja nenhuma não contam como faltando. Como chegar é `linkLoja` (só o destino: o Maps parte de onde a pessoa está).
+- **Buscar preços:** `buscarRapida` manda `{itens, rapida: true}` para `/api/buscar-itens` (os sem preço, ou todos no Buscar de novo; até 8). No servidor, `buscar_itens(itens, rapida=True)` tira a categoria `online` (sem ela: erro dizendo para ligar uma categoria física); o resultado entra no `ofertas.json` como qualquer item, e a lista não muda.
+- **Preço online sem Online:** `categoria_do_preco` devolve `None` para um preço online (categoria `online`, `frete` ou marketplace) quando a categoria Online não está na busca; antes ia para a primeira categoria física.
 
 ## Sugestões ao digitar
 

@@ -1,5 +1,11 @@
 # Mudanças
 
+## 1.16.0
+
+- **Compra rápida**, no **Roteiro**: escolha **Compra rápida** no alto e escreva o que precisa agora (pão, leite, pilha…), com as sugestões de sempre. Os itens não entram na sua lista. O app diz **aonde ir**: uma loja física só, a mais perto que tem tudo, a não ser que outra com os mesmos itens saia bem mais barata (aí ele diz quanto). Mostra o preço de cada item lá, **Como chegar** no Maps, o que falta lá e onde tem, e as outras lojas para comparar num toque. Nada de loja online: quem compra agora não espera a entrega.
+- O que ainda não tem preço aparece marcado: **Buscar preços** procura só esses itens, só nas lojas físicas daqui. Um toque no item tira ele; **Limpar** tira tudo.
+- Um preço online que a IA trazia sem a aba Online ligada não aparece mais como se fosse de uma loja física.
+
 ## 1.15.0
 
 - **Listas prontas**, como Compra semanal e Compra mensal: ligue em **Mais › Configurações › Opções › Listas** (vem desligado). No alto da Minha lista, uma barra com **Todas**, cada lista e **+ Nova** troca de lista num toque. A tela toda segue a lista aberta, com os itens e o Cupom de economia. Um item pode estar em mais de uma lista, e o nome de cada lista no item põe ou tira ele dela. No **Roteiro**, você escolhe quais listas entram.

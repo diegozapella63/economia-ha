@@ -101,6 +101,16 @@ Na aba **Roteiro**, ao lado da Minha lista, diga em até quantas lojas você top
 - o que compensa pedir online (pode desligar);
 - quanto uma parada a mais economizaria. Se for pouco, ele recomenda menos paradas, e dá para comparar as opções com um toque.
 
+## Compra rápida
+
+Para quando precisa de umas coisas agora, sem planejar: no **Roteiro**, escolha **Compra rápida** e escreva cada item (as sugestões trazem os da sua lista e os nomes das lojas). Os itens não entram na lista e ficam guardados no aparelho até você tirar.
+
+- **Onde comprar**: uma loja física só, a mais perto que tem tudo. Se outra loja com os mesmos itens sair bem mais barata (pelo menos R$ 5 e 10% a menos), ela vira a recomendada, e o app diz quanto economiza indo mais longe. Lojas online ficam de fora.
+- O preço de cada item na loja, **Como chegar** (a rota no Maps de onde você está) e, se a loja não tiver tudo, o que falta lá e onde tem.
+- **Compare**: as outras lojas, com o total e quantos itens faltam em cada uma. Um toque mostra a loja.
+- Item ainda **sem preço**: **Buscar preços** procura só esses (até 8), só nas lojas físicas. Com todos com preço, **Buscar de novo** atualiza.
+- Um toque no item tira ele; **Limpar** tira tudo.
+
 ## Como o item da lista acha o produto
 
 O EconomIA lê o nome dos produtos como o varejo escreve: tipo, marca, variante e tamanho ("Álcool Araras Bactericida Eucalipto 1L"). O tipo (a primeira palavra do item, como "álcool" ou "leite") e a marca precisam estar no nome. Uma palavra que a loja não usa em nenhum produto daquele tipo, como "perfumado" entre os álcoois, vale pelas palavras que andam junto dela nos produtos que as lojas já mostraram (lavanda, eucalipto…); o app aprende isso sozinho, dos catálogos e das buscas. Uma palavra que a loja usa, como "integral" entre os leites, tem de estar no nome. Quando acha o produto com certeza, o app guarda o código de barras e reconhece o mesmo produto em outra loja, mesmo com outro nome. Se um item continuar sem preço, escreva como na embalagem: tipo, marca e tamanho.

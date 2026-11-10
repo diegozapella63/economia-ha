@@ -564,6 +564,22 @@ li.escolhida{border-color:var(--accent) !important}
 .parada li span:first-child{min-width:0;overflow-wrap:anywhere}
 .parada li span:last-child{white-space:nowrap;font-weight:600}
 .rot-ops{display:flex;flex-direction:column;gap:6px}
+/* Compra rápida: os itens de agora (um toque tira) e a loja aonde ir */
+#rapForm .field{flex:1 1 8em;min-width:0}
+.rap-itens{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+.rap-itens:empty{display:none}
+.rap-t{max-width:100%}
+.rap-t span{min-width:0;overflow-wrap:anywhere;text-align:left}
+.rap-t small{color:var(--muted);font-weight:500}
+.rap-t.sem{background:var(--bg);border-style:dashed}
+#rapRes{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+#rapRes:empty{display:none}
+.rap-onde .rap-loja{font-family:var(--font-display);font-size:28px;font-weight:700;line-height:1.1;overflow-wrap:anywhere}
+.rap-onde .rot-sub{flex:1 1 100%}
+.rap-acoes{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:8px}
+.rap-acoes:empty{display:none}
+.rap-acoes > .ghost.big,.rap-acoes > .btn{display:flex;align-items:center;justify-content:center;text-align:center;min-width:0;padding-left:8px;padding-right:8px}
+.rap-fim{display:flex;justify-content:flex-end;gap:18px}
 .r-dica{display:block;color:var(--accent);font-size:12px;font-weight:600}
 #addForm{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:8px}
 .cod-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;margin-top:8px}
@@ -1289,7 +1305,19 @@ input.field,select.field{min-height:var(--altura)}
   <!-- ROTEIRO -->
   <section class="view" id="v-roteiro" aria-label="Roteiro" hidden>
     <section class="panel" aria-labelledby="h-rot" id="roteiro">
-      <div class="sec-head"><h2 id="h-rot"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H16a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h7.5"/></svg></span>Roteiro de compras</h2></div>
+      <div class="sec-head"><h2 id="h-rot"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H16a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h7.5"/></svg></span><span id="hRotTxt">Roteiro de compras</span></h2></div>
+      <div class="seg vis-lista" id="rotModo" role="group" aria-label="Como comprar"><button type="button" data-modo="roteiro" aria-pressed="true">Roteiro</button><button type="button" data-modo="rapida" aria-pressed="false">Compra rápida</button></div>
+      <div id="rapida" hidden>
+        <p class="sec-meta">O que você precisa agora? Digo aonde ir, só lojas físicas.</p>
+        <form class="row-form" id="rapForm" novalidate>
+          <input class="field" id="rapItem" data-sug="rapida" autocomplete="off" maxlength="80" placeholder="Ex.: pão, leite, pilha AA" aria-label="Item da compra rápida">
+          <button class="btn" type="submit">Adicionar</button>
+        </form>
+        <p class="hint" id="rapMsg" hidden></p>
+        <div class="rap-itens" id="rapItens"></div>
+        <div id="rapRes" aria-live="polite"></div>
+      </div>
+      <div id="rotPlano">
       <p class="sec-meta">Em quantas lojas você topa parar?</p>
       <div class="rot-ctrl">
         <div class="group"><h3>Paradas, no máximo</h3><div class="seg" id="rotParadas" role="group" aria-label="Paradas, no máximo"></div></div>
@@ -1298,6 +1326,7 @@ input.field,select.field{min-height:var(--altura)}
         <label class="set-line" id="rotOnlineRow"><input type="checkbox" class="switch" id="rotOnline"><span>Pedir online o que sair mais barato com frete</span></label>
       </div>
       <div id="rotRes" aria-live="polite"></div>
+      </div>
     </section>
   </section>
 
@@ -4007,6 +4036,11 @@ input.field,select.field{min-height:var(--altura)}
       + ls.map(function(l){ return '<button type="button" class="pick" data-rl="' + esc(l.id) + '" aria-pressed="' + (ro.listas.indexOf(l.id) >= 0) + '"><span>' + esc(l.nome) + '</span></button>'; }).join('');
   }
   function pintaRoteiro(){
+    var rap = modoRot() === 'rapida';
+    [].forEach.call($('rotModo').querySelectorAll('[data-modo]'), function(b){ b.setAttribute('aria-pressed', String(b.dataset.modo === modoRot())); });
+    $('hRotTxt').textContent = rap ? 'Compra rápida' : 'Roteiro de compras';
+    $('rapida').hidden = !rap; $('rotPlano').hidden = rap;
+    if (rap){ pintaRapida(); return; }
     pintaRotCtrl();
     var el = $('rotRes');
     if (!estado.lista.length){ el.innerHTML = '<p class="empty">Adicione itens à lista para montar o roteiro.</p>'; return; }
@@ -4065,6 +4099,122 @@ input.field,select.field{min-height:var(--altura)}
     rotVer = null; salvar(); pintaRoteiro();
   });
   $('rotRes').addEventListener('click', function(e){ var b = e.target.closest('[data-rotk]'); if (!b) return; rotVer = Number(b.dataset.rotk); pintaRoteiro(); });
+
+  // ===== Compra rápida (1.16.0): uns itens de agora, sem planejar. Não entram na lista (ficam no aparelho, em ui.rapida)
+  // e a resposta é uma loja física só: a mais perto com o máximo de itens, a não ser que outra com os mesmos itens saia bem
+  // mais barata (R$ 5 e 10% a menos). Nada online: quem compra agora não espera a entrega.
+  var MAX_RAPIDA = 10, MAX_BUSCA_ITENS = 8, rapVer = null, RAP_BUSCA = false;
+  var ICO_X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+  function modoRot(){ return ui.rotModo === 'rapida' ? 'rapida' : 'roteiro'; }
+  function rapItens(){ return arr(ui.rapida).filter(function(r){ return r && typeof r.nome === 'string' && r.nome.trim(); }).slice(0, MAX_RAPIDA); }
+  function precosFisicos(nome){ return precosDe(nome).filter(function(y){ return !y.online && G[y.id] && G[y.id].cat !== 'online'; }); }
+  function calculaRapida(){
+    var its = rapItens().map(function(r){ return {nome:r.nome, p:precosFisicos(r.nome)}; }), lojas = {};
+    its.forEach(function(x){ x.p.forEach(function(y){
+      var l = lojas[y.id] || (lojas[y.id] = {id:y.id, itens:[], total:0, dist:distLoja(y.id)});
+      l.itens.push({x:x, y:y}); l.total += y.v;
+    }); });
+    var ls = Object.keys(lojas).map(function(id){ var l = lojas[id]; l.total = Math.round(l.total * 100) / 100; return l; });
+    var max = ls.reduce(function(m, l){ return Math.max(m, l.itens.length); }, 0);
+    var plenas = ls.filter(function(l){ return l.itens.length === max; });
+    var perto = plenas.slice().sort(function(a, b){ return a.dist - b.dist || a.total - b.total; })[0];
+    var barata = plenas.slice().sort(function(a, b){ return a.total - b.total || a.dist - b.dist; })[0];
+    var rec = perto && barata !== perto && perto.total - barata.total >= Math.max(5, perto.total * 0.1) ? barata : perto;
+    ls.sort(function(a, b){ return ((b === rec) - (a === rec)) || (b.itens.length - a.itens.length) || (a.dist - b.dist) || (a.total - b.total); });
+    return {itens:its, sem:its.filter(function(x){ return !x.p.length; }), lojas:ls.slice(0, 4), rec:rec, perto:perto};
+  }
+  // como chegar: do lugar onde a pessoa está até a loja
+  function linkLoja(id){
+    var l = LOJA[id] || {};
+    return 'https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=' + encodeURIComponent(G[id].nome + (l.endereco ? ', ' + l.endereco : '') + (estado.cep ? ', ' + estado.cep : ''));
+  }
+  function itensTxt(n, de){ return n === de ? (de > 1 ? 'os ' + de + ' itens' : 'o item') : n + ' de ' + de + ' itens'; }
+  function pintaRapida(){
+    var c = calculaRapida(), el = $('rapRes'), h = '';
+    $('rapItens').innerHTML = c.itens.map(function(x, i){
+      return '<button type="button" class="nunca-t rap-t' + (x.p.length ? '' : ' sem') + '" data-rapx="' + i + '" aria-label="Tirar ' + esc(x.nome) + '"><span>' + esc(x.nome) + (x.p.length ? '' : ' <small>sem preço</small>') + '</span>' + ICO_X + '</button>';
+    }).join('');
+    if (!c.itens.length){ el.innerHTML = ''; return; }
+    var ver = c.rec, n = c.itens.length - c.sem.length;  // os itens sem preço em loja nenhuma não contam como faltando
+    c.lojas.forEach(function(l){ if (l.id === rapVer) ver = l; });
+    var acoes = [];
+    if (ver){
+      var l = LOJA[ver.id], tem = {};
+      ver.itens.forEach(function(z){ tem[norm(z.x.nome)] = true; });
+      h += '<div class="rot-total rap-onde"><span class="lbl">Onde comprar</span><span class="rap-loja">' + esc(G[ver.id].nome) + '</span><span class="rot-sub num">'
+        + (l && l.distancia_km != null ? km(l.distancia_km) + ' · ' : '') + itensTxt(ver.itens.length, n) + ' por ' + brl.format(ver.total) + '</span></div>';
+      if (ver === c.rec && c.perto && c.rec !== c.perto){
+        var pl = LOJA[c.perto.id];
+        h += '<p class="i-nota">' + esc('Fica mais longe, mas sai ' + brl.format(c.perto.total - c.rec.total) + ' mais barato que ' + G[c.perto.id].nome + (pl && pl.distancia_km != null ? ' (' + km(pl.distancia_km) + ')' : '') + '.') + '</p>';
+      }
+      h += '<div class="parada"><ul>' + ver.itens.map(function(z){
+        return '<li><span>' + esc(z.x.nome) + (z.y.obs && norm(z.y.obs) !== norm(z.x.nome) ? '<small class="r-dica">' + esc(z.y.obs) + '</small>' : '') + '</span><span class="num">' + brl.format(z.y.v) + (z.y.clube ? ' <small>clube</small>' : '') + '</span></li>';
+      }).join('') + '</ul></div>';
+      var fora = c.itens.filter(function(x){ return x.p.length && !tem[norm(x.nome)]; });
+      if (fora.length) h += '<p class="hint">' + esc('Não tem lá: ' + fora.map(function(x){ return x.nome + ' (' + G[x.p[0].id].nome + ', ' + brl.format(x.p[0].v) + ')'; }).join(', ') + '.') + '</p>';
+      acoes.push('<a class="ghost big" href="' + esc(linkLoja(ver.id)) + '" target="_blank" rel="noopener">Como chegar</a>');
+    } else h += '<p class="empty">Ainda não sei o preço ' + (c.itens.length > 1 ? 'destes itens' : 'deste item') + ' nas lojas daqui.</p>';
+    if (ver && c.sem.length) h += '<p class="hint">' + esc('Sem preço ainda: ' + c.sem.map(function(x){ return x.nome; }).join(', ') + '.') + '</p>';
+    if (c.sem.length) acoes.push('<button type="button" class="' + (ver ? 'ghost big' : 'btn') + '" data-rapbusca="sem"' + (RAP_BUSCA ? ' disabled' : '') + '>' + (RAP_BUSCA ? 'Buscando…' : 'Buscar preços') + '</button>');
+    h += '<div class="rap-acoes">' + acoes.join('') + '</div>';
+    if (c.lojas.length > 1) h += '<div class="group"><h3>Compare</h3><ul class="rot-ops">' + c.lojas.map(function(o){
+      var lo = LOJA[o.id], falta = n - o.itens.length;
+      return '<li><button type="button" class="rot-op" data-rapl="' + esc(o.id) + '" aria-pressed="' + (o === ver) + '"><span>' + esc(G[o.id].nome) + (lo && lo.distancia_km != null ? ' · ' + km(lo.distancia_km) : '') + (o === c.rec ? ' · recomendado' : '') + '</span><span class="num">'
+        + brl.format(o.total) + (falta ? ' · sem ' + falta + (falta > 1 ? ' itens' : ' item') : '') + '</span></button></li>';
+    }).join('') + '</ul></div>';
+    h += '<div class="rap-fim">' + (!c.sem.length && !RAP_BUSCA ? '<button type="button" class="link" data-rapbusca="todos">Buscar de novo</button>' : '') + '<button type="button" class="link" data-raplimpar>Limpar</button></div>';
+    el.innerHTML = h;
+  }
+  function buscarRapida(nomes){
+    if (!nomes.length) return;
+    if (MODO !== 'addon'){ toast('No Home Assistant, este botão procura o preço nas lojas daqui.'); return; }
+    if (!estado.cep){ abrirMais('casa'); toast('Salve o CEP antes de buscar.'); return; }
+    var fim = function(){ RAP_BUSCA = false; pintaRapida(); };
+    RAP_BUSCA = true; pintaRapida(); botaoBusca(true, 'Começando');
+    fetch('api/buscar-itens', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({itens:nomes.slice(0, MAX_BUSCA_ITENS), rapida:true})})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+      .then(function(x){
+        if (!x.ok){ fim(); mostraBusca({erro:x.j.erro || 'Não deu para começar a busca.'}); return; }
+        if (x.j.ja_rodando){ fim(); toast('Já tem uma busca rodando. Espere ela terminar.'); acompanhaBusca(false); return; }
+        toast('Procurando nas lojas daqui. Leva cerca de 1 minuto.'); acompanhaBusca(false);
+      })
+      .catch(function(){ fim(); mostraBusca({erro:'Sem conexão com o Home Assistant. Tente de novo.'}); });
+  }
+  // as sugestões: os itens da lista (primeiro os que têm preço nas lojas), o histórico e os nomes vistos nas lojas
+  SUG_FONTES.rapida = function(inp){
+    var q = norm(inp.value), ja = {};
+    if (q.length < 2) return [];
+    rapItens().forEach(function(r){ ja[norm(r.nome)] = true; });
+    var daLista = estado.lista.map(function(i){ return i.produto; }), com = daLista.filter(function(v){ return precosFisicos(v).length; });
+    var k = q; while (k && !SUG_NOMES[k]) k = k.slice(0, -1);
+    return com.concat(daLista.filter(function(v){ return com.indexOf(v) < 0; }), ordemHist().map(function(x){ return x.produto; }), k ? SUG_NOMES[k] : [])
+      .filter(function(v){ return !ja[norm(v)]; });
+  };
+  $('rapItem').addEventListener('input', function(e){ if (e.isTrusted) buscaSugNomes(this); });
+  $('rotModo').addEventListener('click', function(e){ var b = e.target.closest('[data-modo]'); if (!b) return; ui.rotModo = b.dataset.modo; salvarUI(); pintaRoteiro(); });
+  $('rapForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var inp = $('rapItem'), nome = inp.value.replace(/\s+/g, ' ').trim(), msg = $('rapMsg'), its = rapItens();
+    var daLista = estado.lista.filter(function(i){ return norm(i.produto) === norm(nome); })[0];
+    if (daLista) nome = daLista.produto;  // com o nome da lista, para achar os preços dela
+    var erro = nome.length < 2 ? 'Escreva o nome do produto.' : its.some(function(r){ return norm(r.nome) === norm(nome); }) ? 'Já está aqui.'
+      : its.length >= MAX_RAPIDA ? 'Até ' + MAX_RAPIDA + ' itens por vez.' : '';
+    msg.hidden = !erro; msg.className = 'hint err'; msg.textContent = erro;
+    if (erro) return;
+    ui.rapida = its.concat([{nome:nome}]); salvarUI(); rapVer = null;
+    inp.value = ''; sugFechar(); pintaRapida();
+  });
+  $('rapItens').addEventListener('click', function(e){
+    var b = e.target.closest('[data-rapx]'); if (!b) return;
+    var its = rapItens(); its.splice(Number(b.dataset.rapx), 1); ui.rapida = its; salvarUI(); rapVer = null; $('rapMsg').hidden = true; pintaRapida();
+  });
+  $('rapRes').addEventListener('click', function(e){
+    var b = e.target.closest('[data-rapl], [data-rapbusca], [data-raplimpar]'); if (!b) return;
+    if (b.dataset.rapl != null){ rapVer = b.dataset.rapl; pintaRapida(); return; }
+    if (b.hasAttribute('data-raplimpar')){ ui.rapida = []; salvarUI(); rapVer = null; $('rapMsg').hidden = true; pintaRapida(); $('rapItem').focus(); return; }
+    var c = calculaRapida();
+    buscarRapida((b.dataset.rapbusca === 'sem' ? c.sem : c.itens).map(function(x){ return x.nome; }));
+  });
 
   // ===== Abertura: oportunidades de economia =====
   function oportunidades(){
@@ -5398,6 +5548,7 @@ input.field,select.field{min-height:var(--altura)}
       if (st.rodando) buscaT = setTimeout(function(){ acompanhaBusca(false); }, 3000);
       else {
         if (buscaItem){ buscaItem = null; pintaLista(); }
+        if (RAP_BUSCA){ RAP_BUSCA = false; pintaRapida(); }
         var comp = comparando; comparando = null;
         if (!inicial && !st.erro) recarrega(comp);
         else if (comp) pintaDeals();

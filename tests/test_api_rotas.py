@@ -397,6 +397,20 @@ class Buscar(Rotas):
         self.assertEqual(self.pede("POST", "/api/buscar-itens", {"itens": [f"item {i}" for i in range(12)] + ["Item 0"]})[0], 202)
         self.espera(lambda: pedidos)
         self.assertEqual(pedidos[0], [f"Item {i}" for i in range(8)], "o nome da lista, sem repetir, até 8")
+        self.assertEqual(self.pede("POST", "/api/buscar-itens", {"itens": "Item 0"}), (400, {"erro": "Esse item não está na lista."}))
+
+    def test_buscar_itens_compra_rapida(self):
+        # 1.16.0: a Compra rápida procura itens fora da lista (só nas lojas físicas: o True no fim)
+        S = self.S
+        pedidos = []
+        S.buscar_itens = lambda itens, rapida=False: (pedidos.append((itens, rapida)), S.BUSCA.update(rodando=False))
+        self.config(lista=[{"produto": "Pão de forma"}])
+        self.assertEqual(self.pede("POST", "/api/buscar-itens", {"itens": ["Pilha AA"]}), (400, {"erro": "Esse item não está na lista."}), "sem rapida, só a lista")
+        self.assertEqual(self.pede("POST", "/api/buscar-itens", {"itens": ["x", " ", 3, "a" * 81], "rapida": True}), (400, {"erro": "Escreva o nome do produto."}))
+        self.assertEqual(self.pede("POST", "/api/buscar-itens", {"itens": ["  Pilha   AA ", "pão de forma", "PILHA aa", "Leite"] + [f"Coisa {i}" for i in range(10)], "rapida": True})[0], 202)
+        self.espera(lambda: pedidos)
+        self.assertEqual(pedidos[0], (["Pilha AA", "Pão de forma", "Leite"] + [f"Coisa {i}" for i in range(5)], True),
+                         "sem espaços a mais, o da lista com o nome de lá, sem repetir (nem pela caixa), até 8")
 
     def test_comparar(self):
         S = self.S

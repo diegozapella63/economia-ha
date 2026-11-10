@@ -1,6 +1,6 @@
 # EconomIA 1.11.0: uma altura só, a mesma em todos os apps da família (50 px): botões, campos, caixas de seleção, botões
 # de escolha (as abas de Configurações, o Tema) e as escolhas em botões na Minha lista, em Casa, em Lojas e nas quatro
-# abas de Configurações, no celular (390 e 320 px) e no computador. Ficam de fora os botões só com ícone, os quadrinhos
+# abas de Configurações (e, desde a 1.16.0, na Compra rápida), no celular (390 e 320 px) e no computador. Ficam de fora os botões só com ícone, os quadrinhos
 # da IA, os botões pequenos das linhas da lista (Comprei hoje, remover), os preços das lojas, os interruptores e as cores.
 import asyncio
 
@@ -34,6 +34,17 @@ async def main():
                 await pg.click('#lado [data-lado="lista"]' if pc else '.tabbar [data-view="lista"]')
                 await pg.wait_for_timeout(400)
                 await conferir(pg, f"{largura} px › Minha lista")
+                if not pc:  # 1.16.0: a Compra rápida, com Como chegar e Buscar preços
+                    await pg.click('.tabbar [data-view="roteiro"]')
+                    await pg.click('#rotModo [data-modo="rapida"]')
+                    for nome in ("Arroz 5 kg", "Pilha AA"):
+                        await pg.fill("#rapItem", nome)
+                        await pg.click('#rapForm button[type="submit"]')
+                    await pg.wait_for_timeout(300)
+                    await conferir(pg, f"{largura} px › Compra rápida")
+                    chips = await pg.evaluate("[...document.querySelectorAll('#rapItens .rap-t')].map(e => e.offsetHeight)")
+                    check(chips and all(h == H for h in chips), f"{largura} px › os itens da Compra rápida com {H} px ({chips})")
+                    await pg.click('#rotModo [data-modo="roteiro"]')
                 for onde in ("casa", "lojas", "integracoes", "dados", "aparencia", "opcoes"):
                     await abrir_mais(pg, onde, computador=pc)
                     await pg.wait_for_timeout(400)
