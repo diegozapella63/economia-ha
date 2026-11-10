@@ -1,5 +1,10 @@
 # Mudanças
 
+## 1.13.0
+
+- **Lista resumida**: acima dos itens, escolha **Completa** ou **Resumida**. Na resumida, cada item é uma linha com o nome, o preço escolhido e onde comprar; um toque abre o cartão inteiro, e tocar no nome dele fecha. A escolha fica guardada no aparelho.
+- **Buscar de novo** no pé de cada item com preço: procura só aquele item, sem esperar a busca de tudo.
+
 ## 1.12.0
 
 - **Sugestões ao digitar** o nome do item: a partir de 2 letras, aparecem logo abaixo o que já esteve na sua lista e os nomes que as lojas usam, sem marca e sem tamanho, do mais comum para o menos comum ("arroz" → Arroz branco, Arroz integral, Arroz parboilizado…). Toque numa para pôr no campo.
