@@ -447,6 +447,12 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .i-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
 .i-foot{font-size:12px;color:var(--muted);margin-left:auto}
 .i-foot .i-rebusca{font-size:12px;margin-left:2px;white-space:nowrap}
+/* o − e o + do tamanho dos outros botões da linha (Comprei hoje, Similares) */
+.qtd{display:inline-flex;align-items:stretch;align-self:stretch;border:1px solid var(--line);border-radius:8px}
+.qtd .qtd-b{border:0;background:none;min-width:40px;min-height:0;font-size:18px;line-height:1;padding:0;color:var(--accent)}
+.qtd b{display:flex;align-items:center;justify-content:center}
+.qtd .qtd-b:disabled{color:var(--line);cursor:default}
+.qtd b{min-width:22px;font-size:15px}
 /* a lista resumida: o item, o preço escolhido e onde comprar; um toque abre o cartão inteiro, e o nome dele fecha */
 .seg.vis-lista{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;margin:0 0 12px}
 .item.mini{padding:0;gap:0}
@@ -2354,7 +2360,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.13.0';
+  var VERSAO = '1.14.0';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -2898,6 +2904,15 @@ dialog.ss-wrap::backdrop{background:transparent}
   }
   function comoTxt(j, b){ return j.n === 1 ? (j.o.emb || medidaTxt(j.o.q, b)) : j.n + ' × ' + medidaTxt(j.o.q, b); }
   function ondeTxt(o){ return G[o.id].nome + (o.online ? ',' + freteTxt(o, true) : ''); }
+  // quantas unidades do item: o − e o + do cartão (1 de começo, até 99); multiplica o total, a economia e o roteiro
+  function qtdDe(it){ var n = Math.round(Number(it && it.qtd)); return n >= 2 && n <= 99 ? n : 1; }
+  function vezesDe(it, es){ return es && (es.q || es.sim) ? 1 : qtdDe(it); }
+  // o − e o + (de 1 a 99), no começo dos botões do cartão
+  function seletorQtd(x){
+    var n = qtdDe(x.it);
+    return '<span class="qtd" role="group" aria-label="Quantidade de ' + esc(x.it.produto) + '"><button type="button" class="ghost qtd-b" data-qtd="' + x.i + '" data-d="-1" aria-label="Menos"' + (n <= 1 ? ' disabled' : '') + '>−</button>'
+      + '<b class="num" aria-live="polite">' + n + '</b><button type="button" class="ghost qtd-b" data-qtd="' + x.i + '" data-d="1" aria-label="Mais"' + (n >= 99 ? ' disabled' : '') + '>+</button></span>';
+  }
   function melhorTamanho(it, r, p){
     var info = itemDe(it.produto);
     if (!info || !info.base || !arr(info.tamanhos).length) return null;
@@ -2911,7 +2926,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     // referência: o tamanho de sempre (a base); sem preço nele, o menor acima dela
     var ref = js.filter(function(j){ return igualQ(j.Q, q0); })[0] || js.filter(function(j){ return j.Q >= q0 * 0.99; })[0] || js[0];
     var limite = ESTOQUE[estado.cotidiano.estoque] || 180;
-    var dura = function(Q){ return r.media ? Math.round(Q / q0 * r.media) : null; };
+    var N = qtdDe(it), dura = function(Q){ return r.media ? Math.round(Q / (q0 * N) * r.media) : null; };  // cada compra leva N do de sempre
     var pu = function(j){ return j.total / j.Q; };
     var porPu = function(x, y){ return pu(x) - pu(y); };
     var best = js.filter(function(j){ var d = dura(j.Q); return j === ref || d == null || d <= limite; }).sort(porPu)[0];
@@ -3079,7 +3094,8 @@ dialog.ss-wrap::backdrop{background:transparent}
     $('wish').innerHTML = itens.map(function(x){
       var p = precosDe(x.it.produto), soon = x.r.dias != null && x.r.dias <= 3;
       if (resumida && !RES_ABERTO[norm(x.it.produto)]) return linhaResumida(x, p, soon);
-      var acoes = '<div class="i-actions"><button type="button" class="ghost ic-btn" data-comprei="' + x.i + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.3 14.2l2 2 3.6-3.7"/></svg>Comprei hoje</button><button type="button" class="ghost ic-btn sim-btn" data-sim="' + x.i + '" aria-pressed="' + !!x.it.similares + '" title="Mostrar produtos parecidos, da mesma seção da loja, que saem mais em conta">' + SVG_SIM + 'Similares</button><button type="button" class="rm" data-rm="' + x.i + '">remover</button>' + (x.it.origem === 'ha' ? '<span class="chip">Veio do Home Assistant</span>' : '');
+      var N = qtdDe(x.it);
+      var acoes = '<div class="i-actions">' + seletorQtd(x) + '<button type="button" class="ghost ic-btn" data-comprei="' + x.i + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.3 14.2l2 2 3.6-3.7"/></svg>Comprei hoje</button><button type="button" class="ghost ic-btn sim-btn" data-sim="' + x.i + '" aria-pressed="' + !!x.it.similares + '" title="Mostrar produtos parecidos, da mesma seção da loja, que saem mais em conta">' + SVG_SIM + 'Similares</button><button type="button" class="rm" data-rm="' + x.i + '">remover</button>' + (x.it.origem === 'ha' ? '<span class="chip">Veio do Home Assistant</span>' : '');
       if (!p.length){
         var procurou = arr((D.relatorio || {}).sem_preco).map(norm).indexOf(norm(x.it.produto)) >= 0;
         var buscando = buscaItem === x.it.produto;
@@ -3092,7 +3108,7 @@ dialog.ss-wrap::backdrop{background:transparent}
       }
       var best = p[0], conta = {}, mt = melhorTamanho(x.it, x.r, p), dc = mt && mt.principal ? mt.dica : null;
       // economia: o que se deixa de pagar em relação à segunda opção mais barata (com o tamanho que compensa, em relação ao avulso mais barato)
-      var eco = dc ? best.v - dc.porBase : p.length > 1 ? p[1].v - best.v : 0;
+      var eco = (dc ? best.v - dc.porBase : p.length > 1 ? p[1].v - best.v : 0) * N;
       var es = escolhaDe(x.it, p);
       p.forEach(function(y){ conta[G[y.id].cat] = (conta[G[y.id].cat] || 0) + 1; });
       var onde = D.categorias.filter(function(c){ return conta[c.id]; }).map(function(c){ return plural(conta[c.id], c.id); }).join(' e ');
@@ -3102,7 +3118,7 @@ dialog.ss-wrap::backdrop{background:transparent}
         + (es ? caixaEscolha(x, es, best, dc) : dc
           ? abreLink(linkCompra(dc.id, x.it.produto + ' ' + dc.como, dc.link), 'i-best i-link', '<span class="lbl">Melhor compra</span><span class="por num">' + brl.format(dc.porBase) + '<span class="un">por ' + esc(dc.base) + '</span></span><span class="i-store">' + esc(dc.como) + ' por ' + brl.format(dc.total) + ' · ' + esc(G[dc.id].nome) + ' <span class="chip">' + esc(G[dc.id].singular) + '</span></span>' + setaLink(linkCompra(dc.id, '', dc.link)))
             + '<p class="i-avulso num">Avulso, o mais barato: <b>' + brl.format(best.v) + '</b> (' + abreLink(linkCompra(best.id, best.obs || x.it.produto, best.link), 'i-txtlink', esc(G[best.id].nome)) + ')</p>'
-          : abreLink(linkCompra(best.id, best.obs || x.it.produto, best.link), 'i-best i-link', '<span class="lbl">Mais barato</span><span class="por num">' + brl.format(best.v) + '</span><span class="i-store">' + esc(G[best.id].nome) + ' <span class="chip">' + esc(G[best.id].singular) + '</span>' + (best.clube ? ' <span class="chip selo">Clube</span>' : '') + '</span>' + setaLink(linkCompra(best.id, '', best.link)))
+          : abreLink(linkCompra(best.id, best.obs || x.it.produto, best.link), 'i-best i-link', '<span class="lbl">Mais barato</span><span class="por num">' + brl.format(best.v * N) + (N > 1 ? '<span class="un">' + N + ' × ' + brl.format(best.v) + '</span>' : '') + '</span><span class="i-store">' + esc(G[best.id].nome) + ' <span class="chip">' + esc(G[best.id].singular) + '</span>' + (best.clube ? ' <span class="chip selo">Clube</span>' : '') + '</span>' + setaLink(linkCompra(best.id, '', best.link)))
             + (best.obs && !best.online ? '<p class="i-avulso">Produto: ' + esc(best.obs) + '</p>' : ''))
         + (p.length > 1 ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li' + (ehEscolha(x.it, y.id, null, y.obs) ? ' class="escolhida"' : '') + '>' + abreLink(linkCompra(y.id, y.obs || x.it.produto, y.link), 'i-chip', '<span class="ic-n">' + esc(G[y.id].curto) + '</span><b>' + brl.format(y.v) + '</b>' + (y.online && y.carrinho ? '<small>+ frete</small>' : y.online && y.frete ? '<small>c/ frete</small>' : '') + (y.clube ? '<small>clube</small>' : '')) + '' + botaoEscolher(x.it, y.id, null, y.obs, G[y.id].nome + ' por ' + brl.format(y.v)) + '</li>'; }).join('') + '</ul>' : '')
         + dicaClube(p, best)
@@ -3116,9 +3132,10 @@ dialog.ss-wrap::backdrop{background:transparent}
   var RES_ABERTO = {};
   function precoResumido(x, p){
     var best = p[0], mt = melhorTamanho(x.it, x.r, p), dc = mt && mt.principal ? mt.dica : null, es = escolhaDe(x.it, p);
-    if (es) return {v:es.total, onde:G[es.y.id].nome + (es.emb ? ' · ' + es.emb : '')};
+    var N = qtdDe(x.it), vezes = N > 1 ? N + ' × · ' : '';
+    if (es) return {v:es.total * vezesDe(x.it, es), onde:(vezesDe(x.it, es) > 1 ? vezes : '') + G[es.y.id].nome + (es.emb ? ' · ' + es.emb : '')};
     if (dc) return {v:dc.total, onde:G[dc.id].nome + ' · ' + dc.como};
-    return {v:best.v, onde:G[best.id].nome};
+    return {v:best.v * N, onde:vezes + G[best.id].nome};
   }
   function linhaResumida(x, p, soon){
     var r = p.length ? precoResumido(x, p) : null, k = norm(x.it.produto);
@@ -3150,7 +3167,8 @@ dialog.ss-wrap::backdrop{background:transparent}
     var barato = dc && dc.total < es.total - 0.004 && dc.porBase < best.v ? ('A melhor compra é ' + dc.como + ' por ' + brl.format(dc.total) + ' no ' + G[dc.id].nome + '.')
       : y.id === best.id && !es.q ? 'É também o mais barato.' : 'O mais barato é ' + brl.format(best.v) + ' no ' + G[best.id].nome + '.';
     if (es.sim) barato = 'Similar no lugar do item. O item pedido sai ' + brl.format(best.v) + ' no ' + G[best.id].nome + '.';
-    return abreLink(l, 'i-best i-link', '<span class="lbl">' + (es.sim ? 'Sua escolha · similar' : 'Sua escolha') + '</span><span class="por num">' + brl.format(es.total) + '</span><span class="i-store">' + (es.emb ? esc(es.emb) + ' · ' : '') + esc(G[y.id].nome) + ' <span class="chip">' + esc(G[y.id].singular) + '</span>' + (y.online ? '<small>' + esc(freteTxt(y, true)) + '</small>' : '') + '</span>' + setaLink(l))
+    var N = vezesDe(x.it, es);
+    return abreLink(l, 'i-best i-link', '<span class="lbl">' + (es.sim ? 'Sua escolha · similar' : 'Sua escolha') + '</span><span class="por num">' + brl.format(es.total * N) + (N > 1 ? '<span class="un">' + N + ' × ' + brl.format(es.total) + '</span>' : '') + '</span><span class="i-store">' + (es.emb ? esc(es.emb) + ' · ' : '') + esc(G[y.id].nome) + ' <span class="chip">' + esc(G[y.id].singular) + '</span>' + (y.online ? '<small>' + esc(freteTxt(y, true)) + '</small>' : '') + '</span>' + setaLink(l))
       + (y.obs && !y.online && !es.emb ? '<p class="i-avulso">Produto: ' + esc(y.obs) + '</p>' : '')
       + '<p class="i-esc-nota num">' + esc(barato) + ' <button type="button" class="link" data-desescolher="' + x.i + '">Desfazer escolha</button></p>';
   }
@@ -3186,6 +3204,12 @@ dialog.ss-wrap::backdrop{background:transparent}
       tudo(); return;
     }
     if (b.classList.contains('corr-btn')){ trocaNome(b.dataset.de, b.dataset.para); return; }
+    if (b.dataset.qtd != null){
+      var iq = estado.lista[Number(b.dataset.qtd)]; if (!iq) return;
+      var nq = Math.max(1, Math.min(99, qtdDe(iq) + Number(b.dataset.d)));
+      if (nq > 1) iq.qtd = nq; else delete iq.qtd;
+      salvar(iq.produto + ': ' + nq + (nq > 1 ? ' unidades' : ' unidade')); tudo(); return;
+    }
     if (b.dataset.sim != null){
       var isim = estado.lista[Number(b.dataset.sim)]; if (!isim) return;
       if (isim.similares){ delete isim.similares; if (isim.escolha && isim.escolha.sim) delete isim.escolha; }
@@ -4120,7 +4144,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   var rotVer = null;  // plano que a pessoa tocou para ver (null = o recomendado)
   function distLoja(id){ var l = LOJA[id]; return l && l.distancia_km != null ? l.distancia_km : 5; }
   function itensDoRoteiro(){
-    return estado.lista.map(function(it){ var p = precosDe(it.produto), es = escolhaDe(it, p); return {it:it, r:ritmo(it.compras), p:es ? [es.y] : p}; })
+    return estado.lista.map(function(it){ var p = precosDe(it.produto), es = escolhaDe(it, p); return {it:it, r:ritmo(it.compras), p:es ? [es.y] : p, n:vezesDe(it, es)}; })
       .filter(function(x){ return estado.roteiro.escopo !== 'acabando' || (x.r.dias != null && x.r.dias <= 7); });
   }
   function avaliaPlano(itens, combo, online){
@@ -4128,9 +4152,10 @@ dialog.ss-wrap::backdrop{background:transparent}
     itens.forEach(function(x){
       var loja = x.p.filter(function(y){ return !y.online && combo.indexOf(y.id) >= 0; })[0];
       var net = online ? x.p.filter(function(y){ return y.online; })[0] : null;
-      if (net && (!loja || net.v < loja.v)){ pl.online.push({x:x, y:net}); pl.total += net.v; pl.cobre++; return; }
+      var n = x.n || 1;
+      if (net && (!loja || net.v < loja.v)){ pl.online.push({x:x, y:net}); pl.total += net.v * n; pl.cobre++; return; }
       if (!loja){ pl.fora.push(x); return; }
-      (pl.lojas[loja.id] = pl.lojas[loja.id] || []).push({x:x, y:loja}); pl.total += loja.v; pl.cobre++;
+      (pl.lojas[loja.id] = pl.lojas[loja.id] || []).push({x:x, y:loja}); pl.total += loja.v * n; pl.cobre++;
     });
     pl.total = Math.round(pl.total * 100) / 100;
     pl.ids = Object.keys(pl.lojas).sort(function(a, b){ return distLoja(a) - distLoja(b); });
@@ -4167,7 +4192,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   function economiaPlano(pl){
     var e = 0;
     pl.online.concat.apply(pl.online, pl.ids.map(function(id){ return pl.lojas[id]; })).forEach(function(z){
-      var p = z.x.p; e += p.reduce(function(s, y){ return s + y.v; }, 0) / p.length - z.y.v;
+      var p = z.x.p; e += (p.reduce(function(s, y){ return s + y.v; }, 0) / p.length - z.y.v) * (z.x.n || 1);
     });
     return Math.max(0, Math.round(e * 100) / 100);
   }
@@ -4185,7 +4210,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     comPreco.forEach(function(x){
       var y = x.p.filter(function(z){ return online || !z.online; })[0];
       if (!y) return;
-      ideal += y.v; if (!y.online) lojasIdeal[y.id] = 1;
+      ideal += y.v * (x.n || 1); if (!y.online) lojasIdeal[y.id] = 1;
     });
     out.ideal = {total:Math.round(ideal * 100) / 100, n:Object.keys(lojasIdeal).length};
     return out;
@@ -4223,20 +4248,20 @@ dialog.ss-wrap::backdrop{background:transparent}
       h += '<p class="i-nota">' + esc(dif > 0.004 ? 'Com ' + paradasTxt(c.max.ids.length) + ' a economia sobe só ' + brl.format(dif) + ', por isso recomendo ' + paradasTxt(n) + '. Compare as opções abaixo.' : 'Mais paradas não baixariam o total.') + '</p>';
     }
     var lis = pl.ids.map(function(id, i){
-      var its = pl.lojas[id], sub = its.reduce(function(s, z){ return s + z.y.v; }, 0), l = LOJA[id];
+      var its = pl.lojas[id], sub = its.reduce(function(s, z){ return s + z.y.v * (z.x.n || 1); }, 0), l = LOJA[id];
       return '<li class="parada"><div class="parada-h"><span class="parada-n">' + (i + 1) + '</span><b>' + esc(G[id].nome) + '</b><span class="chip">' + esc(G[id].singular) + '</span><span class="sub num">' + (l && l.distancia_km != null ? km(l.distancia_km) + ' · ' : '') + brl.format(sub) + '</span></div>'
         + '<ul>' + its.map(function(z){
           var e = z.x.it.escolha, mt = e && e.sim ? null : melhorTamanho(z.x.it, z.x.r, z.x.p);
           var dica = e && e.sim && e.rede === id ? '<small class="r-dica">Similar: ' + esc(e.obs) + '</small>' : mt && mt.dica && mt.dica.id === id ? '<small class="r-dica">Compensa levar ' + esc(mt.dica.txt) + '</small>' : '';
-          return '<li><span>' + esc(z.x.it.produto) + dica + '</span><span class="num">' + brl.format(z.y.v) + (z.y.clube ? ' <small>clube</small>' : '') + '</span></li>';
+          return '<li><span>' + (z.x.n > 1 ? z.x.n + ' × ' : '') + esc(z.x.it.produto) + dica + '</span><span class="num">' + brl.format(z.y.v * (z.x.n || 1)) + (z.y.clube ? ' <small>clube</small>' : '') + '</span></li>';
         }).join('') + '</ul></li>';
     });
     var porNet = {};
     pl.online.forEach(function(z){ (porNet[z.y.id] = porNet[z.y.id] || []).push(z); });
     Object.keys(porNet).forEach(function(id){
-      var its = porNet[id], sub = its.reduce(function(s, z){ return s + z.y.v; }, 0), prazo = Math.max.apply(null, its.map(function(z){ return z.y.prazo || 0; }));
+      var its = porNet[id], sub = its.reduce(function(s, z){ return s + z.y.v * (z.x.n || 1); }, 0), prazo = Math.max.apply(null, its.map(function(z){ return z.y.prazo || 0; }));
       lis.push('<li class="parada"><div class="parada-h"><span class="chip">Online</span><b>' + esc(G[id].nome) + '</b><span class="sub num">' + (prazo ? 'chega em ' + prazo + (prazo > 1 ? ' dias' : ' dia') + ' · ' : '') + brl.format(sub) + '</span></div>'
-        + '<ul>' + its.map(function(z){ return '<li><span>' + esc(z.x.it.produto) + '</span><span class="num">' + brl.format(z.y.v) + (z.y.carrinho ? ' + frete' : z.y.frete ? ' c/ frete' : '') + '</span></li>'; }).join('') + '</ul></li>');
+        + '<ul>' + its.map(function(z){ return '<li><span>' + (z.x.n > 1 ? z.x.n + ' × ' : '') + esc(z.x.it.produto) + '</span><span class="num">' + brl.format(z.y.v * (z.x.n || 1)) + (z.y.carrinho ? ' + frete' : z.y.frete ? ' c/ frete' : '') + '</span></li>'; }).join('') + '</ul></li>');
     });
     h += '<ol class="paradas">' + lis.join('') + '</ol>';
     if (n) h += '<p class="hint">Ordem sugerida: da loja mais perto para a mais longe.</p><div class="row-form"><a class="ghost big" href="' + esc(linkRota(pl.ids)) + '" target="_blank" rel="noopener">Abrir rota no Maps</a></div>';
@@ -4263,7 +4288,8 @@ dialog.ss-wrap::backdrop{background:transparent}
     var o = {total:0, itens:[], acabando:0, acabandoNomes:[], paraVoce:0, cupom:null, tam:[], rot:null};
     estado.lista.forEach(function(it){
       var p = precosDe(it.produto), r = ritmo(it.compras), mt = p.length ? melhorTamanho(it, r, p) : null;
-      if (p.length > 1 && p[1].v - p[0].v > 0.004){ o.total += p[1].v - p[0].v; o.itens.push({nome:nomeCurto(it.produto), e:p[1].v - p[0].v}); }  // em relação à segunda opção
+      var n = qtdDe(it);
+      if (p.length > 1 && p[1].v - p[0].v > 0.004){ o.total += (p[1].v - p[0].v) * n; o.itens.push({nome:nomeCurto(it.produto), e:(p[1].v - p[0].v) * n}); }  // em relação à segunda opção
       if (r.dias != null && r.dias <= 3){ o.acabando++; o.acabandoNomes.push(nomeCurto(it.produto)); }
       if (mt && mt.economia > 0) o.tam.push({nome:nomeCurto(it.produto), e:mt.economia});
     });

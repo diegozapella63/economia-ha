@@ -214,10 +214,13 @@ class Dados19(Base):
 
     def test_planilha_do_exportar_volta_no_importar(self):
         S = self.S
-        S.gravar_config({"lista": [{"produto": "Leite integral", "compras": ["2026-10-01", "2026-10-11"]}, {"produto": "Café & Cia"}, {"produto": "ab"}]})
+        S.gravar_config({"lista": [{"produto": "Leite integral", "compras": ["2026-10-01", "2026-10-11"], "qtd": 6}, {"produto": "Café & Cia", "qtd": "x"},
+                                   {"produto": "ab"}, {"produto": "Arroz", "qtd": 500}]})
         corpo, _ = S.exportar("xlsx")
         d = S.ler_planilha(corpo)
-        self.assertEqual(d["lista"], [{"produto": "Leite integral", "compras": ["2026-10-01", "2026-10-11"]}, {"produto": "Café & Cia", "compras": []}])
+        self.assertEqual(d["lista"], [{"produto": "Leite integral", "compras": ["2026-10-01", "2026-10-11"], "qtd": 6}, {"produto": "Café & Cia", "compras": []},
+                                      {"produto": "Arroz", "compras": []}], "1.14.0: a quantidade vai e volta (fora de 1 a 99, vale 1)")
+        self.assertEqual([i["quantidade"] for i in json.loads(S.exportar("json")[0])["lista"]], [6, 1, 1, 1])
         with self.assertRaisesRegex(S.ErroBusca, "não parece a planilha"):
             S.ler_planilha(b"isto nao e um zip")
         buf = io.BytesIO()

@@ -63,6 +63,10 @@ Em **Minha lista → Escolher fotos**, tire ou escolha quantas fotos precisar, a
 
 Para ler fotos, a IA escolhida precisa aceitar imagens (a Anthropic aceita). A foto fica um instante na pasta de mídia do Home Assistant, só para a IA ler, e é apagada em seguida.
 
+## Quantidade
+
+No começo dos botões de cada item, **−** e **+** escolhem quantas unidades você leva (de 1 a 99). O preço mostra o total e quanto sai cada uma ("R$ 163,80 · 2 × R$ 81,90"), e a economia, o Cupom de economia do Início e o Roteiro contam a quantidade. O melhor tamanho também: levando 2 de 1 kg, o pacote de 2 kg dura o mesmo que a sua compra de sempre. Quando a sua escolha é uma embalagem (um fardo, um galão), ela vale como está. A quantidade vai junto no Exportar e volta no Importar.
+
 ## Lista completa ou resumida
 
 Acima dos itens, escolha **Completa** (cada item com o cartão inteiro: os preços das lojas, os tamanhos, os similares) ou **Resumida** (uma linha por item: o nome, o preço escolhido e onde comprar). O preço da resumida é a sua escolha, a melhor compra (quando compensa outro tamanho) ou o mais barato; o ponto colorido marca o que está acabando. Toque numa linha para abrir o cartão ali mesmo e no nome dele para fechar. A escolha fica guardada no aparelho.

@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.14.0
+
+- **Quantidade** em cada item: **−** e **+** no começo dos botões do cartão (de 1 a 99). O preço mostra o total e quanto sai cada uma, e a economia, o Cupom de economia e o Roteiro contam a quantidade. No melhor tamanho, levar 2 de 1 kg faz o pacote de 2 kg valer. A lista resumida mostra o total. A quantidade vai junto no Exportar e volta no Importar, e a Conversa e o CorrerIA sabem dela.
+
 ## 1.13.0
 
 - **Lista resumida**: acima dos itens, escolha **Completa** ou **Resumida**. Na resumida, cada item é uma linha com o nome, o preço escolhido e onde comprar; um toque abre o cartão inteiro, e tocar no nome dele fecha. A escolha fica guardada no aparelho.

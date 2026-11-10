@@ -77,6 +77,17 @@ class Conversa(Cenario):
         self.assertEqual(ha.chamadas_ia[-1]["task_name"], "EconomIA: conversa")
 
     # ----- o que vai para a IA -----
+    def test_a_quantidade_de_cada_item(self):
+        """1.14.0: o item com mais de uma unidade vai com a quantidade, na conversa e nas ferramentas do CorrerIA."""
+        S = self.S
+        self.prepara()
+        cfg = S.ler_config()
+        cfg["lista"][0]["qtd"] = 3
+        S.gravar_config(cfg)
+        nome = S.nome_item(cfg["lista"][0])
+        self.assertIn(f"- 3 × {nome}; ", S.contexto_chat("lista"))
+        self.assertIn(f"- 3 × {nome}: ", S._ferr_lista({}, S.ler_config(), S.ler_json(S.OFERTAS, {})))
+
     def test_o_contexto_da_tela_e_dos_dados(self):
         S = self.S
         self.prepara()

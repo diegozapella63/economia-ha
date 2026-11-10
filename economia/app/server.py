@@ -357,6 +357,15 @@ def nome_item(i):
     return str((i.get("produto") if isinstance(i, dict) else i) or "").strip()
 
 
+def qtd_item(i):
+    """Quantas unidades do item (Minha lista: o − e o + de cada item; 1 de começo, até 99)."""
+    try:
+        n = int(round(float(i.get("qtd")))) if isinstance(i, dict) and i.get("qtd") is not None else 1
+    except (TypeError, ValueError):
+        return 1
+    return n if 1 <= n <= 99 else 1
+
+
 IA_DESLIGADA = "A IA está desligada. Para usar, ligue em Mais › Configurações › Integrações › Usar IA."
 OPCOES_PADRAO = {"itens_sem_preco": True, "encartes_auto": True, "lojas_diretas": True, "folhetos": True}
 
@@ -561,7 +570,7 @@ def ler_planilha(dado):
     if not linhas:
         raise ErroBusca("A planilha está vazia.")
     cab = {v.lower(): k for k, v in linhas[0].items()}
-    col, datas = cab.get("produto"), cab.get("datas de compra")
+    col, datas, qtd = cab.get("produto"), cab.get("datas de compra"), cab.get("quantidade")
     if not col:
         raise ErroBusca("A planilha não tem a coluna Produto.")
     itens = []
@@ -572,7 +581,11 @@ def ler_planilha(dado):
         compras = []
         for d in re.findall(r"(\d{2})/(\d{2})/(\d{4})", cel.get(datas, "") if datas else ""):
             compras.append(f"{d[2]}-{d[1]}-{d[0]}")
-        itens.append({"produto": nome[:120], "compras": compras})
+        item = {"produto": nome[:120], "compras": compras}
+        n = qtd_item({"qtd": cel.get(qtd)}) if qtd and cel.get(qtd) else 1
+        if n > 1:
+            item["qtd"] = n
+        itens.append(item)
     return {"lista": itens}
 
 
@@ -6531,7 +6544,7 @@ def dados_lista(cfg=None, of=None):
         if len(compras) >= 2:
             ds = [datetime.strptime(d, "%Y-%m-%d") for d in compras]
             ritmo = max(1, round(sum((ds[k] - ds[k - 1]).days for k in range(1, len(ds))) / (len(ds) - 1)))
-        itens.append({"produto": prod, "mais_barato": ps[0] if ps else None, "precos": ps,
+        itens.append({"produto": prod, "quantidade": qtd_item(it), "mais_barato": ps[0] if ps else None, "precos": ps,
                       "economia": (round(ps[-1]["preco"] - ps[0]["preco"], 2) or None) if len(ps) > 1 else None,
                       "compras": compras, "compra_a_cada_dias": ritmo})
     return itens, of.get("gerado_em")
@@ -6589,18 +6602,18 @@ def exportar(formato):
     if formato == "json":
         dado = {"app": "EconomIA", "exportado_em": agora(), "ultima_busca": ultima, "lista": itens}
         return json.dumps(dado, ensure_ascii=False, indent=2).encode("utf-8"), "application/json; charset=utf-8"
-    cab = ["Produto", "Mais barato em", "Tipo de loja", "Preço", "Economia", "Outras lojas",
+    cab = ["Produto", "Quantidade", "Mais barato em", "Tipo de loja", "Preço", "Economia", "Outras lojas",
            "Compra a cada (dias)", "Última compra", "Datas de compra"]
     linhas = [cab]
     for i in itens:
         mb = i["mais_barato"] or {}
         linhas.append([
-            i["produto"], mb.get("loja"), mb.get("tipo"), mb.get("preco"), i["economia"],
+            i["produto"], i["quantidade"], mb.get("loja"), mb.get("tipo"), mb.get("preco"), i["economia"],
             "; ".join(f'{p["loja"]} {br_preco(p["preco"])}' for p in i["precos"][1:]),
             i["compra_a_cada_dias"], br_data(i["compras"][-1]) if i["compras"] else None,
             ", ".join(br_data(d) for d in i["compras"]),
         ])
-    return xlsx(linhas, [42, 22, 14, 12, 12, 48, 12, 14, 36], {3, 4}), \
+    return xlsx(linhas, [42, 11, 22, 14, 12, 12, 48, 12, 14, 36], {4, 5}), \
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
@@ -6638,7 +6651,7 @@ def contexto_chat(tela, cfg=None, of=None):
     if itens:
         linhas.append(f"\nLista de compras ({len(itens)} itens):")
         for i in itens[:MAX_ITENS_CHAT]:
-            partes = [i["produto"]]
+            partes = [(f'{i["quantidade"]} × ' if i["quantidade"] > 1 else "") + i["produto"]]
             if i["mais_barato"]:
                 outros = ", ".join(f'{p["loja"]} {br_preco(p["preco"])}' for p in i["precos"][1:3])
                 partes.append(f'mais barato no {i["mais_barato"]["loja"]} por {br_preco(i["mais_barato"]["preco"])}'
@@ -6951,7 +6964,8 @@ def _ferr_lista(a, cfg, of):
             n = len(i["compras"])
             partes.append(("comprado 1 vez" if n == 1 else f"comprado {n} vezes") + f', a última em {br_data(i["compras"][-1])}'
                           + (f', a cada {i["compra_a_cada_dias"]} dias' if i["compra_a_cada_dias"] else ""))
-        linhas.append(f'- {i["produto"]}: ' + "; ".join(partes) + _prazo(crus.get(norm(i["produto"]))))
+        linhas.append(f'- {i["quantidade"]} × {i["produto"]}: ' if i["quantidade"] > 1 else f'- {i["produto"]}: ')
+        linhas[-1] += "; ".join(partes) + _prazo(crus.get(norm(i["produto"])))
     return "\n".join(linhas)
 
 
