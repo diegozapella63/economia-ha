@@ -139,7 +139,7 @@ sec("Frios e laticínios",
      "Mortadela de frango", "Salame", "Salame italiano", "Copa", "Lombo defumado", "Peito de peru defumado", "Blanquet de peru",
      "Salsicha", "Salsicha hot dog", "Salsicha de frango", "Hambúrguer", "Hambúrguer de frango", "Almôndega", "Kibe",
      "Empanado de frango", "Nuggets", "Patê", "Pastel congelado", "Massa de pastel", "Pão de queijo congelado", "Tofu"],
-    de("Queijo", QUEIJOS, ""), de("Iogurte", SABORES_IOG, "de"), de("Bebida láctea", SABORES_IOG[:6], "de"))
+    de("Queijo", QUEIJOS, ""), de("Iogurte", [x for x in SABORES_IOG if x not in ("natural", "grego")], "de"), de("Bebida láctea", SABORES_IOG[:6], "de"))
 
 sec("Padaria",
     ["Pão francês", "Pão de forma", "Pão de forma integral", "Pão de forma sem casca", "Pão de forma sem glúten",
@@ -162,7 +162,7 @@ sec("Congelados",
      "Esfiha congelada", "Mini pizza", "Pão de alho congelado", "Waffle congelado", "Massa de pizza congelada",
      "Peixe empanado", "Filé de peixe congelado", "Camarão congelado", "Sorvete", "Pote de sorvete", "Picolé", "Picolé de fruta",
      "Gelo", "Gelo em cubos", "Gelo de coco", "Gelo saborizado", "Sobremesa congelada", "Torta congelada", "Pão de queijo"],
-    de("Sorvete", SORVETES, "de"), de("Polpa de fruta", ["acerola", "maracujá", "goiaba", "morango", "caju", "abacaxi", "manga", "cajá"], "de"))
+    de("Sorvete", SORVETES, "de"), de("Polpa", ["acerola", "maracujá", "goiaba", "morango", "caju", "abacaxi", "manga", "cajá"], "de"))
 
 REFRIS = ["Refrigerante cola", "Refrigerante guaraná", "Refrigerante de laranja", "Refrigerante de limão", "Refrigerante de uva",
           "Refrigerante zero", "Refrigerante diet", "Refrigerante 2 litros", "Refrigerante lata", "Refrigerante 600 ml"]
@@ -470,19 +470,233 @@ MARCAS = {
         "Seringa BD", "Agulha BD", "Fralda Tena", "Dermacyd", "Pomada Minancora", "Minancora", "Leite de Magnésia Phillips",
         "Leite de Magnésia", "Óleo de rícino", "Água boricada", "Polvilho antisséptico", "Talco Barla"],
 }
+
+
+def L(texto):
+    """Uma lista escrita como texto: um item por linha ou separados por |."""
+    return [x.strip() for x in texto.replace("\n", "|").split("|") if x.strip()]
+
+
+# ---------------------------------------------------------------- 1.34.0: as variações dos itens comuns
+SABORES = ["chocolate", "morango", "baunilha", "coco", "limão", "maracujá", "doce de leite", "brigadeiro", "chocolate branco",
+           "frutas vermelhas", "banana", "abacaxi", "uva", "cereja", "framboesa", "napolitano", "flocos", "creme", "leite ninho",
+           "pistache", "amendoim", "café", "caramelo", "menta"]
+ERVAS = ["camomila", "erva-doce", "hortelã", "hibisco", "capim-cidreira", "boldo", "frutas vermelhas", "gengibre", "canela",
+         "cavalinha", "carqueja", "melissa", "maçã com canela", "limão", "pêssego", "morango", "abacaxi com hortelã", "chá verde com limão",
+         "laranja", "jasmim", "rooibos", "mate com limão", "cranberry", "erva-cidreira", "alecrim", "anis-estrelado", "chá branco",
+         "chá vermelho", "chá preto com limão", "cereja"]
+CORTES_BOI = ["alcatra", "picanha", "maminha", "fraldinha", "contrafilé", "filé mignon", "coxão mole", "coxão duro", "patinho",
+              "lagarto", "músculo", "acém", "cupim", "costela", "paleta", "peito", "fígado"]
+sec("Variações",
+    de("Iogurte", SABORES[:12], "de"), de("Iogurte grego", ["morango", "frutas vermelhas", "coco", "mel", "baunilha", "tradicional"], "de"),
+    de("Iogurte natural", ["integral", "desnatado", "com mel"], ""), de("Bebida láctea", SABORES[:8], "de"),
+    de("Leite fermentado", ["natural", "light"], ""), de("Sorvete", SABORES, "de"), de("Picolé", ["chocolate", "limão", "uva", "morango", "coco",
+    "abacaxi", "maracujá", "milho", "creme", "açaí"], "de"), de("Biscoito recheado", SABORES[:9], "de"), de("Biscoito wafer", SABORES[:7], "de"),
+    de("Cookies", ["chocolate", "baunilha", "aveia e mel", "castanha", "gotas de chocolate"], "de"), de("Bolo", ["fubá", "cenoura", "chocolate",
+    "laranja", "milho", "aipim", "coco", "banana", "formigueiro", "limão", "maçã", "nozes", "red velvet", "pão de mel", "prestígio", "abacaxi"], "de"),
+    de("Mistura para bolo", ["chocolate", "baunilha", "laranja", "milho", "cenoura", "coco", "fubá", "limão", "abacaxi", "formigueiro", "morango",
+    "aipim", "banana"], "de"), de("Pizza", ["mussarela", "calabresa", "frango com catupiry", "portuguesa", "marguerita", "quatro queijos",
+    "pepperoni", "atum", "palmito", "presunto", "bacon", "chocolate"], "de"), de("Chá", ERVAS, "de"), de("Gelatina", ["morango", "uva", "limão",
+    "abacaxi", "cereja", "framboesa", "tutti-frutti", "maracujá", "pêssego", "sem sabor"], "de"), de("Pudim", ["chocolate", "baunilha", "leite condensado", "coco"], "de"),
+    de("Mousse", ["maracujá", "chocolate", "limão", "morango"], "de"), de("Suco", ["laranja", "uva", "maçã", "pêssego", "manga", "maracujá", "goiaba",
+    "abacaxi", "caju", "acerola", "tangerina", "limão", "melancia", "morango", "graviola", "cupuaçu", "frutas vermelhas", "laranja com acerola",
+    "abacaxi com hortelã", "uva integral", "laranja integral", "maçã integral", "tomate", "beterraba", "verde", "detox"], "de"),
+    de("Néctar", ["pêssego", "uva", "manga", "maracujá", "goiaba", "abacaxi", "laranja", "caju", "maçã", "morango"], "de"),
+    de("Refresco em pó", FRUTAS[:12], "de"), de("Doce", ["leite", "abóbora", "banana", "goiaba", "figo", "mamão", "coco", "batata-doce", "cidra"], "de"),
+    de("Geleia", ["morango", "uva", "framboesa", "amora", "damasco", "laranja", "pimenta", "goiaba", "frutas vermelhas", "mocotó"], "de"),
+    de("Queijo", ["mussarela fatiado", "prato fatiado", "parmesão ralado", "mussarela ralado", "minas light", "cottage light", "ricota fresca",
+    "coalho espeto", "provolone defumado", "gouda fatiado", "cheddar fatiado", "brie em pedaço", "parmesão em pedaço"], ""),
+    de("Presunto", ["cozido fatiado", "sem capa de gordura", "parma fatiado", "de peru", "defumado"], ""),
+    de("Bife de", CORTES_BOI[:8], ""), de("Carne moída de", ["patinho", "acém", "músculo", "coxão mole", "paleta"], ""),
+    de("Linguiça", ["toscana", "calabresa", "de frango", "cuiabana", "apimentada", "defumada", "de pernil", "mista", "fina", "de porco"], ""),
+    de("Salsicha", ["hot dog", "de frango", "tipo viena", "de peru", "defumada"], ""),
+    de("Hambúrguer", ["bovino", "de frango", "de picanha", "de costela", "vegetal", "de fraldinha", "de peixe"], ""),
+    de("Nuggets", ["de frango", "de peixe", "vegetal", "de frango com queijo"], ""),
+    de("Desinfetante", ["lavanda", "eucalipto", "pinho", "floral", "talco", "jasmim", "marine", "citrus", "erva-doce", "bambu"], ""),
+    de("Detergente", ["neutro", "limão", "coco", "maçã", "clear", "laranja", "glicerina", "erva-doce"], ""),
+    de("Amaciante", ["concentrado", "diluído", "para roupas de bebê", "lavanda", "rosas", "floral", "brisa"], ""),
+    de("Sabão em pó", ["para roupas brancas", "para roupas coloridas", "com amaciante", "multiação", "3 kg", "4 kg"], ""),
+    de("Sabão líquido", ["para roupas brancas", "para roupas coloridas", "para roupas escuras", "concentrado", "refil"], ""),
+    de("Shampoo", ["para cabelos cacheados", "para cabelos crespos", "para cabelos lisos", "para cabelos oleosos", "para cabelos secos",
+    "para cabelos danificados", "para cabelos tingidos", "para cabelos finos", "antiqueda", "hidratante", "masculino", "anticaspa masculino",
+    "detox", "a seco", "sem sal", "de camomila"], ""),
+    de("Condicionador", ["para cabelos cacheados", "para cabelos crespos", "para cabelos lisos", "para cabelos oleosos", "para cabelos secos",
+    "para cabelos danificados", "infantil", "hidratante"], ""),
+    de("Creme para pentear", ["para cabelos cacheados", "para cabelos crespos", "para cabelos lisos", "infantil", "sem enxágue"], ""),
+    de("Desodorante", ["aerossol feminino", "aerossol masculino", "roll-on feminino", "roll-on masculino", "sem perfume", "antitranspirante 48h",
+    "sem alumínio", "para os pés"], ""),
+    de("Sabonete", ["de aveia", "de mel", "de erva-doce", "esfoliante", "hidratante", "para o rosto", "de enxofre", "de carvão", "de glicerina infantil",
+    "de coco", "de lavanda", "de rosas", "em barra pacote"], ""),
+    de("Creme dental", ["com flúor", "sem flúor", "branqueador", "para gengivas", "herbal", "tripla ação", "gel", "com carvão"], ""),
+    de("Ração para cachorro", ["sabor carne", "sabor frango", "sabor cordeiro", "light", "castrado", "raças pequenas", "raças grandes",
+    "filhote raças pequenas", "15 kg", "10 kg"], ""),
+    de("Ração para gato", ["sabor peixe", "sabor carne", "sabor frango", "sabor salmão", "filhote", "castrado", "10 kg", "urinário"], ""),
+)
+
+# frutas, verduras e legumes também orgânicos; os itens de dieta
+ORGANICOS = L("""Banana orgânica | Maçã orgânica | Tomate orgânico | Alface orgânica | Cenoura orgânica | Batata orgânica |
+    Cebola orgânica | Brócolis orgânico | Couve orgânica | Rúcula orgânica | Morango orgânico | Laranja orgânica | Limão orgânico |
+    Abobrinha orgânica | Beterraba orgânica | Pepino orgânico | Mamão orgânico | Café orgânico | Arroz orgânico | Feijão orgânico |
+    Leite orgânico | Mel orgânico | Aveia orgânica | Frango orgânico | Azeite orgânico""")
+DIETA = ["Pão integral", "Biscoito integral", "Macarrão integral", "Arroz integral", "Iogurte desnatado", "Leite desnatado", "Requeijão light",
+         "Queijo cottage", "Peito de peru light", "Refrigerante zero", "Chocolate zero açúcar", "Gelatina zero", "Geleia zero açúcar",
+         "Barra de cereal zero", "Achocolatado zero", "Sorvete zero açúcar", "Biscoito sem glúten", "Pão sem glúten", "Macarrão sem glúten",
+         "Farinha sem glúten", "Bolo sem glúten", "Leite sem lactose", "Queijo sem lactose", "Requeijão sem lactose", "Iogurte sem lactose",
+         "Manteiga sem lactose", "Creme de leite sem lactose", "Leite condensado sem lactose", "Doce de leite sem lactose",
+         "Chocolate sem lactose", "Sorvete sem lactose", "Pão vegano", "Queijo vegano", "Hambúrguer vegano", "Maionese vegana",
+         "Leite vegetal", "Proteína de soja", "Proteína texturizada de soja", "Carne vegetal", "Frango vegetal", "Tofu defumado"]
+sec("Orgânicos e dieta", ORGANICOS, DIETA)
+
+sec("Frutas, verduras e legumes (mais)", L("""Maçã red | Maçã argentina | Pera portuguesa | Pera d'água | Laranja-da-terra | Laranja seleta | Kinkan | Physalis |
+    Cajá-manga | Umbu | Pequi | Buriti | Bacuri | Cupuaçu | Jaca | Fruta-pão | Jambo | Pitanga | Mangaba | Sapoti | Abiu | Tamarillo |
+    Maracujá doce | Banana-figo | Banana-pacova | Melão cantaloupe | Melão gália | Melão orange | Melancia baby | Uva thompson | Uva niágara |
+    Uva rubi | Uva itália | Uva crimson | Morango orgânico | Amora fresca | Mirtilo fresco | Ameixa preta fresca | Nêspera | Cereja fresca |
+    Kiwi gold | Lima-da-pérsia | Grapefruit | Toranja | Limão-cravo | Coco ralado fresco | Cana-de-açúcar | Pinhão | Castanha portuguesa |
+    Couve chinesa | Acelga chinesa | Pak choi | Endívia | Radicchio | Mostarda em folha | Taioba | Ora-pro-nóbis | Bertalha | Serralha |
+    Beldroega | Agrião d'água | Alface americana hidropônica | Alface crespa hidropônica | Rúcula hidropônica | Mix de brotos | Broto de alfafa |
+    Microverdes | Salsa crespa | Salsa lisa | Endro | Dill | Sálvia | Estragão | Manjerona | Cebolinha francesa | Capim-santo | Hortelã-pimenta |
+    Ervas frescas | Pimenta-de-cheiro | Pimenta jalapeño | Pimenta habanero | Pimenta cambuci | Pimenta-de-bode | Alho negro | Alho roxo |
+    Cebola pérola | Cebola branca | Chalota | Echalote | Batata asterix | Batata monalisa | Batata bolinha | Batata yacon | Batata-doce roxa |
+    Batata-doce laranja | Mandioca descascada | Mandioca congelada descascada | Inhame chinês | Gengibre fresco | Cúrcuma fresca |
+    Raiz-forte | Abóbora japonesa | Abóbora menina | Abóbora seca | Abóbora d'água | Abobrinha brasileira | Abobrinha amarela | Berinjela japonesa |
+    Pepino caipira | Pepino conserva | Tomate grape | Tomate holandês | Tomate caqui | Tomate orgânico | Pimentão laranja | Milho verde debulhado |
+    Vagem macarrão | Feijão-verde | Fava | Quiabo cortado | Couve picada | Couve-flor congelada | Repolho picado | Cenoura ralada |
+    Beterraba cozida | Salada de frutas | Frutas picadas | Abacaxi descascado | Melancia cortada | Coco fresco ralado""")
+)
+sec("Rotisseria e pratos prontos", L("""Frango assado | Frango de padaria | Galeto | Costela assada | Maionese de batata | Salpicão | Salada de maionese | Farofa de padaria |
+    Arroz carreteiro | Feijoada pronta | Feijão tropeiro | Baião de dois | Strogonoff de frango | Strogonoff de carne | Escondidinho de carne seca |
+    Lasanha pronta | Nhoque pronto | Macarrão à bolonhesa | Panqueca de carne | Torta de frango | Empadão | Quiche de alho-poró | Esfiha de carne |
+    Esfiha de queijo | Coxinha de frango | Risole | Bolinha de queijo | Kibe frito | Pastel de carne | Pastel de queijo | Enroladinho de salsicha |
+    Pão de queijo assado | Salgado assado | Sanduíche natural | Wrap de frango | Sushi | Temaki | Hot roll | Yakisoba | Frango xadrez |
+    Marmita | Marmita fit | Sopa pronta | Caldo verde | Canja | Purê de batata pronto | Salada pronta | Salada de folhas | Salada caprese |
+    Tabule | Homus | Babaganuche | Pasta de grão de bico | Pasta de ricota | Patê de frango caseiro | Antepasto de berinjela""")
+)
+sec("Confeitaria", L("""Brigadeiro | Beijinho | Cajuzinho | Bicho de pé | Brownie | Blondie | Muffin | Cupcake | Bolo de pote | Bolo no pote | Torta holandesa |
+    Torta de limão | Torta de morango | Cheesecake | Pudim de leite | Pavê | Mousse de chocolate pronto | Carolina | Bomba de chocolate | Mil-folhas |
+    Sonho de creme | Croissant de chocolate | Pão doce com creme | Pão de coco | Pão de milho | Pão de mandioca | Pão de cebola | Pão de batata doce |
+    Pão de cenoura | Rosca de coco | Rosca de leite condensado | Cuca | Cuca de banana | Strudel | Torta alemã | Bolo de rolo | Bolo de casamento |
+    Bolo de aniversário | Bolo confeitado | Bolo vulcão | Bolo gelado | Bolo de mandioca | Bolo de cenoura com chocolate | Biscoito amanteigado de padaria |
+    Biscoito de nata | Sequilho | Broinha de fubá | Petit four | Macaron | Churros | Alfajor | Pé de moleque caseiro | Doce de abóbora com coco |
+    Cocada branca | Cocada queimada | Quindim | Olho de sogra | Bem-casado | Pão de mel com doce de leite | Panetone de frutas | Panetone de chocolate |
+    Colomba pascal | Massa de bolo pronta | Pasta americana | Glacê | Corante alimentício | Granulado colorido | Granulado de chocolate | Forminha de brigadeiro |
+    Vela de aniversário | Confeito de açúcar | Leite em pó para confeitaria | Gordura hidrogenada | Essência de baunilha | Extrato de baunilha |
+    Cacau 100% | Chocolate fracionado | Chocolate em gotas | Cobertura sabor chocolate | Chocolate para derreter | Creme de confeiteiro""")
+)
+sec("Cozinhas do mundo", L("""Alga nori | Arroz para sushi | Arroz japonês tipo gohan | Gengibre em conserva | Wasabi | Missô | Kani kama | Hashi | Molho tarê |
+    Molho teriyaki | Molho agridoce | Molho de ostra | Óleo de gergelim | Vinagre de arroz | Saquê culinário | Mirin | Macarrão udon | Macarrão soba |
+    Bifum | Lámen fresco | Massa de guioza | Rolinho primavera | Leite de coco tailandês | Curry tailandês | Pasta de curry | Molho de peixe |
+    Tortilha de milho | Tortilha de trigo | Nachos | Guacamole | Molho de queijo cheddar | Salsa mexicana | Feijão refrito | Jalapeño em conserva |
+    Taco shell | Pimenta chipotle | Tempero mexicano | Pesto de manjericão | Tomate seco | Funghi seco | Parmesão em lascas | Massa fresca |
+    Ravióli de queijo | Ravióli de carne | Capeletti de frango | Tortellini | Gnocchi | Fettuccine | Pappardelle | Mezzi rigatoni | Massa de arroz |
+    Polenta pronta | Burrata | Mozzarella de búfala | Presunto cru | Salame milano | Copa lombo | Mortadela italiana | Grana padano | Pecorino romano |
+    Azeite trufado | Creme balsâmico | Alcaparras em conserva | Anchova | Pimenta biquinho em conserva | Pão sírio integral | Coalhada seca | Zaatar |
+    Tahine | Grão de bico cozido | Faláfel | Quibe cru | Charuto de repolho | Esfiha aberta | Pasta de berinjela | Cuscuz nordestino | Massa de cuscuz |
+    Flocão de milho para cuscuz | Tapioca pronta | Goma de tapioca hidratada | Beiju | Carne de sol desfiada | Queijo coalho em espeto | Manteiga de garrafa |
+    Charque desfiado | Paçoca de carne | Vatapá | Caruru | Acarajé | Moqueca pronta | Pirão | Pão de queijo mineiro | Doce de leite mineiro |
+    Queijo canastra | Queijo serro | Linguiça mineira | Arroz com pequi | Tacacá | Tucupi | Jambu | Farinha d'água | Farinha de tapioca""")
+)
+sec("Suplementos e fitness", L("""Whey protein chocolate | Whey protein baunilha | Whey protein morango | Whey protein isolado | Whey protein concentrado |
+    Creatina monohidratada | BCAA | Glutamina | Albumina | Hipercalórico | Pré-treino | Termogênico | Cafeína em cápsula | Beta-alanina |
+    Proteína vegana | Colágeno hidrolisado | Colágeno verisol | Ômega 3 cápsulas | Vitamina D3 gotas | Multivitamínico A-Z | Magnésio dimalato |
+    Magnésio quelato | Zinco quelato | Vitamina K2 | Vitamina B12 sublingual | Ferro quelato | Coenzima Q10 | Melatonina gotas | Ashwagandha |
+    Spirulina | Chlorella | Maca peruana | Psyllium | Fibra solúvel | Probiótico em cápsula | Pasta de amendoim integral | Pasta de amendoim com whey |
+    Barra de proteína chocolate | Barra de proteína cookies | Bebida proteica | Shake proteico | Iogurte proteico | Snack proteico | Panqueca proteica |
+    Mistura para panqueca proteica | Café com colágeno | Chá termogênico | Eletrólito | Gel de carboidrato | Isotônico em pó | Coqueteleira""")
+)
+sec("Bazar e utilidades", L("""Panela de pressão | Panela antiaderente | Frigideira antiaderente | Caçarola | Leiteira | Chaleira | Assadeira | Forma de bolo |
+    Forma de pudim | Forma de gelo | Tábua de corte | Faca de cozinha | Faca de pão | Jogo de facas | Tesoura de cozinha | Abridor de latas |
+    Saca-rolhas | Descascador | Ralador | Espremedor de alho | Espremedor de laranja | Peneira | Escorredor de macarrão | Escorredor de louça |
+    Coador de café | Coador de pano | Garrafa térmica | Bule | Jarra | Copo de vidro | Xícara | Caneca | Prato raso | Prato fundo | Tigela |
+    Talheres | Colher de pau | Concha | Escumadeira | Espátula | Pegador de massa | Batedor de ovos | Fouet | Rolo de massa | Medidor de cozinha |
+    Balança de cozinha | Pote hermético | Pote de vidro | Marmita de vidro | Garrafa de água | Squeeze | Lancheira | Bolsa térmica | Caixa térmica |
+    Saco térmico | Pano de prato de algodão | Avental | Luva térmica | Descanso de panela | Toalha de mesa | Jogo americano | Guardanapo de pano |
+    Porta-guardanapo | Saleiro | Açucareiro | Fruteira | Lixeira de pia | Lixeira com pedal | Organizador de geladeira | Organizador de gaveta |
+    Cabide | Prendedor de roupa de madeira | Varal de chão | Tábua de passar roupa | Ferro de passar | Cesto organizador | Caixa organizadora |
+    Saco a vácuo | Etiqueta | Fita crepe | Fita dupla face | Barbante | Elástico de borracha | Grampo | Clipes | Caneta esferográfica |
+    Lápis | Borracha | Apontador | Caderno | Bloco de notas | Post-it | Cola branca | Cola bastão | Tesoura escolar | Régua | Marca-texto |
+    Envelope | Papel sulfite | Pasta plástica | Pilha recarregável | Carregador de pilha | Lâmpada fluorescente | Lâmpada de emergência | Lanterna |
+    Benjamim | Filtro de linha | Tomada | Interruptor | Chuveiro elétrico | Resistência de chuveiro | Torneira | Rodo de pia | Desentupidor de borracha |
+    Mangueira | Regador | Vaso de planta | Terra vegetal | Substrato | Adubo | Fertilizante | Semente de hortaliça | Inseticida para jardim |
+    Carvão vegetal | Acendedor de carvão | Grelha | Espeto | Faca de churrasco | Tábua de churrasco | Sal grosso para churrasco | Cooler |
+    Cera automotiva | Shampoo automotivo | Pretinho para pneu | Limpa para-brisa | Aditivo para radiador | Óleo de motor | Fluido de freio |
+    Flanela para carro | Aromatizador de carro | Vela de aniversário número | Balão de festa | Prato de festa | Copo de festa | Toalha de festa |
+    Chapéu de festa | Língua de sogra | Saco de presente | Papel de presente | Fita de cetim | Laço de presente | Cartão de presente""")
+)
+DOSES = {"Losartana": ["25 mg", "100 mg"], "Atorvastatina": ["10 mg", "40 mg", "80 mg"], "Sinvastatina": ["10 mg", "40 mg"],
+         "Rosuvastatina": ["10 mg", "20 mg"], "Metformina": ["500 mg", "1 g", "XR 500 mg"], "Anlodipino": ["5 mg", "10 mg"],
+         "Enalapril": ["10 mg", "20 mg"], "Hidroclorotiazida": ["25 mg"], "Atenolol": ["25 mg", "50 mg"], "Propranolol": ["40 mg"],
+         "Levotiroxina": ["25 mcg", "50 mcg", "75 mcg", "88 mcg", "100 mcg"], "Omeprazol": ["40 mg"], "Pantoprazol": ["20 mg", "40 mg"],
+         "Sertralina": ["50 mg", "100 mg"], "Fluoxetina": ["20 mg"], "Escitalopram": ["10 mg", "20 mg"], "Clonazepam": ["0,5 mg", "2 mg", "gotas"],
+         "Amoxicilina": ["500 mg", "875 mg", "suspensão"], "Azitromicina": ["500 mg", "suspensão"], "Cefalexina": ["500 mg"],
+         "Prednisona": ["5 mg", "20 mg"], "Loratadina": ["10 mg", "xarope"], "Dexametasona": ["4 mg", "creme"], "Diclofenaco": ["50 mg", "gel"],
+         "Nimesulida": ["100 mg", "gotas"], "Ibuprofeno": ["200 mg", "suspensão"], "Paracetamol": ["1 g", "infantil"],
+         "Dipirona": ["xarope", "infantil"], "Furosemida": ["40 mg"], "Espironolactona": ["25 mg"], "Carvedilol": ["6,25 mg", "12,5 mg", "25 mg"],
+         "Glibenclamida": ["5 mg"], "Gliclazida": ["30 mg", "60 mg"], "Clopidogrel": ["75 mg"], "Ácido acetilsalicílico": ["100 mg"],
+         "Alendronato": ["70 mg"], "Vitamina D": ["1.000 UI", "7.000 UI", "50.000 UI"], "Sulfato ferroso": ["40 mg"], "Ácido fólico": ["5 mg"],
+         "Melatonina": ["3 mg"], "Zolpidem": ["10 mg"], "Quetiapina": ["25 mg"], "Bupropiona": ["150 mg"], "Venlafaxina": ["75 mg"],
+         "Amitriptilina": ["25 mg"], "Pregabalina": ["75 mg"], "Gabapentina": ["300 mg"], "Topiramato": ["25 mg", "50 mg"],
+         "Tansulosina": ["0,4 mg"], "Finasterida": ["1 mg", "5 mg"], "Sildenafila": ["50 mg"], "Tadalafila": ["5 mg", "20 mg"],
+         "Ciprofloxacino": ["500 mg"], "Fluconazol": ["150 mg"], "Albendazol": ["400 mg"], "Ivermectina": ["6 mg"], "Valsartana": ["160 mg"],
+         "Olmesartana": ["20 mg", "40 mg"], "Metoprolol": ["50 mg"], "Ezetimiba": ["10 mg"], "Domperidona": ["10 mg"], "Ondansetrona": ["8 mg"],
+         "Cetirizina": ["10 mg"], "Desloratadina": ["5 mg"], "Fexofenadina": ["120 mg", "180 mg"], "Hidroxizina": ["25 mg"], "Prednisolona": ["xarope"],
+         "Acetilcisteína": ["600 mg", "xarope"], "Ambroxol": ["xarope"], "Simeticona": ["gotas", "40 mg"], "Bromoprida": ["gotas"]}
+sec("Farmácia com dosagem", [f"{r} {d}" for r, ds in DOSES.items() for d in ds])
+
+
 for k, v in MARCAS.items():
     sec("Marcas · " + k, v)
 
+# 1.34.0: as linhas de produtos das marcas mais vendidas, por fabricante (tools/itens_marcas.py)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import itens_marcas  # noqa: E402
+
+for grupo in itens_marcas.TODOS:
+    for fabricante, texto in grupo.items():
+        sec("Marcas · " + fabricante, L(texto))
+
+# as marcas com o sabor, o tamanho do pacote ou o tipo mais pedidos
+def X(marcas, tipos, molde="{m} {t}"):
+    return [molde.format(m=m, t=t) for m in marcas for t in tipos]
+
+
+sec("Marcas · combinações", X(["Danone", "Nestlé", "Batavo", "Vigor", "Itambé", "Piracanjuba"], ["morango", "coco", "frutas vermelhas", "ameixa", "pêssego"],
+                              "Iogurte {m} {t}"),
+    X(["Passatempo", "Bono", "Trakinas", "Negresco", "Treloso"], ["chocolate", "morango"], "Biscoito {m} {t}"),
+    ["Biscoito Bono doce de leite", "Biscoito Oreo original", "Biscoito Oreo chocolate", "Biscoito Trakinas chocolate branco", "Biscoito Passatempo leite"],
+    X(["Coca-Cola", "Guaraná Antarctica", "Fanta Laranja", "Pepsi", "Sprite", "Coca-Cola Zero"], ["lata", "2 litros", "600 ml"]),
+    X(["Skol", "Brahma", "Heineken", "Amstel", "Budweiser", "Itaipava", "Original", "Stella Artois", "Corona", "Spaten", "Brahma Duplo Malte", "Petra"],
+      ["lata", "long neck", "600 ml"], "Cerveja {m} {t}"),
+    X(["Del Valle", "Maguary", "Dafruta", "Natural One", "Do Bem"], ["laranja", "uva", "pêssego", "manga", "maracujá", "goiaba"], "Suco {m} {t}"),
+    X(["Dove", "Lux", "Protex", "Palmolive", "Nivea", "Rexona"], ["em barra", "líquido"], "Sabonete {m} {t}"),
+    X(["Pedigree", "Golden", "Premier", "Dog Chow", "Special Dog", "Magnus"], ["filhote", "adulto", "raças pequenas"], "Ração {m} {t}"),
+    X(["Whiskas", "Golden Gatos", "Premier Gatos", "Cat Chow", "Friskies", "Special Cat"], ["filhote", "adulto", "castrado"], "Ração {m} {t}"),
+    X(["Pampers", "Huggies", "MamyPoko", "Turma da Mônica", "Babysec", "Pom Pom"], ["P", "M", "G", "XG", "XXG"], "Fralda {m} {t}"),
+    X(["Italac", "Piracanjuba", "Parmalat", "Itambé", "Elegê", "Tirol", "Ninho", "Molico"], ["integral", "desnatado", "semidesnatado", "zero lactose"],
+      "Leite {m} {t}"),
+    X(["Pilão", "3 Corações", "Melitta", "Pelé", "Santa Clara", "Café do Ponto", "Caboclo"], ["tradicional", "extraforte", "a vácuo", "em grãos"],
+      "Café {m} {t}"),
+    X(["Omo", "Ariel", "Brilhante", "Tixan Ypê", "Surf", "Minuano"], ["em pó", "líquido"], "Lava-roupas {m} {t}"),
+    X(["Comfort", "Downy", "Ypê", "Mon Bijou", "Fofo", "Minuano"], ["concentrado", "diluído"], "Amaciante {m} {t}"),
+    X(["Pantene", "Seda", "Elseve", "Dove", "TRESemmé", "Fructis", "Head & Shoulders", "Clear"], ["shampoo", "condicionador"], "{t} {m}"),
+    X(["Colgate", "Sorriso", "Oral-B", "Close Up", "Sensodyne"], ["creme dental", "escova de dente"], "{t} {m}"),
+    X(["Rexona", "Dove", "Nivea", "Axe", "Monange", "Above"], ["aerossol", "roll-on"], "Desodorante {m} {t}"),
+    X(["Neve", "Personal", "Mili", "Sublime", "Scott", "Familia"], ["folha dupla", "folha simples", "12 rolos"], "Papel higiênico {m} {t}"),
+)
+
 if __name__ == "__main__":
     vistos, linhas, n = set(), ["# Itens comuns de supermercado, hortifrúti, açougue, padaria, farmácia e pet, e as marcas mais",
-                                "# vendidas com o produto delas: a base das sugestões ao digitar um item (1.33.0). Um por linha;",
+                                "# vendidas com o produto delas: a base das sugestões ao digitar um item (1.33.0; 1.34.0 com as linhas",
+                                "# de produtos de cada fabricante, em tools/itens_marcas.py). Um por linha;",
                                 "# as linhas com # são seções. Gerado por tools/itens_comuns.py: mude lá e rode de novo."], 0
+    import re  # noqa: PLC0415
+    import unicodedata  # noqa: PLC0415
+    chave = lambda t: re.sub(r"[^a-z0-9]+", " ", unicodedata.normalize("NFD", t).encode("ascii", "ignore").decode().lower()).strip()  # noqa: E731
     for nome, itens in S.items():
         linhas.append("")
         linhas.append(f"# {nome}")
         for x in itens:
             x = x[:1].upper() + x[1:]
-            k = x.lower()
+            k = chave(x)  # sem repetir, nem com outro acento
             if k in vistos:
                 continue
             vistos.add(k)

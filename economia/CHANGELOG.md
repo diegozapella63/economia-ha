@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.34.0
+
+- A lista pronta das sugestões passou de 2.600 para quase 6.000 itens: as linhas de produtos das marcas mais vendidas de cada fabricante (Nestlé, Unilever, Ypê, Reckitt, BRF, Ambev, Coca-Cola…), os sabores e tipos mais pedidos ("Iogurte Danone morango", "Fralda Pampers G", "Cerveja Heineken long neck"), frutas regionais, pratos prontos, confeitaria, cozinhas do mundo, suplementos, bazar e remédios com a dosagem ("Losartana 50 mg").
+
 ## 1.33.0
 
 - As sugestões ao digitar o item agora têm uma lista pronta com 2.600 itens comuns de supermercado, hortifrúti, açougue, padaria, farmácia e pet, e as marcas mais vendidas com o produto delas. Aparecem mesmo antes de qualquer busca: "Vanish" sugere *Tira manchas Vanish*, "leite sem lac" sugere *Leite sem lactose*. O que as lojas já mostraram vem primeiro.

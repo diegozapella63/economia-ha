@@ -14,7 +14,8 @@ e CorrerIA (os apps no WhatsApp, no Claude e no Gemini: com a opção ligada, us
 - `economia/app/server.py`: o servidor, **só biblioteca padrão do Python** (sem pip, sem dependências). Serve a página
   pelo ingress, faz as buscas, guarda tudo em `/data`. `voz.py`: o Falar (fala para texto do Home Assistant).
 - `economia/app/itens_comuns.txt`: a lista pronta das sugestões ao digitar um item (itens comuns e as marcas mais
-  vendidas com o produto delas), **gerada** por `tools/itens_comuns.py`: mude lá e rode `python3 tools/itens_comuns.py`.
+  vendidas com o produto delas), **gerada** por `tools/itens_comuns.py` (as linhas de produtos de cada fabricante ficam em
+  `tools/itens_marcas.py`): mude lá e rode `python3 tools/itens_comuns.py`.
 - `economia/pagina/selectsheet.js`: as caixas de seleção no visual do app, **o mesmo arquivo dos outros apps** (ao
   mudar, copie para os outros); o `montar_pagina.py` põe dentro da página.
 - `economia/pagina/painel.html`: **a fonte da página** (HTML + CSS + JS ES5 num arquivo só, sem framework). Roda sozinha

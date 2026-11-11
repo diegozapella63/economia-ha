@@ -122,15 +122,16 @@ class ListaPronta(unittest.TestCase):
 
     def test_a_lista_tem_os_itens_comuns_sem_repetir(self):
         lista = self.S.itens_comuns()
-        self.assertGreater(len(lista), 2000)
+        self.assertGreater(len(lista), 5000, "1.34.0: com as linhas de produtos das marcas")
         self.assertEqual(len({n for n, _, _ in lista}), len(lista), "sem repetir")
         nomes = {x for _, x, _ in lista}
         self.assertTrue({"Leite sem lactose", "Tira manchas Vanish", "Sabão em pó", "Papel higiênico", "Dipirona"} <= nomes)
         self.assertTrue(all(x[:1].isupper() or x[:1].isdigit() for x in nomes), "a primeira letra maiúscula")
 
     def test_sem_nada_visto_nas_lojas_a_lista_pronta_sugere(self):
-        self.assertEqual(self.S.sugestoes_nomes("vanish")[:2], ["Tira manchas Vanish", "Tira manchas Vanish Oxi Action"], "só a marca")
-        self.assertEqual(self.S.sugestoes_nomes("leite sem lac"), ["Leite sem lactose"])
+        v = self.S.sugestoes_nomes("vanish")
+        self.assertTrue(v[0].startswith("Vanish") and "Tira manchas Vanish" in v, f"só a marca: as linhas dela e o produto ({v})")
+        self.assertEqual(self.S.sugestoes_nomes("leite sem lac")[0], "Leite sem lactose", "o do começo primeiro (depois o creme de leite sem lactose...)")
         self.assertEqual(self.S.sugestoes_nomes("arroz")[:3], ["Arroz branco", "Arroz integral", "Arroz parboilizado"])
         self.assertIn("Arroz Tio João", self.S.sugestoes_nomes("arroz ti"), "a marca com o item")
         self.assertIn("Sabão em pó Omo", self.S.sugestoes_nomes("sabão omo"), "as palavras na ordem, com outras no meio")

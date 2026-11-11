@@ -1,5 +1,6 @@
 # Itens comuns de supermercado, hortifrúti, açougue, padaria, farmácia e pet, e as marcas mais
-# vendidas com o produto delas: a base das sugestões ao digitar um item (1.33.0). Um por linha;
+# vendidas com o produto delas: a base das sugestões ao digitar um item (1.33.0; 1.34.0 com as linhas
+# de produtos de cada fabricante, em tools/itens_marcas.py). Um por linha;
 # as linhas com # são seções. Gerado por tools/itens_comuns.py: mude lá e rode de novo.
 
 # Mercearia
@@ -762,8 +763,6 @@ Iogurte de pêssego
 Iogurte de ameixa
 Iogurte de baunilha
 Iogurte de mel
-Iogurte de natural
-Iogurte de grego
 Iogurte de chocolate
 Bebida láctea de morango
 Bebida láctea de frutas vermelhas
@@ -888,14 +887,14 @@ Sorvete de baunilha
 Sorvete de limão
 Sorvete de coco
 Sorvete de doce de leite
-Polpa de fruta de acerola
-Polpa de fruta de maracujá
-Polpa de fruta de goiaba
-Polpa de fruta de morango
-Polpa de fruta de caju
-Polpa de fruta de abacaxi
-Polpa de fruta de manga
-Polpa de fruta de cajá
+Polpa de acerola
+Polpa de maracujá
+Polpa de goiaba
+Polpa de morango
+Polpa de caju
+Polpa de abacaxi
+Polpa de manga
+Polpa de cajá
 
 # Bebidas
 Água mineral
@@ -1556,6 +1555,1086 @@ Meia de compressão
 Teste de covid
 Inalador
 Nebulizador
+
+# Variações
+Iogurte de limão
+Iogurte de maracujá
+Iogurte de doce de leite
+Iogurte de brigadeiro
+Iogurte de chocolate branco
+Iogurte de banana
+Iogurte de abacaxi
+Iogurte grego de morango
+Iogurte grego de frutas vermelhas
+Iogurte grego de coco
+Iogurte grego de mel
+Iogurte grego de baunilha
+Iogurte grego de tradicional
+Iogurte natural integral
+Iogurte natural desnatado
+Iogurte natural com mel
+Bebida láctea de chocolate
+Bebida láctea de limão
+Bebida láctea de maracujá
+Bebida láctea de doce de leite
+Bebida láctea de brigadeiro
+Leite fermentado natural
+Leite fermentado light
+Sorvete de maracujá
+Sorvete de brigadeiro
+Sorvete de chocolate branco
+Sorvete de frutas vermelhas
+Sorvete de banana
+Sorvete de abacaxi
+Sorvete de uva
+Sorvete de cereja
+Sorvete de framboesa
+Sorvete de leite ninho
+Sorvete de pistache
+Sorvete de amendoim
+Sorvete de café
+Sorvete de caramelo
+Sorvete de menta
+Picolé de chocolate
+Picolé de limão
+Picolé de uva
+Picolé de morango
+Picolé de coco
+Picolé de abacaxi
+Picolé de maracujá
+Picolé de milho
+Picolé de creme
+Picolé de açaí
+Biscoito recheado de baunilha
+Biscoito recheado de coco
+Biscoito recheado de limão
+Biscoito recheado de maracujá
+Biscoito recheado de doce de leite
+Biscoito recheado de brigadeiro
+Biscoito recheado de chocolate branco
+Biscoito wafer de chocolate
+Biscoito wafer de morango
+Biscoito wafer de baunilha
+Biscoito wafer de coco
+Biscoito wafer de limão
+Biscoito wafer de maracujá
+Biscoito wafer de doce de leite
+Cookies de chocolate
+Cookies de baunilha
+Cookies de aveia e mel
+Cookies de castanha
+Cookies de gotas de chocolate
+Bolo de banana
+Bolo de formigueiro
+Bolo de limão
+Bolo de maçã
+Bolo de nozes
+Bolo de red velvet
+Bolo de pão de mel
+Bolo de prestígio
+Bolo de abacaxi
+Mistura para bolo de chocolate
+Mistura para bolo de baunilha
+Mistura para bolo de laranja
+Mistura para bolo de milho
+Mistura para bolo de cenoura
+Mistura para bolo de coco
+Mistura para bolo de fubá
+Mistura para bolo de limão
+Mistura para bolo de abacaxi
+Mistura para bolo de formigueiro
+Mistura para bolo de morango
+Mistura para bolo de aipim
+Mistura para bolo de banana
+Pizza de portuguesa
+Pizza de marguerita
+Pizza de quatro queijos
+Pizza de pepperoni
+Pizza de atum
+Pizza de palmito
+Pizza de presunto
+Pizza de bacon
+Pizza de chocolate
+Chá de maçã com canela
+Chá de limão
+Chá de pêssego
+Chá de morango
+Chá de abacaxi com hortelã
+Chá de chá verde com limão
+Chá de laranja
+Chá de jasmim
+Chá de rooibos
+Chá de mate com limão
+Chá de cranberry
+Chá de erva-cidreira
+Chá de alecrim
+Chá de anis-estrelado
+Chá de chá branco
+Chá de chá vermelho
+Chá de chá preto com limão
+Chá de cereja
+Gelatina de tutti-frutti
+Gelatina de maracujá
+Gelatina de pêssego
+Gelatina de sem sabor
+Pudim de chocolate
+Pudim de baunilha
+Pudim de leite condensado
+Pudim de coco
+Mousse de maracujá
+Mousse de chocolate
+Mousse de limão
+Mousse de morango
+Suco de uva
+Suco de acerola
+Suco de tangerina
+Suco de limão
+Suco de melancia
+Suco de morango
+Suco de graviola
+Suco de cupuaçu
+Suco de frutas vermelhas
+Suco de laranja com acerola
+Suco de abacaxi com hortelã
+Suco de laranja integral
+Suco de maçã integral
+Suco de tomate
+Suco de beterraba
+Suco de verde
+Suco de detox
+Néctar de maracujá
+Néctar de goiaba
+Néctar de abacaxi
+Néctar de laranja
+Néctar de caju
+Néctar de maçã
+Néctar de morango
+Refresco em pó de laranja
+Refresco em pó de uva
+Refresco em pó de maçã
+Refresco em pó de pêssego
+Refresco em pó de maracujá
+Refresco em pó de abacaxi
+Refresco em pó de manga
+Refresco em pó de goiaba
+Refresco em pó de caju
+Refresco em pó de acerola
+Refresco em pó de morango
+Refresco em pó de limão
+Doce de banana
+Doce de goiaba
+Doce de figo
+Doce de mamão
+Doce de coco
+Doce de batata-doce
+Doce de cidra
+Geleia de framboesa
+Geleia de amora
+Geleia de damasco
+Geleia de laranja
+Geleia de pimenta
+Geleia de goiaba
+Geleia de mocotó
+Queijo mussarela fatiado
+Queijo prato fatiado
+Queijo parmesão ralado
+Queijo mussarela ralado
+Queijo minas light
+Queijo cottage light
+Queijo ricota fresca
+Queijo coalho espeto
+Queijo provolone defumado
+Queijo gouda fatiado
+Queijo cheddar fatiado
+Queijo brie em pedaço
+Queijo parmesão em pedaço
+Presunto cozido fatiado
+Presunto sem capa de gordura
+Presunto parma fatiado
+Presunto de peru
+Presunto defumado
+Bife de picanha
+Bife de maminha
+Bife de fraldinha
+Bife de filé mignon
+Bife de coxão mole
+Bife de coxão duro
+Carne moída de patinho
+Carne moída de acém
+Carne moída de músculo
+Carne moída de coxão mole
+Carne moída de paleta
+Linguiça de pernil
+Linguiça mista
+Linguiça fina
+Linguiça de porco
+Salsicha tipo viena
+Salsicha de peru
+Salsicha defumada
+Hambúrguer de picanha
+Hambúrguer de costela
+Hambúrguer vegetal
+Hambúrguer de fraldinha
+Hambúrguer de peixe
+Nuggets de frango
+Nuggets de peixe
+Nuggets vegetal
+Nuggets de frango com queijo
+Desinfetante lavanda
+Desinfetante eucalipto
+Desinfetante floral
+Desinfetante talco
+Desinfetante jasmim
+Desinfetante marine
+Desinfetante citrus
+Desinfetante erva-doce
+Desinfetante bambu
+Detergente limão
+Detergente coco
+Detergente maçã
+Detergente clear
+Detergente laranja
+Detergente glicerina
+Detergente erva-doce
+Amaciante diluído
+Amaciante para roupas de bebê
+Amaciante lavanda
+Amaciante rosas
+Amaciante floral
+Amaciante brisa
+Sabão em pó para roupas brancas
+Sabão em pó para roupas coloridas
+Sabão em pó com amaciante
+Sabão em pó multiação
+Sabão em pó 3 kg
+Sabão em pó 4 kg
+Sabão líquido para roupas brancas
+Sabão líquido para roupas coloridas
+Sabão líquido para roupas escuras
+Sabão líquido concentrado
+Sabão líquido refil
+Shampoo para cabelos cacheados
+Shampoo para cabelos crespos
+Shampoo para cabelos lisos
+Shampoo para cabelos oleosos
+Shampoo para cabelos secos
+Shampoo para cabelos danificados
+Shampoo para cabelos tingidos
+Shampoo para cabelos finos
+Shampoo antiqueda
+Shampoo hidratante
+Shampoo masculino
+Shampoo anticaspa masculino
+Shampoo detox
+Shampoo a seco
+Shampoo sem sal
+Shampoo de camomila
+Condicionador para cabelos cacheados
+Condicionador para cabelos crespos
+Condicionador para cabelos lisos
+Condicionador para cabelos oleosos
+Condicionador para cabelos secos
+Condicionador para cabelos danificados
+Condicionador hidratante
+Creme para pentear para cabelos cacheados
+Creme para pentear para cabelos crespos
+Creme para pentear para cabelos lisos
+Creme para pentear infantil
+Creme para pentear sem enxágue
+Desodorante aerossol feminino
+Desodorante aerossol masculino
+Desodorante roll-on feminino
+Desodorante roll-on masculino
+Desodorante sem perfume
+Desodorante antitranspirante 48h
+Desodorante sem alumínio
+Desodorante para os pés
+Sabonete de aveia
+Sabonete de mel
+Sabonete de erva-doce
+Sabonete esfoliante
+Sabonete hidratante
+Sabonete para o rosto
+Sabonete de enxofre
+Sabonete de carvão
+Sabonete de glicerina infantil
+Sabonete de coco
+Sabonete de lavanda
+Sabonete de rosas
+Sabonete em barra pacote
+Creme dental com flúor
+Creme dental sem flúor
+Creme dental branqueador
+Creme dental para gengivas
+Creme dental herbal
+Creme dental tripla ação
+Creme dental gel
+Creme dental com carvão
+Ração para cachorro sabor carne
+Ração para cachorro sabor frango
+Ração para cachorro sabor cordeiro
+Ração para cachorro light
+Ração para cachorro castrado
+Ração para cachorro raças pequenas
+Ração para cachorro raças grandes
+Ração para cachorro filhote raças pequenas
+Ração para cachorro 15 kg
+Ração para cachorro 10 kg
+Ração para gato sabor peixe
+Ração para gato sabor carne
+Ração para gato sabor frango
+Ração para gato sabor salmão
+Ração para gato 10 kg
+Ração para gato urinário
+
+# Orgânicos e dieta
+Banana orgânica
+Maçã orgânica
+Tomate orgânico
+Alface orgânica
+Cenoura orgânica
+Batata orgânica
+Cebola orgânica
+Brócolis orgânico
+Couve orgânica
+Rúcula orgânica
+Morango orgânico
+Laranja orgânica
+Limão orgânico
+Abobrinha orgânica
+Beterraba orgânica
+Pepino orgânico
+Mamão orgânico
+Café orgânico
+Arroz orgânico
+Feijão orgânico
+Leite orgânico
+Mel orgânico
+Aveia orgânica
+Frango orgânico
+Azeite orgânico
+Peito de peru light
+Chocolate zero açúcar
+Gelatina zero
+Geleia zero açúcar
+Barra de cereal zero
+Achocolatado zero
+Sorvete zero açúcar
+Pão sem glúten
+Macarrão sem glúten
+Farinha sem glúten
+Bolo sem glúten
+Queijo sem lactose
+Requeijão sem lactose
+Iogurte sem lactose
+Manteiga sem lactose
+Creme de leite sem lactose
+Leite condensado sem lactose
+Doce de leite sem lactose
+Chocolate sem lactose
+Sorvete sem lactose
+Pão vegano
+Queijo vegano
+Hambúrguer vegano
+Maionese vegana
+Leite vegetal
+Proteína de soja
+Proteína texturizada de soja
+Carne vegetal
+Frango vegetal
+Tofu defumado
+
+# Frutas, verduras e legumes (mais)
+Maçã red
+Maçã argentina
+Pera portuguesa
+Pera d'água
+Laranja-da-terra
+Laranja seleta
+Kinkan
+Physalis
+Cajá-manga
+Umbu
+Pequi
+Buriti
+Bacuri
+Cupuaçu
+Jaca
+Fruta-pão
+Jambo
+Pitanga
+Mangaba
+Sapoti
+Abiu
+Tamarillo
+Maracujá doce
+Banana-figo
+Banana-pacova
+Melão cantaloupe
+Melão gália
+Melão orange
+Melancia baby
+Uva thompson
+Uva niágara
+Uva rubi
+Uva itália
+Uva crimson
+Amora fresca
+Mirtilo fresco
+Ameixa preta fresca
+Nêspera
+Cereja fresca
+Kiwi gold
+Lima-da-pérsia
+Grapefruit
+Toranja
+Coco ralado fresco
+Cana-de-açúcar
+Pinhão
+Castanha portuguesa
+Couve chinesa
+Acelga chinesa
+Pak choi
+Endívia
+Radicchio
+Mostarda em folha
+Taioba
+Ora-pro-nóbis
+Bertalha
+Serralha
+Beldroega
+Agrião d'água
+Alface americana hidropônica
+Alface crespa hidropônica
+Rúcula hidropônica
+Mix de brotos
+Broto de alfafa
+Microverdes
+Salsa crespa
+Salsa lisa
+Endro
+Dill
+Sálvia
+Estragão
+Manjerona
+Cebolinha francesa
+Capim-santo
+Hortelã-pimenta
+Ervas frescas
+Pimenta-de-cheiro
+Pimenta jalapeño
+Pimenta habanero
+Pimenta cambuci
+Pimenta-de-bode
+Alho negro
+Alho roxo
+Cebola pérola
+Cebola branca
+Chalota
+Echalote
+Batata asterix
+Batata monalisa
+Batata bolinha
+Batata yacon
+Batata-doce roxa
+Batata-doce laranja
+Mandioca descascada
+Mandioca congelada descascada
+Inhame chinês
+Gengibre fresco
+Cúrcuma fresca
+Raiz-forte
+Abóbora japonesa
+Abóbora menina
+Abóbora seca
+Abóbora d'água
+Abobrinha brasileira
+Abobrinha amarela
+Berinjela japonesa
+Pepino caipira
+Pepino conserva
+Tomate grape
+Tomate holandês
+Tomate caqui
+Pimentão laranja
+Milho verde debulhado
+Vagem macarrão
+Feijão-verde
+Fava
+Quiabo cortado
+Couve picada
+Couve-flor congelada
+Repolho picado
+Cenoura ralada
+Beterraba cozida
+Salada de frutas
+Frutas picadas
+Abacaxi descascado
+Melancia cortada
+Coco fresco ralado
+
+# Rotisseria e pratos prontos
+Frango assado
+Frango de padaria
+Galeto
+Costela assada
+Maionese de batata
+Salpicão
+Salada de maionese
+Farofa de padaria
+Arroz carreteiro
+Feijoada pronta
+Feijão tropeiro
+Baião de dois
+Strogonoff de frango
+Strogonoff de carne
+Escondidinho de carne seca
+Lasanha pronta
+Nhoque pronto
+Macarrão à bolonhesa
+Panqueca de carne
+Torta de frango
+Empadão
+Quiche de alho-poró
+Esfiha de carne
+Esfiha de queijo
+Coxinha de frango
+Risole
+Bolinha de queijo
+Kibe frito
+Pastel de carne
+Pastel de queijo
+Enroladinho de salsicha
+Pão de queijo assado
+Salgado assado
+Wrap de frango
+Sushi
+Temaki
+Hot roll
+Yakisoba
+Frango xadrez
+Marmita
+Marmita fit
+Sopa pronta
+Caldo verde
+Canja
+Purê de batata pronto
+Salada de folhas
+Salada caprese
+Tabule
+Homus
+Babaganuche
+Pasta de grão de bico
+Pasta de ricota
+Patê de frango caseiro
+Antepasto de berinjela
+
+# Confeitaria
+Brigadeiro
+Beijinho
+Cajuzinho
+Bicho de pé
+Brownie
+Blondie
+Muffin
+Cupcake
+Bolo de pote
+Bolo no pote
+Torta holandesa
+Torta de limão
+Torta de morango
+Cheesecake
+Pudim de leite
+Pavê
+Mousse de chocolate pronto
+Carolina
+Bomba de chocolate
+Mil-folhas
+Sonho de creme
+Croissant de chocolate
+Pão doce com creme
+Pão de coco
+Pão de milho
+Pão de mandioca
+Pão de cebola
+Pão de batata doce
+Pão de cenoura
+Rosca de coco
+Rosca de leite condensado
+Cuca
+Cuca de banana
+Strudel
+Torta alemã
+Bolo de rolo
+Bolo de casamento
+Bolo de aniversário
+Bolo confeitado
+Bolo vulcão
+Bolo gelado
+Bolo de mandioca
+Bolo de cenoura com chocolate
+Biscoito amanteigado de padaria
+Biscoito de nata
+Sequilho
+Broinha de fubá
+Petit four
+Macaron
+Churros
+Alfajor
+Pé de moleque caseiro
+Doce de abóbora com coco
+Cocada branca
+Cocada queimada
+Quindim
+Olho de sogra
+Bem-casado
+Pão de mel com doce de leite
+Panetone de frutas
+Panetone de chocolate
+Colomba pascal
+Massa de bolo pronta
+Pasta americana
+Glacê
+Corante alimentício
+Granulado colorido
+Granulado de chocolate
+Forminha de brigadeiro
+Vela de aniversário
+Confeito de açúcar
+Leite em pó para confeitaria
+Gordura hidrogenada
+Essência de baunilha
+Extrato de baunilha
+Cacau 100%
+Chocolate fracionado
+Chocolate em gotas
+Cobertura sabor chocolate
+Chocolate para derreter
+Creme de confeiteiro
+
+# Cozinhas do mundo
+Alga nori
+Arroz para sushi
+Arroz japonês tipo gohan
+Gengibre em conserva
+Wasabi
+Missô
+Kani kama
+Hashi
+Molho teriyaki
+Molho agridoce
+Molho de ostra
+Óleo de gergelim
+Vinagre de arroz
+Saquê culinário
+Mirin
+Macarrão udon
+Macarrão soba
+Bifum
+Lámen fresco
+Massa de guioza
+Rolinho primavera
+Leite de coco tailandês
+Curry tailandês
+Pasta de curry
+Molho de peixe
+Tortilha de milho
+Tortilha de trigo
+Nachos
+Guacamole
+Molho de queijo cheddar
+Salsa mexicana
+Feijão refrito
+Jalapeño em conserva
+Taco shell
+Pimenta chipotle
+Tempero mexicano
+Pesto de manjericão
+Tomate seco
+Funghi seco
+Parmesão em lascas
+Massa fresca
+Ravióli de queijo
+Ravióli de carne
+Capeletti de frango
+Tortellini
+Gnocchi
+Fettuccine
+Pappardelle
+Mezzi rigatoni
+Massa de arroz
+Polenta pronta
+Burrata
+Mozzarella de búfala
+Presunto cru
+Salame milano
+Copa lombo
+Mortadela italiana
+Grana padano
+Pecorino romano
+Azeite trufado
+Creme balsâmico
+Alcaparras em conserva
+Anchova
+Pimenta biquinho em conserva
+Pão sírio integral
+Coalhada seca
+Zaatar
+Tahine
+Grão de bico cozido
+Faláfel
+Quibe cru
+Charuto de repolho
+Esfiha aberta
+Pasta de berinjela
+Cuscuz nordestino
+Massa de cuscuz
+Flocão de milho para cuscuz
+Tapioca pronta
+Goma de tapioca hidratada
+Beiju
+Carne de sol desfiada
+Queijo coalho em espeto
+Manteiga de garrafa
+Charque desfiado
+Paçoca de carne
+Vatapá
+Caruru
+Acarajé
+Moqueca pronta
+Pirão
+Pão de queijo mineiro
+Doce de leite mineiro
+Queijo canastra
+Queijo serro
+Linguiça mineira
+Arroz com pequi
+Tacacá
+Tucupi
+Jambu
+Farinha d'água
+Farinha de tapioca
+
+# Suplementos e fitness
+Whey protein chocolate
+Whey protein baunilha
+Whey protein morango
+Whey protein isolado
+Whey protein concentrado
+Creatina monohidratada
+BCAA
+Glutamina
+Albumina
+Hipercalórico
+Pré-treino
+Termogênico
+Cafeína em cápsula
+Beta-alanina
+Proteína vegana
+Colágeno hidrolisado
+Colágeno verisol
+Ômega 3 cápsulas
+Vitamina D3 gotas
+Multivitamínico A-Z
+Magnésio dimalato
+Magnésio quelato
+Zinco quelato
+Vitamina K2
+Vitamina B12 sublingual
+Ferro quelato
+Coenzima Q10
+Melatonina gotas
+Ashwagandha
+Spirulina
+Chlorella
+Maca peruana
+Psyllium
+Fibra solúvel
+Probiótico em cápsula
+Pasta de amendoim integral
+Pasta de amendoim com whey
+Barra de proteína chocolate
+Barra de proteína cookies
+Bebida proteica
+Shake proteico
+Iogurte proteico
+Snack proteico
+Panqueca proteica
+Mistura para panqueca proteica
+Café com colágeno
+Chá termogênico
+Eletrólito
+Gel de carboidrato
+Isotônico em pó
+Coqueteleira
+
+# Bazar e utilidades
+Panela de pressão
+Panela antiaderente
+Frigideira antiaderente
+Caçarola
+Leiteira
+Chaleira
+Assadeira
+Forma de bolo
+Forma de pudim
+Forma de gelo
+Tábua de corte
+Faca de cozinha
+Faca de pão
+Jogo de facas
+Tesoura de cozinha
+Abridor de latas
+Saca-rolhas
+Descascador
+Ralador
+Espremedor de alho
+Espremedor de laranja
+Peneira
+Escorredor de macarrão
+Escorredor de louça
+Coador de café
+Coador de pano
+Garrafa térmica
+Bule
+Jarra
+Copo de vidro
+Xícara
+Caneca
+Prato raso
+Prato fundo
+Tigela
+Talheres
+Colher de pau
+Concha
+Escumadeira
+Espátula
+Pegador de massa
+Batedor de ovos
+Fouet
+Rolo de massa
+Medidor de cozinha
+Balança de cozinha
+Pote hermético
+Pote de vidro
+Marmita de vidro
+Garrafa de água
+Squeeze
+Lancheira
+Caixa térmica
+Saco térmico
+Pano de prato de algodão
+Avental
+Luva térmica
+Descanso de panela
+Toalha de mesa
+Jogo americano
+Guardanapo de pano
+Porta-guardanapo
+Saleiro
+Açucareiro
+Fruteira
+Lixeira de pia
+Lixeira com pedal
+Organizador de geladeira
+Organizador de gaveta
+Cabide
+Prendedor de roupa de madeira
+Varal de chão
+Tábua de passar roupa
+Ferro de passar
+Cesto organizador
+Caixa organizadora
+Saco a vácuo
+Etiqueta
+Fita crepe
+Fita dupla face
+Barbante
+Elástico de borracha
+Grampo
+Clipes
+Caneta esferográfica
+Lápis
+Borracha
+Apontador
+Caderno
+Bloco de notas
+Post-it
+Cola branca
+Cola bastão
+Tesoura escolar
+Régua
+Marca-texto
+Envelope
+Papel sulfite
+Pasta plástica
+Pilha recarregável
+Carregador de pilha
+Lâmpada fluorescente
+Lâmpada de emergência
+Lanterna
+Benjamim
+Filtro de linha
+Tomada
+Interruptor
+Chuveiro elétrico
+Resistência de chuveiro
+Torneira
+Rodo de pia
+Desentupidor de borracha
+Mangueira
+Regador
+Vaso de planta
+Terra vegetal
+Substrato
+Adubo
+Fertilizante
+Semente de hortaliça
+Inseticida para jardim
+Carvão vegetal
+Acendedor de carvão
+Grelha
+Espeto
+Faca de churrasco
+Tábua de churrasco
+Sal grosso para churrasco
+Cooler
+Cera automotiva
+Shampoo automotivo
+Pretinho para pneu
+Limpa para-brisa
+Aditivo para radiador
+Óleo de motor
+Fluido de freio
+Flanela para carro
+Aromatizador de carro
+Vela de aniversário número
+Balão de festa
+Prato de festa
+Copo de festa
+Toalha de festa
+Chapéu de festa
+Língua de sogra
+Saco de presente
+Papel de presente
+Fita de cetim
+Laço de presente
+Cartão de presente
+
+# Farmácia com dosagem
+Losartana 25 mg
+Losartana 100 mg
+Atorvastatina 10 mg
+Atorvastatina 40 mg
+Atorvastatina 80 mg
+Sinvastatina 10 mg
+Sinvastatina 40 mg
+Rosuvastatina 10 mg
+Rosuvastatina 20 mg
+Metformina 500 mg
+Metformina 1 g
+Metformina XR 500 mg
+Anlodipino 5 mg
+Anlodipino 10 mg
+Enalapril 10 mg
+Enalapril 20 mg
+Hidroclorotiazida 25 mg
+Atenolol 25 mg
+Atenolol 50 mg
+Propranolol 40 mg
+Levotiroxina 25 mcg
+Levotiroxina 50 mcg
+Levotiroxina 75 mcg
+Levotiroxina 88 mcg
+Levotiroxina 100 mcg
+Omeprazol 40 mg
+Pantoprazol 20 mg
+Pantoprazol 40 mg
+Sertralina 50 mg
+Sertralina 100 mg
+Fluoxetina 20 mg
+Escitalopram 10 mg
+Escitalopram 20 mg
+Clonazepam 0,5 mg
+Clonazepam 2 mg
+Clonazepam gotas
+Amoxicilina 500 mg
+Amoxicilina 875 mg
+Amoxicilina suspensão
+Azitromicina 500 mg
+Azitromicina suspensão
+Cefalexina 500 mg
+Prednisona 5 mg
+Prednisona 20 mg
+Loratadina 10 mg
+Loratadina xarope
+Dexametasona 4 mg
+Dexametasona creme
+Diclofenaco 50 mg
+Diclofenaco gel
+Nimesulida 100 mg
+Nimesulida gotas
+Ibuprofeno 200 mg
+Ibuprofeno suspensão
+Paracetamol 1 g
+Paracetamol infantil
+Dipirona xarope
+Dipirona infantil
+Furosemida 40 mg
+Espironolactona 25 mg
+Carvedilol 6,25 mg
+Carvedilol 12,5 mg
+Carvedilol 25 mg
+Glibenclamida 5 mg
+Gliclazida 30 mg
+Gliclazida 60 mg
+Clopidogrel 75 mg
+Ácido acetilsalicílico 100 mg
+Alendronato 70 mg
+Vitamina D 1.000 UI
+Vitamina D 7.000 UI
+Vitamina D 50.000 UI
+Sulfato ferroso 40 mg
+Ácido fólico 5 mg
+Melatonina 3 mg
+Zolpidem 10 mg
+Quetiapina 25 mg
+Bupropiona 150 mg
+Venlafaxina 75 mg
+Amitriptilina 25 mg
+Pregabalina 75 mg
+Gabapentina 300 mg
+Topiramato 25 mg
+Topiramato 50 mg
+Tansulosina 0,4 mg
+Finasterida 1 mg
+Finasterida 5 mg
+Sildenafila 50 mg
+Tadalafila 5 mg
+Tadalafila 20 mg
+Ciprofloxacino 500 mg
+Fluconazol 150 mg
+Albendazol 400 mg
+Ivermectina 6 mg
+Valsartana 160 mg
+Olmesartana 20 mg
+Olmesartana 40 mg
+Metoprolol 50 mg
+Ezetimiba 10 mg
+Domperidona 10 mg
+Ondansetrona 8 mg
+Cetirizina 10 mg
+Desloratadina 5 mg
+Fexofenadina 120 mg
+Fexofenadina 180 mg
+Hidroxizina 25 mg
+Prednisolona xarope
+Acetilcisteína 600 mg
+Acetilcisteína xarope
+Ambroxol xarope
+Simeticona gotas
+Simeticona 40 mg
+Bromoprida gotas
 
 # Marcas · Limpeza
 Tira manchas Vanish
@@ -2457,6 +3536,52 @@ Nuk
 Chupeta MAM
 Chupeta Avent
 Avent
+Pampers Confort Sec
+Pampers Premium Care
+Pampers Pants
+Pampers Ajuste Total
+Huggies Tripla Proteção
+Huggies Supreme Care
+Huggies Natural Care
+Huggies Roupinha
+MamyPoko Pants
+Turma da Mônica
+Babysec
+Personal Baby
+Bigfral Baby
+Fralda Mônica Plus
+Fralda Capricho
+Fralda Sapeka
+Lenço Johnson's
+Desitin
+Dermodex
+Condicionador Johnson's Baby
+Granado Bebê
+Mustela
+Huggies Shampoo
+Nan
+Nan Comfor
+Nan Supreme
+Nan Sem Lactose
+Aptamil Premium
+Similac
+Ninho Fases
+Neocate
+Pregomin
+Nestlé Naturnes
+Papinha Heinz Baby
+Philips Avent
+Mamadeira Nuk
+Mamadeira MAM
+Mamadeira Kuka
+Kuka
+Chupeta Kuka
+Mamadeira Pigeon
+Pigeon
+Chicco
+Mamadeira Chicco
+Chupeta Chicco
+Fisher-Price
 
 # Marcas · Pet
 Ração Pedigree
@@ -2529,6 +3654,89 @@ Drontal
 Vermífugo Vermivet
 Shampoo Sanol
 Sanol
+Ração Pedigree filhote
+Ração Pedigree adulto
+Petisco Pedigree
+Pedigree Dentastix
+Dentastix
+Whiskas Temptations
+Golden
+Ração Golden Fórmula
+Golden Mega
+Golden Seleção Natural
+Premier
+Premier Pet
+Premier Fórmula
+Premier Nattu
+Royal Canin Mini
+Royal Canin Indoor
+Sachê Friskies
+Alpo
+Ração Alpo
+Felix
+Sachê Felix
+Special Cat
+Total Max
+Guabi
+Ração Gran Plus
+Farmina
+Hill's
+Premiatta
+Formula Natural
+Fit Formula
+Origens
+Petisco Baw Waw
+Kelcat
+Ração Kelcat
+Keldog
+Ração Keldog
+Bifinho Keldog
+Max Cat
+Ração Max Cat
+Equilíbrio
+Ração Equilíbrio
+Total Equilíbrio
+Optimum
+Ração Optimum
+Three Cats
+Ração Three Cats
+Three Dogs
+Ração Three Dogs
+Faro
+Ração Faro
+Champ
+Ração Champ
+Foster
+Ração Foster
+Granplus Menu
+Chalesco
+Viva Verde
+Kelco
+Areia Pet Clean
+Pet Clean
+Areia Snow
+Granulado Pipicat
+Super Secão
+Tapete Expet
+Expet
+Advocate
+Revolution
+Credeli
+Vermivet
+Endogard
+Milbemax
+Sanol Dog
+Petisco Petz
+Ração Zee.Dog
+Zee.Dog
+Alpiste Zootekna
+Ração Alcon
+Alcon
+Ração Tetra
+Ração Nutrópica
+Nutrópica
+Ração Megazoo
+Megazoo
 
 # Marcas · Farmácia
 Dorflex
@@ -2642,3 +3850,2264 @@ Leite de Magnésia
 Óleo de rícino
 Água boricada
 Polvilho antisséptico
+
+# Marcas · Nestlé
+Leite condensado Moça lata
+Leite condensado Moça caixinha
+Moça Fiesta
+Creme de leite Nestlé lata
+Leite em pó Ninho integral
+Leite em pó Ninho Forti+
+Ninho Fases 1+
+Ninho Fases 3+
+Leite Ninho Zero Lactose
+Leite em pó Molico
+Nescau 2.0
+Nescau Light
+Nescau pronto para beber
+Neston 3 cereais
+Mucilon arroz e aveia
+Mucilon multicereais
+Nescafé Original
+Nescafé Matinal
+Nescafé Gold
+Nescafé Cappuccino
+Nescafé Dolce Gusto
+Cápsula Dolce Gusto
+Cereal Snow Flakes
+Cereal Nesfit
+Cereal Moça Flakes
+Cereal Crunch
+Cereal Passatempo
+Cereal Chocapic
+Biscoito recheado Passatempo
+Biscoito São Luiz
+Biscoito Prestígio
+Chocolate Charge
+Chocolate Sensação
+Chocolate Lollo
+Chocolate Chokito
+Chocolate Nestlé Blend
+Chocolate Surpresa
+Bombom Especialidades Nestlé
+Caixa de bombom Especialidades Nestlé
+Chambinho
+Iogurte Nestlé Grego light
+Iogurte Molico
+Leite fermentado Chamyto
+Iogurte Ninho
+Petit suisse Chambinho
+Chandelle
+Sobremesa Chandelle
+Pudim Moça
+Picolé La Frutta
+Picolé Kit Kat
+Sorvete Moça
+Caldo Maggi galinha
+Caldo Maggi carne
+Tempero Maggi
+Macarrão instantâneo Maggi
+Sopa Maggi
+Maggi Fondor
+Ninho Soleil
+Sustagen
+Nesquik
+Nestea
+Água Pureza Vital
+São Lourenço
+
+# Marcas · Unilever (alimentos)
+Maionese Hellmann's light
+Molho Hellmann's
+Caldo Knorr galinha
+Caldo Knorr carne
+Caldo Knorr legumes
+Knorr Meu Caldo
+Sopa Knorr
+Creme de cebola Knorr
+Tempero Knorr
+Arroz Knorr
+Purê de batata Knorr
+Molho Knorr
+Cornetto
+Picolé Fruttare
+Fruttare
+Sorvete Magnum
+Picolé Chicabon
+Chicabon
+Eskibon
+Tablito
+Sorvete Brigadeiro Kibon
+Sorvete Napolitano Kibon
+Sorvete Carte d'Or
+Carte d'Or
+Sorvete Ben & Jerry's
+
+# Marcas · Mondelez
+Chocolate Lacta ao leite
+Bis Xtra
+Chocolate Ouro Branco
+Caixa de bombom Lacta
+Chocolate Lacta Intense
+Chocolate Shot
+Chocolate Lacta 5Star
+Chocolate Milka
+Chocolate Toblerone
+Biscoito Belvita
+Biscoito Lacta
+Biscoito Tortinhas Trakinas
+Biscoito Club Social integral
+Chiclete Bubbaloo
+Bubbaloo
+Chiclete Chiclets
+Refresco Tang
+Clight
+Fresh
+Royal
+Philadelphia
+
+# Marcas · PepsiCo
+Lay's
+Baconzitos
+Cebolitos
+Stiksy
+Sensações
+Batata Sensações
+Pingo d'Ouro
+Elma Chips
+Toddynho
+Cereal Toddy
+Quaker
+Farinha de aveia Quaker
+Aveia em flocos Quaker
+Granola Quaker
+Cereal Quaker
+Mabel
+Biscoito Toddy
+Cookies Toddy
+Sukita
+Refrigerante Sukita
+Tônica Antarctica
+
+# Marcas · Kraft Heinz
+Molho barbecue Heinz
+Atomatado Quero
+Molho de pimenta Quero
+Catchup Quero
+Polpa de tomate Quero
+
+# Marcas · Cargill
+Óleo de milho Liza
+Óleo de canola Liza
+Extrato de tomate Pomarola
+Pomarola
+Elefante
+Molho de tomate Tarantella
+Tarantella
+Maionese Mazola
+Óleo Mazola
+
+# Marcas · Bunge
+Soya
+Primor
+Creme vegetal Primor
+Gordura vegetal Primor
+Óleo Salada
+Farinha de trigo Suprema
+Azeite Salada
+Maionese Primor
+
+# Marcas · Camil e grãos
+Arroz Camil tipo 1
+Arroz Camil integral
+Arroz Camil parboilizado
+Feijão Camil carioca
+Feijão Camil preto
+Açúcar União refinado
+Açúcar União cristal
+Açúcar União mascavo
+Açúcar Doce Mel
+Açúcar Alto Alegre
+Café União
+Arroz Tio João tipo 1
+Arroz Tio João integral
+Arroz Tio João parboilizado
+Arroz Urbano
+Arroz Pilecco
+Arroz Rei Sul
+Arroz Broto Legal
+Feijão Kicaldo carioca
+Feijão Kicaldo preto
+Arroz Kicaldo
+Arroz Fazenda
+Arroz Pop
+Arroz Emoções
+Arroz Sepé
+Feijão Pantera
+Feijão Turquesa
+Feijão Combrasil
+Feijão Biju
+Arroz Codil
+Arroz Saboroso
+Arroz Dona Benta
+Lentilha Camil
+Grão de bico Camil
+Pipoca Camil
+Canjica Camil
+
+# Marcas · M. Dias Branco
+Biscoito Piraquê leite maltado
+Biscoito Piraquê goiabinha
+Biscoito Piraquê cream cracker
+Biscoito Piraquê água e sal
+Biscoito Piraquê Presuntinho
+Biscoito Piraquê Queijinho
+Biscoito Piraquê recheado
+Biscoito Treloso
+Treloso
+Biscoito Isabela
+Biscoito Estrela
+Biscoito Pelaggio
+Biscoito Basilar
+Biscoito Predilleto
+Macarrão Adria espaguete
+Macarrão Adria parafuso
+Macarrão Adria com ovos
+Macarrão Adria grano duro
+Macarrão Vitarella
+Macarrão Fortaleza
+Macarrão Richester
+Macarrão Isabela
+Macarrão Pilar
+Macarrão Basilar
+Macarrão Medalha de Ouro
+Macarrão instantâneo Adria
+Torrada Adria
+Bolinho Adria
+Farinha de trigo Fortaleza
+Farinha de trigo Medalha de Ouro
+Farinha de trigo Finna
+Finna
+Margarina Puro Sabor
+Mistura para bolo Isabela
+Mistura para bolo Adria
+Snack Frontera
+Salgadinho Frontera
+Pipoca Vitarella
+
+# Marcas · Massas e farinhas
+Macarrão Renata espaguete
+Macarrão Renata parafuso
+Macarrão Renata com ovos
+Macarrão Barilla espaguete
+Macarrão Barilla penne
+Macarrão De Cecco
+Macarrão Nissin
+Macarrão Paganini
+Macarrão Orquídea
+Macarrão Germani
+Macarrão Mosmann
+Macarrão Floriani
+Macarrão Bonsabor
+Macarrão Santa Lúcia
+Lasanha Renata
+Lasanha Barilla
+Nissin Lámen
+Macarrão instantâneo Turma da Mônica
+Farinha de trigo Rosa Branca
+Farinha de trigo Nita
+Farinha de trigo Boa Sorte
+Farinha de trigo Globo
+Farinha de trigo Orquídea
+Farinha de trigo Mirella
+Farinha de trigo Anaconda tipo 1
+Mistura para pão Dona Benta
+Fubá Yoki
+Farinha de mandioca Yoki
+Farofa Yoki
+Pipoca de micro-ondas Yoki
+Amendoim Yoki
+Mistura para bolo Yoki
+Polvilho Yoki
+Canjica Yoki
+Tapioca Yoki
+Sagu Yoki
+Kitano
+Tempero Kitano
+Orégano Kitano
+Pimenta Kitano
+Canela Kitano
+Fubá Sinhá
+Farinha de milho Sinhá
+Flocão Sinhá
+Milharina
+Fubá Kimilho
+Flocão Kimilho
+Farinha de mandioca Pinduca
+Polvilho Amafil
+Tapioca Da Terrinha
+Massa de pastel Brasileira
+Massa de pastel Romanha
+
+# Marcas · Biscoitos, bolos e panetones
+Cookies Bauducco
+Biscoito Bauducco Maizena
+Biscoito Bauducco Cookies
+Pão de mel Bauducco
+Bolo Bauducco
+Biscoito Visconti
+Chocotone Visconti
+Wafer Visconti
+Biscoito Marilan cream cracker
+Biscoito Marilan Teens
+Biscoito Pit Stop
+Pit Stop
+Biscoito Marilan Maizena
+Biscoito Nikito
+Biscoito Aymoré
+Biscoito Mabel Doce de Leite
+Biscoito Zezé
+Biscoito Fortaleza Maria
+Biscoito Tostines Maizena
+Biscoito Bono chocolate
+Biscoito Negresco morango
+Biscoito Oreo baunilha
+Biscoito Passatempo chocolate
+Ana Maria
+Bolinho Pullman
+Bolinho Seven Boys
+Bolinho Plus Vita
+Bolinho Bauducco Gotas
+Rocambole Seven Boys
+Panetone Pullman
+Panetone Casa Suíça
+Panetone Village
+Panetone Trento
+Biscoito Fofura
+Biscoito Globo
+Biscoito de polvilho Globo
+Biscoito Kodilar
+Biscoito Dauper
+Biscoito Liane
+Biscoito Mabel cream cracker
+Biscoito Água Matilde
+Biscoito Tia Sônia
+Torrada Magic Toast
+Magic Toast
+Biscoito Club Social Original
+Biscoito Belvita aveia
+Biscoito Nesfit integral
+Barra de cereal Trio
+Barra de cereal Ritter
+Barra de proteína Nutry
+Barra de cereal Quaker
+Mãe Terra
+Biscoito Mãe Terra
+Tostines
+Bauducco
+
+# Marcas · Doces e chocolates
+Chocolate Garoto Talento
+Chocolate Serenata do Amor
+Chocolate Crocante Garoto
+Chocolate Garoto Meio Amargo
+Chocolate Negresco
+Bombom Garoto
+Hershey's
+Chocolate Hershey's Cookies'n'Creme
+Chocolate Kisses
+Lindt
+Chocolate Lindt Excellence
+Cacau Show
+Trufa Cacau Show
+Ferrero Rocher
+Kinder Bueno
+Tic Tac
+Twix
+Snickers
+Chocolate Milky Way
+Chocolate Arcor
+Bala Arcor
+Pirulito Arcor
+7 Belo
+Chiclete Poosh
+Bala Butter Toffees
+Butter Toffees
+Chocolate Tortuguita
+Tortuguita
+Fini
+Gelatina Fini
+Bala Mentos
+Bala Freegells
+Freegells
+Paçoca Amor
+Pé de moleque Santa Helena
+Amendoim Santa Helena
+Mendorato
+Dori
+Bala Dori
+Jujuba Dori
+Gomets
+Bala de goma Fini
+Pirulito Chupa Chups
+Chupa Chups
+Chocolate Montevérgine
+Chocolate Neugebauer
+Neugebauer
+Chocolate Harald
+Harald
+Chocolate em pó Harald
+Chocolate Melken
+Chocolate em pó Nestlé Dois Frades
+Dois Frades
+Granulado Mavalério
+Confeitos Dori
+Marshmallow Fini
+Goiabada Cascão
+Doce de leite Viçosa
+Doce de leite Mococa
+Leite condensado Mococa
+Leite condensado Italac
+Leite condensado Triângulo
+Leite condensado Camponesa
+Creme de leite Italac
+Creme de leite Mococa
+Amélia
+Chantilly Vigor
+Pudim Dr. Oetker
+Mistura para bolo Dr. Oetker
+Fermento Dr. Oetker
+Confeitos Dr. Oetker
+Dr. Oetker
+Queensberry
+Geleia Ritter
+Ritter
+Geleia Predilecta
+Pasta de amendoim Dr. Peanut
+Dr. Peanut
+Pasta de amendoim Integralmédica
+Pasta de amendoim Amendupã
+Creme de avelã Nucita
+Zero-Cal
+Adocyl
+Linea
+Adoçante Finn
+Finn
+Adoçante Stevita
+Stevita
+Adoçante Doce Menor
+Adoçante Assugrin
+Assugrin
+Adoçante Sucralose Linea
+Mel Baldoni
+Baldoni
+
+# Marcas · Temperos, molhos e conservas
+Arisco
+Tempero completo Arisco
+Caldo Arisco
+Glutamato Ajinomoto
+Hondashi
+Sakura
+Kikkoman
+Shoyu Mitsuwa
+Molho inglês Cepêra
+Cepêra
+Vinagre Castelo
+Castelo
+Vinagre Toscano
+Vinagre Minhoto
+Vinagre Heinz
+Andorinha
+Borges
+Carbonell
+O-Live
+Azeite Cocinero
+Cocinero
+Gallo
+Azeite Português
+Azeite Serrata
+Azeite Paganini
+Azeite Figueira da Foz
+Óleo Cocamar
+Óleo de soja Coamo
+Óleo de soja Vila Velha
+Óleo Sinhá
+Óleo de soja ABC
+Fugini
+Extrato de tomate Fugini
+Ketchup Fugini
+Maionese Fugini
+Predilecta
+Extrato de tomate Predilecta
+Ervilha Predilecta
+Molho de tomate Cajamar
+Molho de tomate Bonare
+Molho de tomate Olé
+Olé
+Molho de tomate Pomodoro
+Molho de tomate Barilla
+Molho Barilla
+Molho de pimenta Tabasco
+Tabasco
+Molho de pimenta Cepêra
+Molho de pimenta Kitano
+Molho de pimenta Mineira
+Molho de pimenta Ana Maria
+Palmito Bonare
+Bonare
+Palmito Predilecta
+Azeitona Raiola
+Raiola
+Azeitona La Violetera
+Azeitona Vale Fértil
+Vale Fértil
+Champignon Raiola
+Gomes da Costa
+Atum ralado Gomes da Costa
+Patê de atum Gomes da Costa
+Coqueiro
+Atum Pescador
+Pescador
+88
+Sardinha Pescador
+Atum Robinson Crusoe
+Sococo
+Ducoco
+Leite de coco Menina
+Leite de coco Copra
+Copra
+Óleo de coco Copra
+Cisne
+Lebre
+Sal Norsal
+Sal Smart
+Sal Moc
+Tempero Sabor Ajinomoto
+Tempero Kisabor
+Tempero Fugini
+Alho Arisco
+Alho Elefante
+Pimenta-do-reino Kitano
+Colorau Kitano
+Orégano Chinezinho
+Chinezinho
+Tempero Chinezinho
+Pimenta Chinezinho
+Canela Chinezinho
+Cravo Chinezinho
+Coentro Chinezinho
+Batata palha Visconti
+Batata palha Pingo d'Ouro
+Batata palha Sinhá
+Batata palha Kró
+Kró
+Batata palha Crocantíssima
+Farofa Kisabor
+Farofa Pronta Yoki
+Farofa Hikari
+Hikari
+
+# Marcas · Café e chá
+Pilão
+Café Pilão tradicional
+Café Pilão extraforte
+Café Pilão a vácuo
+Café Pilão em cápsula
+3 Corações
+Café 3 Corações tradicional
+Café 3 Corações extraforte
+Cápsula 3 Corações
+Cápsula Três
+Melitta
+Café Melitta extraforte
+Filtro de papel Melitta
+Filtro de café Melitta
+Pelé
+Santa Clara
+Caboclo
+Café Seleto
+Seleto
+Café Marata
+Café Pimpinela
+Café Bom Jesus
+Café Damasco
+Damasco
+Café Baggio
+Baggio
+Café Utam
+Café Brasileiro
+Café Cajubá
+Café Toko
+Café Odebrecht
+Café Iguaçu
+Café Solúvel Iguaçu
+Café Orfeu
+Orfeu
+Café Fazenda Rio Grande
+Café Starbucks
+Café L'Or
+Cápsula L'Or
+Nespresso
+Café Nescafé Dolce Gusto
+Café Solúvel Nescafé
+Café Solúvel Pelé
+Cappuccino Pilão
+Cappuccino Melitta
+Cappuccino Nescafé
+Leão
+Matte Leão
+Chá mate Leão
+Twinings
+Chá Real
+Chá Celestial
+Chá Mais Leve
+Barão
+Ximango
+Erva-mate Mate Laranjeiras
+Erva-mate Rei Verde
+Erva-mate Campeiro
+Erva-mate Seiva Pura
+Erva-mate Madrugada
+Chimarrão Barão
+Filtro de papel 3 Corações
+Filtro de papel Brigitta
+Filtro de papel Bom Jesus
+
+# Marcas · Laticínios
+Italac
+Piracanjuba
+Parmalat
+Itambé
+Elegê
+Tirol
+Jussara
+Batavo
+Shefa
+Leite Quatá
+Quatá
+Leite Betânia
+Betânia
+Leite Camponesa
+Camponesa
+Leite Vigor
+Leite Frimesa
+Frimesa
+Leite Polly
+Leite Danby
+Leite Dalia
+Leite Cativa
+Cativa
+Leite Lactalis
+Leite Président
+Leite Zero Lactose Piracanjuba
+Leite Zero Lactose Italac
+Leite Zero Lactose Parmalat
+Leite Zero Lactose Itambé
+Leite Zero Lactose Elegê
+Leite Zero Lactose Tirol
+Leite Liane Zero Lactose
+Leite Liane
+Leite Cooperativa
+Leite Languiru
+Languiru
+Leite Santa Clara
+Leite Piá
+Piá
+Leite Verde Campo
+Verde Campo
+Leite Holandês
+Danone
+Iogurte Danone Grego
+Danone Grego
+Iogurte Corpus
+Corpus
+Iogurte Danio
+Danio
+Iogurte YoPRO
+YoPRO
+Iogurte Batavo Pense Zero
+Pense Zero
+Vigor
+Iogurte Italac
+Iogurte Elegê
+Iogurte Tirol
+Iogurte Frimesa
+Iogurte Verde Campo
+Iogurte Paulista
+Paulista
+Iogurte Molico Zero
+Yakult 40
+Sofyl
+Leite fermentado Batavo
+Danúbio
+Poços de Caldas
+Tirolez
+Requeijão Nestlé
+Requeijão Piracanjuba
+Requeijão Italac
+Requeijão Elegê
+Requeijão Batavo
+Requeijão Président
+Requeijão Scala
+Scala
+Requeijão Quatá
+Requeijão Verde Campo
+Cream cheese Polenghi
+Cream cheese Scala
+Président
+Faixa Azul
+Queijo Scala
+Queijo Sadia
+Queijo Itambé
+Queijo Piracanjuba
+Queijo Ipanema
+Queijo Teixeira
+Queijo Damare
+Queijo Cruzília
+Queijo Regina
+Queijo Santa Amália
+Queijo Coalho Sertanejo
+Queijo Davaca
+Queijo Gran Mestri
+Gran Mestri
+Queijo Parmesão Faixa Azul
+Queijo Parmesão Vigor
+Queijo ralado Vigor
+Queijo ralado Faixa Azul
+Queijo ralado Quatá
+Queijo ralado Président
+Aviação
+Manteiga Vigor
+Manteiga Elegê
+Manteiga Scala
+Manteiga Italac
+Manteiga Frimesa
+Manteiga Ghee Benni
+Doriana
+Becel
+Claybom
+Margarina Vigor
+Margarina Sadia
+Creme vegetal Becel
+Margarina Deline
+Deline
+Margarina Soya
+Margarina Mila
+Margarina Coamo
+
+# Marcas · BRF
+Sadia
+Linguiça toscana Sadia
+Linguiça calabresa Sadia
+Steak Sadia
+Peito de frango Sadia
+Coxinha da asa Sadia
+Sassami Sadia
+Chester Sadia
+Peru Sadia
+Lombo Sadia
+Pão de queijo Sadia
+Hot Pocket Sadia
+Hot Pocket
+Kibe Sadia
+Almôndega Sadia
+Escondidinho Sadia
+Speciale Sadia
+Sadia Bio
+Presunto Sadia sem capa
+Requeijão Sadia
+Perdigão
+Chester Perdigão
+Empanado Perdigão
+Perdigão Na Brasa
+Linguiça Perdigão Na Brasa
+Apresuntado Perdigão
+
+# Marcas · JBS
+Seara
+Empanado Seara
+Peito de frango Seara
+Coxinha da asa Seara
+Kibe Seara
+Seara Gourmet
+Seara Da Granja
+Seara Incrível
+Hambúrguer Incrível
+Frango Incrível
+Margarina Seara
+Friboi
+Picanha Friboi
+Maminha Friboi
+Alcatra Friboi
+Fraldinha Friboi
+Contrafilé Friboi
+Carne moída Friboi
+Friboi Maturatta
+Maturatta
+Swift
+Picanha Swift
+Batata Swift
+Pão de queijo Swift
+Massa Leve
+
+# Marcas · Outros frigoríficos
+Aurora
+Mortadela Aurora
+Bacon Aurora
+Pernil Aurora
+Lombo Aurora
+Copacol
+Coxa e sobrecoxa Copacol
+Filé de peito Copacol
+Tilápia Copacol
+Lar
+Frango a passarinho Lar
+Peito de frango Lar
+Coxa de frango Lar
+Asa de frango Lar
+C.Vale
+Presunto Frimesa
+Mortadela Frimesa
+Salsicha Frimesa
+Linguiça Frimesa
+Pif Paf
+Frango Pif Paf
+Lasanha Pif Paf
+Rezende
+Salsicha Rezende
+Mortadela Rezende
+Marba
+Presunto Marba
+Ceratti
+Salame Ceratti
+Mortadela Bologna Ceratti
+Minerva
+Minerva Foods
+Marfrig
+Bassi
+Picanha Bassi
+Korin
+Ovos Korin
+Diplomata
+Frango Jaguá
+Frango Bello
+Frango Canção
+Frango Avivar
+Frango Rivelli
+Frango Pioneiro
+Frango Ad'oro
+Frango Alliz
+Frango Seara Nature
+Frango Granja Faria
+Ovos Mantiqueira
+Mantiqueira
+Ovos Happy Eggs
+Ovos Granja Faria
+Granja Faria
+Ovos Yabuta
+Tilápia Tilabras
+Peixe Gomes da Costa
+Salmão Pescanova
+Bacalhau Riberalves
+Bacalhau Gadus Morhua
+Camarão Costa Sul
+Seara Bacalhau
+Pescanova
+Linguiça Saudali
+Saudali
+Presunto Saudali
+Mortadela Confiança
+Salsicha Hot Dog Pif Paf
+Linguiça Alegra
+Alegra
+Lombo Alegra
+Bacon Alegra
+Prieto
+Linguiça Prieto
+Salame Prieto
+Copa Prieto
+Salame Aurora
+Defumados Frimesa
+Peito de peru Rezende
+Presunto Pif Paf
+
+# Marcas · Pães e padaria
+Pão de forma Pullman
+Pullman
+Pão Pullman integral
+Bisnaguinha Pullman
+Pão de hambúrguer Pullman
+Pão de forma Seven Boys
+Seven Boys
+Bisnaguinha Seven Boys
+Pão de hot dog Seven Boys
+Pão de forma Wickbold
+Wickbold
+Pão Wickbold 5 Zero
+Pão Wickbold Leve
+Pão de forma Plus Vita
+Plus Vita
+Pão Plus Vita integral
+Pão de forma Nutrella
+Nutrella
+Pão Nutrella integral
+Pão de forma Visconti
+Pão de forma Panco
+Panco
+Bisnaguinha Panco
+Pão de forma Bimbo
+Bimbo
+Rap10 integral
+Tortilha Bimbo
+Pão de forma Ana Maria
+Pão de forma Bauducco
+Pão Pão de Açúcar
+Pão Qualitá
+Pão de forma Romanha
+Pão de forma Firenze
+Pão de forma Dom Paulo
+Pão Bauducco
+Torrada Wickbold
+Torrada Visconti integral
+Pão sírio Wickbold
+Pão de queijo Massa Leve
+Pão de queijo Yoki
+Pão de queijo Bauducco
+Pão de queijo Seara
+Pão de queijo Minas Mais
+Biscoito de queijo Forno de Minas
+Chipa Forno de Minas
+Massa de pizza Massa Leve
+Massa de pastel Massa Leve
+
+# Marcas · Congelados
+McCain
+Batata palito McCain
+Batata Smiles McCain
+Batata rústica McCain
+Bem Brasil
+Batata Pratigel
+Batata Simplot
+Batata Lamb Weston
+Polenta Bem Brasil
+Mandioca Bem Brasil
+Brócolis Pratigel
+Pratigel
+Seleta Pratigel
+Ervilha Pratigel
+Vegetais Bonduelle
+Bonduelle
+Milho Bonduelle
+Ervilha Bonduelle
+Grão de bico Bonduelle
+Frooty
+Açaí Oakberry
+Açaí Tia Sônia
+Açaí Yoki
+DeMarchi
+Ricaeli
+Polpa de fruta Mais Fruta
+Polpa de fruta Bela Ischia
+Jundiá
+Cremosy
+Häagen-Dazs
+Sorvete Diletto
+Diletto
+Sorvete Frutos do Brasil
+Sorvete Sorvetão
+Sorvete Garoto
+Sorvete Rochinha
+Sorvete Pardal
+Sorvete Lacta
+Sorvete Bauducco
+Picolé Nestlé
+Lasanha Massa Leve
+Pizza Dr. Oetker
+Pizza Pif Paf
+Pizza Massa Leve
+Pizza Mama Mia
+Strogonoff Sadia
+Escondidinho Seara
+Prato pronto Sadia
+Prato pronto Seara
+Hambúrguer Big Burger
+Mini pizza Seara
+Coxinha Sadia
+Coxinha Seara
+Esfiha Sadia
+Bolinha de queijo Sadia
+Steak Seara
+Filé de peixe Seara
+Peixe empanado Sadia
+Camarão empanado Sadia
+Waffle Forno de Minas
+Gelo Polar
+Gelo em cubo
+
+# Marcas · Coca-Cola
+Coca-Cola sem açúcar
+Coca-Cola lata
+Coca-Cola 2 litros
+Coca-Cola 600 ml
+Coca-Cola Café
+Fanta Maracujá
+Fanta Zero
+Sprite Zero
+Kuat
+Schweppes Citrus
+Del Valle Frut
+Néctar Del Valle
+Del Valle 100%
+Crystal
+Água Crystal com gás
+Powerade
+Monster Ultra
+Chá Leão Fuze
+Fuze Tea
+Bebida de soja Ades
+Água de coco Verde Campo
+
+# Marcas · Ambev
+Skol Pilsen
+Skol Puro Malte
+Skol Hops
+Brahma Chopp
+Brahma Zero
+Antarctica
+Antarctica Original
+Original
+Budweiser Zero
+Stella Pure Gold
+Corona Extra
+Beck's
+Cerveja Beck's
+Michelob Ultra
+Bohemia
+Colorado
+Patagonia
+Goose Island
+Wäls
+Serramalte
+Polar
+Cerveja Polar
+Caracu
+Cerveja Caracu
+Malzbier Brahma
+Soda Limonada Antarctica
+Fusion
+Beats
+Mike's
+Água AMA
+
+# Marcas · Heineken e Petrópolis
+Heineken lata
+Heineken long neck
+Amstel Ultra
+Devassa
+Baden Baden
+Kaiser
+Bavaria
+Cerveja Bavaria
+Sol
+Tiger
+Blue Moon
+Lagunitas
+Schin
+Glacial
+Itubaína
+Água Schin
+Itaipava Premium
+Petra
+Black Princess
+Lokal
+Cerveja Lokal
+Weltenburger
+Tnt
+Blue Spirit Ice
+Cabaré Ice
+Refrigerante Petrópolis
+Império
+Proibida
+Cerveja Proibida
+Conti
+Cerveja Conti
+Bierland
+Cerveja Bierland
+
+# Marcas · Refrigerantes, sucos e águas
+Dolly
+Refrigerante Convenção
+Refrigerante Mineirinho
+Mineirinho
+Refrigerante Cotuba
+Refrigerante Funada
+Refrigerante Charrua
+Refrigerante Frevo
+Guaraná Fruki
+Fruki
+Refrigerante Goianinho
+Refrigerante Simba
+Refrigerante Tubaína
+Tubaína
+Refrigerante Xereta
+Guaraná Real
+Refrigerante It
+Bonafont
+Lindoya
+Minalba
+Indaiá
+Água mineral Prata
+Água mineral Ouro Fino
+Ouro Fino
+Água mineral Fonte Ijuí
+Água mineral Santa Bárbara
+Água mineral Igarapé
+Água mineral Serra da Canastra
+Água mineral Puríssima
+Água mineral Schin
+Água mineral Acqua Lia
+Acqua Lia
+Água mineral Perrier
+Perrier
+Água San Pellegrino
+San Pellegrino
+Água Evian
+Água Fiji
+Obrigado
+Água de coco Ducoco
+Água de coco Mais Coco
+Água de coco Puro Coco
+Suco Dafruta
+Dafruta
+Do Bem
+Natural One
+Tial
+Sufresh
+Suco Prats
+Prats
+Suco Aurora
+Suco de uva Aurora
+Suco de uva Casa de Bento
+Suco de uva Garibaldi
+Suco de uva Salton
+Suco de uva Tetê
+Mid
+Suco Frisco
+Frisco
+Suco Qualimax
+Suco Camp
+Suco Vitao
+Suco Ki-Suco
+Ki-Suco
+Suco Clight
+Suco Xereta
+Suco Feel Good
+Feel Good
+Suco Purity
+Suco Greenpeople
+Kombucha Tao
+Kombucha Companhia dos Fermentados
+Kombucha Fermentaria
+Isotônico Marathon
+Red Bull Sugarfree
+Energético Burn
+Burn
+Energético Baly
+Baly
+Energético Flash Power
+Energético Night Power
+Energético Vibe
+Energético Furioso
+Energético 220V
+Chá gelado Leão
+Mate Couro
+Guaraviton
+Guaraná Viton
+Guaraná Power
+Café gelado Starbucks
+
+# Marcas · Vinhos e destilados
+Casillero del Diablo
+Concha y Toro
+Vinho Reservado Concha y Toro
+Santa Helena
+Vinho Santa Carolina
+Vinho Gato Negro
+Gato Negro
+Vinho Alma Mora
+Pérgola
+Salton
+Miolo
+Chalise
+Quinta do Morgado
+Vinho Sangue de Boi
+Sangue de Boi
+Vinho Canção
+Vinho Campo Largo
+Campo Largo
+Vinho Casa Valduga
+Casa Valduga
+Vinho Almadén
+Almadén
+Vinho Periquita
+Vinho Catena
+Vinho Trapiche
+Vinho Norton
+Vinho El Enemigo
+Vinho Cordero con Piel de Lobo
+Vinho Dom Bosco
+Vinho Galiotto
+Vinho Country Wine
+Vinho Bordô
+Vinho Château Duvalier
+Vinho Frontera
+Vinho Undurraga
+Vinho Cono Sur
+Vinho Santa Rita
+Vinho 120
+Vinho Lambrusco
+Lambrusco
+Vinho Porto Ferreira
+Porto Ferreira
+Freixenet
+Espumante Garibaldi
+Espumante Peterlongo
+Peterlongo
+Espumante Casa Valduga
+Espumante Miolo
+Espumante Cereser
+Cereser
+Sidra Peterlongo
+Champanhe Moët & Chandon
+Velho Barreiro
+Pitú
+Cachaça Salinas
+Cachaça Sapupara
+Cachaça Leblon
+Cachaça Boazinha
+Cachaça Tatuzinho
+Cachaça Caninha da Roça
+Cachaça Chico Mineiro
+Cachaça Vale Verde
+Cachaça Espírito de Minas
+Orloff
+Askov
+Vodca Natasha
+Vodca Ketel One
+Vodca Grey Goose
+Vodca Belvedere
+Vodca Skyy
+Vodca Kovak
+Vodca Balalaika
+Johnnie Walker Red Label
+Red Label
+Johnnie Walker Black Label
+Black Label
+Ballantine's
+Chivas
+White Horse
+Passport
+Uísque Old Parr
+Old Parr
+Uísque Buchanan's
+Buchanan's
+Uísque Jim Beam
+Jim Beam
+Uísque Jameson
+Jameson
+Uísque Grant's
+Uísque J&B
+Uísque Teacher's
+Uísque Black & White
+Uísque Natu Nobilis
+Uísque Old Eight
+Uísque Bell's
+Uísque Dewar's
+Tanqueray
+Beefeater
+Bombay
+Gim Gordon's
+Gordon's
+Gim Seagers
+Seagers
+Gim Hendrick's
+Gim Amázzoni
+Gim Rocks
+Gim Eternity
+Montilla
+Rum Havana Club
+Havana Club
+Rum Captain Morgan
+José Cuervo
+Tequila Olmeca
+Tequila Sauza
+Baileys
+Licor Amarula
+Amarula
+Licor Cointreau
+Licor Frangelico
+Licor Jägermeister
+Jägermeister
+Licor Fireball
+Martini Bianco
+Cinzano
+Conhaque Dreher
+Dreher
+Conhaque Domecq
+Conhaque São João da Barra
+Beats Senses
+Ice Kiss
+Vinho Quinta do Morgado suave
+Vermute Contini
+Steinhäger Becosa
+Saquê Azuma
+Saquê Sagaz
+Licor Stock
+Licor de cacau Stock
+Licor Bols
+Bitter Campari
+Underberg
+Fernet Branca
+Malibu
+
+# Marcas · Ypê
+Ypê
+Detergente Ypê neutro
+Detergente Ypê limão
+Detergente Ypê coco
+Detergente Ypê clear
+Lava-louças Ypê
+Lava-louças Ypê Concentrado
+Lava-roupas líquido Ypê
+Lava-roupas Ypê Power Act
+Ypê Power Act
+Tixan Ypê
+Tixan
+Lava-roupas Tixan Ypê
+Amaciante Ypê concentrado
+Amaciante Ypê Essencial
+Desinfetante Ypê Bak
+Limpador Multiuso Ypê
+Alvejante Ypê
+Limpa vidros Ypê
+Limpador perfumado Ypê
+Esponja Ypê
+Lã de aço Assolan
+Atol
+Ypê Premium
+Sabonete Ypê
+Lava-louças Ypê Green
+Ypê Green
+Gel sanitário Ypê
+Limpa banheiro Ypê
+
+# Marcas · Unilever (casa)
+Omo
+Omo líquido
+Omo Lavagem Perfeita
+Omo Puro Cuidado
+Omo Multiação
+Omo Sports
+Omo cápsulas
+Comfort
+Comfort Puro Cuidado
+Brilhante
+Brilhante líquido
+Surf
+Lava-roupas Surf
+Cif
+Cif cremoso
+Cif multiuso
+Cif tira limo
+Cif banheiro
+Cif cozinha
+Cif vidros
+Cif lava-louças
+Sabão em pó Minerva
+
+# Marcas · P&G (casa)
+Ariel
+Ariel líquido
+Ariel cápsulas
+Ace
+Downy
+Downy concentrado
+Downy perfume
+Downy Brisa de Verão
+Downy Lírios do Campo
+Febreze
+Odorizador Febreze
+
+# Marcas · Reckitt
+Vanish
+Vanish Oxi Action
+Vanish Crystal White
+Vanish líquido
+Vanish em pó
+Vanish Gold
+Vanish Poder O2
+Veja
+Veja Gold
+Vidrex
+Veja Banheiro X-14
+X-14
+Limpador X-14
+Veja Cozinha
+Veja Desengordurante
+Veja Perfumes
+Veja Naturals
+Harpic Power Plus
+Harpic pastilha
+Lysoform spray
+Lysol
+Lysol spray
+Desinfetante Lysol
+Air Wick
+Aromatizador Air Wick
+Bom Ar Air Wick
+SBP
+SBP multi-insetos
+SBP elétrico
+Finish
+Secante Finish
+Sal Finish
+Detergente Finish
+Mortein
+Preservativo Durex
+Dettol
+Sabonete Dettol
+Calgon
+
+# Marcas · Colgate-Palmolive (casa)
+Pinho Sol
+Pinho Sol original
+Pinho Sol lavanda
+Ajax
+Ajax Fiesta das Flores
+Ajax Bicarbonato
+Ajax multiuso
+Murphy
+Sabão Murphy
+
+# Marcas · Bombril e outras
+Lã de aço Bombril
+Mon Bijou
+Limpol
+Lava-louças Limpol
+Pinho Bril
+Kalipto
+Desinfetante Kalipto
+Radium
+Saponáceo Radium
+Brilhol
+Limpador Brilhol
+Pratice
+Lava-roupas Pratice
+Desinfetante Sanol
+Qboa
+Alvejante Qboa
+Candura
+Super Globo
+Água sanitária Brilux
+Água sanitária Dragão
+Água sanitária Clorox
+Água sanitária Nobre
+Água sanitária Girando Sol
+Girando Sol
+Amaciante Girando Sol
+Lava-roupas Girando Sol
+Detergente Girando Sol
+Minuano
+Assim
+Amaciante Assim
+Detergente Assim
+Fofo
+Urca
+Amaciante Urca
+Detergente Urca
+Sabão em barra Urca
+Flor de Ypê
+Fazendeiro
+Sabão Rio
+Sabão Granado
+Sabão de coco Granado
+Sabão Pantera
+Sabão Bem-te-vi
+Sabão Barra Vitória
+Pril
+Detergente Lava Bem
+Detergente Toque de Brilho
+Desentupidor Destop
+Destop
+Mr. Músculo cozinha
+Mr. Músculo banheiro
+Pato
+Pato pastilha
+Pato desinfetante
+Glade
+Glade automático
+Glade toque de frescor
+Odorizador Glade
+Raid
+Raid elétrico
+Off
+Off Kids
+Baygon
+Repelente Exposis
+Exposis
+Repelente Repelex
+Repelex
+Ultrathon
+Poliflor
+Brilho Fácil
+Cera Grand Prix
+Grand Prix
+Lustra móveis Peroba
+Óleo de peroba
+Peroba
+Limpa alumínio Brilhante
+Limpa alumínio Mon Bijou
+Tupi
+Zulu
+Start
+Álcool Santa Cruz
+Álcool Prolink
+Álcool em gel Asseptgel
+Asseptgel
+Álcool em gel Tupi
+Álcool Jimo
+Querosene Jimo
+Jimo
+Removedor Jimo
+Tira limo Jimo
+Cupinicida Jimo
+Desengordurante Uau
+Uau
+Limpa pedra
+Dover Roll
+Saco de lixo Embalixo
+Embalixo
+Saco de lixo Lixo Mix
+Saco de lixo Bettanin
+Bettanin
+Rodo Bettanin
+Vassoura Bettanin
+Esfregão Bettanin
+Mop Bettanin
+Scotch-Brite
+Esponja dupla face Scotch-Brite
+Esponja Limppano
+Limppano
+Pano Limppano
+Flanela Limppano
+Luva Mucambo
+Mucambo
+Luva Sanro
+Sanro
+Wyda
+Papel alumínio Royal Pack
+Filme PVC Royal Pack
+Papel alumínio Alcoa
+Papel manteiga Wyda
+Saco zip Wyda
+Copo descartável Copobras
+Copobras
+Copo Copaza
+Prato descartável Copobras
+Guardanapo Snob
+Guardanapo Santepel
+Papel toalha Sublime
+Papel toalha Personal
+Palito Gina
+Gina
+Fósforo Paraná
+Fósforo Pinheiro
+Fósforo Fiat Lux
+Fiat Lux
+Vela Fiat Lux
+Isqueiro Bic
+Carvão Carvãozinho
+Acendedor Zippo
+Pilha Duracell
+Duracell
+Pilha Rayovac
+Rayovac
+Pilha Panasonic
+Pilha Energizer
+Energizer
+Pilha Elgin
+Lâmpada Philips
+Lâmpada Osram
+Lâmpada Elgin
+Lâmpada Avant
+Lâmpada Taschibra
+Fita adesiva Durex 3M
+Durex 3M
+Super Bonder
+Cola Super Bonder
+Cola Tenaz
+Tenaz
+Cola Pritt
+Fita isolante 3M
+
+# Marcas · Unilever (higiene)
+Desodorante Dove Men+Care
+Dove Men+Care
+Creme para pentear Dove
+Creme Dove
+Rexona Men
+Rexona Clinical
+Rexona aerossol
+Rexona roll-on
+Axe Black
+Axe Dark Temptation
+Body spray Axe
+Lifebuoy
+Seda
+Seda Cocriações
+Clear
+Clear Men
+Shampoo Clear Men
+Creme para pentear TRESemmé
+Close Up Triple
+Pond's
+Creme Pond's
+Hidratante Pond's
+Suave
+Shampoo Suave
+Simple
+Sabonete facial Simple
+Nexxus
+Creme Seda
+Rexona Women
+Dove Baby
+Sabonete Dove Baby
+
+# Marcas · P&G (higiene)
+Creme para pentear Pantene
+Pantene Bambu
+Pantene Hidratação
+Pantene Cachos
+Pantene Restauração
+Head & Shoulders Men
+Herbal Essences
+Condicionador Herbal Essences
+Mach3
+Gillette Fusion
+Gillette Fusion5
+Prestobarba3
+Gillette Venus
+Venus
+Carga Gillette Mach3
+Oral-B
+Oral-B Pro-Saúde
+Escova elétrica Oral-B
+Enxaguante Oral-B
+Always Noturno
+Always Protetor Diário
+Secret
+Desodorante Secret
+Vick
+Vick Pastilha
+Vick 44
+
+# Marcas · Colgate-Palmolive (higiene)
+Colgate Máxima Proteção Anticáries
+Colgate Tripla Ação
+Colgate Sensitive
+Colgate Natural Extracts
+Colgate Herbal
+Colgate Kids
+Colgate Neutraçúcar
+Escova Colgate Slim Soft
+Colgate Slim Soft
+Enxaguante Colgate
+Enxaguante bucal Colgate Plax
+Colgate Plax
+Sorriso Dentes Brancos
+Sorriso Xtreme
+Escova de dente Sorriso
+Elmex
+Sabonete líquido Palmolive
+Palmolive Naturals
+Protex Aveia
+Protex Erva-doce
+Speed Stick
+Desodorante Speed Stick
+Lady Speed Stick
+Tom's of Maine
+
+# Marcas · L'Oréal e Garnier
+Elseve Óleo Extraordinário
+Elseve Hydra Hialurônico
+Elseve Cicatri Renov
+Elseve Liso dos Sonhos
+Elseve Reparação Total 5
+Máscara Elseve
+Imédia Excellence
+Excellence
+Tinta L'Oréal
+Casting Creme Gloss
+L'Oréal
+Revitalift
+L'Oréal Revitalift
+Garnier
+Shampoo Fructis
+Condicionador Fructis
+Creme para pentear Fructis
+Tinta Nutrisse
+Garnier Nutrisse
+Garnier SkinActive
+Uniq One
+Kérastase
+Maybelline Colossal
+Maybelline Fit Me
+Fit Me
+La Roche-Posay
+Anthelios
+Effaclar
+Cicaplast
+Vichy
+Loção CeraVe
+
+# Marcas · Natura, Boticário e outros
+Natura
+Natura Ekos
+Ekos
+Natura Tododia
+Tododia
+Natura Lumina
+Lumina
+Natura Chronos
+Natura Kaiak
+Kaiak
+Natura Homem
+Natura Essencial
+Sabonete Natura
+Boticário
+O Boticário
+Nativa SPA
+Malbec
+Lily
+Egeo
+Quasar
+Floratta
+Cuide-se Bem
+Make B
+Eudora
+Siàge
+Quem disse, Berenice?
+Avon
+Avon Care
+Renew
+Jequiti
+Phebo
+Nivea Sun
+Nivea Milk
+Monange Hidratação
+Cenoura & Bronze
+Protetor solar Cenoura & Bronze
+Episol
+Banana Boat
+Sabonete Cetaphil
+Darrow
+Bioderma
+Água micelar Bioderma
+Avène
+Eucerin
+Hidratante Eucerin
+Johnson's
+Óleo Johnson's
+Listerine Cool Mint
+Listerine Zero
+Sensodyne Repair
+Escova Sensodyne
+Parodontax
+Corega
+Curaprox
+Kolynos
+Gessy
+Francis
+Albany
+Sabonete Flor de Ypê
+Sabonete Davene
+Davene
+Sabonete Lux Botanicals
+Senador
+Sabonete Senador
+Bozzano
+Gel Bozzano
+Avanço
+Herbíssimo
+Above
+Adidas
+Desodorante Giovanna Baby
+Giovanna Baby
+Desodorante Leite de Rosas
+Desodorante Contouré
+Contouré
+Desodorante Soffie
+Paixão
+Hidratante Hidramais
+Hidramais
+Hidratante Skala
+Skala
+Creme Skala
+Creme Salon Line
+Gelatina Salon Line
+Creme Novex
+Shampoo Novex
+Lola Cosmetics
+Lola
+Kerasys
+Wella
+Igora
+Keraton
+Tinta Keraton
+Beautycolor
+Tinta Beautycolor
+Haskell
+Shampoo Haskell
+Darling
+Palmolive Ultra Suave
+Neutrox
+Creme Neutrox
+Bio Extratus
+Shampoo Bio Extratus
+Yamasterol
+Pantene Pro-V
+Dove Men
+Esmalte Dailus
+Dailus
+Esmalte Vult
+Max Love
+Farmax
+Removedor de esmalte Farmax
+Apolo
+Cremer
+Hastes Cremer
+Neve
+Neve Naturali
+Neve Supreme
+Personal
+Mili
+Sublime
+Scott
+Papel higiênico Floral
+Papel higiênico Paloma
+Papel higiênico Elite
+Elite
+Papel higiênico Primavera
+Papel higiênico Folhas de Ouro
+Papel higiênico Dualette
+Intimus Gel
+Intimus Days
+Sym
+O.b.
+Kotex
+Absorvente Mili
+Absorvente Herbíssimo
+Coletor Inciclo
+Inciclo
+Calcinha absorvente Pantys
+Pantys
+Fralda geriátrica Confort
+Prudence
+Olla
+Preservativo Blowtex
+Blowtex
+Gel lubrificante KY
+Protetor labial Carmed
+Lucretin
+Nivea Men Sensitive
+
+# Marcas · Analgésicos, gripe e estômago
+Dorflex comprimido
+Dorflex gotas
+Tylenol 750
+Tylenol gotas
+Novalgina gotas
+Buscofem
+Alivium
+AAS Infantil
+Calminex
+Gripen
+Naldecon
+Maresis
+Afrin
+Loratamed
+Gaviscon
+Mylanta
+Pepsamar
+Omeprazol EMS
+Muvinlax
+Buscopan gotas
+Atroveran
+Ponstan
+Nimesulida EMS
+Tandrilla
+Flanax
+Nisulid
+
+# Marcas · Vitaminas e saúde
+Centrum Silver
+Lavitan Mulher
+Lavitan A-Z
+Pharmaton
+Vitafor
+Sanavita
+Growth
+Max Titanium
+Integralmédica
+Whey Integralmédica
+Essential Nutrition
+Synthroid
+Glifage XR
+Selozok
+Atenol
+Rosuvastatina EMS
+Puran
+Clearblue
+Confirme
+G-Tech
+FreeStyle Libre
+OneTouch
+BD
+Curativo Band-Aid
+Nexcare
+Curativo Nexcare
+Micropore Nexcare
+Esparadrapo Cremer
+Gaze Cremer
+Fibrinase
+Kollagenase
+Hidrogel
+Picrato de butesina
+Barla
+Arboreto
+Optive
+Lágrima Moura Brasil
+Moura Brasil
+Colírio Moura Brasil
+Dexaneurin
+Citoneurin
+Dipirona EMS
+Dipirona Medley
+Paracetamol EMS
+Ibuprofeno EMS
+Medley
+EMS
+Neo Química
+Eurofarma
+Prati-Donaduzzi
+Cimed
+Germed
+Sanofi
+Bayer
+
+# Marcas · combinações
+Iogurte Danone morango
+Iogurte Danone coco
+Iogurte Danone frutas vermelhas
+Iogurte Danone ameixa
+Iogurte Danone pêssego
+Iogurte Nestlé morango
+Iogurte Nestlé coco
+Iogurte Nestlé frutas vermelhas
+Iogurte Nestlé ameixa
+Iogurte Nestlé pêssego
+Iogurte Batavo morango
+Iogurte Batavo coco
+Iogurte Batavo frutas vermelhas
+Iogurte Batavo ameixa
+Iogurte Batavo pêssego
+Iogurte Vigor morango
+Iogurte Vigor coco
+Iogurte Vigor frutas vermelhas
+Iogurte Vigor ameixa
+Iogurte Vigor pêssego
+Iogurte Itambé morango
+Iogurte Itambé coco
+Iogurte Itambé frutas vermelhas
+Iogurte Itambé ameixa
+Iogurte Itambé pêssego
+Iogurte Piracanjuba morango
+Iogurte Piracanjuba coco
+Iogurte Piracanjuba frutas vermelhas
+Iogurte Piracanjuba ameixa
+Iogurte Piracanjuba pêssego
+Biscoito Passatempo morango
+Biscoito Bono morango
+Biscoito Trakinas chocolate
+Biscoito Trakinas morango
+Biscoito Negresco chocolate
+Biscoito Treloso chocolate
+Biscoito Treloso morango
+Biscoito Bono doce de leite
+Biscoito Oreo original
+Biscoito Oreo chocolate
+Biscoito Trakinas chocolate branco
+Biscoito Passatempo leite
+Guaraná Antarctica lata
+Guaraná Antarctica 2 litros
+Guaraná Antarctica 600 ml
+Fanta Laranja lata
+Fanta Laranja 2 litros
+Fanta Laranja 600 ml
+Pepsi lata
+Pepsi 2 litros
+Pepsi 600 ml
+Sprite lata
+Sprite 2 litros
+Sprite 600 ml
+Coca-Cola Zero lata
+Coca-Cola Zero 2 litros
+Coca-Cola Zero 600 ml
+Cerveja Skol lata
+Cerveja Skol long neck
+Cerveja Skol 600 ml
+Cerveja Brahma lata
+Cerveja Brahma long neck
+Cerveja Brahma 600 ml
+Cerveja Heineken lata
+Cerveja Heineken long neck
+Cerveja Heineken 600 ml
+Cerveja Amstel lata
+Cerveja Amstel long neck
+Cerveja Amstel 600 ml
+Cerveja Budweiser lata
+Cerveja Budweiser long neck
+Cerveja Budweiser 600 ml
+Cerveja Itaipava lata
+Cerveja Itaipava long neck
+Cerveja Itaipava 600 ml
+Cerveja Original lata
+Cerveja Original long neck
+Cerveja Original 600 ml
+Cerveja Stella Artois lata
+Cerveja Stella Artois long neck
+Cerveja Stella Artois 600 ml
+Cerveja Corona lata
+Cerveja Corona long neck
+Cerveja Corona 600 ml
+Cerveja Spaten lata
+Cerveja Spaten long neck
+Cerveja Spaten 600 ml
+Cerveja Brahma Duplo Malte lata
+Cerveja Brahma Duplo Malte long neck
+Cerveja Brahma Duplo Malte 600 ml
+Cerveja Petra lata
+Cerveja Petra long neck
+Cerveja Petra 600 ml
+Suco Del Valle laranja
+Suco Del Valle uva
+Suco Del Valle pêssego
+Suco Del Valle manga
+Suco Del Valle maracujá
+Suco Del Valle goiaba
+Suco Maguary laranja
+Suco Maguary uva
+Suco Maguary pêssego
+Suco Maguary manga
+Suco Maguary maracujá
+Suco Maguary goiaba
+Suco Dafruta laranja
+Suco Dafruta uva
+Suco Dafruta pêssego
+Suco Dafruta manga
+Suco Dafruta maracujá
+Suco Dafruta goiaba
+Suco Natural One laranja
+Suco Natural One uva
+Suco Natural One pêssego
+Suco Natural One manga
+Suco Natural One maracujá
+Suco Natural One goiaba
+Suco Do Bem laranja
+Suco Do Bem uva
+Suco Do Bem pêssego
+Suco Do Bem manga
+Suco Do Bem maracujá
+Suco Do Bem goiaba
+Sabonete Dove em barra
+Sabonete Dove líquido
+Sabonete Lux em barra
+Sabonete Lux líquido
+Sabonete Protex em barra
+Sabonete Protex líquido
+Sabonete Palmolive em barra
+Sabonete Palmolive líquido
+Sabonete Nivea em barra
+Sabonete Nivea líquido
+Sabonete Rexona em barra
+Sabonete Rexona líquido
+Ração Pedigree raças pequenas
+Ração Golden filhote
+Ração Golden adulto
+Ração Golden raças pequenas
+Ração Premier filhote
+Ração Premier adulto
+Ração Premier raças pequenas
+Ração Dog Chow filhote
+Ração Dog Chow adulto
+Ração Dog Chow raças pequenas
+Ração Special Dog filhote
+Ração Special Dog adulto
+Ração Special Dog raças pequenas
+Ração Magnus filhote
+Ração Magnus adulto
+Ração Magnus raças pequenas
+Ração Whiskas filhote
+Ração Whiskas adulto
+Ração Whiskas castrado
+Ração Golden Gatos filhote
+Ração Golden Gatos adulto
+Ração Golden Gatos castrado
+Ração Premier Gatos filhote
+Ração Premier Gatos adulto
+Ração Premier Gatos castrado
+Ração Cat Chow filhote
+Ração Cat Chow adulto
+Ração Cat Chow castrado
+Ração Friskies filhote
+Ração Friskies adulto
+Ração Friskies castrado
+Ração Special Cat filhote
+Ração Special Cat adulto
+Ração Special Cat castrado
+Fralda Pampers P
+Fralda Pampers M
+Fralda Pampers G
+Fralda Pampers XG
+Fralda Pampers XXG
+Fralda Huggies P
+Fralda Huggies M
+Fralda Huggies G
+Fralda Huggies XG
+Fralda Huggies XXG
+Fralda MamyPoko P
+Fralda MamyPoko M
+Fralda MamyPoko G
+Fralda MamyPoko XG
+Fralda MamyPoko XXG
+Fralda Turma da Mônica P
+Fralda Turma da Mônica M
+Fralda Turma da Mônica G
+Fralda Turma da Mônica XG
+Fralda Turma da Mônica XXG
+Fralda Babysec P
+Fralda Babysec M
+Fralda Babysec G
+Fralda Babysec XG
+Fralda Babysec XXG
+Fralda Pom Pom P
+Fralda Pom Pom M
+Fralda Pom Pom G
+Fralda Pom Pom XG
+Fralda Pom Pom XXG
+Leite Italac integral
+Leite Italac desnatado
+Leite Italac semidesnatado
+Leite Piracanjuba integral
+Leite Piracanjuba desnatado
+Leite Piracanjuba semidesnatado
+Leite Parmalat integral
+Leite Parmalat desnatado
+Leite Parmalat semidesnatado
+Leite Itambé integral
+Leite Itambé desnatado
+Leite Itambé semidesnatado
+Leite Itambé zero lactose
+Leite Elegê integral
+Leite Elegê desnatado
+Leite Elegê semidesnatado
+Leite Elegê zero lactose
+Leite Tirol integral
+Leite Tirol desnatado
+Leite Tirol semidesnatado
+Leite Tirol zero lactose
+Leite Ninho integral
+Leite Ninho desnatado
+Leite Ninho semidesnatado
+Leite Molico integral
+Leite Molico desnatado
+Leite Molico semidesnatado
+Leite Molico zero lactose
+Café Pilão em grãos
+Café 3 Corações a vácuo
+Café 3 Corações em grãos
+Café Melitta a vácuo
+Café Melitta em grãos
+Café Pelé tradicional
+Café Pelé extraforte
+Café Pelé a vácuo
+Café Pelé em grãos
+Café Santa Clara tradicional
+Café Santa Clara extraforte
+Café Santa Clara a vácuo
+Café Santa Clara em grãos
+Café Café do Ponto tradicional
+Café Café do Ponto extraforte
+Café Café do Ponto a vácuo
+Café Café do Ponto em grãos
+Café Caboclo tradicional
+Café Caboclo extraforte
+Café Caboclo a vácuo
+Café Caboclo em grãos
+Lava-roupas Omo em pó
+Lava-roupas Omo líquido
+Lava-roupas Ariel em pó
+Lava-roupas Ariel líquido
+Lava-roupas Brilhante em pó
+Lava-roupas Brilhante líquido
+Lava-roupas Tixan Ypê em pó
+Lava-roupas Tixan Ypê líquido
+Lava-roupas Surf em pó
+Lava-roupas Surf líquido
+Lava-roupas Minuano em pó
+Lava-roupas Minuano líquido
+Amaciante Comfort diluído
+Amaciante Downy concentrado
+Amaciante Downy diluído
+Amaciante Ypê diluído
+Amaciante Mon Bijou concentrado
+Amaciante Mon Bijou diluído
+Amaciante Fofo concentrado
+Amaciante Fofo diluído
+Amaciante Minuano concentrado
+Amaciante Minuano diluído
+Condicionador Head & Shoulders
+Condicionador Clear
+Escova de dente Close Up
+Escova de dente Sensodyne
+Desodorante Rexona aerossol
+Desodorante Rexona roll-on
+Desodorante Dove aerossol
+Desodorante Dove roll-on
+Desodorante Nivea aerossol
+Desodorante Nivea roll-on
+Desodorante Axe aerossol
+Desodorante Axe roll-on
+Desodorante Monange aerossol
+Desodorante Monange roll-on
+Desodorante Above aerossol
+Desodorante Above roll-on
+Papel higiênico Neve folha dupla
+Papel higiênico Neve folha simples
+Papel higiênico Neve 12 rolos
+Papel higiênico Personal folha dupla
+Papel higiênico Personal folha simples
+Papel higiênico Personal 12 rolos
+Papel higiênico Mili folha dupla
+Papel higiênico Mili folha simples
+Papel higiênico Mili 12 rolos
+Papel higiênico Sublime folha dupla
+Papel higiênico Sublime folha simples
+Papel higiênico Sublime 12 rolos
+Papel higiênico Scott folha dupla
+Papel higiênico Scott folha simples
+Papel higiênico Scott 12 rolos
+Papel higiênico Familia folha dupla
+Papel higiênico Familia folha simples
+Papel higiênico Familia 12 rolos
