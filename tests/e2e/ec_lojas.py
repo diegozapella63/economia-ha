@@ -73,6 +73,13 @@ async def main():
             await pg.check("#soSemFonte")
             await pg.wait_for_timeout(300)
             check(await nomes(pg) == ["Droga Raia"], f"só sem fonte: a Nissei (com site) sai ({await nomes(pg)})")
+            # 1.21.1: a Nissei foi testada e tem fonte, mas a última busca não trouxe preço dela: os preços vêm na próxima
+            await pg.uncheck("#soSemFonte")
+            await pg.wait_for_timeout(300)
+            ni = await pg.locator("#mp-lojas li", has=pg.locator('input[data-rede="farm-nissei"]')).first.inner_text()
+            check("Preços na próxima busca" in ni, f"Nissei testada: os preços vêm na próxima busca ({ni[:120]})")
+            await pg.check("#soSemFonte")
+            await pg.wait_for_timeout(300)
             await pg.uncheck("#soSemFonte")
             await pg.wait_for_timeout(300)
             # desmarcar: vai para Inativas e para a config

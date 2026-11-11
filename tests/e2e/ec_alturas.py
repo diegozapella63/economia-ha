@@ -45,10 +45,18 @@ async def main():
                     chips = await pg.evaluate("[...document.querySelectorAll('#rapItens .rap-t')].map(e => e.offsetHeight)")
                     check(chips and all(h == H for h in chips), f"{largura} px › os itens da Compra rápida com {H} px ({chips})")
                     await pg.click('#rotModo [data-modo="roteiro"]')
+                # 1.21.1: Encarte ou print de preços, nas Ofertas: na largura do cartão no celular, 250 px no computador
+                await pg.click('#lado [data-lado="ofertas"]' if pc else '.tabbar [data-view="ofertas"]')
+                await pg.wait_for_timeout(400)
+                w = await pg.evaluate("() => { const b = document.getElementById('encBtn'); return b && b.checkVisibility() ? [Math.round(b.getBoundingClientRect().width), Math.round(b.closest('.row-form').getBoundingClientRect().width), b.offsetHeight] : null; }")
+                check(w and w[2] == H and (w[0] == 250 if pc else abs(w[0] - w[1]) <= 1), f"{largura} px › Encarte ou print de preços na largura do cartão ({w})")
                 for onde in ("casa", "lojas", "integracoes", "dados", "aparencia", "opcoes"):
                     await abrir_mais(pg, onde, computador=pc)
                     await pg.wait_for_timeout(400)
                     await conferir(pg, f"{largura} px › {onde}")
+                    if onde == "casa":  # 1.21.1: o Espaço para estoque na largura do cartão, como os outros campos
+                        w = await pg.evaluate("() => { const e = document.getElementById('estoque'); return [Math.round(e.getBoundingClientRect().width), Math.round(e.parentElement.getBoundingClientRect().width)]; }")
+                        check(abs(w[0] - w[1]) <= 1, f"{largura} px › Espaço para estoque na largura toda ({w})")
                 await shot(pg, f"alturas-{largura}")
                 await b.close()
     resumo()

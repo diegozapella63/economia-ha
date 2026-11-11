@@ -228,6 +228,9 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:34px;text-ove
 .mais-painel:not(#mp-dados) .row-form:not(:has(.field)) > :is(.btn, .ghost.big){flex:1 1 calc(50% - 4px);min-width:fit-content;white-space:nowrap;min-height:50px;
   justify-content:center;border-radius:12px;padding:12px 18px;font-size:15px;box-sizing:border-box;text-align:center} /* sem caber os dois, um embaixo do outro */
 @media (min-width:1000px){.mais-painel:not(#mp-dados) .row-form:not(:has(.field)) > :is(.btn, .ghost.big){flex:none;width:250px}}
+/* 1.21.1: o Encarte ou print de preços (Ofertas), como os botões de Mais: na largura do cartão no celular, 250 px no computador */
+.enc > .row-form > .ghost.big{flex:1 1 100%;min-height:50px;justify-content:center;border-radius:12px;padding:12px 18px;font-size:15px;box-sizing:border-box}
+@media (min-width:1000px){.enc > .row-form > .ghost.big{flex:none;width:250px}}
 #mp-dados .confirma .row-form > .btn,#mp-dados .confirma .row-form > .ghost.big{flex:1 1 0;width:auto;min-width:0} /* Apagar tudo e Cancelar lado a lado, do mesmo tamanho */
 #mp-dados .confirma .btn.perigo{background:var(--deal);border-color:transparent;color:var(--surface)} /* na confirmação, o Apagar tudo é o cheio */
 .hint{font-size:12.5px;color:var(--muted)}
@@ -1405,7 +1408,7 @@ input.field,select.field{min-height:var(--altura)}
           <div class="group"><h3>Dias de farmácia</h3><div class="picks dias" id="dFarmacia"></div></div>
           <div class="group">
             <h3><label for="estoque">Espaço para estoque</label></h3>
-            <select class="field" id="estoque" style="align-self:flex-start">
+            <select class="field" id="estoque">
               <option value="pouco">Pouco: até 2 meses de estoque</option>
               <option value="normal">Normal: até 6 meses</option>
               <option value="bastante">Bastante: até 1 ano</option>
@@ -4386,13 +4389,17 @@ input.field,select.field{min-height:var(--altura)}
 
   // ===== Lojas =====
   // loja que a busca achou perto, mas sem nenhum preço (nem oferta, nem item da lista)
-  function semPrecos(c){
+  // as lojas do raio que a última busca deixou sem preço nenhum
+  function semPrecosBusca(c){
     var com = {};
     arr(c.ofertas).forEach(function(o){ com[o.rede] = 1; });
     arr(D.lista).forEach(function(i){ Object.keys(i.precos || {}).forEach(function(r){ com[r] = 1; }); arr(i.tamanhos).forEach(function(t){ com[t.rede] = 1; }); });
-    return arr(c.lojas).filter(function(l){ return G[l.rede] && !com[l.rede] && !l.nova && acompanha(l.rede) && c.id !== 'online'
-      && !(l.preco_fonte && /^(site|paginas|ofertas_site|busca_site|folheto|instagram)/.test(l.preco_fonte.como)); });
+    return arr(c.lojas).filter(function(l){ return G[l.rede] && !com[l.rede] && !l.nova && acompanha(l.rede) && c.id !== 'online'; });
   }
+  // 1.21.1: o Testar agora achou de onde tirar o preço (site, busca direta, páginas, folheto, Instagram ou a IA ligada)
+  function fonteOk(l){ var f = l.preco_fonte; return !!f && f.como !== 'nenhum' && (f.como !== 'ia' || iaOn()); }
+  // "Sem preços de": só as que nem o teste achou de onde tirar (as outras trazem preço na próxima busca)
+  function semPrecos(c){ return semPrecosBusca(c).filter(function(l){ return !fonteOk(l); }); }
   function siteManual(nome){ return estado.lojas.adicionar.filter(function(a){ return a.site && norm(a.nome).indexOf(norm(nome)) === 0; })[0]; }
   function host(u){ return String(u || '').replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]; }
   function ehInsta(u){ return /(^@|instagram\.com\/)/i.test(String(u || '')); }
@@ -4546,7 +4553,7 @@ input.field,select.field{min-height:var(--altura)}
           + '<label class="track"><input type="checkbox" data-rede="' + l.rede + '"' + (on ? ' checked' : '') + '><span class="r-name">' + esc(G[l.rede].nome) + '</span></label>'
           + '<span class="r-val num">' + (web ? '' : km(l.distancia_km)) + '</span>'
           + '<span class="r-sub">' + (txt ? '<span>' + esc(txt) + '</span>' : '') + (l.endereco ? '<span>' + esc(l.endereco) + '</span>' : '') + (web ? '' : mapaChip(l, G[l.rede].nome)) + siteChip(l) + instaChip(l) + clubeHtml(c, l) + arr(l.fontes).filter(function(f){ return f !== 'Mapa' && f !== 'Clube' && !(f === 'Site' && siteDe(l)) && !(f === 'Instagram' && instaDe(l)); }).map(function(f){ return '<span class="src">' + esc(f) + '</span>'; }).join('')
-          + (l.encarte_auto ? '<span>Encarte lido do site ' + esc(host(l.site)) + '</span>' : '') + (l.folheto ? '<span>Folheto da semana' + (l.folheto_ate ? ' até ' + dataBR(l.folheto_ate) : '') + '</span>' : '') + (l.instagram ? '<a class="linkbtn" href="' + esc(l.instagram) + '" target="_blank" rel="noopener">Encarte do Instagram' + (l.instagram_ate ? ' até ' + dataBR(l.instagram_ate) : '') + '</a>' : '') + (l.preco_fonte ? fonteHtml(l, c.id) : web ? fonteOnline(G[l.rede].nome) + botaoTestar(l, c.id) : avisoSemPreco(c, l) + botaoTestar(l, c.id))
+          + (l.encarte_auto ? '<span>Encarte lido do site ' + esc(host(l.site)) + '</span>' : '') + (l.folheto ? '<span>Folheto da semana' + (l.folheto_ate ? ' até ' + dataBR(l.folheto_ate) : '') + '</span>' : '') + (l.instagram ? '<a class="linkbtn" href="' + esc(l.instagram) + '" target="_blank" rel="noopener">Encarte do Instagram' + (l.instagram_ate ? ' até ' + dataBR(l.instagram_ate) : '') + '</a>' : '') + (l.preco_fonte ? fonteHtml(l, c.id, c) : web ? fonteOnline(G[l.rede].nome) + botaoTestar(l, c.id) : avisoSemPreco(c, l) + botaoTestar(l, c.id))
           + (mi >= 0 ? '<span>Adicionada por você</span><button type="button" class="rm" data-loja="' + mi + '">remover</button>' : '') + '</span>'
           + (siteAberto === l.rede ? '<form class="site-form" novalidate data-site-form="' + esc(l.rede) + '" data-cat="' + c.id + '"><input class="field" type="url" inputmode="url" value="' + esc(siteDe(l)) + '" placeholder="Site, página de ofertas ou @ do Instagram" aria-label="Site de ofertas de ' + esc(G[l.rede].nome) + '"><button class="btn" type="submit">Salvar</button><button type="button" class="ghost big" data-site-fecha="1">Cancelar</button></form>' : '')
           + '</li>';
@@ -4632,10 +4639,13 @@ input.field,select.field{min-height:var(--altura)}
       })
       .catch(function(){ TESTANDO = null; pintaLojas(); toast('Sem conexão com o Home Assistant.'); });
   }
-  function fonteHtml(l, cid){
+  function fonteHtml(l, cid, c){
     var f = l.preco_fonte, r = FONTE_ROT[f.como] || FONTE_ROT.nenhum;
     var rot = f.como === 'ia' && !iaOn() ? FONTE_ROT.nenhum : r;
+    // 1.21.1: testada com fonte, mas a última busca foi antes: os preços dela vêm na próxima
+    var depois = c && fonteOk(l) && semPrecosBusca(c).indexOf(l) >= 0;
     return '<span class="chip ' + rot[0] + '">' + rot[1] + '</span>' + (f.exemplo ? '<span>ex.: ' + esc(f.exemplo) + '</span>' : '')
+      + (depois ? '<span>Preços na próxima busca</span>' : '')
       + ((f.como === 'ia' || f.como === 'nenhum') && !iaOn() ? '<span>Ligue a IA para ter o preço</span>' : '')
       + (arr(f.passos).length ? '<details class="fonte-det"' + (FONTE_ABERTA[l.rede] ? ' open' : '') + ' data-fonte="' + esc(l.rede) + '"><summary>Como foi testado' + (f.em ? ' · ' + esc(quandoCurto(f.em)) : '') + '</summary><ul>'
         + arr(f.passos).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></details>' : '')

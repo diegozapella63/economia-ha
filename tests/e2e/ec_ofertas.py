@@ -30,7 +30,7 @@ OFERTAS = {"versao": 2, "gerado_em": "2026-11-02T10:00:00-03:00", "lista": [], "
                 {"rede": "farm-nissei", "codigo": "NISSEI10", "valor": 10, "beneficio": "10% em tudo", "condicao": "No app", "valido_ate": None, "status": "testar"},
                 {"rede": "farm-panvel", "codigo": "VELHO", "valor": 5, "beneficio": "R$ 5", "condicao": "", "valido_ate": D(-1), "status": "confirmado"},
                 {"rede": "farm-nissei", "codigo": "NATAL", "valor": 15, "beneficio": "15% no Natal", "condicao": "", "valido_ate": D(60), "status": "confirmado"}]),
-    categoria("mercados", [("merc-giassi", "Giassi", 1.1)]),
+    categoria("mercados", [("merc-giassi", "Giassi", 1.1, {"preco_fonte": {"como": "api", "exemplo": "Arroz 5 kg por R$ 21,90"}})]),
     categoria("petshops", [("pets-cobasi", "Cobasi", 1.0)], ofertas=[
         oferta("o-golden", "pets-cobasi", "Ração Golden Gatos Castrados 10 kg", 159.9, 189.9, tags=["pet", "gato"]),
         oferta("o-pedigree", "pets-cobasi", "Ração Pedigree Cães Adultos 15 kg", 139.9, 169.9, tags=["pet", "cachorro"])]),
@@ -222,6 +222,8 @@ async def main():
             await pg.click('#cats [data-cat="mercados"]')
             check("Nenhuma oferta encontrada ainda" in await pg.text_content("#deals"), "categoria sem ofertas")
             check(await pg.locator("#resumo").is_hidden(), "sem nada: o resumo some")
+            # 1.21.1: o Testar agora achou o preço no site: não é "Sem preços de" (os preços vêm na próxima busca)
+            check(await pg.locator("#semPrecos").is_hidden(), "loja testada com fonte de preço: fora do Sem preços de")
             # desligados em Online: o marketplace fora da busca e os mercados da região somem das ofertas e dos filtros
             st = app.api("GET", "/api/estado")
             app.api("PUT", "/api/config", dict(st["config"], online={"marketplaces": ["mercadolivre"], "mercados_entrega": False}))

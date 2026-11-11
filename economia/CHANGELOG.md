@@ -1,5 +1,11 @@
 # Mudanças
 
+## 1.21.1
+
+- **Sem preços de** (nas Ofertas) segue o **Testar agora**: uma loja que o teste achou de onde tirar o preço sai do aviso, e em **Mais › Lojas** diz **Preços na próxima busca**. Antes o aviso olhava só a última busca e não sumia depois do teste.
+- **Encarte ou print de preços** na largura do cartão, como os outros botões (250 px no computador).
+- **Espaço para estoque** (Mais › Casa) na largura do cartão, como os outros campos.
+
 ## 1.21.0
 
 - **Sensores novos** no Home Assistant (com **Sensores no Home Assistant** ligado em **Mais › Configurações › Integrações**):
