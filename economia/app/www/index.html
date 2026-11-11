@@ -2564,7 +2564,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.25.2';
+  var VERSAO = '1.25.3';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -4812,7 +4812,8 @@ dialog.ss-wrap::backdrop{background:transparent}
   function pintaHero(){
     var o = oportunidades(), vazio = !estado.lista.length;
     $('heroData').textContent = dataBR(hojeSP());
-    $('comecar').hidden = !vazio;
+    // 1.25.3: o Vamos começar é só para quem começa: lista vazia e nada no Histórico (limpar a lista leva tudo para lá)
+    $('comecar').hidden = !vazio || arr(estado.historico).length > 0;
     var top = o.itens.sort(function(a, b){ return b.e - a.e; });
     $('heroItens').hidden = !top.length;
     $('heroItens').innerHTML = top.slice(0, 3).map(function(x){ return '<li><span class="n">' + esc(x.nome) + '</span><span class="pt" aria-hidden="true"></span><span class="v">' + brl.format(x.e) + '</span></li>'; }).join('')

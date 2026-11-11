@@ -228,6 +228,17 @@ async def main():
             check(not pg.erros, f"atalho: sem erros na página {pg.erros}")
             await b.close()
 
+    # 1.25.3: com a lista vazia depois de limpar (tudo no Histórico), sem o Vamos começar
+    with App({"cep": CEP, "raio_km": 5, "categorias": ["mercados"], "lista": [], "historico": [{"produto": "Leite integral", "compras": [], "saiu": "2026-11-10"}]}, buscar=False) as app:
+        async with async_playwright() as p:
+            b, pg = await pagina(p, largura=390, altura=844)
+            await pg.goto(app.url)
+            await pg.wait_for_timeout(1200)
+            await pg.click('.tabbar [data-view="lista"]')
+            await pg.wait_for_timeout(300)
+            check(await pg.locator("#comecar").is_hidden(), "lista limpa, com Histórico: sem o Vamos começar")
+            await b.close()
+
 
 asyncio.run(main())
 resumo()

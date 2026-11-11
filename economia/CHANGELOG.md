@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.25.3
+
+- **Vamos começar** aparece só para quem está começando: com a lista limpa (os itens vão para o Histórico), não aparece mais.
+
 ## 1.25.2
 
 - **Compra rápida**: os itens do mesmo tamanho, lado a lado da esquerda para a direita.

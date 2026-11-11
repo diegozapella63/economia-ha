@@ -4385,7 +4385,8 @@ input.field,select.field{min-height:var(--altura)}
   function pintaHero(){
     var o = oportunidades(), vazio = !estado.lista.length;
     $('heroData').textContent = dataBR(hojeSP());
-    $('comecar').hidden = !vazio;
+    // 1.25.3: o Vamos começar é só para quem começa: lista vazia e nada no Histórico (limpar a lista leva tudo para lá)
+    $('comecar').hidden = !vazio || arr(estado.historico).length > 0;
     var top = o.itens.sort(function(a, b){ return b.e - a.e; });
     $('heroItens').hidden = !top.length;
     $('heroItens').innerHTML = top.slice(0, 3).map(function(x){ return '<li><span class="n">' + esc(x.nome) + '</span><span class="pt" aria-hidden="true"></span><span class="v">' + brl.format(x.e) + '</span></li>'; }).join('')
