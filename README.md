@@ -35,12 +35,11 @@ A busca começa pelo que não gasta IA (os sites das lojas, os folhetos e a Shop
 - **Minha lista** única para farmácias, mercados, pet shops e online, com um ícone por item e o ritmo de compra de cada um ("deve acabar em 6 dias"). O **Histórico** põe de volta, com um toque, o que já esteve na lista.
 - **Código de barras**: foto ou números do código, e o produto entra na lista; o mesmo produto é achado nas lojas mesmo com outro nome.
 - **Sugestões ao digitar**: o nome do item sugere o que já esteve na lista e os nomes que as lojas usam, sem marca e sem tamanho.
-- **Listas prontas** (opcional): Compra semanal, Compra mensal…, com a tela e o Roteiro na lista escolhida; quantidade e lista resumida.
+- **Listas prontas** (opcional): Compra semanal, Compra mensal…, cada uma com o seu ícone, fixas para usar em toda compra (o que já foi comprado fica marcado até Começar de novo), com a tela e o Roteiro na lista escolhida; quantidade e lista resumida.
 - **"Quis dizer…?"**: corrige o nome escrito errado pelas palavras dos produtos das lojas.
 - **Melhor tamanho**: compara o preço por litro, quilo ou unidade (1 L, galão de 5 L, 5 × 1 L, kits online com frete) e diz quanto tempo dura no seu ritmo.
 - **Sua escolha e similares**: o ✓ fixa a loja ou o tamanho que você prefere, mesmo que não seja o mais barato, e **Similares** mostra até 3 produtos parecidos mais em conta pelo preço do quilo ou do litro.
 - **Roteiro de compras**: diga em até quantas lojas topa parar e o app testa as combinações, mostra onde comprar cada item (no tamanho que compensa mais), a ordem e a rota no Maps.
-- **Compra rápida**: uns itens de agora, sem planejar e sem pôr na lista, e o app diz em qual loja física ir (a de melhor preço entre as que têm mais itens), com a rota no Maps.
 - **Lojas perto de casa pelo mapa**: a zona Casa do Home Assistant e o OpenStreetMap (e o Google Maps, com chave) dizem quais lojas existem perto, com a distância certa. **Encontrar lojas** e **Testar agora** mostram de onde sai o preço de cada loja, com o passo a passo em "Como foi testado".
 - **Primeiro o que não gasta IA**: preço direto no site dos mercados que permitem (Giassi, Angeloni e outros testados sozinhos), a busca e as páginas de produto do site (Cobasi, Bistek), a página de ofertas das lojas pequenas, a Shopee pela API de afiliados e o folheto da semana (Kimbino, Portafolhetos, Seus Folhetos e Catálogos Ofertas) ou o encarte do Instagram, lidos uma vez pela IA. A busca na web com IA entra por último, só para o que faltou.
 - **Ofertas e cupons** das lojas perto do seu CEP, com o motivo de cada destaque e o botão "Não mostrar".

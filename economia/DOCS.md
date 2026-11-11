@@ -71,11 +71,12 @@ Ligue em **Mais › Configurações › Opções › Listas** (vem desligado). N
 
 - Continua uma lista só de produtos, com os preços e o histórico de cada um; as listas dizem o que entra em cada compra. Um item pode estar em mais de uma.
 - A tela toda segue a lista aberta: os itens, o Cupom de economia e as oportunidades.
+- A lista é fixa, para usar em toda compra: numa lista, **Comprei hoje** marca o item como comprado (a data entra no histórico, como sempre) e ele vai para **Comprados (n)**, no fim, recolhido. O Cupom, as oportunidades e o Roteiro olham só para o que falta. **Desmarcar** devolve um item; **Começar de novo**, embaixo da barra, desmarca todos para a próxima compra, sem tirar item nenhum da lista.
 - **Nenhuma** mostra só os itens que não estão em lista nenhuma (não há "Todas": cada item está numa lista ou em Nenhuma).
 - O que você adiciona com uma lista aberta entra nela. Um item que já existe também: é só escrever o nome (ele aparece nas sugestões). Cada item mostra o nome de cada lista: um toque põe ou tira o item dela.
 - Numa lista, **tirar desta lista** tira o item só dela; sem outra lista, ele vai para Nenhuma. **Limpar lista** fica só em Nenhuma e tira só os itens dela.
 - **Mover itens**, embaixo da barra: escolha para qual lista, marque os itens (ou **Marcar todos**) e toque em **Mover**. Eles saem da lista aberta e entram na outra; de uma lista, dá para mover para Nenhuma.
-- **Renomear** e **Apagar lista** ficam embaixo da barra, com a lista aberta. Apagar uma lista não apaga os itens: os que só estavam nela vão para Nenhuma.
+- **Editar** e **Apagar lista** ficam embaixo da barra, com a lista aberta. Em Editar (e ao criar) dá para trocar o nome e escolher um ícone para a lista (um toque no ícone escolhido tira). Apagar uma lista não apaga os itens: os que só estavam nela vão para Nenhuma.
 - No **Roteiro**, em **Lista**, escolha qual entra: uma lista ou **Nenhuma** (os itens sem lista). Uma escolha só, como Paradas e O que comprar; de começo, a lista aberta na Minha lista.
 - Desligar a opção esconde as listas, sem apagar: ligue de novo e elas voltam.
 
@@ -104,17 +105,6 @@ Na aba **Roteiro**, ao lado da Minha lista, diga em até quantas lojas você top
 - o que comprar em cada parada, da loja mais perto para a mais longe, com link para a rota no Maps; sem uma escolha sua, cada item vai no tamanho que compensa mais (a Melhor compra da Minha lista), com o preço do pacote;
 - o que compensa pedir online (pode desligar);
 - quanto uma parada a mais economizaria. Se for pouco, ele recomenda menos paradas, e dá para comparar as opções com um toque.
-
-## Compra rápida
-
-Para quando precisa de umas coisas agora, sem planejar: no **Roteiro**, escolha **Compra rápida** e escreva cada item (as sugestões trazem os da sua lista e os nomes das lojas). Os itens não entram na lista e ficam guardados no aparelho até você tirar.
-
-- Logo embaixo dos itens: **Buscar preços** (só os que estão sem preço; com todos com preço, **Buscar de novo**) e **Limpar**.
-- **Onde comprar**: uma loja física só, a de melhor preço entre as que têm mais itens (empatadas, a mais perto). Se ela fica mais longe que outra, o app diz quanto economiza indo até lá. Lojas online ficam de fora.
-- O preço de cada item na loja, **Como chegar** (a rota no Maps de onde você está) e, se a loja não tiver tudo, o que falta lá e onde tem.
-- **Compare**: as outras lojas, com o total e quantos itens faltam em cada uma. Um toque mostra a loja.
-- Item ainda **sem preço**: **Buscar preços** procura só esses (até 8), só nas lojas físicas.
-- Um toque no item tira ele; **Limpar** tira tudo.
 
 ## Como o item da lista acha o produto
 

@@ -1,6 +1,6 @@
 # EconomIA 1.11.0: uma altura só, a mesma em todos os apps da família (50 px): botões, campos, caixas de seleção, botões
 # de escolha (as abas de Configurações, o Tema) e as escolhas em botões na Minha lista, em Casa, em Lojas e nas quatro
-# abas de Configurações (e, desde a 1.16.0, na Compra rápida), no celular (390 e 320 px) e no computador. Ficam de fora os botões só com ícone, os quadrinhos
+# abas de Configurações (e no Roteiro), no celular (390 e 320 px) e no computador. Ficam de fora os botões só com ícone, os quadrinhos
 # da IA, os botões pequenos das linhas da lista (Comprei hoje, remover), os preços das lojas, os interruptores e as cores.
 import asyncio
 
@@ -34,21 +34,10 @@ async def main():
                 await pg.click('#lado [data-lado="lista"]' if pc else '.tabbar [data-view="lista"]')
                 await pg.wait_for_timeout(400)
                 await conferir(pg, f"{largura} px › Minha lista")
-                if not pc:  # 1.16.0: a Compra rápida, com Como chegar e Buscar preços
+                if not pc:  # o Roteiro (a Compra rápida, de 1.16.0 a 1.25, saiu na 1.26.0)
                     await pg.click('.tabbar [data-view="roteiro"]')
-                    await pg.click('#rotModo [data-modo="rapida"]')
-                    for nome in ("Arroz 5 kg", "Pilha AA"):
-                        await pg.fill("#rapItem", nome)
-                        await pg.click('#rapForm button[type="submit"]')
                     await pg.wait_for_timeout(300)
-                    await conferir(pg, f"{largura} px › Compra rápida")
-                    # 1.25.2: os itens do mesmo tamanho na linha; nome comprido quebra a linha (nada cortado), com 50 px no mínimo
-                    chips = await pg.evaluate("[...document.querySelectorAll('#rapItens .rap-t')].map(e => [e.offsetHeight, Math.round(e.getBoundingClientRect().top)])")
-                    linhas = {}
-                    for h, t in chips:
-                        linhas.setdefault(t, set()).add(h)
-                    check(chips and all(h >= H for h, _ in chips) and all(len(v) == 1 for v in linhas.values()), f"{largura} px › os itens da Compra rápida com {H} px ou mais, iguais na linha ({chips})")
-                    await pg.click('#rotModo [data-modo="roteiro"]')
+                    await conferir(pg, f"{largura} px › Roteiro")
                 # 1.21.1: Encarte ou print de preços, nas Ofertas: na largura do cartão no celular, 250 px no computador
                 await pg.click('#lado [data-lado="ofertas"]' if pc else '.tabbar [data-view="ofertas"]')
                 await pg.wait_for_timeout(400)

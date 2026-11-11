@@ -14,8 +14,7 @@ Rotas:
 - PUT  /api/config   grava a configuração
 - PUT  /api/ofertas  grava um ofertas.json pronto
 - POST /api/buscar   começa a busca agora
-- POST /api/buscar-itens   {"itens": [...]} busca só esses itens e junta ao resultado; com "rapida": true (Compra rápida),
-                            itens fora da lista também, só nas lojas físicas
+- POST /api/buscar-itens   {"itens": [...]} busca só esses itens da lista e junta ao resultado
 - GET  /api/uso-ia   chamadas de IA por dia, tipo e resultado (e sensor.economia_ia_hoje, se ligado)
 - GET  /api/voz/status   se o Falar está pronto e com qual fala para texto
 - POST /api/voz   áudio PCM 16 kHz, 16 bits, mono → {"texto"} pela fala para texto do Home Assistant
@@ -6109,7 +6108,7 @@ def categoria_do_preco(p, cats):
         return c
     nome = norm(p.get("rede") or "")
     if c == "online" or frete_item(p.get("frete")) is not None or any(norm(m) in nome for m in list(MARKETPLACES.values()) + ["shopee", "magazine"]):
-        return "online" if "online" in cats else None  # um preço online, sem Online ligado (ou na Compra rápida): fica fora
+        return "online" if "online" in cats else None  # um preço online, sem Online ligado: fica fora
     pistas = {"farmacias": ("drog", "farm", "raia", "pacheco", "panvel", "pague menos"),
               "petshops": ("pet", "cobasi", "petz", "agro")}
     for cat, palavras in pistas.items():
@@ -6409,11 +6408,10 @@ def mesclar_resultado(resultado, cfg, extra=None, mapa=None, completa=False, nov
         return lista
 
 
-def buscar_itens(itens, rapida=False):
-    """Busca só esses itens e junta ao resultado. Na Compra rápida (rapida), só as lojas físicas: quem compra agora não
-    espera a entrega, e o item pode não estar na lista."""
+def buscar_itens(itens):
+    """Busca só esses itens da lista e junta ao resultado."""
     cfg = ler_json(CONFIG, {}) or {}
-    cats = [c for c in (cfg.get("categorias") or list(CATEGORIAS)) if c in CATEGORIAS and not (rapida and c == "online")]
+    cats = [c for c in (cfg.get("categorias") or list(CATEGORIAS)) if c in CATEGORIAS]
     _uso_local.chamadas = 0
     BUSCA.update({"rodando": True, "erro": None, "avisos": [], "atual": 1, "total": 1, "chamadas_ia": None,
                   "etapa": (itens[0] if len(itens) == 1 else f"{len(itens)} itens").lower()})
@@ -6421,7 +6419,7 @@ def buscar_itens(itens, rapida=False):
         if not cfg.get("cep"):
             raise ErroBusca("Salve o CEP em Mais › Casa antes de buscar.")
         if not cats:
-            raise ErroBusca("Ligue mercados, farmácias ou pet shops em Mais › Lojas para a compra rápida.")
+            raise ErroBusca("Ligue mercados, farmácias, pet shops ou lojas online em Mais › Lojas.")
         resultado, rel, _ = busca_scripts(cfg, cats, itens, ler_folhetos=False)
         conta = {n: sum(len(p[n]["precos"]) for _, p in resultado if n in p) for n in itens}
         faltam = [n for n in itens if conta[n] < 2]
@@ -7970,21 +7968,10 @@ class Painel(BaseHTTPRequestHandler):
                 return None
             nomes = {norm(n): n for n in nomes_da_lista(ler_json(CONFIG, {}) or {})}
             pedidos = [i for i in dado.get("itens") or [] if isinstance(i, str)] if isinstance(dado.get("itens"), list) else []
-            if dado.get("rapida") is True:  # Compra rápida: o item pode não estar na lista
-                vistos = {}
-                for i in pedidos:
-                    i = " ".join(i.split())
-                    if 2 <= len(i) <= 80 and norm(i):
-                        vistos.setdefault(norm(i), nomes.get(norm(i)) or i)  # o da lista com o nome de lá
-                itens = list(vistos.values())
-                if not itens:
-                    return self._json(400, {"erro": "Escreva o nome do produto."})
-                alvo, args = buscar_itens, (itens[:MAX_FOCADA], True)
-            else:
-                itens = list(dict.fromkeys(nomes[norm(i)] for i in pedidos if norm(i) in nomes))
-                if not itens:
-                    return self._json(400, {"erro": "Esse item não está na lista."})
-                alvo, args = buscar_itens, (itens[:MAX_FOCADA],)
+            itens = list(dict.fromkeys(nomes[norm(i)] for i in pedidos if norm(i) in nomes))
+            if not itens:
+                return self._json(400, {"erro": "Esse item não está na lista."})
+            alvo, args = buscar_itens, (itens[:MAX_FOCADA],)
         with _trava:
             if BUSCA["rodando"]:
                 return self._json(202, {"ok": True, "ja_rodando": True})

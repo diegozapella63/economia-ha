@@ -1,5 +1,11 @@
 # Mudanças
 
+## 1.26.0
+
+- **Listas prontas** fixas, para usar em toda compra: numa lista, **Comprei hoje** marca o item e ele vai para **Comprados**, no fim, recolhido. O cupom, as oportunidades e o Roteiro olham só para o que falta. **Desmarcar** devolve um item; **Começar de novo** desmarca todos para a próxima compra, sem tirar nada da lista.
+- Cada lista pode ter um **ícone**: escolha ao criar ou em **Editar** (o antigo Renomear).
+- A **Compra rápida** saiu do Roteiro: as listas prontas fazem esse papel.
+
 ## 1.25.3
 
 - **Vamos começar** aparece só para quem está começando: com a lista limpa (os itens vão para o Histórico), não aparece mais.

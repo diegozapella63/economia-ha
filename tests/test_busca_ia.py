@@ -252,7 +252,7 @@ class Focada(Cenario):
                  ({"rede": "Drogaria Z"}, "farmacias"), ({"rede": "Cobasi"}, "petshops"), ({"rede": "Mercado W"}, "mercados")]
         for p, c in casos:
             self.assertEqual(S.categoria_do_preco(p, cats), c, p)
-        # 1.16.0: sem Online (ou na Compra rápida), um preço online fica fora: antes virava uma "farmácia Amazon"
+        # 1.16.0: sem Online, um preço online fica fora: antes virava uma "farmácia Amazon"
         for p in ({"rede": "Amazon"}, {"rede": "Loja Y", "frete": 0}, {"rede": "X", "categoria": "online"}):
             self.assertIsNone(S.categoria_do_preco(p, ["farmacias", "mercados"]), p)
         self.assertEqual(S.categoria_do_preco({"rede": "Drogaria Z"}, ["mercados"]), "mercados", "sem farmácias: a física que tiver")
@@ -323,21 +323,11 @@ class BuscarItens(Cenario):
         self.assertEqual(lista["Dipirona 500 mg"]["precos"], {"farm-x": 5.0}, "o resto do resultado anterior fica")
         self.assertEqual((S.BUSCA["chamadas_ia"], S.BUSCA["rodando"], S.BUSCA["avisos"]), (1, False, []))
 
-    def test_compra_rapida_so_nas_lojas_fisicas(self):
-        # 1.16.0: a Compra rápida procura um item fora da lista, sem as lojas online (nem na pergunta à IA)
-        S, ha = self.S, self.ha
-        self.config(categorias=["mercados", "online"], lista=[{"produto": "Abacaxi pérola"}])
-        ha.responde_ia("itens sem preço", {"lista": [{"item": 1, "produto": "Pilha AA", "precos": [
-            {"rede": "Bistek", "categoria": "mercados", "preco": 12.9}, {"rede": "Amazon", "categoria": "online", "preco": 9.9, "frete": 0}]}]})
-        S.buscar_itens(["Pilha AA"], rapida=True)
-        self.assertIsNone(S.BUSCA["erro"])
-        self.assertNotIn("e online em", ha.chamadas_ia[-1]["instructions"], "a IA não procura online")
-        lista = {i["produto"]: i for i in S.ler_json(S.OFERTAS)["lista"]}
-        self.assertEqual({k: S.valor_total(v) for k, v in lista["Pilha AA"]["precos"].items()}, {"merc-bistek": 12.9}, "só o preço da loja física")
-        self.assertEqual([i["produto"] for i in S.ler_json(S.CONFIG)["lista"]], ["Abacaxi pérola"], "a lista não muda")
-        self.config(categorias=["online"], lista=[])
-        S.buscar_itens(["Pilha AA"], rapida=True)
-        self.assertEqual(S.BUSCA["erro"], "Ligue mercados, farmácias ou pet shops em Mais › Lojas para a compra rápida.")
+    def test_sem_categoria_valida(self):
+        S = self.S
+        self.config(categorias=["nada"], lista=[{"produto": "Pilha AA"}])
+        S.buscar_itens(["Pilha AA"])
+        self.assertEqual(S.BUSCA["erro"], "Ligue mercados, farmácias, pet shops ou lojas online em Mais › Lojas.")
 
     def test_a_ia_falha_e_os_sites_respondem(self):
         S, ha = self.S, self.ha

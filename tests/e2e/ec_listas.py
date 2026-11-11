@@ -5,6 +5,8 @@
 # No Roteiro, quais listas entram.
 # 1.17.0: sem "Todas": Nenhuma mostra só os itens que não estão em lista nenhuma; Mover itens passa os itens escolhidos de
 # uma lista para outra (ou para Nenhuma); no Roteiro, cada lista e Nenhuma, ao menos uma. Lojas, itens e preços inventados.
+# 1.26.0: a lista pronta é fixa: Comprei hoje marca o item (Comprados (n), no fim e recolhido, com Desmarcar) e o cupom e o
+# Roteiro olham só para o que falta; Começar de novo desmarca tudo, sem tirar item nenhum. Cada lista pode ter um ícone (Editar).
 import asyncio
 
 from playwright.async_api import async_playwright
@@ -169,13 +171,67 @@ async def main():
             await pg.wait_for_timeout(400)
             check(sorted(de(app, sem["id"])) == ["Arroz 5 kg", "Café torrado em grãos", "Leite integral"] and "Todos os itens estão em alguma lista" in await pg.inner_text("#wish"),
                   "Nenhuma ficou vazia")
-            # renomear e apagar
+            # 1.26.0: comprar na lista fixa: o item vai para Comprados (no fim, recolhido) e a análise olha só para o resto
             await abre(pg, "Compra semanal")
+            check(await pg.locator("#listasExtra [data-lrecomecar]").count() == 0 and await pg.locator("#wishComprados details").count() == 0,
+                  "nada comprado: sem Comprados nem Começar de novo")
+            check(limpo(await pg.inner_text("#heroValor")) == "R$ 15,90", f"o cupom com o arroz e o café ({await pg.inner_text('#heroValor')})")
+            await pg.locator("#wish > li.item", has_text="Café torrado").locator("[data-comprei]").click()
+            await pg.wait_for_timeout(400)
+            semc = next(x for x in app.config_salva()["listas"] if x["id"] == sem["id"])
+            check(len(semc.get("comprados") or []) == 1 and sorted(await nomes(pg)) == ["Arroz 5 kg", "Leite integral"], f"o café saiu do que falta ({await nomes(pg)})")
+            check(await pg.inner_text("#wishComprados summary") == "Comprados (1)" and not await pg.locator("#wishComprados details").evaluate("d => d.open"),
+                  "no fim, recolhido: Comprados (1)")
+            check(any(i["produto"] == "Café torrado em grãos" and i.get("compras") for i in app.config_salva()["lista"]), "a data da compra fica no histórico")
+            check(sorted(de(app, sem["id"])) == ["Arroz 5 kg", "Café torrado em grãos", "Leite integral"], "nenhum item sai da lista")
+            check(limpo(await pg.inner_text("#heroValor")) == "R$ 2,00", f"o cupom sem o que já foi comprado ({await pg.inner_text('#heroValor')})")
+            await pg.click('.tabbar [data-view="roteiro"]')
+            await pg.wait_for_timeout(300)
+            rt = await pg.inner_text("#rotRes")
+            check("Arroz 5 kg" in rt and "Café torrado" not in rt, "o Roteiro sem o que já foi comprado")
+            await pg.click('.tabbar [data-view="lista"]')
+            await pg.wait_for_timeout(300)
+            # Desmarcar volta para o que falta
+            await pg.click("#wishComprados summary")
+            await pg.locator("#wishComprados [data-descomprar]").click()
+            await pg.wait_for_timeout(400)
+            check(len(await nomes(pg)) == 3 and await pg.locator("#wishComprados details").count() == 0, "Desmarcar: de volta ao que falta")
+            # tudo comprado; Começar de novo desmarca tudo
+            for nome in ("Café torrado", "Arroz 5 kg", "Leite integral"):
+                await pg.locator("#wish > li.item", has_text=nome).locator("[data-comprei]").click()
+                await pg.wait_for_timeout(300)
+            check("Tudo comprado" in await pg.inner_text("#wish") and await pg.inner_text("#wishComprados summary") == "Comprados (3)", "tudo comprado")
+            check(await barra(pg) == ["Nenhuma 0", "Compra semanal 3", "Compra mensal 1", "+ Nova"], f"a lista continua com os 3 ({await barra(pg)})")
+            await shot(pg, "listas-comprados")
+            await pg.click("#listasExtra [data-lrecomecar]")
+            await pg.wait_for_timeout(400)
+            semc = next(x for x in app.config_salva()["listas"] if x["id"] == sem["id"])
+            check(not semc.get("comprados") and len(await nomes(pg)) == 3 and await pg.locator("#listasExtra [data-lrecomecar]").count() == 0,
+                  "Começar de novo: tudo para comprar de novo")
+            # Editar (o nome e o ícone) e apagar
+            await abre(pg, "Compra semanal")
+            check(await pg.inner_text('#listasExtra [data-lren]') == "Editar", "Editar")
             await pg.click('#listasExtra [data-lren]')
             await pg.fill("#listaNome", "Semanal")
+            ics = await pg.evaluate("[...document.querySelectorAll('#listaForm .lista-icones .pick')].map(e => { const r = e.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.width), Math.round(r.height)]; })")
+            check(len(ics) == 12 and len({t for t, _, _ in ics}) == 2 and len({(w, h) for _, w, h in ics}) == 1 and ics[0][2] == 50,
+                  f"12 ícones, seis por linha, do mesmo tamanho ({ics})")
+            await pg.click('#listaForm [data-lic="🥦"]')
+            await pg.click('#listaForm [data-lic="🛒"]')
+            check(await pg.input_value("#listaNome") == "Semanal" and await pg.locator('#listaForm [data-lic][aria-pressed="true"]').all_inner_texts() == ["🛒"],
+                  "um ícone só, e o nome digitado fica")
+            await pg.click('#listaForm [data-lic="🛒"]')
+            check(await pg.locator('#listaForm [data-lic][aria-pressed="true"]').count() == 0, "tocar de novo tira o ícone")
+            await pg.click('#listaForm [data-lic="🛒"]')
+            med = await pg.evaluate("[...document.querySelectorAll('#listaForm .row-form > *')].map(e => { const r = e.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.width), Math.round(r.height)]; })")
+            check(len(med) == 2 and med[0] == med[1] and med[0][2] == 50, f"Salvar e Cancelar lado a lado, do mesmo tamanho ({med})")
+            await shot(pg, "listas-editar")
             await pg.click('#listaForm button[type="submit"]')
             await pg.wait_for_timeout(300)
-            check(await barra(pg) == ["Nenhuma 0", "Semanal 3", "Compra mensal 1", "+ Nova"], f"renomeada ({await barra(pg)})")
+            check(await barra(pg) == ["Nenhuma 0", "🛒 Semanal 3", "Compra mensal 1", "+ Nova"], f"com o nome e o ícone novos ({await barra(pg)})")
+            check(app.config_salva()["listas"][0].get("icone") == "🛒", "o ícone fica guardado na lista")
+            chip = limpo(await pg.locator("#wish > li.item", has_text="Arroz 5 kg").locator(".lst-b").first.inner_text())
+            check(chip == "🛒 Semanal", f"o ícone também no botão da lista no item ({chip})")
             await pg.click('#listasExtra [data-ldel]')
             check("Os itens não são apagados" in await pg.inner_text("#listasExtra"), "Apagar pergunta antes")
             await pg.click('#listasExtra [data-lapagar]')
@@ -189,7 +245,14 @@ async def main():
             await pg.goto(app.url)
             await pg.wait_for_timeout(1200)
             await pg.click('.tabbar [data-view="lista"]')
-            await nova(pg, "Compra mensal do mercado")
+            await pg.click('#listasBar [data-lnova]')
+            await pg.fill("#listaNome", "Compra mensal do mercado")
+            await pg.click('#listaForm [data-lic="🧴"]')
+            check(await pg.evaluate("document.documentElement.scrollWidth <= innerWidth"), "320 px: os ícones cabem")
+            await shot(pg, "listas-nova-320")
+            await pg.click('#listaForm button[type="submit"]')
+            await pg.wait_for_timeout(400)
+            check("🧴 Compra mensal do mercado 0" in await barra(pg), f"criada com o ícone ({await barra(pg)})")
             await abre(pg, "Nenhuma")
             await pg.click("#listasExtra [data-lmover]")
             await pg.wait_for_timeout(300)

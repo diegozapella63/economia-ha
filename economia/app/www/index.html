@@ -496,8 +496,13 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .lista-mover .listas-acoes{margin:0}
 .lm-itens .set-line{min-height:36px}
 .lm-fim{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
-.lm-fim .btn:disabled,.rap-acoes .btn:disabled,.rap-acoes .ghost.big:disabled{opacity:.45;cursor:default}
-.lista-form .field{flex:1}
+.lm-fim .btn:disabled{opacity:.45;cursor:default}
+.lista-form{display:flex;flex-direction:column;gap:10px}
+.lista-form .field{flex:none;width:100%}
+/* 1.26.0: os ícones das listas, seis por linha no celular e todos numa linha no computador */
+.lista-icones{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.lista-icones .pick{font-size:22px;padding:0}
+@media (min-width:1000px){.lista-icones{grid-template-columns:repeat(12,minmax(0,1fr))}}
 .listas-acoes{margin:8px 2px 0;font-size:13px;color:var(--muted)}
 .listas-wrap .confirma{margin-top:10px}
 .i-listas{display:flex;flex-wrap:wrap;gap:6px}
@@ -600,27 +605,6 @@ li.escolhida{border-color:var(--accent) !important}
 .parada li span:first-child{min-width:0;overflow-wrap:anywhere}
 .parada li span:last-child{white-space:nowrap;font-weight:600}
 .rot-ops{display:flex;flex-direction:column;gap:6px}
-/* Compra rápida: os itens de agora (um toque tira) e a loja aonde ir */
-#rapForm .field{flex:1 1 8em;min-width:0}
-/* 1.25.2: os itens do mesmo tamanho, lado a lado da esquerda para a direita (dois por linha no celular) */
-.rap-itens{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:10px 0 0}
-.rap-itens .rap-t{width:100%;justify-content:space-between;padding-top:8px;padding-bottom:8px;box-sizing:border-box}
-#rapAcoes{margin-top:12px}
-#rapAcoes:empty{display:none}
-.rap-itens:empty{display:none}
-.rap-t{max-width:100%}
-.rap-t span{min-width:0;overflow-wrap:anywhere;text-align:left}
-.rap-t small{display:block}
-.rap-t small{color:var(--muted);font-weight:500}
-.rap-t.sem{background:var(--bg);border-style:dashed}
-#rapRes{display:flex;flex-direction:column;gap:10px;margin-top:12px}
-#rapRes:empty{display:none}
-.rap-onde .rap-loja{font-family:var(--font-display);font-size:28px;font-weight:700;line-height:1.1;overflow-wrap:anywhere}
-.rap-onde .rot-sub{flex:1 1 100%}
-.rap-acoes{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:8px}
-.rap-acoes:empty{display:none}
-.rap-acoes > .ghost.big,.rap-acoes > .btn{display:flex;align-items:center;justify-content:center;text-align:center;min-width:0;padding-left:8px;padding-right:8px}
-.rap-fim{display:flex;justify-content:flex-end;gap:18px}
 .r-dica{display:block;color:var(--accent);font-size:12px;font-weight:600}
 #addForm{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:8px}
 .cod-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;margin-top:8px}
@@ -1342,6 +1326,7 @@ input.field,select.field{min-height:var(--altura)}
       <p class="sec-meta" id="wishDica">Pode escrever só o produto, como "Lysoform": o app compara os tamanhos pelo preço por quilo ou litro.</p>
       <div class="seg vis-lista" id="visLista" role="group" aria-label="Como mostrar a lista" hidden><button type="button" data-vis="completa" aria-pressed="true">Completa</button><button type="button" data-vis="resumida" aria-pressed="false">Resumida</button></div>
       <ul class="wish-grid" id="wish"></ul>
+      <div id="wishComprados"></div>
     </section>
   </section>
 
@@ -1349,18 +1334,6 @@ input.field,select.field{min-height:var(--altura)}
   <section class="view" id="v-roteiro" aria-label="Roteiro" hidden>
     <section class="panel" aria-labelledby="h-rot" id="roteiro">
       <div class="sec-head"><h2 id="h-rot"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H16a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h7.5"/></svg></span><span id="hRotTxt">Roteiro de compras</span></h2></div>
-      <div class="seg vis-lista" id="rotModo" role="group" aria-label="Como comprar"><button type="button" data-modo="roteiro" aria-pressed="true">Roteiro</button><button type="button" data-modo="rapida" aria-pressed="false">Compra rápida</button></div>
-      <div id="rapida" hidden>
-        <p class="sec-meta">O que você precisa agora? Digo aonde ir, só lojas físicas.</p>
-        <form class="row-form" id="rapForm" novalidate>
-          <input class="field" id="rapItem" data-sug="rapida" autocomplete="off" maxlength="80" placeholder="Ex.: pão, leite, pilha AA" aria-label="Item da compra rápida">
-          <button class="btn" type="submit">Adicionar</button>
-        </form>
-        <p class="hint" id="rapMsg" hidden></p>
-        <div class="rap-itens" id="rapItens"></div>
-        <div class="row-form" id="rapAcoes"></div>
-        <div id="rapRes" aria-live="polite"></div>
-      </div>
       <div id="rotPlano">
       <p class="sec-meta">Em quantas lojas você topa parar?</p>
       <div class="rot-ctrl">
@@ -2267,6 +2240,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   var CAT, filtro = 'todas', menuAberto = null, termoAberto = null;
   var KEY = 'ofertas-bairro:v3', KEY_UI = 'ofertas-bairro:ui';
   var NENHUMA = '_nenhuma';  // no roteiro, os itens que não estão em lista pronta nenhuma (Listas prontas)
+  var ICONES_LISTA = ['🛒', '🥦', '🥩', '🍞', '🥤', '☕', '🧴', '🧹', '💊', '🐾', '👶', '🎉'];  // 1.26.0: o ícone de cada lista
   function lerLocal(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } }
   function gravarLocal(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch(e){ return false; } }
   var ui = lerLocal(KEY_UI) || {};
@@ -2337,7 +2311,11 @@ dialog.ss-wrap::backdrop{background:transparent}
     var p = c.perfil || {}, r = c.cotidiano || {}, l = c.lojas || {}, sy = c.sync || {}, on = c.online || null, ro = c.roteiro || {};
     // as listas prontas (Compra semanal, Compra mensal…): {id, nome}; cada item diz em quais está (listas: [id])
     var listas = arr(c.listas).filter(function(x){ return x && /^[a-z0-9-]{1,40}$/.test(String(x.id || '')) && String(x.nome || '').trim(); })
-      .map(function(x){ return {id:String(x.id), nome:String(x.nome).trim().slice(0, 30)}; }).slice(0, 20), idsListas = {};
+      .map(function(x){
+        var l = {id:String(x.id), nome:String(x.nome).trim().slice(0, 30), comprados:arr(x.comprados).filter(function(k){ return typeof k === 'string' && k; }).slice(0, 300)};
+        if (ICONES_LISTA.indexOf(x.icone) >= 0) l.icone = x.icone;  // 1.26.0: o ícone da lista, um dos de ICONES_LISTA
+        return l;
+      }).slice(0, 20), idsListas = {};
     listas.forEach(function(x){ idsListas[x.id] = true; });
     var cats = arr(c.categorias).slice();
     if (!on && cats.length && cats.indexOf('online') < 0) cats.push('online');  // quem já usava ganha a aba Online
@@ -2564,7 +2542,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.25.3';
+  var VERSAO = '1.26.0';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -3282,13 +3260,25 @@ dialog.ss-wrap::backdrop{background:transparent}
   function listaAtual(){ var id = ui.listaAtual || ''; return listasOn() && estado.listas.some(function(l){ return l.id === id; }) ? id : ''; }
   function emLista(it, id){ return id && id !== NENHUMA ? arr(it.listas).indexOf(id) >= 0 : !arr(it.listas).length; }
   function naListaAtual(it){ return !listasOn() || emLista(it, listaAtual()); }
+  // 1.26.0: a lista pronta é fixa; o que já foi comprado nesta rodada fica marcado (lista.comprados) até Começar de novo
+  function listaObj(id){ return estado.listas.filter(function(l){ return l.id === id; })[0] || null; }
+  function comprado(it, id){ var l = id && listaObj(id); return !!l && arr(l.comprados).indexOf(norm(it.produto)) >= 0; }
+  // o que falta comprar na lista aberta: a análise (cupom, oportunidades, roteiro) olha só para isso
+  function paraComprar(it){ return naListaAtual(it) && !comprado(it, listaAtual()); }
   function nomeLista(id){ var l = estado.listas.filter(function(x){ return x.id === id; })[0]; return l ? l.nome : id === NENHUMA || id === '' ? 'Nenhuma' : ''; }
+  // o nome com o ícone na frente, nos botões das listas (as mensagens ficam só com o nome)
+  function rotuloLista(id){ var l = listaObj(id); return (l && l.icone ? l.icone + ' ' : '') + nomeLista(id); }
+  function iconesLista(sel){
+    return '<div class="lista-icones" role="group" aria-label="Ícone da lista">' + ICONES_LISTA.map(function(ic){
+      return '<button type="button" class="pick" data-lic="' + ic + '" aria-pressed="' + (ic === sel) + '">' + ic + '</button>';
+    }).join('') + '</div>';
+  }
   var LISTA_ED = null;  // o que está aberto embaixo da barra: {novo: true}, {renomear: id}, {apagar: id} ou {mover: id, alvo, sel}
   function linhaListas(x){
     if (!listasOn() || !estado.listas.length) return '';
     return '<div class="i-listas" role="group" aria-label="Listas de ' + esc(x.it.produto) + '">' + estado.listas.map(function(l){
       var on = arr(x.it.listas).indexOf(l.id) >= 0;
-      return '<button type="button" class="ghost lst-b" data-lst="' + x.i + '" data-id="' + esc(l.id) + '" aria-pressed="' + on + '">' + esc(l.nome) + '</button>';
+      return '<button type="button" class="ghost lst-b" data-lst="' + x.i + '" data-id="' + esc(l.id) + '" aria-pressed="' + on + '">' + esc(rotuloLista(l.id)) + '</button>';
     }).join('') + '</div>';
   }
   function pintaListas(){
@@ -3297,18 +3287,22 @@ dialog.ss-wrap::backdrop{background:transparent}
     if (!on){ $('listasBar').innerHTML = ''; $('listasExtra').innerHTML = ''; return; }
     var n = function(id){ return estado.lista.filter(function(it){ return emLista(it, id); }).length; };
     $('listasBar').innerHTML = '<button type="button" class="pick" data-la="" aria-pressed="' + !a + '"><span>Nenhuma</span> <small class="num">' + n('') + '</small></button>'
-      + estado.listas.map(function(l){ return '<button type="button" class="pick" data-la="' + esc(l.id) + '" aria-pressed="' + (a === l.id) + '"><span>' + esc(l.nome) + '</span> <small class="num">' + n(l.id) + '</small></button>'; }).join('')
+      + estado.listas.map(function(l){ return '<button type="button" class="pick" data-la="' + esc(l.id) + '" aria-pressed="' + (a === l.id) + '"><span>' + esc(rotuloLista(l.id)) + '</span> <small class="num">' + n(l.id) + '</small></button>'; }).join('')
       + (estado.listas.length < 20 ? '<button type="button" class="pick lista-nova" data-lnova="1">+ Nova</button>' : '');
     var ed = LISTA_ED, h = '';
     if (ed && (ed.novo || ed.renomear)){
-      h = '<form class="row-form lista-form" id="listaForm"><input class="field" id="listaNome" maxlength="30" autocomplete="off" placeholder="Ex.: Compra semanal" aria-label="Nome da lista" value="' + esc(ed.renomear ? nomeLista(ed.renomear) : '') + '">'
-        + '<button class="btn" type="submit">' + (ed.novo ? 'Criar' : 'Salvar') + '</button><button type="button" class="ghost big" data-lx="1">Cancelar</button></form>';
+      // 1.26.0: o nome, o ícone (opcional: tocar de novo tira) e, embaixo, Criar ou Salvar e Cancelar
+      if (ed.icone === undefined) ed.icone = ed.renomear ? (listaObj(ed.renomear) || {}).icone || '' : '';
+      h = '<form class="lista-form" id="listaForm"><input class="field" id="listaNome" maxlength="30" autocomplete="off" placeholder="Ex.: Compra semanal" aria-label="Nome da lista" value="' + esc(ed.nome != null ? ed.nome : ed.renomear ? nomeLista(ed.renomear) : '') + '">'
+        + iconesLista(ed.icone)
+        + '<div class="row-form"><button class="btn" type="submit">' + (ed.novo ? 'Criar' : 'Salvar') + '</button><button type="button" class="ghost big" data-lx="1">Cancelar</button></div></form>';
     } else if (ed && ed.apagar){
       h = '<div class="confirma"><p>Apagar a lista ' + esc(nomeLista(ed.apagar)) + '? Os itens não são apagados.</p><div class="row-form"><button type="button" class="btn perigo" data-lapagar="' + esc(ed.apagar) + '">Apagar</button><button type="button" class="ghost big" data-lx="1">Cancelar</button></div></div>';
     } else if (ed && ed.mover != null){
       h = pintaMover(ed);
     } else {
-      var acoes = a ? ['<button type="button" class="link" data-lren="' + esc(a) + '">Renomear</button>', '<button type="button" class="link" data-ldel="' + esc(a) + '">Apagar lista</button>'] : [];
+      var acoes = a ? ['<button type="button" class="link" data-lren="' + esc(a) + '">Editar</button>', '<button type="button" class="link" data-ldel="' + esc(a) + '">Apagar lista</button>'] : [];
+      if (a && arr((listaObj(a) || {}).comprados).length) acoes.unshift('<button type="button" class="link" data-lrecomecar="' + esc(a) + '">Começar de novo</button>');
       if (n(a) && alvosMover(a).length) acoes.push('<button type="button" class="link" data-lmover="1">Mover itens</button>');
       if (acoes.length) h = '<p class="listas-acoes">' + acoes.join(' · ') + '</p>';
     }
@@ -3320,7 +3314,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   function pintaMover(ed){
     var its = estado.lista.filter(function(it){ return emLista(it, ed.mover); }), alvos = alvosMover(ed.mover), k = Object.keys(ed.sel).filter(function(p){ return ed.sel[p]; }).length;
     return '<div class="lista-mover"><h3>Mover para</h3><div class="listas-bar" role="group" aria-label="Mover para">' + alvos.map(function(id){
-        return '<button type="button" class="pick" data-lmalvo="' + esc(id) + '" aria-pressed="' + (ed.alvo === id) + '"><span>' + esc(nomeLista(id)) + '</span></button>';
+        return '<button type="button" class="pick" data-lmalvo="' + esc(id) + '" aria-pressed="' + (ed.alvo === id) + '"><span>' + esc(rotuloLista(id)) + '</span></button>';
       }).join('') + '</div>'
       + '<p class="listas-acoes"><button type="button" class="link" data-lmtodos="1">' + (k === its.length ? 'Desmarcar todos' : 'Marcar todos') + '</button></p>'
       + '<ul class="foto-itens lm-itens">' + its.map(function(it){
@@ -3335,6 +3329,9 @@ dialog.ss-wrap::backdrop{background:transparent}
   });
   $('listasWrap').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.lic && LISTA_ED){  // o ícone: o tocado, ou nenhum se já era ele
+      LISTA_ED.nome = $('listaNome').value; LISTA_ED.icone = LISTA_ED.icone === b.dataset.lic ? '' : b.dataset.lic; pintaListas(); return;
+    }
     if (b.dataset.lmover){ var al = alvosMover(listaAtual()); LISTA_ED = {mover:listaAtual(), alvo:al.length === 1 ? al[0] : null, sel:{}}; pintaListas(); return; }
     if (b.dataset.lmalvo != null && LISTA_ED){ LISTA_ED.alvo = b.dataset.lmalvo; pintaListas(); return; }
     if (b.dataset.lmtodos && LISTA_ED){
@@ -3350,6 +3347,11 @@ dialog.ss-wrap::backdrop{background:transparent}
       });
       LISTA_ED = null; RES_ABERTO = {};
       salvar((movidos.length > 1 ? movidos.length + ' itens foram' : '"' + movidos[0].produto + '" foi') + ' para ' + nomeLista(ed.alvo)); pintaLista(); return;
+    }
+    if (b.dataset.lrecomecar){  // 1.26.0: tudo desmarcado para a próxima compra; nenhum item sai da lista
+      var lr = listaObj(b.dataset.lrecomecar); if (!lr) return;
+      lr.comprados = []; COMPRADOS_ABERTO = false;
+      salvar(lr.nome + ': pronta para a próxima compra'); tudo(); return;
     }
     if (b.dataset.la != null){ ui.listaAtual = b.dataset.la; salvarUI(); LISTA_ED = null; RES_ABERTO = {}; pintaLista(); return; }
     if (b.dataset.lnova){ LISTA_ED = {novo:true}; pintaListas(); return; }
@@ -3373,18 +3375,21 @@ dialog.ss-wrap::backdrop{background:transparent}
     if (!nome){ $('listaNome').focus(); return; }
     if (estado.listas.some(function(l){ return norm(l.nome) === norm(nome) && l.id !== ed.renomear; })){ toast('Já tem uma lista ' + nome + '.'); return; }
     if (ed.renomear){
-      estado.listas.forEach(function(l){ if (l.id === ed.renomear) l.nome = nome; });
-      LISTA_ED = null; salvar('Lista renomeada'); pintaLista(); return;
+      estado.listas.forEach(function(l){ if (l.id === ed.renomear){ l.nome = nome; if (ed.icone) l.icone = ed.icone; else delete l.icone; } });
+      LISTA_ED = null; salvar('Lista salva'); pintaLista(); return;
     }
     var id = (norm(nome).replace(/\s+/g, '-').slice(0, 24) || 'lista') + '-' + Date.now().toString(36).slice(-4);
-    estado.listas.push({id:id, nome:nome});
+    estado.listas.push(ed.icone ? {id:id, nome:nome, icone:ed.icone} : {id:id, nome:nome});
     ui.listaAtual = id; salvarUI(); LISTA_ED = null;
     salvar('Lista ' + nome + ' criada'); pintaLista();
   });
   function pintaLista(){
     pintaListas();
     var aberta = listaAtual();
-    var itens = estado.lista.map(function(it, i){ var r = ritmo(it.compras); return {it:it, i:i, r:r}; }).filter(function(x){ return naListaAtual(x.it); })
+    var todos = estado.lista.map(function(it, i){ var r = ritmo(it.compras); return {it:it, i:i, r:r}; }).filter(function(x){ return naListaAtual(x.it); });
+    var jaComprados = todos.filter(function(x){ return comprado(x.it, aberta); });
+    pintaComprados(jaComprados, aberta);
+    var itens = todos.filter(function(x){ return !comprado(x.it, aberta); })
       .sort(function(a, b){
         var x = a.r.dias == null ? 9999 : a.r.dias, y = b.r.dias == null ? 9999 : b.r.dias;
         return x - y || a.i - b.i;
@@ -3395,6 +3400,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     $('visLista').hidden = itens.length < 2;
     var resumida = ui.lista === 'resumida' && itens.length >= 2;
     [].forEach.call($('visLista').querySelectorAll('button'), function(b){ b.setAttribute('aria-pressed', String((b.dataset.vis === 'resumida') === resumida)); });
+    if (!itens.length && jaComprados.length){ pintaHero(); $('wish').innerHTML = '<li class="empty">Tudo comprado.</li>'; return; }
     if (!itens.length){ pintaHero(); $('wish').innerHTML = '<li class="empty">' + (aberta ? 'Nada em ' + esc(nomeLista(aberta)) + ' ainda. Adicione aqui ou traga de outra lista com Mover itens.'
       : listasOn() && estado.lista.length ? 'Todos os itens estão em alguma lista.' : 'Sua lista está vazia. Adicione o que você compra sempre.') + '</li>'; return; }
     pintaHero();
@@ -3452,6 +3458,13 @@ dialog.ss-wrap::backdrop{background:transparent}
     if (dc) return {v:dc.total, onde:G[dc.id].nome + ' · ' + dc.como};
     return {v:best.v * N, onde:vezes + G[best.id].nome};
   }
+  // os comprados nesta rodada da lista pronta, no fim e recolhidos (como os inativos dos apps da família)
+  var COMPRADOS_ABERTO = false;
+  function pintaComprados(xs, aberta){
+    var el = $('wishComprados');
+    el.innerHTML = !aberta || !xs.length ? '' : '<details class="inativas" data-inat="comprados"' + (COMPRADOS_ABERTO ? ' open' : '') + '><summary>Comprados (' + xs.length + ')</summary><ul class="rows">'
+      + xs.map(function(x){ return '<li class="row comprado"><span class="r-name">' + esc(x.it.produto) + '</span><button type="button" class="linkbtn" data-descomprar="' + x.i + '">Desmarcar</button></li>'; }).join('') + '</ul></details>';
+  }
   function linhaResumida(x, p, soon){
     var r = p.length ? precoResumido(x, p) : null, k = norm(x.it.produto);
     return '<li class="item mini"><button type="button" class="i-mini" data-abrir="' + esc(k) + '" aria-expanded="false">' + iconeItem(x.it.produto, p.length ? G[p[0].id].cat : null)
@@ -3466,6 +3479,13 @@ dialog.ss-wrap::backdrop{background:transparent}
     var b = e.target.closest('button'); if (!b) return;
     ui.lista = b.dataset.vis; salvarUI(); RES_ABERTO = {}; pintaLista();
   });
+  $('wishComprados').addEventListener('click', function(e){
+    var b = e.target.closest('[data-descomprar]'); if (!b) return;
+    var it = estado.lista[Number(b.dataset.descomprar)], lo = listaObj(listaAtual()); if (!it || !lo) return;
+    lo.comprados = arr(lo.comprados).filter(function(k){ return k !== norm(it.produto); });
+    salvar('Desmarcado: ' + it.produto); tudo();
+  });
+  $('wishComprados').addEventListener('toggle', function(e){ if (e.target.dataset && e.target.dataset.inat === 'comprados') COMPRADOS_ABERTO = e.target.open; }, true);
   $('wish').addEventListener('click', function(e){
     var a = e.target.closest('[data-abrir]');
     if (a){ RES_ABERTO[a.dataset.abrir] = true; pintaLista(); return; }
@@ -3546,9 +3566,10 @@ dialog.ss-wrap::backdrop{background:transparent}
     }
     if (b.dataset.buscaitem != null){ buscarItem(estado.lista[Number(b.dataset.buscaitem)].produto); return; }
     if (b.dataset.comprei != null){
-      var it = estado.lista[Number(b.dataset.comprei)], hoje = hojeSP();
+      var it = estado.lista[Number(b.dataset.comprei)], hoje = hojeSP(), lo = listaObj(listaAtual());
       if (it.compras.indexOf(hoje) < 0) it.compras.push(hoje);
-      salvar('Compra registrada'); pintaLista(); return;
+      if (lo && arr(lo.comprados).indexOf(norm(it.produto)) < 0) lo.comprados = arr(lo.comprados).concat([norm(it.produto)]);
+      salvar(lo ? 'Comprado: ' + it.produto : 'Compra registrada'); pintaLista(); return;
     }
     if (b.dataset.rm != null && listaAtual()){  // numa lista pronta, sai só dela (sem outra lista, vai para Nenhuma)
       var ir = estado.lista[Number(b.dataset.rm)]; if (!ir) return;
@@ -4489,7 +4510,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   }
   function itensDoRoteiro(principal){
     var ls = listasOn() && estado.listas.length ? [listaRoteiro()] : [];
-    return estado.lista.filter(function(it){ return principal ? naListaAtual(it) : !ls.length || ls.some(function(id){ return emLista(it, id); }); }).map(function(it){ var p = precosDe(it.produto), r = ritmo(it.compras), es = escolhaDe(it, p) || compensaDe(it, p, r); return {it:it, r:r, p:es ? [es.y] : p, n:vezesDe(it, es), auto:!!(es && es.auto)}; })
+    return estado.lista.filter(function(it){ return principal ? paraComprar(it) : !ls.length || ls.some(function(id){ return emLista(it, id) && !comprado(it, id); }); }).map(function(it){ var p = precosDe(it.produto), r = ritmo(it.compras), es = escolhaDe(it, p) || compensaDe(it, p, r); return {it:it, r:r, p:es ? [es.y] : p, n:vezesDe(it, es), auto:!!(es && es.auto)}; })
       .filter(function(x){ return estado.roteiro.escopo !== 'acabando' || (x.r.dias != null && x.r.dias <= 7); });
   }
   function avaliaPlano(itens, combo, online){
@@ -4578,14 +4599,9 @@ dialog.ss-wrap::backdrop{background:transparent}
     var ls = listasOn() ? estado.listas : [];
     $('rotListasG').hidden = !ls.length;
     var sel = listaRoteiro();  // 1.25.1: uma lista ou Nenhuma, sem Todas
-    $('rotListas').innerHTML = !ls.length ? '' : idsRoteiro().map(function(id){ return '<button type="button" data-rl="' + esc(id) + '" aria-pressed="' + (id === sel) + '">' + esc(nomeLista(id)) + '</button>'; }).join('');
+    $('rotListas').innerHTML = !ls.length ? '' : idsRoteiro().map(function(id){ return '<button type="button" data-rl="' + esc(id) + '" aria-pressed="' + (id === sel) + '">' + esc(rotuloLista(id)) + '</button>'; }).join('');
   }
   function pintaRoteiro(){
-    var rap = modoRot() === 'rapida';
-    [].forEach.call($('rotModo').querySelectorAll('[data-modo]'), function(b){ b.setAttribute('aria-pressed', String(b.dataset.modo === modoRot())); });
-    $('hRotTxt').textContent = rap ? 'Compra rápida' : 'Roteiro de compras';
-    $('rapida').hidden = !rap; $('rotPlano').hidden = rap;
-    if (rap){ pintaRapida(); return; }
     pintaRotCtrl();
     var el = $('rotRes');
     if (!estado.lista.length){ el.innerHTML = '<p class="empty">Adicione itens à lista para montar o roteiro.</p>'; return; }
@@ -4651,137 +4667,17 @@ dialog.ss-wrap::backdrop{background:transparent}
   });
   $('rotRes').addEventListener('click', function(e){ var b = e.target.closest('[data-rotk]'); if (!b) return; rotVer = Number(b.dataset.rotk); pintaRoteiro(); });
 
-  // ===== Compra rápida (1.16.0): uns itens de agora, sem planejar. Não entram na lista (ficam no aparelho, em ui.rapida)
-  // e a resposta é uma loja física só: a de melhor preço entre as que têm mais itens (1.23.0; empatado, a mais perto).
-  // Nada online: quem compra agora não espera a entrega.
-  var MAX_RAPIDA = 10, MAX_BUSCA_ITENS = 8, rapVer = null, RAP_BUSCA = false;
-  var ICO_X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
-  function modoRot(){ return ui.rotModo === 'rapida' ? 'rapida' : 'roteiro'; }
-  function rapItens(){ return arr(ui.rapida).filter(function(r){ return r && typeof r.nome === 'string' && r.nome.trim(); }).slice(0, MAX_RAPIDA); }
-  function precosFisicos(nome){ return precosDe(nome).filter(function(y){ return !y.online && G[y.id] && G[y.id].cat !== 'online'; }); }
-  function calculaRapida(){
-    var its = rapItens().map(function(r){ return {nome:r.nome, p:precosFisicos(r.nome)}; }), lojas = {};
-    its.forEach(function(x){ x.p.forEach(function(y){
-      var l = lojas[y.id] || (lojas[y.id] = {id:y.id, itens:[], total:0, dist:distLoja(y.id)});
-      l.itens.push({x:x, y:y}); l.total += y.v;
-    }); });
-    var ls = Object.keys(lojas).map(function(id){ var l = lojas[id]; l.total = Math.round(l.total * 100) / 100; return l; });
-    var max = ls.reduce(function(m, l){ return Math.max(m, l.itens.length); }, 0);
-    var plenas = ls.filter(function(l){ return l.itens.length === max; });
-    var perto = plenas.slice().sort(function(a, b){ return a.dist - b.dist || a.total - b.total; })[0];
-    // 1.23.0: o melhor preço entre as lojas com mais itens (antes, a mais perto, a não ser que outra saísse R$ 5 e 10% mais barata)
-    var rec = plenas.slice().sort(function(a, b){ return a.total - b.total || a.dist - b.dist; })[0];
-    ls.sort(function(a, b){ return ((b === rec) - (a === rec)) || (b.itens.length - a.itens.length) || (a.dist - b.dist) || (a.total - b.total); });
-    return {itens:its, sem:its.filter(function(x){ return !x.p.length; }), lojas:ls.slice(0, 4), rec:rec, perto:perto};
-  }
-  // como chegar: do lugar onde a pessoa está até a loja
-  function linkLoja(id){
-    var l = LOJA[id] || {};
-    return 'https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=' + encodeURIComponent(G[id].nome + (l.endereco ? ', ' + l.endereco : '') + (estado.cep ? ', ' + estado.cep : ''));
-  }
-  function itensTxt(n, de){ return n === de ? (de > 1 ? 'os ' + de + ' itens' : 'o item') : n + ' de ' + de + ' itens'; }
-  function pintaRapida(){
-    var c = calculaRapida(), el = $('rapRes'), h = '';
-    $('rapItens').innerHTML = c.itens.map(function(x, i){
-      return '<button type="button" class="nunca-t rap-t' + (x.p.length ? '' : ' sem') + '" data-rapx="' + i + '" aria-label="Tirar ' + esc(x.nome) + '"><span>' + esc(x.nome) + (x.p.length ? '' : ' <small>sem preço</small>') + '</span>' + ICO_X + '</button>';
-    }).join('');
-    // 1.23.0: Buscar preços e Limpar logo embaixo dos itens (antes, um no meio do resultado e o outro no fim)
-    $('rapAcoes').innerHTML = !c.itens.length ? '' : (RAP_BUSCA ? '<button type="button" class="btn" disabled>Buscando…</button>'
-      : '<button type="button" class="' + (c.sem.length ? 'btn' : 'ghost big') + '" data-rapbusca="' + (c.sem.length ? 'sem' : 'todos') + '">' + (c.sem.length ? 'Buscar preços' : 'Buscar de novo') + '</button>')
-      + '<button type="button" class="ghost big" data-raplimpar>Limpar</button>';
-    if (!c.itens.length){ el.innerHTML = ''; return; }
-    var ver = c.rec, n = c.itens.length - c.sem.length;  // os itens sem preço em loja nenhuma não contam como faltando
-    c.lojas.forEach(function(l){ if (l.id === rapVer) ver = l; });
-    var acoes = [];
-    if (ver){
-      var l = LOJA[ver.id], tem = {};
-      ver.itens.forEach(function(z){ tem[norm(z.x.nome)] = true; });
-      h += '<div class="rot-total rap-onde"><span class="lbl">Onde comprar</span><span class="rap-loja">' + esc(G[ver.id].nome) + '</span><span class="rot-sub num">'
-        + (l && l.distancia_km != null ? km(l.distancia_km) + ' · ' : '') + itensTxt(ver.itens.length, n) + ' por ' + brl.format(ver.total) + '</span></div>';
-      if (ver === c.rec && c.perto && c.rec !== c.perto){
-        var pl = LOJA[c.perto.id];
-        h += '<p class="i-nota">' + esc('Fica mais longe, mas sai ' + brl.format(c.perto.total - c.rec.total) + ' mais barato que ' + G[c.perto.id].nome + (pl && pl.distancia_km != null ? ' (' + km(pl.distancia_km) + ')' : '') + '.') + '</p>';
-      }
-      h += '<div class="parada"><ul>' + ver.itens.map(function(z){
-        return '<li><span>' + esc(z.x.nome) + (z.y.obs && norm(z.y.obs) !== norm(z.x.nome) ? '<small class="r-dica">' + esc(z.y.obs) + '</small>' : '') + '</span><span class="num">' + brl.format(z.y.v) + (z.y.clube ? ' <small>clube</small>' : '') + '</span></li>';
-      }).join('') + '</ul></div>';
-      var fora = c.itens.filter(function(x){ return x.p.length && !tem[norm(x.nome)]; });
-      if (fora.length) h += '<p class="hint">' + esc('Não tem lá: ' + fora.map(function(x){ return x.nome + ' (' + G[x.p[0].id].nome + ', ' + brl.format(x.p[0].v) + ')'; }).join(', ') + '.') + '</p>';
-      acoes.push('<a class="ghost big" href="' + esc(linkLoja(ver.id)) + '" target="_blank" rel="noopener">Como chegar</a>');
-    } else h += '<p class="empty">Ainda não sei o preço ' + (c.itens.length > 1 ? 'destes itens' : 'deste item') + ' nas lojas daqui.</p>';
-    if (ver && c.sem.length) h += '<p class="hint">' + esc('Sem preço ainda: ' + c.sem.map(function(x){ return x.nome; }).join(', ') + '.') + '</p>';
-    if (acoes.length) h += '<div class="row-form">' + acoes.join('') + '</div>';
-    if (c.lojas.length > 1) h += '<div class="group"><h3>Compare</h3><ul class="rot-ops">' + c.lojas.map(function(o){
-      var lo = LOJA[o.id], falta = n - o.itens.length;
-      return '<li><button type="button" class="rot-op" data-rapl="' + esc(o.id) + '" aria-pressed="' + (o === ver) + '"><span>' + esc(G[o.id].nome) + (lo && lo.distancia_km != null ? ' · ' + km(lo.distancia_km) : '') + (o === c.rec ? ' · recomendado' : '') + '</span><span class="num">'
-        + brl.format(o.total) + (falta ? ' · sem ' + falta + (falta > 1 ? ' itens' : ' item') : '') + '</span></button></li>';
-    }).join('') + '</ul></div>';
-    el.innerHTML = h;
-  }
-  function buscarRapida(nomes){
-    if (!nomes.length) return;
-    if (MODO !== 'addon'){ toast('No Home Assistant, este botão procura o preço nas lojas daqui.'); return; }
-    if (!estado.cep){ abrirMais('casa'); toast('Salve o CEP antes de buscar.'); return; }
-    var fim = function(){ RAP_BUSCA = false; pintaRapida(); };
-    RAP_BUSCA = true; pintaRapida(); botaoBusca(true, 'Começando');
-    fetch('api/buscar-itens', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({itens:nomes.slice(0, MAX_BUSCA_ITENS), rapida:true})})
-      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
-      .then(function(x){
-        if (!x.ok){ fim(); mostraBusca({erro:x.j.erro || 'Não deu para começar a busca.'}); return; }
-        if (x.j.ja_rodando){ fim(); toast('Já tem uma busca rodando. Espere ela terminar.'); acompanhaBusca(false); return; }
-        toast('Procurando nas lojas daqui. Leva cerca de 1 minuto.'); acompanhaBusca(false);
-      })
-      .catch(function(){ fim(); mostraBusca({erro:'Sem conexão com o Home Assistant. Tente de novo.'}); });
-  }
-  // as sugestões: os itens da lista (primeiro os que têm preço nas lojas), o histórico e os nomes vistos nas lojas
-  SUG_FONTES.rapida = function(inp){
-    var q = norm(inp.value), ja = {};
-    if (q.length < 2) return [];
-    rapItens().forEach(function(r){ ja[norm(r.nome)] = true; });
-    var daLista = estado.lista.map(function(i){ return i.produto; }), com = daLista.filter(function(v){ return precosFisicos(v).length; });
-    var k = q; while (k && !SUG_NOMES[k]) k = k.slice(0, -1);
-    return com.concat(daLista.filter(function(v){ return com.indexOf(v) < 0; }), ordemHist().map(function(x){ return x.produto; }), k ? SUG_NOMES[k] : [])
-      .filter(function(v){ return !ja[norm(v)]; });
-  };
-  $('rapItem').addEventListener('input', function(e){ if (e.isTrusted) buscaSugNomes(this); });
-  $('rotModo').addEventListener('click', function(e){ var b = e.target.closest('[data-modo]'); if (!b) return; ui.rotModo = b.dataset.modo; salvarUI(); pintaRoteiro(); });
-  $('rapForm').addEventListener('submit', function(e){
-    e.preventDefault();
-    var inp = $('rapItem'), nome = inp.value.replace(/\s+/g, ' ').trim(), msg = $('rapMsg'), its = rapItens();
-    var daLista = estado.lista.filter(function(i){ return norm(i.produto) === norm(nome); })[0];
-    if (daLista) nome = daLista.produto;  // com o nome da lista, para achar os preços dela
-    var erro = nome.length < 2 ? 'Escreva o nome do produto.' : its.some(function(r){ return norm(r.nome) === norm(nome); }) ? 'Já está aqui.'
-      : its.length >= MAX_RAPIDA ? 'Até ' + MAX_RAPIDA + ' itens por vez.' : '';
-    msg.hidden = !erro; msg.className = 'hint err'; msg.textContent = erro;
-    if (erro) return;
-    ui.rapida = its.concat([{nome:nome}]); salvarUI(); rapVer = null;
-    inp.value = ''; sugFechar(); pintaRapida();
-  });
-  $('rapItens').addEventListener('click', function(e){
-    var b = e.target.closest('[data-rapx]'); if (!b) return;
-    var its = rapItens(); its.splice(Number(b.dataset.rapx), 1); ui.rapida = its; salvarUI(); rapVer = null; $('rapMsg').hidden = true; pintaRapida();
-  });
-  function rapClique(e){
-    var b = e.target.closest('[data-rapl], [data-rapbusca], [data-raplimpar]'); if (!b) return;
-    if (b.dataset.rapl != null){ rapVer = b.dataset.rapl; pintaRapida(); return; }
-    if (b.hasAttribute('data-raplimpar')){ ui.rapida = []; salvarUI(); rapVer = null; $('rapMsg').hidden = true; pintaRapida(); $('rapItem').focus(); return; }
-    var c = calculaRapida();
-    buscarRapida((b.dataset.rapbusca === 'sem' ? c.sem : c.itens).map(function(x){ return x.nome; }));
-  }
-  $('rapRes').addEventListener('click', rapClique);
-  $('rapAcoes').addEventListener('click', rapClique);
-
   // ===== Abertura: oportunidades de economia =====
   function oportunidades(){
     var o = {total:0, itens:[], acabando:0, acabandoNomes:[], paraVoce:0, cupom:null, tam:[], rot:null};
-    estado.lista.filter(naListaAtual).forEach(function(it){  // a lista aberta (com as listas ligadas)
+    estado.lista.filter(paraComprar).forEach(function(it){  // a lista aberta (com as listas ligadas), sem o já comprado
       var p = precosDe(it.produto), r = ritmo(it.compras), mt = p.length ? melhorTamanho(it, r, p) : null;
       var n = qtdDe(it);
       if (p.length > 1 && p[1].v - p[0].v > 0.004){ o.total += (p[1].v - p[0].v) * n; o.itens.push({nome:nomeCurto(it.produto), e:(p[1].v - p[0].v) * n}); }  // em relação à segunda opção
       if (r.dias != null && r.dias <= 3){ o.acabando++; o.acabandoNomes.push(nomeCurto(it.produto)); }
       if (mt && mt.economia > 0) o.tam.push({nome:nomeCurto(it.produto), e:mt.economia});
     });
-    var c = estado.lista.filter(naListaAtual).length ? calculaRoteiro(true) : {};
+    var c = estado.lista.filter(paraComprar).length ? calculaRoteiro(true) : {};
     if (c.rec && c.rec.pl.ids.length) o.rot = {n:c.rec.pl.ids.length, ids:c.rec.pl.ids, online:c.rec.pl.online.length > 0, eco:economiaPlano(c.rec.pl), total:c.rec.pl.total};
     D.categorias.forEach(function(c){
       if (estado.categorias.indexOf(c.id) < 0) return;
@@ -6194,7 +6090,6 @@ dialog.ss-wrap::backdrop{background:transparent}
       if (st.rodando) buscaT = setTimeout(function(){ acompanhaBusca(false); }, 3000);
       else {
         if (buscaItem){ buscaItem = null; pintaLista(); }
-        if (RAP_BUSCA){ RAP_BUSCA = false; pintaRapida(); }
         var comp = comparando; comparando = null;
         if (!inicial && !st.erro) recarrega(comp);
         else if (comp) pintaDeals();
