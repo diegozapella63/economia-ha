@@ -76,7 +76,7 @@ Ligue em **Mais › Configurações › Opções › Listas** (vem desligado). N
 - Numa lista, **tirar desta lista** tira o item só dela; sem outra lista, ele vai para Nenhuma. **Limpar lista** fica só em Nenhuma e tira só os itens dela.
 - **Mover itens**, embaixo da barra: escolha para qual lista, marque os itens (ou **Marcar todos**) e toque em **Mover**. Eles saem da lista aberta e entram na outra; de uma lista, dá para mover para Nenhuma.
 - **Renomear** e **Apagar lista** ficam embaixo da barra, com a lista aberta. Apagar uma lista não apaga os itens: os que só estavam nela vão para Nenhuma.
-- No **Roteiro**, em **Lista**, escolha qual entra: **Todas** (de começo), uma lista ou **Nenhuma** (os itens sem lista). Uma escolha só, como Paradas e O que comprar.
+- No **Roteiro**, em **Lista**, escolha qual entra: uma lista ou **Nenhuma** (os itens sem lista). Uma escolha só, como Paradas e O que comprar; de começo, a lista aberta na Minha lista.
 - Desligar a opção esconde as listas, sem apagar: ligue de novo e elas voltam.
 
 ## Quantidade

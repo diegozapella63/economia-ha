@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.25.1
+
+- **Roteiro**: a **Lista** fica só com as suas listas e **Nenhuma**, sem **Todas**. De começo vale a lista aberta na Minha lista.
+
 ## 1.25.0
 
 - **Roteiro**: sem uma escolha sua, o item já vai no tamanho que **compensa mais** (a Melhor compra da Minha lista), com o preço do pacote e a loja dele; antes só aparecia "Compensa levar…". O ✓ de **Sua escolha** continua mandando.

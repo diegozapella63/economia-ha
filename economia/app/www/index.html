@@ -2361,7 +2361,7 @@ dialog.ss-wrap::backdrop{background:transparent}
       clubes: arr(c.clubes),
       cupons_meus: arr(c.cupons_meus).filter(function(k){ return k && k.beneficio && k.rede; }),
       roteiro: {paradas:Math.min(4, Math.max(1, Math.round(Number(ro.paradas)) || 2)), escopo:ro.escopo === 'acabando' ? 'acabando' : 'tudo', online:ro.online !== false,
-        listas:arr(ro.listas).filter(function(id, k, a){ return (idsListas[id] || id === NENHUMA) && a.indexOf(id) === k; }).filter(function(_, k, a){ return a.length === 1; })},  // uma lista ou todas (1.23.0)
+        listas:arr(ro.listas).filter(function(id, k, a){ return (idsListas[id] || id === NENHUMA) && a.indexOf(id) === k; }).filter(function(_, k, a){ return a.length === 1; })},  // uma lista (1.23.0); vazio: a da Minha lista, ou a primeira
       listas: listas,
       ocultas: arr(c.ocultas),
       // a cor do app, da casa toda (1.9.0): null até a casa ter uma (a primeira vez adota a do aparelho)
@@ -2561,7 +2561,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.25.0';
+  var VERSAO = '1.25.1';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -4485,7 +4485,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     return {y:{id:dc.id, v:dc.total, preco:dc.total, frete:0, online:false, obs:dc.como, link:dc.link || ''}, emb:dc.como, total:dc.total, q:1, auto:true};
   }
   function itensDoRoteiro(principal){
-    var ls = listasOn() ? estado.roteiro.listas : [];
+    var ls = listasOn() && estado.listas.length ? [listaRoteiro()] : [];
     return estado.lista.filter(function(it){ return principal ? naListaAtual(it) : !ls.length || ls.some(function(id){ return emLista(it, id); }); }).map(function(it){ var p = precosDe(it.produto), r = ritmo(it.compras), es = escolhaDe(it, p) || compensaDe(it, p, r); return {it:it, r:r, p:es ? [es.y] : p, n:vezesDe(it, es), auto:!!(es && es.auto)}; })
       .filter(function(x){ return estado.roteiro.escopo !== 'acabando' || (x.r.dias != null && x.r.dias <= 7); });
   }
@@ -4574,8 +4574,8 @@ dialog.ss-wrap::backdrop{background:transparent}
     $('rotOnlineRow').hidden = estado.categorias.indexOf('online') < 0;
     var ls = listasOn() ? estado.listas : [];
     $('rotListasG').hidden = !ls.length;
-    var sel = ro.listas.length === 1 ? ro.listas[0] : '';  // uma lista ou Todas (antes dava para marcar várias: vale Todas)
-    $('rotListas').innerHTML = !ls.length ? '' : [''].concat(idsRoteiro()).map(function(id){ return '<button type="button" data-rl="' + esc(id) + '" aria-pressed="' + (id === sel) + '">' + esc(id ? nomeLista(id) : 'Todas') + '</button>'; }).join('');
+    var sel = listaRoteiro();  // 1.25.1: uma lista ou Nenhuma, sem Todas
+    $('rotListas').innerHTML = !ls.length ? '' : idsRoteiro().map(function(id){ return '<button type="button" data-rl="' + esc(id) + '" aria-pressed="' + (id === sel) + '">' + esc(nomeLista(id)) + '</button>'; }).join('');
   }
   function pintaRoteiro(){
     var rap = modoRot() === 'rapida';
@@ -4634,11 +4634,16 @@ dialog.ss-wrap::backdrop{background:transparent}
   $('rotParadas').addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; estado.roteiro.paradas = Number(b.dataset.v); rotVer = null; salvar(); pintaRoteiro(); pintaHero(); });
   $('rotEscopo').addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; estado.roteiro.escopo = b.dataset.v; rotVer = null; salvar(); pintaRoteiro(); pintaHero(); });
   $('rotOnline').addEventListener('change', function(){ estado.roteiro.online = this.checked; rotVer = null; salvar(); pintaRoteiro(); pintaHero(); });
-  // a lista do roteiro (1.23.0): Todas, uma lista pronta ou Nenhuma (os itens sem lista); uma escolha só (todas = [])
+  // a lista do roteiro: uma lista pronta ou Nenhuma (os itens sem lista), uma escolha só (1.23.0); sem Todas (1.25.1).
+  // Sem escolha guardada, a lista aberta na Minha lista, ou a primeira
   function idsRoteiro(){ return estado.listas.map(function(l){ return l.id; }).concat([NENHUMA]); }
+  function listaRoteiro(){
+    var ids = idsRoteiro(), r = estado.roteiro.listas[0];
+    return ids.indexOf(r) >= 0 ? r : listaAtual() || ids[0];
+  }
   $('rotListas').addEventListener('click', function(e){
-    var b = e.target.closest('[data-rl]'); if (!b) return;
-    estado.roteiro.listas = b.dataset.rl ? [b.dataset.rl] : [];
+    var b = e.target.closest('[data-rl]'); if (!b || !b.dataset.rl) return;
+    estado.roteiro.listas = [b.dataset.rl];
     rotVer = null; salvar(); pintaRoteiro();
   });
   $('rotRes').addEventListener('click', function(e){ var b = e.target.closest('[data-rotk]'); if (!b) return; rotVer = Number(b.dataset.rotk); pintaRoteiro(); });
