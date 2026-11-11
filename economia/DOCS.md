@@ -67,17 +67,18 @@ Para ler fotos, a IA escolhida precisa aceitar imagens (a Anthropic aceita). A f
 
 ## Listas prontas
 
-Ligue em **Mais › Configurações › Opções › Listas** (vem desligado). No alto da Minha lista aparece uma barra com **Nenhuma**, cada lista (com quantos itens tem) e **+ Nova**: crie, por exemplo, **Compra semanal** e **Compra mensal**, e troque de uma para outra com um toque. A lista aberta fica guardada no aparelho.
+Ligue em **Mais › Configurações › Opções › Listas** (vem desligado). No alto da Minha lista aparece uma barra com cada lista (com quantos itens tem) e **+ Nova**: crie, por exemplo, **Compra semanal** e **Compra mensal**, e troque de uma para outra com um toque. A lista aberta fica guardada no aparelho.
 
 - Continua uma lista só de produtos, com os preços e o histórico de cada um; as listas dizem o que entra em cada compra. Um item pode estar em mais de uma.
 - A tela toda segue a lista aberta: os itens, o Cupom de economia e as oportunidades.
 - A lista é fixa, para usar em toda compra: numa lista, **Comprei hoje** marca o item como comprado (a data entra no histórico, como sempre) e ele vai para **Comprados (n)**, no fim, recolhido. O Cupom, as oportunidades e o Roteiro olham só para o que falta. **Desmarcar** devolve um item; **Começar de novo**, embaixo da barra, desmarca todos para a próxima compra, sem tirar item nenhum da lista.
-- **Nenhuma** mostra só os itens que não estão em lista nenhuma (não há "Todas": cada item está numa lista ou em Nenhuma).
-- O que você adiciona com uma lista aberta entra nela. Um item que já existe também: é só escrever o nome (ele aparece nas sugestões). Cada item mostra o nome de cada lista: um toque põe ou tira o item dela.
-- Numa lista, **tirar desta lista** tira o item só dela; sem outra lista, ele vai para Nenhuma. **Limpar lista** fica só em Nenhuma e tira só os itens dela.
-- **Mover itens**, embaixo da barra: escolha para qual lista, marque os itens (ou **Marcar todos**) e toque em **Mover**. Eles saem da lista aberta e entram na outra; de uma lista, dá para mover para Nenhuma.
+- Todo item fica numa lista: sem uma lista aberta, nada entra (o app pede **Crie uma lista** ou **Abra uma lista**), nem pela leitura com IA, pela Conversa ou pelo CorrerIA (que pergunta em qual lista pôr).
+- **Nenhuma** só aparece enquanto tem item sem lista (os que já estavam na lista quando você ligou a opção, ou os de uma lista apagada): abra e passe para uma lista com **Mover itens**. Vazia, ela some.
+- O que você adiciona com uma lista aberta entra nela. Um item que já existe também: é só escrever o nome (ele aparece nas sugestões).
+- Numa lista, **tirar desta lista** tira o item só dela; se ele não está em outra, sai da lista e fica no Histórico, com as compras. **Limpar lista** fica só em Nenhuma e tira só os itens dela.
+- **Mover itens**, embaixo da barra: escolha para qual lista, marque os itens (ou **Marcar todos**) e toque em **Mover**. Eles saem da lista aberta e entram na outra.
 - **Editar** e **Apagar lista** ficam embaixo da barra, com a lista aberta. Em Editar (e ao criar) dá para trocar o nome e escolher um ícone para a lista (um toque no ícone escolhido tira). Apagar uma lista não apaga os itens: os que só estavam nela vão para Nenhuma.
-- No **Roteiro**, em **Lista**, escolha qual entra: uma lista ou **Nenhuma** (os itens sem lista). Uma escolha só, como Paradas e O que comprar; de começo, a lista aberta na Minha lista.
+- No **Roteiro**, em **Lista**, escolha qual entra: uma lista (ou **Nenhuma**, enquanto ela tiver item). Uma escolha só, como Paradas e O que comprar; de começo, a lista aberta na Minha lista.
 - Desligar a opção esconde as listas, sem apagar: ligue de novo e elas voltam.
 
 ## Quantidade

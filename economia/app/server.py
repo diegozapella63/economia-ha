@@ -608,6 +608,8 @@ def aplicar_diario(cfg, d):
         else:
             item = {"produto": d["produto"], "compras": [], "origem": "ha"}
         lista.append(item)
+    if d.get("lista") and d["lista"] not in item.setdefault("listas", []):  # posto numa lista pronta pela CorrerIA (1.27.0)
+        item["listas"].append(d["lista"])
     if d["tipo"] == "compra" and d.get("data") and d["data"] not in item.setdefault("compras", []):
         item["compras"].append(d["data"])
 
@@ -7222,8 +7224,10 @@ FERRAMENTAS_CORRERIA = [
      "entrada": _obj({})},
     {"nome": "por_na_lista", "titulo": "Pôr na lista", "grava": True, "apaga": False,
      "descricao": "Põe um produto na lista de compras (se já saiu antes, volta com as compras de antes). O preço vem na "
-                  "próxima busca do app.",
-     "entrada": _obj({"produto": _PRODUTO}, ["produto"])},
+                  "próxima busca do app. Com as listas prontas ligadas (economia_lista mostra), diga em qual delas.",
+     "entrada": _obj({"produto": _PRODUTO,
+                      "lista": {"type": "string", "description": "O nome da lista pronta, como \"Compra semanal\" (só com as listas ligadas e mais de uma)."}},
+                     ["produto"])},
     {"nome": "tirar_da_lista", "titulo": "Tirar da lista", "grava": True, "apaga": False,
      "descricao": "Tira um item da lista. Ele fica no histórico, com as compras, e volta com economia_por_na_lista.",
      "entrada": _obj({"produto": _DO_ITEM}, ["produto"])},
@@ -7336,8 +7340,17 @@ def _ferr_lista(a, cfg, of):
     if not itens:
         return "A lista de compras está vazia."
     linhas = [f"Lista de compras ({len(itens)} itens)." + (f" Preços da última busca, de {br_data(gerado[:10])}." if data_ok(str(gerado or "")[:10]) else "")]
+    # 1.27.0: com as listas prontas ligadas, em qual lista está cada item (economia_por_na_lista pede a lista)
+    prontas = {x["id"]: str(x["nome"]) for x in cfg.get("listas") or [] if isinstance(x, dict) and x.get("id") and x.get("nome")} \
+        if (cfg.get("opcoes") or {}).get("listas") is True else None
+    if prontas is not None:
+        linhas.append("Listas prontas: " + (", ".join(prontas.values()) + "." if prontas else "nenhuma ainda."))
     for i in itens:
         partes = []
+        if prontas is not None:
+            cru = crus.get(norm(i["produto"]))
+            em = [prontas[x] for x in (cru.get("listas") or []) if x in prontas] if isinstance(cru, dict) else []
+            partes.append("em " + " e ".join(em) if em else "sem lista")
         if i["mais_barato"]:
             outros = ", ".join(f'{p["loja"]} {br_preco(p["preco"])}' for p in i["precos"][1:3])
             partes.append(f'mais barato no {i["mais_barato"]["loja"]}, {br_preco(i["mais_barato"]["preco"])}' + (f" ({outros})" if outros else ""))
@@ -7439,22 +7452,47 @@ def _ferr_cupons(a, cfg, of):
         for k in cupons[:20]])
 
 
+def _lista_pronta(a, cfg):
+    """Com as listas prontas ligadas (1.27.0), todo item fica numa lista: a dita em "lista", ou a única que houver."""
+    if (cfg.get("opcoes") or {}).get("listas") is not True:
+        return None
+    listas = [x for x in cfg.get("listas") or [] if isinstance(x, dict) and x.get("id") and x.get("nome")]
+    if not listas:
+        raise ErroFerramenta("As listas prontas estão ligadas e ainda não há nenhuma: crie uma no app (Minha lista › + Nova).")
+    nomes = ", ".join(str(x["nome"]) for x in listas)
+    pedida = norm(a.get("lista") or "")
+    if pedida:
+        alvo = next((x for x in listas if norm(x["nome"]) == pedida), None) or next((x for x in listas if pedida in norm(x["nome"])), None)
+        if not alvo:
+            raise ErroFerramenta(f"lista vale: {nomes}.")
+        return alvo
+    if len(listas) == 1:
+        return listas[0]
+    raise ErroFerramenta(f"Diga em qual lista pôr (lista): {nomes}.")
+
+
 def _ferr_por(a, cfg, of):
     prod = _texto_arg(a, "produto")
     k = norm(prod)
     lista = cfg.setdefault("lista", [])
-    ja = next((nome_item(i) for i in lista if norm(nome_item(i)) == k), None)
-    if ja:
-        return f"{ja} já está na lista.", None
+    alvo = _lista_pronta(a, cfg)
+    ja = next((i for i in lista if norm(nome_item(i)) == k), None)
+    if ja is not None:
+        if alvo and isinstance(ja, dict) and alvo["id"] not in (ja.get("listas") or []):
+            ja["listas"] = (ja.get("listas") or []) + [alvo["id"]]
+            return f'Pus {ja["produto"]} na lista {alvo["nome"]}.', {"tipo": "lista", "produto": ja["produto"], "lista": alvo["id"]}
+        return f"{nome_item(ja)} já está na lista" + (f' {alvo["nome"]}' if alvo else "") + ".", None
     hist = cfg.get("historico") or []
     h = next((x for x in hist if isinstance(x, dict) and norm(x.get("produto")) == k), None)
     item = {"produto": h["produto"] if h else prod, "compras": sorted(c for c in (h.get("compras") or []) if data_ok(c)) if h else []}
     if h and h.get("ean"):
         item["ean"] = h["ean"]
+    if alvo:
+        item["listas"] = [alvo["id"]]
     cfg["historico"] = [x for x in hist if x is not h]
     lista.append(item)
     n = len(item["compras"])
-    return (f'Pus {item["produto"]} na lista' + (f", de volta do histórico com {n} compra(s)" if h and n else "")
+    return (f'Pus {item["produto"]} na lista' + (f' {alvo["nome"]}' if alvo else "") + (f", de volta do histórico com {n} compra(s)" if h and n else "")
             + ". O preço vem na próxima busca do app."), {"tipo": "novo", "produto": item["produto"], "item": item}
 
 

@@ -494,10 +494,6 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 @media (min-width:1000px){.lista-icones{grid-template-columns:repeat(12,minmax(0,1fr))}}
 .listas-acoes{margin:8px 2px 0;font-size:13px;color:var(--muted)}
 .listas-wrap .confirma{margin-top:10px}
-.i-listas{display:flex;flex-wrap:wrap;gap:6px}
-.i-listas .lst-b{color:var(--muted)}
-.i-listas .lst-b[aria-pressed="true"]{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
-.i-listas .lst-b[aria-pressed="true"]::before{content:"✓\00a0"}
 .rot-listas{flex-basis:100%}
 .rm{background:none;border:0;color:var(--muted);font-size:12px;text-decoration:underline;padding:0;flex:none}
 .i-online{display:flex;flex-direction:column;align-items:flex-start;gap:4px;border-top:1px dashed var(--line);padding-top:8px;font-size:13px;color:var(--muted)}
@@ -595,6 +591,8 @@ li.escolhida{border-color:var(--accent) !important}
 .parada li span:last-child{white-space:nowrap;font-weight:600}
 .rot-ops{display:flex;flex-direction:column;gap:6px}
 .r-dica{display:block;color:var(--accent);font-size:12px;font-weight:600}
+/* 1.27.0: o que põe itens na lista, junto (some sem lista aberta, com as listas ligadas); o mesmo espaço do .panel */
+#addArea{display:flex;flex-direction:column;gap:14px;min-width:0}
 #addForm{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:8px}
 .cod-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;margin-top:8px}
 .cod-foto{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
@@ -1263,6 +1261,8 @@ input.field,select.field{min-height:var(--altura)}
     </div>
     <section class="panel" aria-labelledby="h-lista">
       <div class="sec-head"><h2 id="h-lista"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg></span>Itens da lista</h2><button type="button" class="rm" id="limpar" hidden>Limpar lista</button></div>
+      <p class="hint add-bloq" id="addBloq" hidden></p>
+      <div id="addArea">
       <form class="row-form" id="addForm" novalidate>
         <input class="field" id="novoItem" name="novoItem" data-sug="itens" autocomplete="off" placeholder="Ex.: Lysoform, Café 500 g, Atorvastatina 20 mg" aria-label="Produto para acompanhar">
         <button class="btn" type="submit">Adicionar</button>
@@ -1307,6 +1307,7 @@ input.field,select.field{min-height:var(--altura)}
         <p class="hint" id="fotoMsg" aria-live="polite"></p>
         <ul class="foto-itens" id="fotoItens"></ul>
         <div class="row-form" id="fotoAddRow" hidden><button type="button" class="btn" id="fotoAdd">Adicionar à lista</button></div>
+      </div>
       </div>
       <div class="confirma" id="limparConf" hidden>
         <p id="limparTxt"></p>
@@ -2759,7 +2760,8 @@ input.field,select.field{min-height:var(--altura)}
       estado.historico = estado.historico.slice(-300);
     }
   }
-  function entraNaLista(nome){  // item novo ou de volta do histórico, com as compras de antes
+  function entraNaLista(nome){  // item novo ou de volta do histórico, com as compras de antes (só com uma lista aberta: podePor)
+    if (!podePor()) return null;
     var k = norm(nome), h = estado.historico.filter(function(x){ return norm(x.produto) === k; })[0];
     estado.historico = estado.historico.filter(function(x){ return norm(x.produto) !== k; });
     estado.lista.push({produto:h ? h.produto : nome, compras:h ? h.compras.slice().sort() : [], ean:h && h.ean ? h.ean : undefined, listas:listaAtual() ? [listaAtual()] : undefined});
@@ -2796,7 +2798,8 @@ input.field,select.field{min-height:var(--altura)}
     if (rm){ var t = estado.historico[Number(rm.dataset.histRm)]; estado.historico.splice(Number(rm.dataset.histRm), 1); salvar('"' + t.produto + '" saiu do histórico'); pintaHist(); return; }
     var b = e.target.closest('[data-hist]'); if (!b) return;
     var h = estado.historico[Number(b.dataset.hist)]; if (!h) return;
-    entraNaLista(h.produto); $('novoItem').value = '';
+    if (entraNaLista(h.produto) === null){ toast(porBloqueado()); return; }
+    $('novoItem').value = '';
     $('addMsg').className = 'hint ok'; $('addMsg').textContent = '"' + h.produto + '" voltou para a lista.';
     salvar('"' + h.produto + '" voltou para a lista'); pintaLista(); pintaOfertasTela(); pintaHist();
   });
@@ -2829,8 +2832,18 @@ input.field,select.field{min-height:var(--altura)}
   // pode estar em mais de uma. A tela toda (a lista, o cupom de economia) segue a lista aberta, que fica no aparelho. Com
   // as listas ligadas não há "Todas" (1.17.0): a lista aberta é uma lista pronta ou Nenhuma, os itens que não estão em
   // lista nenhuma ('' em ui.listaAtual; no roteiro, NENHUMA).
+  // 1.27.0: com as listas ligadas, todo item fica numa lista: Nenhuma só aparece enquanto tem item (os de antes de ligar,
+  // os de uma lista apagada), para passar para uma lista com Mover itens; sem lista aberta, nada entra (podePor).
   function listasOn(){ return !!estado.opcoes.listas; }
-  function listaAtual(){ var id = ui.listaAtual || ''; return listasOn() && estado.listas.some(function(l){ return l.id === id; }) ? id : ''; }
+  function temNenhuma(){ return estado.lista.some(function(it){ return !arr(it.listas).length; }); }
+  function listaAtual(){
+    if (!listasOn()) return '';
+    var id = ui.listaAtual || '';
+    if (estado.listas.some(function(l){ return l.id === id; })) return id;
+    return id === '' && temNenhuma() || !estado.listas.length ? '' : estado.listas[0].id;
+  }
+  function podePor(){ return !listasOn() || !!listaAtual(); }
+  function porBloqueado(){ return estado.listas.length ? 'Abra uma lista para pôr itens.' : 'Crie uma lista para pôr itens.'; }
   function emLista(it, id){ return id && id !== NENHUMA ? arr(it.listas).indexOf(id) >= 0 : !arr(it.listas).length; }
   function naListaAtual(it){ return !listasOn() || emLista(it, listaAtual()); }
   // 1.26.0: a lista pronta é fixa; o que já foi comprado nesta rodada fica marcado (lista.comprados) até Começar de novo
@@ -2847,19 +2860,12 @@ input.field,select.field{min-height:var(--altura)}
     }).join('') + '</div>';
   }
   var LISTA_ED = null;  // o que está aberto embaixo da barra: {novo: true}, {renomear: id}, {apagar: id} ou {mover: id, alvo, sel}
-  function linhaListas(x){
-    if (!listasOn() || !estado.listas.length) return '';
-    return '<div class="i-listas" role="group" aria-label="Listas de ' + esc(x.it.produto) + '">' + estado.listas.map(function(l){
-      var on = arr(x.it.listas).indexOf(l.id) >= 0;
-      return '<button type="button" class="ghost lst-b" data-lst="' + x.i + '" data-id="' + esc(l.id) + '" aria-pressed="' + on + '">' + esc(rotuloLista(l.id)) + '</button>';
-    }).join('') + '</div>';
-  }
   function pintaListas(){
     var on = listasOn(), a = listaAtual();
     $('listasWrap').hidden = !on;
     if (!on){ $('listasBar').innerHTML = ''; $('listasExtra').innerHTML = ''; return; }
     var n = function(id){ return estado.lista.filter(function(it){ return emLista(it, id); }).length; };
-    $('listasBar').innerHTML = '<button type="button" class="pick" data-la="" aria-pressed="' + !a + '"><span>Nenhuma</span> <small class="num">' + n('') + '</small></button>'
+    $('listasBar').innerHTML = (temNenhuma() ? '<button type="button" class="pick" data-la="" aria-pressed="' + !a + '"><span>Nenhuma</span> <small class="num">' + n('') + '</small></button>' : '')
       + estado.listas.map(function(l){ return '<button type="button" class="pick" data-la="' + esc(l.id) + '" aria-pressed="' + (a === l.id) + '"><span>' + esc(rotuloLista(l.id)) + '</span> <small class="num">' + n(l.id) + '</small></button>'; }).join('')
       + (estado.listas.length < 20 ? '<button type="button" class="pick lista-nova" data-lnova="1">+ Nova</button>' : '');
     var ed = LISTA_ED, h = '';
@@ -2882,8 +2888,8 @@ input.field,select.field{min-height:var(--altura)}
     $('listasExtra').innerHTML = h;
     if (ed && (ed.novo || ed.renomear)) setTimeout(function(){ var i = $('listaNome'); if (i) i.focus(); }, 0);
   }
-  // Mover itens (1.17.0): da lista aberta para outra (ou, de uma lista pronta, para Nenhuma, que só tira dela)
-  function alvosMover(de){ return estado.listas.filter(function(l){ return l.id !== de; }).map(function(l){ return l.id; }).concat(de ? [''] : []); }
+  // Mover itens (1.17.0): da lista aberta (ou de Nenhuma) para outra lista (1.27.0: Nenhuma não é destino)
+  function alvosMover(de){ return estado.listas.filter(function(l){ return l.id !== de; }).map(function(l){ return l.id; }); }
   function pintaMover(ed){
     var its = estado.lista.filter(function(it){ return emLista(it, ed.mover); }), alvos = alvosMover(ed.mover), k = Object.keys(ed.sel).filter(function(p){ return ed.sel[p]; }).length;
     return '<div class="lista-mover"><h3>Mover para</h3><div class="listas-bar" role="group" aria-label="Mover para">' + alvos.map(function(id){
@@ -2958,7 +2964,8 @@ input.field,select.field{min-height:var(--altura)}
   });
   function pintaLista(){
     pintaListas();
-    var aberta = listaAtual();
+    var aberta = listaAtual(), pode = podePor();
+    $('addArea').hidden = !pode; $('addBloq').hidden = pode; $('addBloq').textContent = pode ? '' : porBloqueado();
     var todos = estado.lista.map(function(it, i){ var r = ritmo(it.compras); return {it:it, i:i, r:r}; }).filter(function(x){ return naListaAtual(x.it); });
     var jaComprados = todos.filter(function(x){ return comprado(x.it, aberta); });
     pintaComprados(jaComprados, aberta);
@@ -2975,7 +2982,7 @@ input.field,select.field{min-height:var(--altura)}
     [].forEach.call($('visLista').querySelectorAll('button'), function(b){ b.setAttribute('aria-pressed', String((b.dataset.vis === 'resumida') === resumida)); });
     if (!itens.length && jaComprados.length){ pintaHero(); $('wish').innerHTML = '<li class="empty">Tudo comprado.</li>'; return; }
     if (!itens.length){ pintaHero(); $('wish').innerHTML = '<li class="empty">' + (aberta ? 'Nada em ' + esc(nomeLista(aberta)) + ' ainda. Adicione aqui ou traga de outra lista com Mover itens.'
-      : listasOn() && estado.lista.length ? 'Todos os itens estão em alguma lista.' : 'Sua lista está vazia. Adicione o que você compra sempre.') + '</li>'; return; }
+      : listasOn() ? 'Nenhuma lista ainda.' : 'Sua lista está vazia. Adicione o que você compra sempre.') + '</li>'; return; }
     pintaHero();
     // o que vale para vários itens é dito uma vez só, aqui em cima, e não em cada cartão
     var semCompra = itens.some(function(x){ return !arr(x.it.compras).length; });
@@ -2989,7 +2996,7 @@ input.field,select.field{min-height:var(--altura)}
       var p = precosDe(x.it.produto), soon = x.r.dias != null && x.r.dias <= 3;
       if (resumida && !RES_ABERTO[norm(x.it.produto)]) return linhaResumida(x, p, soon);
       var N = qtdDe(x.it);
-      var acoes = linhaListas(x) + '<div class="i-actions">' + seletorQtd(x) + '<button type="button" class="ghost ic-btn" data-comprei="' + x.i + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.3 14.2l2 2 3.6-3.7"/></svg>Comprei hoje</button><button type="button" class="ghost ic-btn sim-btn" data-sim="' + x.i + '" aria-pressed="' + !!x.it.similares + '" title="Mostrar produtos parecidos, da mesma seção da loja, que saem mais em conta">' + SVG_SIM + 'Similares</button><button type="button" class="rm" data-rm="' + x.i + '">' + (aberta ? 'tirar desta lista' : 'remover') + '</button>' + (x.it.origem === 'ha' ? '<span class="chip">Veio do Home Assistant</span>' : '');
+      var acoes = '<div class="i-actions">' + seletorQtd(x) + '<button type="button" class="ghost ic-btn" data-comprei="' + x.i + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.3 14.2l2 2 3.6-3.7"/></svg>Comprei hoje</button><button type="button" class="ghost ic-btn sim-btn" data-sim="' + x.i + '" aria-pressed="' + !!x.it.similares + '" title="Mostrar produtos parecidos, da mesma seção da loja, que saem mais em conta">' + SVG_SIM + 'Similares</button><button type="button" class="rm" data-rm="' + x.i + '">' + (aberta ? 'tirar desta lista' : 'remover') + '</button>' + (x.it.origem === 'ha' ? '<span class="chip">Veio do Home Assistant</span>' : '');
       if (!p.length){
         var procurou = arr((D.relatorio || {}).sem_preco).map(norm).indexOf(norm(x.it.produto)) >= 0;
         var buscando = buscaItem === x.it.produto;
@@ -3144,17 +3151,11 @@ input.field,select.field{min-height:var(--altura)}
       if (lo && arr(lo.comprados).indexOf(norm(it.produto)) < 0) lo.comprados = arr(lo.comprados).concat([norm(it.produto)]);
       salvar(lo ? 'Comprado: ' + it.produto : 'Compra registrada'); pintaLista(); return;
     }
-    if (b.dataset.rm != null && listaAtual()){  // numa lista pronta, sai só dela (sem outra lista, vai para Nenhuma)
-      var ir = estado.lista[Number(b.dataset.rm)]; if (!ir) return;
-      ir.listas = arr(ir.listas).filter(function(id){ return id !== listaAtual(); }); if (!ir.listas.length) delete ir.listas;
-      salvar('"' + ir.produto + '" saiu de ' + nomeLista(listaAtual()) + (ir.listas ? '' : '; está em Nenhuma')); pintaLista(); return;
-    }
-    if (b.dataset.lst != null){
-      var il = estado.lista[Number(b.dataset.lst)]; if (!il) return;
-      var tem = arr(il.listas).indexOf(b.dataset.id) >= 0;
-      il.listas = tem ? arr(il.listas).filter(function(id){ return id !== b.dataset.id; }) : arr(il.listas).concat([b.dataset.id]);
-      if (!il.listas.length) delete il.listas;
-      salvar((tem ? '"' + il.produto + '" saiu de ' : '"' + il.produto + '" entrou em ') + nomeLista(b.dataset.id)); pintaLista(); return;
+    // numa lista pronta, sai só dela; se não está em outra, sai da lista e fica no histórico (1.27.0: nada vai para Nenhuma)
+    if (b.dataset.rm != null && listaAtual() && arr((estado.lista[Number(b.dataset.rm)] || {}).listas).length > 1){
+      var ir = estado.lista[Number(b.dataset.rm)];
+      ir.listas = arr(ir.listas).filter(function(id){ return id !== listaAtual(); });
+      salvar('"' + ir.produto + '" saiu de ' + nomeLista(listaAtual())); pintaLista(); return;
     }
     if (b.dataset.rm != null){
       var nome = estado.lista[Number(b.dataset.rm)].produto;
@@ -3733,6 +3734,7 @@ input.field,select.field{min-height:var(--altura)}
     var i = itemDaLista(a.produto);
     if (a.tipo === 'por_na_lista'){
       if (i >= 0){ toast('"' + estado.lista[i].produto + '" já está na lista'); return true; }
+      if (!podePor()){ toast(porBloqueado()); return false; }
       var voltou = entraNaLista(a.produto);
       salvar('"' + a.produto + '" ' + (voltou ? 'voltou para a lista' : 'entrou na lista')); pintaLista(); pintaOfertasTela(); pintaHist();
       return true;
@@ -3810,6 +3812,7 @@ input.field,select.field{min-height:var(--altura)}
 
   $('fotoAdd').addEventListener('click', function(){
     var novos = 0;
+    if (!podePor()){ $('fotoMsg').className = 'hint err'; $('fotoMsg').textContent = porBloqueado(); return; }
     [].forEach.call($('fotoItens').querySelectorAll('li'), function(li){
       var c = li.querySelector('input[type=checkbox]'), nome = li.querySelector('textarea').value.trim().slice(0, 120);
       if (!c.checked || c.disabled || nome.length < 2 || estado.lista.some(function(x){ return norm(x.produto) === norm(nome); })) return;
@@ -3825,6 +3828,7 @@ input.field,select.field{min-height:var(--altura)}
     e.preventDefault();
     var nome = $('novoItem').value.trim(), msg = $('addMsg');
     if (nome.length < 3){ msg.className = 'hint err'; msg.textContent = 'Escreva o nome do produto, com tamanho ou dosagem se tiver.'; return; }
+    if (!podePor()){ msg.className = 'hint err'; msg.textContent = porBloqueado(); return; }
     var jaTem = estado.lista.filter(function(i){ return norm(i.produto) === norm(nome); })[0];
     if (jaTem && listaAtual() && !naListaAtual(jaTem)){  // já está em outra lista ou em Nenhuma: entra na lista aberta
       jaTem.listas = arr(jaTem.listas).concat([listaAtual()]); $('novoItem').value = ''; sugFechar();
@@ -3962,7 +3966,8 @@ input.field,select.field{min-height:var(--altura)}
     if (nome.length < 3){ codMsg('Escreva o nome do produto.', 'err'); $('codNome').focus(); return; }
     var igual = estado.lista.filter(function(i){ return norm(i.produto) === norm(nome); })[0];
     if (igual){ igual.ean = ean; salvar('Código guardado em "' + igual.produto + '"'); }
-    else { entraNaLista(nome); estado.lista[estado.lista.length - 1].ean = ean; salvar('Adicionado à lista'); }
+    else if (entraNaLista(nome) === null){ codMsg(porBloqueado(), 'err'); return; }
+    else { estado.lista[estado.lista.length - 1].ean = ean; salvar('Adicionado à lista'); }
     // o código só é usado pela busca direta nas lojas (Mais › Configurações › Opções)
     $('addMsg').className = 'hint ok'; $('addMsg').textContent = igual ? 'O código ficou guardado em "' + igual.produto + '".' : '"' + nome + '" entrou na lista com o código de barras' + (estado.opcoes.lojas_diretas ? ': com ele, o mesmo produto é achado nas lojas com busca no site.' : '.');
     $('codNum').value = ''; $('codRes').hidden = true; codMsg(''); abreCod(false);
@@ -4228,7 +4233,7 @@ input.field,select.field{min-height:var(--altura)}
   $('rotOnline').addEventListener('change', function(){ estado.roteiro.online = this.checked; rotVer = null; salvar(); pintaRoteiro(); pintaHero(); });
   // a lista do roteiro: uma lista pronta ou Nenhuma (os itens sem lista), uma escolha só (1.23.0); sem Todas (1.25.1).
   // Sem escolha guardada, a lista aberta na Minha lista, ou a primeira
-  function idsRoteiro(){ return estado.listas.map(function(l){ return l.id; }).concat([NENHUMA]); }
+  function idsRoteiro(){ return estado.listas.map(function(l){ return l.id; }).concat(temNenhuma() ? [NENHUMA] : []); }
   function listaRoteiro(){
     var ids = idsRoteiro(), r = estado.roteiro.listas[0];
     return ids.indexOf(r) >= 0 ? r : listaAtual() || ids[0];

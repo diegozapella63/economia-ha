@@ -152,6 +152,42 @@ class Ferramentas(Cenario):
             self.usa("por_na_lista", produto="x")
         self.assertTrue(os.listdir(os.path.join(S.DATA, "versoes")), "guarda a versão anterior antes de gravar")
 
+    def test_por_na_lista_com_listas_prontas(self):
+        """1.27.0: com as listas prontas ligadas, todo item fica numa lista: a dita, ou a única."""
+        S = self.S
+        lc = lista_cfg()
+        lc[0]["listas"] = ["sem"]
+        self.prepara(opcoes={"listas": True}, listas=[], lista=lc)
+        with self.assertRaisesRegex(S.ErroFerramenta, r"ainda não há nenhuma: crie uma no app \(Minha lista › \+ Nova\)"):
+            self.usa("por_na_lista", produto="Pão de forma")
+        self.prepara(opcoes={"listas": True}, listas=[{"id": "sem", "nome": "Compra semanal"}], lista=lc)
+        self.assertEqual(self.usa("por_na_lista", produto="Pão de forma"), "Pus Pão de forma na lista Compra semanal. O preço vem na próxima busca do app.")
+        self.assertEqual(S.ler_config()["lista"][-1], {"produto": "Pão de forma", "compras": [], "listas": ["sem"]}, "a única lista")
+        self.prepara(opcoes={"listas": True}, listas=[{"id": "sem", "nome": "Compra semanal"}, {"id": "men", "nome": "Compra mensal"}], lista=lc)
+        with self.assertRaisesRegex(S.ErroFerramenta, r"Diga em qual lista pôr \(lista\): Compra semanal, Compra mensal\."):
+            self.usa("por_na_lista", produto="Pão de forma")
+        with self.assertRaisesRegex(S.ErroFerramenta, r"lista vale: Compra semanal, Compra mensal\."):
+            self.usa("por_na_lista", produto="Pão de forma", lista="Feira")
+        self.assertEqual(self.usa("por_na_lista", produto="Pão de forma", lista="mensal"), "Pus Pão de forma na lista Compra mensal. O preço vem na próxima busca do app.")
+        # já na lista, noutra lista pronta: entra também nesta (e a página que estava aberta junta)
+        pagina = json.loads(json.dumps(S.ler_config()))
+        self.assertEqual(self.usa("por_na_lista", produto="café pilão 500 g", lista="Compra mensal"), "Pus Café Pilão 500 g na lista Compra mensal.")
+        self.assertEqual(S.ler_config()["lista"][0]["listas"], ["sem", "men"])
+        self.assertEqual(S.DIARIO[-1], {"tipo": "lista", "produto": "Café Pilão 500 g", "lista": "men", "rev": S.ler_config()["rev"]})
+        S.aplicar_diario(pagina, S.DIARIO[-1])
+        self.assertEqual(pagina["lista"][0]["listas"], ["sem", "men"])
+        self.assertEqual(self.usa("por_na_lista", produto="Café Pilão 500 g", lista="Compra semanal"), "Café Pilão 500 g já está na lista Compra semanal.")
+        # economia_lista diz em qual lista está cada item
+        t = self.usa("lista")
+        self.assertIn("Listas prontas: Compra semanal, Compra mensal.", t)
+        self.assertIn("- Café Pilão 500 g: em Compra semanal e Compra mensal; mais barato no Giassi", t)
+        self.assertIn("- Leite integral: sem lista; sem preço na última busca", t)
+        self.prepara(opcoes={"listas": True}, listas=[], lista=lc)
+        self.assertIn("Listas prontas: nenhuma ainda.", self.usa("lista"))
+        self.prepara(opcoes={"listas": False}, listas=[{"id": "sem", "nome": "Compra semanal"}], lista=lc)
+        self.assertEqual(self.usa("por_na_lista", produto="Pão de forma"), "Pus Pão de forma na lista. O preço vem na próxima busca do app.", "desligadas: como antes")
+        self.assertNotIn("Listas prontas", self.usa("lista"))
+
     def test_tirar_da_lista(self):
         S = self.S
         self.assertEqual(self.usa("tirar_da_lista", produto="cafe pilao"), "Tirei Café Pilão 500 g da lista. Ficou no histórico, com as compras.")

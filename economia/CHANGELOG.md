@@ -1,5 +1,12 @@
 # Mudanças
 
+## 1.27.0
+
+- **Listas prontas**: todo item fica numa lista. Sem uma lista aberta, nada entra: o app pede **Crie uma lista** ou **Abra uma lista** (também na leitura com IA, na Conversa e no CorrerIA, que pergunta em qual lista pôr).
+- **Nenhuma** só aparece enquanto tiver item sem lista, para você passar para uma lista com **Mover itens**; vazia, ela some (também no Roteiro).
+- Os itens não mostram mais os botões das listas. Para trocar um item de lista, use **Mover itens**.
+- **Tirar desta lista**, num item que só está nela, tira o item da lista e ele fica no Histórico, em vez de ir para Nenhuma.
+
 ## 1.26.0
 
 - **Listas prontas** fixas, para usar em toda compra: numa lista, **Comprei hoje** marca o item e ele vai para **Comprados**, no fim, recolhido. O cupom, as oportunidades e o Roteiro olham só para o que falta. **Desmarcar** devolve um item; **Começar de novo** desmarca todos para a próxima compra, sem tirar nada da lista.
