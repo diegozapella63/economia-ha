@@ -1,5 +1,17 @@
 # Mudanças
 
+## 1.36.0
+
+- **Comparar com IA**, na Minha lista: toque em **Comparar** (ao lado de Completa e Resumida) e marque de 2 a 6 opções nos cartões: a melhor compra, as outras lojas, os tamanhos ou os similares, até de itens diferentes. **Comparar** leva as escolhidas para a Conversa. A IA diz qual levar, se a marca mais barata é boa e confiável, e quanto custa o que se aproveita de verdade: o peito de frango com osso por R$ 15 contra o filé sem osso por R$ 13, pelo quilo aproveitado. O Voltar do celular e **Cancelar** saem sem comparar.
+- **Onde comprar** fica antes do **Adicionar** (Qualquer, Mercado, Farmácia ou Pet shop), de item para item: depois de adicionar, volta para Qualquer.
+- Item sem tamanho no nome ("Peito de frango"): quando o tamanho de sempre achado pela busca sai bem acima do comum (400 g a R$ 46/kg, com o quilo em geral a R$ 17), a **Melhor compra** é a mais barata por quilo, comparada ao **preço comum** das opções (*O comum é R$ 16,99 por quilo, em 12 opções*), e não mais àquele pacote.
+- O item que entra na lista, novo ou de volta do **Histórico**, não mostra mais o preço de antes: fica **Sem preço ainda** até uma busca nova, para não parecer que aquele é o preço de agora.
+- No cartão do item, **Buscar de novo**, **Buscar similares**, o setor e **Tirar desta lista** viraram botões como os outros do app, dois por linha. No Histórico, o **tirar** virou um botão redondo como o **+**, com o ícone de tirar.
+- Com a lista vazia, a **Última busca** some do alto da tela.
+- **Mais › Lojas** organizada: cada loja mostra, em ordem, o horário e o endereço, os links, de onde vem o preço, o clube, os recolhidos (Benefícios do clube e Como foi testado) e os botões (**Sou do clube**, com a caixinha de marcar, **Benefícios do clube**, **Testar agora** e o site), no padrão do app. A loja sem clube de vantagens diz **Sem clube de vantagens**.
+- O **Encontrar lojas** também procura os **benefícios do clube** de cada rede que você acompanha (com a IA ligada): uma pergunta por rede ainda não conferida ou conferida há mais de 60 dias, até 12 por vez.
+- **Ofertas** organizadas: **Procurar nas ofertas** e a loja numa caixa de seleção (no lugar de um botão por loja); em cada oferta, o preço sem desconto fica na direita e os botões (**Abrir na loja**, **Comparar preço**, **Vale a pena?**, **Não mostrar**) ficam no padrão do app, dois por linha, como o **Esconder**. O **Abrir na loja** do Mercado Livre abre a busca do produto quando o link não é de um anúncio.
+
 ## 1.35.0
 
 - A **Melhor compra** e a economia agora são **por quilo, litro ou unidade**: *R$ 9,60 por quilo* e *economia de R$ 35,40/kg*. Antes eram pelo tamanho de sempre do item (por 400 g, por 30 ml). O avulso mais barato mostra o mesmo preço por quilo ou litro, ao lado do preço do pacote.

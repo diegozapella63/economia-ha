@@ -117,6 +117,7 @@ esperar (espera-se a condição: `Cenario.espera`, `espera()` nas visuais), semp
 - `e2e/ec_dados.py`: Mais › Configurações › Dados: exportar (downloads), importar, versões e restaurar.
 - `e2e/ec_aparencia.py`: tema claro e escuro, a Cor do dia (ligada de começo, escolher uma cor desliga, a troca na virada do dia com relógio de mentira), sem IA, estados vazios e textos sem inglês.
 - `e2e/ec_tamanhos.py`: os tamanhos do item, a base e o preço por quilo ou litro.
+- `e2e/ec_comparar_ia.py`: Comparar com IA: marcar opções de itens diferentes (sem abrir a loja), o Voltar e o Cancelar, e a Conversa com as escolhidas e a resposta da IA.
 - `e2e/ec_setor.py`: a Melhor compra, o avulso e a economia por quilo ou litro; nada comparado entre setores (o automático e o escolhido no pé do cartão, que traz outro tamanho de sempre); Onde comprar ao adicionar.
 - `e2e/ec_mais.py`: Mais é um menu (Casa, Lojas, Configurações e Sobre por último): as linhas (ícone, título, o que tem,
   seta, alinhadas, nada cortado), cada tela com o ‹ Mais e só o painel dela, as abas de Configurações (só a aba aberta,

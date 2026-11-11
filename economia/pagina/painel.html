@@ -295,9 +295,23 @@ li.deal:first-child{border-top:0}
 .tarja.mip::before{background:var(--line)}
 .hide-btn{background:none;border:0;padding:0;color:var(--muted);font-size:12.5px;text-decoration:underline;text-underline-offset:2px}
 .hide-btn:hover{color:var(--ink)}
-.hide-menu{grid-column:1 / -1;display:flex;flex-wrap:wrap;align-items:center;gap:6px;background:var(--bg);border-radius:10px;padding:8px 10px;font-size:12.5px}
+.hide-menu{grid-column:1 / -1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:8px;background:var(--bg);border-radius:10px;padding:10px;font-size:13px}
+.hide-menu > span,.hide-menu > label,.hide-menu > input{grid-column:1 / -1}
+.hide-menu > span,.hide-menu > label{font-weight:600;color:var(--muted)}
+.hide-menu > button{min-width:0;justify-content:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+.hide-menu > button:last-child:nth-child(even){grid-column:1 / -1}
+.hide-menu.termo-form > button:last-child{grid-column:auto}
 .hide-btn:disabled{text-decoration:none;opacity:.7}
-.d-acts{grid-column:1 / -1;display:flex;flex-wrap:wrap;align-items:center;gap:4px 20px}
+.of-filtros{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 10px}
+.of-filtros:has(> select[hidden]){grid-template-columns:minmax(0,1fr)}
+@media (min-width:1000px){.of-filtros{grid-template-columns:minmax(0,1fr) 280px}}
+.d-acts > a.d-btn{text-decoration:none;color:var(--ink)}
+.d-acts{grid-column:1 / -1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:6px}
+.d-acts > .d-btn{width:100%;min-width:0;justify-content:center;white-space:normal;line-height:1.2;text-align:center;font-size:14px}
+.d-acts > :last-child:nth-child(odd){grid-column:1/-1}
+@media (min-width:1000px){.d-acts{grid-template-columns:repeat(auto-fill,250px)}.d-acts > :last-child:nth-child(odd){grid-column:auto}}
+/* 1.36.0: sem desconto, o preço fica na direita (antes, um espaço vazio no lugar do desconto o deixava no meio) */
+li.deal > .price.so-preco{grid-column:2 / -1;justify-self:end}
 .cmp{grid-column:1 / -1;display:flex;flex-direction:column;gap:7px;background:var(--bg);border-radius:10px;padding:9px 10px;min-width:0}
 .cmp-t{font-size:13px;font-weight:600;color:var(--muted)}
 .cmp.caro .cmp-t{color:var(--deal)}
@@ -313,7 +327,6 @@ li.deal:first-child{border-top:0}
 .chip.selo{background:var(--accent-soft);color:var(--accent)}
 .clube-ben ul{display:flex;flex-direction:column;gap:4px}
 .clube-ben b{color:var(--ink);font-weight:600}
-.off-enc{visibility:hidden}
 .sem-precos{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;background:var(--warn-soft);border-radius:10px;padding:10px 12px;font-size:14px}
 .sem-precos b{color:var(--warn)}
 .site-form{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:8px;padding-top:4px}
@@ -467,6 +480,24 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .qtd b{min-width:22px;font-size:15px}
 /* a lista resumida: o item, o preço escolhido e onde comprar; um toque abre o cartão inteiro, e o nome dele fecha */
 .seg.vis-lista{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;margin:0 0 12px}
+/* 1.36.0: Comparar com IA: o botão ao lado de Completa/Resumida; marcando as opções, a barra acima da de baixo */
+.lista-barra{display:flex;gap:8px;margin:0 0 12px;min-width:0}
+.lista-barra:not(:has(> :not([hidden]))){display:none}
+.lista-barra .seg.vis-lista{margin:0;flex:1 1 auto;min-width:0;width:auto}
+.cmp-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:1 1 auto;white-space:nowrap}
+.cmp-btn[hidden]{display:none}
+.seg.vis-lista:not([hidden]) + .cmp-btn{flex:0 0 auto}
+.cmp-btn svg{width:18px;height:18px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cmp-btn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.cmp-bar{position:fixed;left:12px;right:12px;bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:16;display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--accent);border-radius:14px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.22)}
+.cmp-bar[hidden]{display:none}
+.cmp-n{margin:0;font-size:14px;font-weight:600;color:var(--ink)}
+.cmp-acoes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.cmp-acoes > button{min-height:50px;justify-content:center}
+.comparando #wish{padding-bottom:150px}
+.comparando #wish [data-cmp]{cursor:pointer;outline:2px dashed color-mix(in srgb,var(--accent) 50%,transparent);outline-offset:2px}
+.comparando #wish [data-cmp][data-cmp-sel]{outline:3px solid var(--accent)}
+.comparando #wish .esc-btn,.comparando #wish .sim-acoes{visibility:hidden}
 .seg.vis-lista button{padding:8px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .item.mini{padding:0;gap:0}
 .i-mini{display:flex;align-items:center;gap:10px;width:100%;min-height:58px;padding:8px 14px;background:none;border:0;border-radius:12px;color:inherit;font:inherit;text-align:left;cursor:pointer}
@@ -606,14 +637,18 @@ li.escolhida{border-color:var(--accent) !important}
 /* 1.27.0: o que põe itens na lista, junto (some sem lista aberta, com as listas ligadas); o mesmo espaço do .panel */
 #addArea{display:flex;flex-direction:column;gap:14px;min-width:0}
 #addForm{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:8px}
-/* 1.35.0: onde comprar o item novo (setor) e, no pé do cartão, o setor de cada item */
-.add-setor{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:10px;font-size:14px;font-weight:600;color:var(--muted)}
-.add-setor[hidden]{display:none}
-.add-setor select{width:100%}
-@media (min-width:1000px){.add-setor{grid-template-columns:auto 280px;justify-content:start}}
-select.setor-sel{appearance:none;-webkit-appearance:none;font:inherit;font-size:12px;font-weight:600;color:var(--accent);background:none;border:0;padding:0 12px 0 0;margin-left:2px;text-decoration:underline;cursor:pointer;max-width:100%;
-  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 6px) 55%,calc(100% - 2px) 55%;background-size:4px 4px;background-repeat:no-repeat}
-.i-actions > select.setor-sel{justify-self:center;grid-column:1/-1}
+/* 1.35.0: onde comprar o item novo (setor), antes do Adicionar: o nome numa linha, embaixo onde comprar e os botões;
+   no computador, tudo numa linha. No pé do cartão, o setor de cada item */
+#addForm > #novoSetor[hidden]{display:none}
+#addForm:has(> #novoSetor:not([hidden])) > #novoItem{grid-column:1/-1}
+@media (min-width:1000px){#addForm:has(> #novoSetor:not([hidden])){grid-template-columns:minmax(0,1fr) 180px auto auto auto}#addForm:has(> #novoSetor:not([hidden])) > #novoItem{grid-column:auto}}
+.i-botoes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.i-botoes > *{width:100%;min-width:0;min-height:var(--altura,50px);margin:0}
+.i-botoes > .ic-btn{justify-content:center;white-space:normal;line-height:1.2;text-align:center}
+.i-botoes > :last-child:nth-child(odd){grid-column:1/-1}
+.i-botoes > .rm{color:var(--ink);text-decoration:none;font-size:14px;padding:0 12px}
+.i-botoes > .rm svg{stroke:var(--muted)}
+@media (min-width:1000px){.i-botoes{grid-template-columns:repeat(auto-fill,250px);justify-content:end}.i-botoes > :last-child:nth-child(odd){grid-column:auto}}
 .cod-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;margin-top:8px}
 .cod-foto{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
 .cod-foto svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -633,6 +668,8 @@ select.setor-sel{appearance:none;-webkit-appearance:none;font:inherit;font-size:
 .hist-add b{font-weight:600}
 .hist-add small{color:var(--muted);font-size:12.5px}
 .hist-mais{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--accent);background:none;color:var(--accent);font-size:20px;line-height:1;cursor:pointer}
+.hist-tirar{display:inline-flex;align-items:center;justify-content:center;padding:0}
+.hist-tirar svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
 .foto-box{display:flex;flex-direction:column;gap:10px;border:1px dashed var(--accent);border-radius:12px;padding:12px}
 .arq{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 .fotos{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:10px}
@@ -673,9 +710,18 @@ textarea.field.grow{field-sizing:content;min-height:var(--altura,50px);max-heigh
 .src.map-a{display:inline-flex;align-items:center;gap:3px;color:var(--accent);border-color:var(--accent);text-decoration:none}
 .src.map-a svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .src.sem{color:var(--muted);border-style:dashed}
-button.src.clube{display:inline-flex;align-items:center;gap:3px;background:none;font-family:inherit;line-height:inherit;cursor:pointer;color:var(--muted);border-style:dashed}
-button.src.clube svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-button.src.clube[aria-pressed="true"]{color:var(--accent);border:1px solid var(--accent);background:var(--accent-soft)}
+/* 1.36.0: a linha da loja em blocos: cada informação numa linha, os links juntos, de onde vem o preço, os recolhidos */
+.r-sub > .r-l,.r-sub > .r-links,.r-sub > .r-preco,.r-sub > details{flex:1 1 100%}
+.r-links,.r-preco{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
+.r-links:empty,.r-preco:empty{display:none}
+.r-preco > .r-l{flex:1 1 100%}
+/* 1.36.0: os botões da loja no padrão do app: na largura da linha, dois por linha no celular; 250 px no computador */
+.loja-botoes{flex:1 1 100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:6px}
+.loja-botoes > .loja-btn{width:100%;min-width:0;justify-content:center;white-space:normal;line-height:1.2;text-align:center;font-size:14px;padding-top:6px;padding-bottom:6px}
+.clube-ben > a,.clube-ben > button{display:block;margin-top:6px}
+.loja-botoes > :last-child:nth-child(odd){grid-column:1/-1}
+.loja-btn.clube[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+@media (min-width:1000px){.loja-botoes{grid-template-columns:repeat(auto-fill,250px)}.loja-botoes > :last-child:nth-child(odd){grid-column:auto}}
 .note{font-size:13px;color:var(--muted)}
 
 footer{font-size:12.5px;color:var(--muted)}
@@ -956,6 +1002,8 @@ html:not(.sem-ia) .so-semia{display:none!important}
   .hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 40px;align-items:center}
   .hero .opps{max-width:none}
   .toast{left:calc(50% + var(--side-w) / 2);bottom:24px}
+  .cmp-bar{left:calc(var(--side-w) + 24px);right:24px;bottom:24px;flex-direction:row;align-items:center;justify-content:space-between;gap:16px}
+  .cmp-acoes{grid-template-columns:250px 250px}
   .chat-fundo{display:none!important}
   .chat{left:auto;right:24px;bottom:24px;width:400px;height:min(680px,calc(100vh - 48px));padding-bottom:0;border-radius:18px;border:1px solid var(--line);box-shadow:0 18px 50px rgba(0,0,0,.22)}
   .chat-aberto .toast{top:auto;bottom:24px;left:calc(50% + var(--side-w) / 2 - 200px)}
@@ -1247,7 +1295,7 @@ input.field,select.field{min-height:var(--altura)}
       <section class="panel" aria-labelledby="h-ofertas">
         <div class="sec-head"><h2 id="h-ofertas"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/></svg></span>Ofertas</h2></div>
         <p class="sec-meta" id="ofertasMeta"></p>
-        <div class="filters" id="filters" role="group" aria-label="Filtrar por loja"></div>
+        <div class="of-filtros"><input class="field" type="search" id="ofBusca" placeholder="Procurar nas ofertas" aria-label="Procurar nas ofertas" autocomplete="off" enterkeyhint="search"><select class="field" id="filters" aria-label="Loja"></select></div>
         <ul class="deals" id="deals"></ul>
         <div id="dealsInat"></div>
       </section>
@@ -1285,11 +1333,11 @@ input.field,select.field{min-height:var(--altura)}
       <div id="addArea">
       <form class="row-form" id="addForm" novalidate>
         <input class="field" id="novoItem" name="novoItem" data-sug="itens" autocomplete="off" placeholder="Ex.: Lysoform, Café 500 g, Atorvastatina 20 mg" aria-label="Produto para acompanhar">
+        <select class="field" id="novoSetor" aria-label="Onde comprar" hidden></select>
         <button class="btn" type="submit">Adicionar</button>
         <button type="button" class="ghost big hist-btn" id="histBtn" aria-expanded="false" aria-controls="histBox" aria-label="Histórico: itens que já estiveram na lista" title="Histórico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></svg><span class="n" id="histN" hidden></span></button>
         <button type="button" class="ghost big hist-btn" id="codBtn" aria-expanded="false" aria-controls="codBox" aria-label="Pôr na lista pelo código de barras" title="Código de barras"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8v8M10 8v8M13 8v8M16.5 8v8"/></svg></button>
       </form>
-      <label class="add-setor" id="novoSetorRow" hidden><span>Onde comprar</span><select class="field" id="novoSetor"></select></label>
       <div class="hist-box" id="histBox" hidden>
         <h3>Histórico</h3>
         <p class="hint" id="histMeta"></p>
@@ -1335,7 +1383,7 @@ input.field,select.field{min-height:var(--altura)}
         <div class="row-form"><button type="button" class="btn perigo" id="limparSim">Tirar tudo</button><button type="button" class="ghost big" id="limparNao">Cancelar</button></div>
       </div>
       <p class="sec-meta" id="wishDica">Pode escrever só o produto, como "Lysoform": o app compara os tamanhos pelo preço por quilo ou litro.</p>
-      <div class="seg vis-lista" id="visLista" role="group" aria-label="Como mostrar a lista" hidden><button type="button" data-vis="completa" aria-pressed="true">Completa</button><button type="button" data-vis="resumida" aria-pressed="false">Resumida</button></div>
+      <div class="lista-barra"><div class="seg vis-lista" id="visLista" role="group" aria-label="Como mostrar a lista" hidden><button type="button" data-vis="completa" aria-pressed="true">Completa</button><button type="button" data-vis="resumida" aria-pressed="false">Resumida</button></div><button type="button" class="ghost big so-ia cmp-btn" id="cmpBtn" aria-pressed="false" aria-label="Comparar com IA" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M7 20h10M5 8h14"/><path d="M5 8l-3 7a3 3 0 0 0 6 0zM19 8l-3 7a3 3 0 0 0 6 0z"/></svg>Comparar</button></div>
       <ul class="wish-grid" id="wish"></ul>
       <div id="wishComprados"></div>
     </section>
@@ -1742,6 +1790,7 @@ input.field,select.field{min-height:var(--altura)}
   </div>
 </div>
 
+<div class="cmp-bar" id="cmpBar" role="region" aria-label="Comparar com IA" data-noswipe hidden><p class="cmp-n num" id="cmpN" aria-live="polite"></p><div class="cmp-acoes"><button type="button" class="ghost big" id="cmpCancel">Cancelar</button><button type="button" class="btn" id="cmpGo" disabled>Comparar</button></div></div>
 <nav class="tabbar" id="views" aria-label="Telas">
   <div class="tabbar-in">
     <button type="button" class="tab" data-view="lista"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg>Minha lista</button>
@@ -1807,6 +1856,12 @@ input.field,select.field{min-height:var(--altura)}
   }
   function pct(o){ return o.preco_normal ? Math.round((1 - o.preco_oferta / o.preco_normal) * 100) : 0; }
   function km(v){ return v == null || !isFinite(v) ? '—' : v.toFixed(1).replace('.', ',') + ' km'; }
+  // 1.36.0: o Abrir na loja da oferta: o link dela; do Mercado Livre, só o de um anúncio (MLB...), senão a busca do produto lá
+  function linkOferta(o){
+    var u = /^https?:\/\//.test(o.fonte || '') ? o.fonte : '';
+    if (u && /mercado ?livre/.test(norm((G[o.rede] || {}).nome || '')) && !/MLB-?\d{6,}/i.test(u)) u = '';
+    return linkCompra(o.rede, o.produto, u);
+  }
   function fonteLink(u){ return /^https?:\/\//.test(u || '') ? '<a href="' + esc(u) + '" target="_blank" rel="noopener">fonte</a>' : ''; }
 
   // ---------- vocabulário do perfil ----------
@@ -1929,6 +1984,7 @@ input.field,select.field{min-height:var(--altura)}
       lojas: {ignorar: arr(l.ignorar), manter: arr(l.manter), adicionar: arr(l.adicionar), folhetos: arr(l.folhetos).filter(function(f){ return f && f.nome; }).map(function(f){ return {nome:String(f.nome), categoria:f.categoria || 'mercados'}; })},
       lista: arr(c.lista).map(function(i){ return typeof i === 'string' ? {produto:i, compras:[]} : {produto:String(i.produto || ''), compras:arr(i.compras), origem:i.origem === 'ha' ? 'ha' : undefined,
         similares:i.similares ? true : undefined, ean:/^\d{8,14}$/.test(String(i.ean || '')) ? String(i.ean) : undefined, qtd:qtdDe(i) > 1 ? qtdDe(i) : undefined, setor:SETORES[i.setor] ? i.setor : undefined,
+        desde:/^\d{4}-\d{2}-\d{2}T/.test(String(i.desde || '')) ? String(i.desde) : undefined,
         listas:arr(i.listas).filter(function(id){ return idsListas[id]; }).length ? arr(i.listas).filter(function(id, k, a){ return idsListas[id] && a.indexOf(id) === k; }) : undefined,
         escolha:i.escolha && i.escolha.rede ? {rede:String(i.escolha.rede), q:Number(i.escolha.q) || null, obs:String(i.escolha.obs || '').slice(0, 120), sim:i.escolha.sim ? true : undefined} : undefined}; }).filter(function(i){ return i.produto; }),
       // itens que saíram da lista, com as compras, para voltar com um toque
@@ -2082,6 +2138,7 @@ input.field,select.field{min-height:var(--altura)}
   // caminho (abas de baixo, barra lateral, arrastar, ‹ Mais) sai da tela.
   var TELA_DE = null;  // a aba de baixo de onde um atalho abriu a tela (Preencher o perfil, Buscar sem CEP): o Voltar volta para ela
   function irPara(v, tela){
+    if (CMP && v !== 'lista'){ CMP = null; pintaCmp(); }  // o Comparar é só da Minha lista
     var de = ui.view, antes = ui.view === 'mais' ? ui.maisTela : '';
     ui.view = v; ui.maisTela = v === 'mais' && MAIS_IDS.indexOf(tela) >= 0 ? tela : ''; salvarUI();
     var t = ui.maisTela, menu = v === 'mais' && !t, cls = document.documentElement.classList;
@@ -2304,7 +2361,7 @@ input.field,select.field{min-height:var(--altura)}
   // tocar no Destaque leva à oferta: Todas as lojas, a linha no meio da tela, piscando
   $('factTop').addEventListener('click', function(){
     if (!TOP_ID) return;
-    if (filtro !== 'todas'){ filtro = 'todas'; pintaFiltros(); }
+    if (filtro !== 'todas' || OF_BUSCA){ filtro = 'todas'; OF_BUSCA = ''; $('ofBusca').value = ''; pintaFiltros(); }
     menuAberto = null; pintaDeals();
     var li = [].filter.call($('deals').children, function(x){ return x.dataset.oferta === TOP_ID; })[0];
     if (!li) return;
@@ -2322,31 +2379,35 @@ input.field,select.field{min-height:var(--altura)}
   }
   function pintaFiltros(){
     var tem = comOferta(), redes = arr(CAT.redes).filter(function(r){ return acompanha(r.id) && tem[r.id]; });
+    // 1.36.0: a loja numa caixa de seleção (antes, um botão por loja) e, ao lado, a busca nas ofertas
     $('filters').hidden = redes.length < 2;
-    var bt = function(r){ return '<button type="button" data-rede="' + r.id + '" aria-pressed="' + (r.id === filtro) + '">' + esc(r.nome) + '</button>'; };
+    if (filtro !== 'todas' && !redes.some(function(r){ return r.id === filtro; })) filtro = 'todas';
+    var op = function(r){ return '<option value="' + r.id + '"' + (r.id === filtro ? ' selected' : '') + '>' + esc(r.nome) + '</option>'; };
     var reg = CAT.id === 'online' ? redes.filter(function(r){ return regional(r.id); }) : [];
     var mkt = redes.filter(function(r){ return reg.indexOf(r) < 0; });
-    $('filters').innerHTML = [{id:'todas', nome:'Todas'}].concat(mkt).map(bt).join('')
-      + (reg.length ? '<span class="f-sep">Mercados da região que entregam</span>' + reg.map(bt).join('') : '');
+    $('filters').innerHTML = [{id:'todas', nome:'Todas as lojas'}].concat(mkt).map(op).join('')
+      + (reg.length ? '<optgroup label="Mercados da região que entregam">' + reg.map(op).join('') + '</optgroup>' : '');
   }
-  $('filters').addEventListener('click', function(e){
-    var b = e.target.closest('button'); if (!b) return;
-    filtro = b.dataset.rede; menuAberto = null;
-    Array.prototype.forEach.call(this.querySelectorAll('button'), function(x){ x.setAttribute('aria-pressed', String(x === b)); });
-    pintaDeals();
-  });
+  $('filters').addEventListener('change', function(){ filtro = this.value || 'todas'; menuAberto = null; pintaDeals(); });
+  var OF_BUSCA = '';
+  $('ofBusca').addEventListener('input', function(){ OF_BUSCA = norm(this.value); menuAberto = null; pintaDeals(); });
+  function achaOferta(o){
+    if (!OF_BUSCA) return true;
+    var t = norm(o.produto + ' ' + ((G[o.rede] || {}).nome || ''));
+    return OF_BUSCA.split(' ').every(function(w){ return !w || t.indexOf(w) >= 0; });
+  }
 
   var ROT_PRECO = {promo:'De', clube:'Sem clube', atacado:'Unitário'};
   function tagPrincipal(o){ return arr(o.tags).filter(function(t){ return NUNCA.indexOf(t) >= 0; })[0] || arr(o.tags).filter(function(t){ return ROTULO_TAG[t] && t !== 'alimentos'; })[0]; }
   function pintaDeals(){
-    var base = ofertasDaAba().filter(function(o){ return filtro === 'todas' || o.rede === filtro; });
+    var base = ofertasDaAba().filter(function(o){ return (filtro === 'todas' || o.rede === filtro) && achaOferta(o); });
     var vis = base.filter(function(o){ return !escondida(o); }).sort(function(a, b){ return nota(b) - nota(a); });
     // as escondidas (pelo perfil, por Nunca mostrar ou só esta oferta) no fim, em Escondidas (N), recolhidas até um toque
     var ocu = base.filter(function(o){ return escondida(o); });
     $('dealsInat').innerHTML = ocu.length ? '<details class="inativas" data-inat="ofertas"' + (OCULTAS_ABERTO ? ' open' : '') + '><summary>Escondidas (' + ocu.length + ')</summary><ul class="deals">'
       + ocu.map(function(o){ return linhaOferta(o, escondida(o)); }).join('') + '</ul></details>' : '';
     if (!vis.length){
-      var n = filtro !== 'todas' && G[filtro] ? G[filtro].nota : '';
+      var n = OF_BUSCA ? 'Nenhuma oferta com “' + $('ofBusca').value.trim() + '”.' : filtro !== 'todas' && G[filtro] ? G[filtro].nota : '';
       $('deals').innerHTML = '<li class="empty">' + esc(n || (base.length ? 'Todas as ofertas daqui foram escondidas pelo seu perfil.' : 'Nenhuma oferta encontrada ainda nas lojas que você acompanha.')) + '</li>';
       return;
     }
@@ -2369,34 +2430,36 @@ input.field,select.field{min-height:var(--altura)}
     var why = oc ? '<p class="why off-why">' + esc(oc.txt) + '</p>' : (porQue(o) ? '<p class="why">' + esc(porQue(o)) + '</p>' : '');
     var acao;
     if (oc){
+      // 1.36.0: os botões da oferta no padrão do app (dois por linha na largura do cartão)
       acao = oc.tipo === 'perfil'
-        ? '<button type="button" class="hide-btn" data-act="perfil">Ajustar no perfil</button>'
-        : '<button type="button" class="hide-btn" data-act="mostrar" data-id="' + esc(id) + '"' + (oc.tag ? ' data-tag="' + oc.tag + '"' : '') + (oc.termo ? ' data-termo="' + esc(oc.termo) + '"' : '') + '>Mostrar de novo</button>';
+        ? '<button type="button" class="ghost big ic-btn d-btn" data-act="perfil">Ajustar no perfil</button>'
+        : '<button type="button" class="ghost big ic-btn d-btn" data-act="mostrar" data-id="' + esc(id) + '"' + (oc.tag ? ' data-tag="' + oc.tag + '"' : '') + (oc.termo ? ' data-termo="' + esc(oc.termo) + '"' : '') + '>Mostrar de novo</button>';
     } else {
-      acao = '<button type="button" class="hide-btn" data-act="comparar" data-id="' + esc(id) + '"' + (comparando === id ? ' disabled' : '') + '>' + (comparando === id ? 'Comparando…' : 'Comparar preço') + '</button>'
-        + '<button type="button" class="hide-btn so-ia" data-act="avaliar" data-id="' + esc(id) + '">Vale a pena?</button>'
-        + '<button type="button" class="hide-btn" data-act="menu" data-id="' + esc(id) + '" aria-expanded="' + (menuAberto === id) + '">Não mostrar</button>';
+      acao = abreLink(linkOferta(o), 'ghost big ic-btn d-btn d-abrir', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>Abrir na loja')
+        + '<button type="button" class="ghost big ic-btn d-btn" data-act="comparar" data-id="' + esc(id) + '"' + (comparando === id ? ' disabled' : '') + '><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>' + (comparando === id ? 'Comparando…' : 'Comparar preço') + '</button>'
+        + (iaOn() ? '<button type="button" class="ghost big ic-btn d-btn so-ia" data-act="avaliar" data-id="' + esc(id) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Vale a pena?</button>' : '')
+        + '<button type="button" class="ghost big ic-btn d-btn" data-act="menu" data-id="' + esc(id) + '" aria-expanded="' + (menuAberto === id) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c5 0 9 4.5 10 7a13 13 0 0 1-3.3 4.4M6.5 6.6A13 13 0 0 0 2 12c1 2.5 5 7 10 7a9.7 9.7 0 0 0 4.5-1.1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>Não mostrar</button>';
     }
     var menu = '';
     if (!oc && menuAberto === id && termoAberto === id){
       // Nunca mostrar uma palavra: dá para trocar a palavra antes de esconder
       menu = '<form class="hide-menu termo-form" data-id="' + esc(id) + '"><label for="termoIn">Nunca mostrar ofertas com</label>'
         + '<input class="field" id="termoIn" value="' + esc(palavraDe(o.produto)) + '" maxlength="40" autocomplete="off" enterkeyhint="done">'
-        + '<button type="submit" class="btn">Esconder</button><button type="button" class="hide-btn" data-act="fechar">Cancelar</button></form>';
+        + '<button type="submit" class="btn">Esconder</button><button type="button" class="ghost big" data-act="fechar">Cancelar</button></form>';
     } else if (!oc && menuAberto === id){
       var tp = tagPrincipal(o), pal = palavraDe(o.produto);
-      menu = '<div class="hide-menu"><span>Esconder:</span>'
-        + '<button type="button" class="ghost" data-act="esconder" data-id="' + esc(id) + '">Só esta oferta</button>'
-        + (pal ? '<button type="button" class="ghost" data-act="termo" data-id="' + esc(id) + '">Nunca “' + esc(pal) + '”</button>' : '')
-        + (tp ? '<button type="button" class="ghost" data-act="nunca" data-tag="' + tp + '">Nada de ' + esc(ROTULO_TAG[tp]) + '</button>' : '')
-        + '<button type="button" class="hide-btn" data-act="fechar">Cancelar</button></div>';
+      menu = '<div class="hide-menu"><span>Esconder</span>'
+        + '<button type="button" class="ghost big" data-act="esconder" data-id="' + esc(id) + '">Só esta oferta</button>'
+        + (pal ? '<button type="button" class="ghost big" data-act="termo" data-id="' + esc(id) + '">Nunca “' + esc(pal) + '”</button>' : '')
+        + (tp ? '<button type="button" class="ghost big" data-act="nunca" data-tag="' + tp + '">Nada de ' + esc(ROTULO_TAG[tp]) + '</button>' : '')
+        + '<button type="button" class="ghost big" data-act="fechar">Cancelar</button></div>';
     }
     return '<li class="deal' + (oc ? ' muted' : '') + '" data-oferta="' + esc(id) + '">'
       + '<div><p class="d-prod">' + esc(o.produto) + '</p>' + why
-      + '<p class="d-meta"><span>' + esc(G[o.rede].nome) + '</span>' + selo + cond + rec + fonteLink(o.fonte) + '</p></div>'
-      + '<div class="price num"><span class="de">' + (o.preco_normal ? ROT_PRECO[tipo] + ' <s>' + brl.format(o.preco_normal) + '</s>' : o.encarte || tipo === 'encarte' ? 'Encarte' : 'Preço atual') + '</span><span class="por">' + brl.format(o.preco_oferta) + un + '</span>' + (o.tamanho && Number(o.tamanho.quantidade) > 0 && !o.unidade ? '<span class="de">' + porUn(o.preco_oferta, Number(o.tamanho.quantidade), o.tamanho) + '</span>' : o.unidades > 1 ? '<span class="de">' + brl.format(o.preco_oferta / o.unidades) + ' cada</span>' : '') + '</div>'
-      + (o.preco_normal ? '<span class="off num">−' + pct(o) + '%</span>' : '<span class="off off-enc" aria-hidden="true">−0%</span>')
-      + '<p class="d-acts">' + acao + '</p>' + menu + (oc ? '' : blocoComparar(o, id)) + '</li>';
+      + '<p class="d-meta"><span>' + esc(G[o.rede].nome) + '</span>' + selo + cond + rec + (oc ? fonteLink(o.fonte) : '') + '</p></div>'
+      + '<div class="price num' + (o.preco_normal ? '' : ' so-preco') + '"><span class="de">' + (o.preco_normal ? ROT_PRECO[tipo] + ' <s>' + brl.format(o.preco_normal) + '</s>' : o.encarte || tipo === 'encarte' ? 'Encarte' : 'Preço atual') + '</span><span class="por">' + brl.format(o.preco_oferta) + un + '</span>' + (o.tamanho && Number(o.tamanho.quantidade) > 0 && !o.unidade ? '<span class="de">' + porUn(o.preco_oferta, Number(o.tamanho.quantidade), o.tamanho) + '</span>' : o.unidades > 1 ? '<span class="de">' + brl.format(o.preco_oferta / o.unidades) + ' cada</span>' : '') + '</div>'
+      + (o.preco_normal ? '<span class="off num">−' + pct(o) + '%</span>' : '')
+      + '<div class="d-acts">' + acao + '</div>' + menu + (oc ? '' : blocoComparar(o, id)) + '</li>';
   }
   // Comparar preço: o mesmo produto nas outras lojas (o servidor procura como no Buscar este item, sem pôr na lista).
   // O preço de cada loja vale no tamanho da oferta ("equivale"); outro tamanho aparece com o tamanho dela.
@@ -2524,7 +2587,21 @@ input.field,select.field{min-height:var(--altura)}
   function setorDe(produto){ return setorEscolhido(produto) || setorAuto(itemCru(produto)); }
   function catDe(id){ return (G[id] || {}).cat || ''; }
   function noSetor(s){ return function(id){ var c = catDe(id); return !s || c === s || c === 'online'; }; }
-  function itemCru(produto){ var k = norm(produto); return arr(D.lista).filter(function(i){ return norm(i.produto) === k; })[0]; }
+  // 1.36.0: o item que entrou na lista (novo ou de volta do Histórico) só mostra o preço visto depois disso: um preço de
+  // antes daria a falsa ideia de que é o de agora. A marca é a hora do servidor dos dados de agora (sem depender do
+  // relógio do celular): só vale o preço visto por uma busca depois dela
+  function marcaDesde(){ return String((D && !exemplo && (D.atualizado_em || D.gerado_em)) || new Date().toISOString()); }
+  function desdeDe(produto){
+    var k = norm(produto), it = estado.lista.filter(function(i){ return norm(i.produto) === k; })[0];
+    return it && it.desde ? Date.parse(it.desde) || 0 : 0;
+  }
+  function itemCru(produto){
+    var k = norm(produto), cru = arr(D.lista).filter(function(i){ return norm(i.produto) === k; })[0], d = desdeDe(produto);
+    if (!cru || !d) return cru;
+    var vistos = cru.vistos || {}, precos = {};
+    Object.keys(cru.precos || {}).forEach(function(id){ if (vistos[id] && Date.parse(vistos[id].em) > d) precos[id] = cru.precos[id]; });
+    return Object.keys(precos).length ? Object.assign({}, cru, {precos:precos}) : null;
+  }
   function itemDe(produto){
     var cru = itemCru(produto), s = setorDe(produto);
     if (!cru || !s) return cru;
@@ -2565,8 +2642,8 @@ input.field,select.field{min-height:var(--altura)}
       : 'https://www.google.com/search?q=' + encodeURIComponent(nome.replace(/^(iFood|Rappi) · /, '') + ' ' + q);
     return {url:base, achado:false};
   }
-  function abreLink(l, cls, dentro){
-    return '<a class="' + cls + '" href="' + esc(l.url) + '" target="_blank" rel="noopener">' + dentro + '</a>';
+  function abreLink(l, cls, dentro, mais){
+    return '<a class="' + cls + '" href="' + esc(l.url) + '" target="_blank" rel="noopener"' + (mais || '') + '>' + dentro + '</a>';
   }
   function setaLink(l){ return '<span class="i-abrir">' + (l.achado ? 'Abrir' : 'Procurar') + ' <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></span>'; }
   function precosDe(produto){
@@ -2680,8 +2757,10 @@ input.field,select.field{min-height:var(--altura)}
   var SVG_SIM = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="7" width="10" height="10" rx="2"/><path d="M10.5 4h8a2 2 0 0 1 2 2v8"/><path d="M6.5 12h4"/></svg>';
   // os da última busca; sem eles, os guardados de uma busca de antes (simSalvoEm diz de quando)
   function simSalvoEm(it){
-    var info = itemDe(it.produto), sv = SIM_SALVOS[it.produto];
-    return !arr(info && info.similares).length && sv && arr(sv.itens).length ? String(sv.em || '') : '';
+    var info = itemDe(it.produto), sv = SIM_SALVOS[it.produto], d = desdeDe(it.produto);
+    // 1.36.0: os guardados de antes de o item entrar na lista ficam de fora (preço antigo)
+    var antigo = d && sv && String(sv.em || '') <= new Intl.DateTimeFormat('en-CA', {timeZone:TZ, year:'numeric', month:'2-digit', day:'2-digit'}).format(new Date(d));
+    return !arr(info && info.similares).length && sv && arr(sv.itens).length && !antigo ? String(sv.em || '') : '';
   }
   function similaresDe(it){
     var info = itemDe(it.produto), lst = arr(info && info.similares);
@@ -2703,7 +2782,7 @@ input.field,select.field{min-height:var(--altura)}
     vaiProHistorico([{produto:velho, compras:arr(it_.compras).slice(), ean:it_.ean}]);
     estado.historico = estado.historico.filter(function(h){ return norm(h.produto) !== norm(nt); });
     estado.listas.forEach(function(l){ l.comprados = arr(l.comprados).map(function(k){ return k === norm(velho) ? norm(nt) : k; }); });
-    it_.produto = nt; delete it_.escolha; delete it_.similares; delete it_.ean;
+    it_.produto = nt; it_.desde = marcaDesde(); delete it_.escolha; delete it_.similares; delete it_.ean;
     salvar('"' + velho + '" trocado por "' + nt + '"'); tudo(); pintaHist();
   }
   function ehSim(it, s){ var e = it.escolha; return !!(e && e.sim && e.rede === s.rede && norm(e.obs) === norm(s.nome)); }
@@ -2730,7 +2809,7 @@ input.field,select.field{min-height:var(--altura)}
     var lis = ss.map(function(s){
       var q = Number(s.quantidade), pr = Number(s.preco), bu = {unidade:s.unidade}, cls = [ehSim(x.it, s) ? 'escolhida' : '', conta(s) ? 'conta' : ''].join(' ').trim();
       // 1.29.0: embaixo de cada um, pôr na lista como item novo ou trocar o item por ele
-      return '<li' + (cls ? ' class="' + cls + '"' : '') + '>' + abreLink(linkCompra(s.rede, s.nome, s.fonte), 'tam-a', '<b>' + esc(s.nome) + '</b><span>' + esc(G[s.rede].curto) + ' · ' + esc(medidaTxt(q, bu)) + '</span><span>' + brl.format(pr) + '</span><span class="pu">' + esc(porUn(pr, q, bu)) + '</span>')
+      return '<li' + (cls ? ' class="' + cls + '"' : '') + cmpAttr(x.it.produto, s.nome, G[s.rede].nome, pr, q, bu) + '>' + abreLink(linkCompra(s.rede, s.nome, s.fonte), 'tam-a', '<b>' + esc(s.nome) + '</b><span>' + esc(G[s.rede].curto) + ' · ' + esc(medidaTxt(q, bu)) + '</span><span>' + brl.format(pr) + '</span><span class="pu">' + esc(porUn(pr, q, bu)) + '</span>')
         + '<p class="sim-acoes"><button type="button" class="link" data-simpor="' + x.i + '" data-sim-nome="' + esc(s.nome) + '">Pôr na lista</button>'
         + '<button type="button" class="link" data-simtroca="' + x.i + '" data-sim-nome="' + esc(s.nome) + '">Trocar por este</button></p>' + botaoSim(x.it, s) + '</li>';
     }).join('');
@@ -2779,15 +2858,58 @@ input.field,select.field{min-height:var(--altura)}
     var cs = setoresLigados(); if (atual && cs.indexOf(atual) < 0) cs.push(atual);
     return '<option value="">' + esc(auto) + '</option>' + cs.map(function(c){ return '<option value="' + c + '"' + (c === atual ? ' selected' : '') + '>Só ' + esc(SETORES[c].toLowerCase()) + '</option>'; }).join('');
   }
-  function pintaSetorAdd(){
-    var sel = $('novoSetor'), v = sel.value;
-    $('novoSetorRow').hidden = setoresLigados().length < 2;
-    sel.innerHTML = opcoesSetor(SETORES[v] ? v : '', 'Automático');
+  function pintaSetorAdd(){  // antes do Adicionar: Qualquer, Mercado, Farmácia ou Pet shop (cada item pode ser de um lugar)
+    var sel = $('novoSetor'), v = SETORES[sel.value] ? sel.value : '', cs = setoresLigados();
+    sel.hidden = cs.length < 2;
+    if (v && cs.indexOf(v) < 0) cs.push(v);
+    sel.innerHTML = '<option value="">Qualquer</option>' + cs.map(function(c){ return '<option value="' + c + '"' + (c === v ? ' selected' : '') + '>' + esc(SETORES[c]) + '</option>'; }).join('');
   }
   function seletorSetor(x){
     var s = SETORES[x.it.setor] ? x.it.setor : '';
     if (!s && setoresLigados().length < 2) return '';
-    return '<select class="setor-sel" data-setor="' + x.i + '" aria-label="Onde comprar ' + esc(x.it.produto) + '">' + opcoesSetor(s, 'Setor automático') + '</select>';
+    return '<select class="field setor-sel" data-setor="' + x.i + '" aria-label="Onde comprar ' + esc(x.it.produto) + '">' + opcoesSetor(s, 'Setor automático') + '</select>';
+  }
+  // ===== 1.36.0: Comparar com IA. Em Comparar, as opções dos cartões (a melhor compra, as lojas, os tamanhos, os
+  // similares, de um item ou de vários) ficam marcáveis; Comparar leva as escolhidas à Conversa, e a IA diz se a marca
+  // mais barata é boa e confiável, se o preço menor compensa e quanto custa o que se aproveita (osso, pele, água) =====
+  var CMP = null, CMP_REG = {}, CMP_VOLTA = null, MAX_CMP = 6;
+  function baseDe(produto){ var info = itemDe(produto); return info && info.base ? info.base : null; }
+  function q0De(produto){ var b = baseDe(produto); return b ? Number(b.quantidade) : null; }
+  function cmpAttr(item, produto, loja, preco, q, b){
+    if (!(preco > 0)) return '';
+    var k = [norm(item), norm(produto), norm(loja), Math.round(preco * 100), q || ''].join('|');
+    CMP_REG[k] = {item:item, produto:produto, loja:loja, preco:preco, q:q > 0 ? q : null, b:b && b.unidade ? b : null};
+    return ' data-cmp="' + esc(k) + '"' + (CMP && CMP.sel[k] ? ' data-cmp-sel' : '');
+  }
+  function linhaCmp(o){
+    var med = o.q && o.b ? medidaTxt(o.q, o.b) : '';
+    var t = o.produto + (med && !/\d/.test(o.produto) ? ', ' + med : '') + ': ' + brl.format(o.preco) + (med ? ' (' + porUn(o.preco, o.q, o.b) + ')' : '') + ', em ' + o.loja;
+    return t + (norm(o.produto).indexOf(norm(o.item)) < 0 ? ' (para "' + o.item + '")' : '');
+  }
+  function histCmp(){ try { return !!(history.state && history.state.cmp); } catch(e){ return false; } }
+  function pintaCmp(){
+    var n = CMP ? Object.keys(CMP.sel).length : 0;
+    document.documentElement.classList.toggle('comparando', !!CMP);
+    $('cmpBar').hidden = !CMP;
+    $('cmpBtn').setAttribute('aria-pressed', String(!!CMP));
+    if (CMP){ $('cmpN').textContent = n < 2 ? 'Toque nas opções: de 2 a ' + MAX_CMP + '.' : n + ' escolhidas'; $('cmpGo').disabled = n < 2; }
+    [].forEach.call($('wish').querySelectorAll('[data-cmp]'), function(el){ if (CMP && CMP.sel[el.dataset.cmp]) el.setAttribute('data-cmp-sel', ''); else el.removeAttribute('data-cmp-sel'); });
+  }
+  function entraComparar(){
+    if (CMP || !iaOn()) return;
+    CMP = {sel:{}};
+    if (!histCmp()){ try { history.pushState({tela:histTela() || undefined, cmp:true}, ''); } catch(e){ /* sem histórico */ } }
+    pintaCmp();
+  }
+  // sai do Comparar; com a entrada no histórico, ela é desfeita antes (depois roda quando o histórico voltou)
+  function saiComparar(depois){
+    var fim = typeof depois === 'function' ? depois : null;
+    if (!CMP){ if (fim) fim(); return; }
+    CMP = null; pintaCmp();
+    if (histCmp()){
+      CMP_VOLTA = fim || function(){};
+      try { history.back(); } catch(e){ var f = CMP_VOLTA; CMP_VOLTA = null; f(); }
+    } else if (fim) fim();
   }
   function melhorTamanho(it, r, p){
     var info = itemDe(it.produto);
@@ -2814,18 +2936,35 @@ input.field,select.field{min-height:var(--altura)}
     };
     var economia = function(j){ return Math.round((noRef(j.Q).total - j.total) * 100) / 100; };
     var vale = function(j){ return j !== ref && economia(j) >= Math.max(2, noRef(j.Q).total * 0.05); };
+    // 1.36.0: sem tamanho no nome do item ("Peito de frango"), o tamanho de sempre é um palpite da busca; quando ele sai
+    // bem acima do comum (400 g a R$ 46/kg, com o quilo em geral a R$ 17), a referência passa a ser o preço comum por
+    // quilo ou litro (a mediana das opções), e não esse pacote
+    var comum = mediana(ops.map(function(o){ return o.total / o.q; }));
+    var palpite = !temTamanho(it.produto) && pu(ref) > comum * 1.3 && best !== ref && pu(best) < comum;
     var det = ops.slice().sort(function(x, y){ return x.total / x.q - y.total / y.q; }).slice(0, 8).map(function(o, i){
       var escolhida = ehEscolha(it, o.id, o.q, o.obs || o.emb);
-      return '<li' + (i === 0 || escolhida ? ' class="' + (i === 0 ? 'top' : '') + (escolhida ? ' escolhida' : '') + '"' : '') + '>' + abreLink(linkCompra(o.id, o.obs || (it.produto + (o.emb ? ' ' + o.emb : '')), o.link), 'tam-a', '<b>' + esc(o.emb || medidaTxt(o.q, b)) + '</b><span>' + esc(G[o.id].curto) + '</span><span>' + brl.format(o.total) + (o.online ? freteTxt(o, true) : '') + '</span><span class="pu">' + esc(porUn(o.total, o.q, b)) + '</span>')
+      return '<li' + (i === 0 || escolhida ? ' class="' + (i === 0 ? 'top' : '') + (escolhida ? ' escolhida' : '') + '"' : '') + cmpAttr(it.produto, o.obs || o.emb || it.produto, G[o.id].nome, o.total, o.q, b) + '>' + abreLink(linkCompra(o.id, o.obs || (it.produto + (o.emb ? ' ' + o.emb : '')), o.link), 'tam-a', '<b>' + esc(o.emb || medidaTxt(o.q, b)) + '</b><span>' + esc(G[o.id].curto) + '</span><span>' + brl.format(o.total) + (o.online ? freteTxt(o, true) : '') + '</span><span class="pu">' + esc(porUn(o.total, o.q, b)) + '</span>')
         + botaoEscolher(it, o.id, o.q, o.obs || o.emb, (o.emb || medidaTxt(o.q, b)) + ' no ' + G[o.id].nome + ' por ' + brl.format(o.total)) + '</li>';
     }).join('');
     var chip, linha, nota = [], eco = 0, dica = null, principal = false;
-    if (best !== ref && vale(best)){
+    if (palpite){
+      var dp = dura(best.Q);
+      eco = Math.max(0, Math.round((comum - pu(best)) * best.Q * 100) / 100);
+      dica = {id:best.o.id, link:best.o.link, txt:comoTxt(best, b) + ' por ' + brl.format(best.total), como:comoTxt(best, b), total:best.total, online:best.o.online, frete:best.o.frete,
+              porBase:Math.round(best.total / (best.Q / q0) * 100) / 100, base:medidaTxt(q0, b),
+              porUn:Math.round(best.total / best.Q * 100) / 100, un:nomeUn(b), q0:q0, b:b, Q:best.Q, comum:Math.round(comum * 100) / 100, n:ops.length};
+      principal = !(best.o.online && best.o.prazo != null && r.dias != null && best.o.prazo > r.dias);
+      chip = '<span class="dchip on">Mais barato por ' + esc(nomeUn(b)) + '</span>';
+      linha = comoTxt(best, b) + ' por ' + brl.format(best.total) + ' (' + ondeTxt(best.o) + ') · ' + porUn(best.total, best.Q, b);
+      nota.push('Sai ' + porUn(best.total, best.Q, b) + '; o comum é ' + porUn(comum, 1, b) + '.');
+      if (dp != null) nota.push('No seu ritmo, dura uns ' + tempoTxt(dp) + '.');
+      if (!principal) nota.push('Chega em ' + best.o.prazo + (best.o.prazo > 1 ? ' dias' : ' dia') + ', depois de acabar.');
+    } else if (best !== ref && vale(best)){
       var nr = noRef(best.Q), d = dura(best.Q);
       eco = economia(best);
       dica = {id:best.o.id, link:best.o.link, txt:comoTxt(best, b) + ' por ' + brl.format(best.total), como:comoTxt(best, b), total:best.total, online:best.o.online, frete:best.o.frete,
               porBase:Math.round(best.total / (best.Q / q0) * 100) / 100, base:medidaTxt(q0, b),
-              porUn:Math.round(best.total / best.Q * 100) / 100, un:nomeUn(b), q0:q0, b:b};
+              porUn:Math.round(best.total / best.Q * 100) / 100, un:nomeUn(b), q0:q0, b:b, Q:best.Q};
       principal = !(best.o.online && best.o.prazo != null && r.dias != null && best.o.prazo > r.dias);
       var menor = best.Q < ref.Q;
       chip = '<span class="dchip on">' + (menor ? 'Compensa o menor' : 'Compensa o maior') + '</span>';
@@ -2860,6 +2999,12 @@ input.field,select.field{min-height:var(--altura)}
     return {economia:eco, dica:dica, principal:principal, n:ops.length, lista:det, un:nomeUn(b),
       html:'<div class="i-tam">' + chip + (principal ? '' : '<p>' + esc(linha) + '</p>') + (nota.length ? '<p class="i-nota">' + esc(nota.join(' ')) + '</p>' : '') + '</div>'};
   }
+  function mediana(xs){
+    var v = xs.filter(function(x){ return x > 0; }).sort(function(a, c){ return a - c; }), n = v.length;
+    return !n ? 0 : n % 2 ? v[(n - 1) / 2] : (v[n / 2 - 1] + v[n / 2]) / 2;
+  }
+  // o tamanho escrito no nome do item ("Café 500 g", "Leite 1 L"), como o tamanho_nome do servidor
+  function temTamanho(nome){ return /\d+(?:[.,]\d+)?\s*(?:ml|l|lt|litros?|kg|g|gr|un|und|unid|unidades?|m|metros?)\b/i.test(String(nome || '')); }
   // loja com preço de clube melhor, mas você não marcou que é do clube
   function dicaClube(p, best){
     var c = p.filter(function(y){ return !y.socio && y.precoClube && y.precoClube < best.v - 0.004; }).sort(function(a, b){ return a.precoClube - b.precoClube; })[0];
@@ -2887,6 +3032,7 @@ input.field,select.field{min-height:var(--altura)}
     var k = norm(nome), h = estado.historico.filter(function(x){ return norm(x.produto) === k; })[0];
     estado.historico = estado.historico.filter(function(x){ return norm(x.produto) !== k; });
     estado.lista.push({produto:h ? h.produto : nome, compras:h ? h.compras.slice().sort() : [], ean:h && h.ean ? h.ean : undefined, listas:listaAtual() ? [listaAtual()] : undefined, similares:h && h.similares ? true : undefined,
+      desde:marcaDesde(),  // 1.36.0: o preço de antes (de quando estava na lista) não aparece
       setor:SETORES[setor] ? setor : h && SETORES[h.setor] ? h.setor : undefined});  // 1.35.0: o setor escolhido ao adicionar (ou o de antes)
     return !!h;
   }
@@ -2911,7 +3057,8 @@ input.field,select.field{min-height:var(--altura)}
       var i = estado.historico.indexOf(x);
       return '<li class="hist-row"><button type="button" class="hist-add" data-hist="' + i + '"><b>' + esc(x.produto) + '</b><small>' + esc(sub) + '</small></button>'
         + '<button type="button" class="hist-mais" data-hist="' + i + '" aria-label="Pôr ' + esc(x.produto) + ' na lista">+</button>'
-        + '<button type="button" class="rm" data-hist-rm="' + i + '" aria-label="Tirar ' + esc(x.produto) + ' do histórico">tirar</button></li>';
+        // 1.36.0: o tirar do histórico no mesmo padrão do +, com o ícone de tirar
+        + '<button type="button" class="hist-mais hist-tirar" data-hist-rm="' + i + '" aria-label="Tirar ' + esc(x.produto) + ' do histórico" title="Tirar do histórico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg></button></li>';
     }).join('');
   }
   $('histBtn').addEventListener('click', function(){ HIST_ABERTO = !HIST_ABERTO; pintaHist(); });
@@ -3098,6 +3245,10 @@ input.field,select.field{min-height:var(--altura)}
         return x - y || a.i - b.i;
       });
     pintaSetorAdd();
+    if (D) pintaSync();  // 1.36.0: a última busca some com a lista vazia
+    CMP_REG = {};
+    $('cmpBtn').hidden = !iaOn() || !itens.some(function(x){ return precosDe(x.it.produto).length; });
+    if (CMP && $('cmpBtn').hidden) saiComparar();
     $('limpar').hidden = !itens.length || !!aberta;  // numa lista pronta, nada de limpar: ela é para usar de novo (em Nenhuma, limpa só os dela)
     if (!itens.length) $('limparConf').hidden = true;
     pintaRoteiro();
@@ -3120,9 +3271,11 @@ input.field,select.field{min-height:var(--altura)}
       var p = precosDe(x.it.produto), soon = x.r.dias != null && x.r.dias <= 3;
       if (resumida && !RES_ABERTO[norm(x.it.produto)]) return linhaResumida(x, p, soon);
       var N = qtdDe(x.it);
-      var acoes = '<div class="i-actions">' + seletorQtd(x) + '<button type="button" class="ghost ic-btn" data-comprei="' + x.i + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.3 14.2l2 2 3.6-3.7"/></svg>Comprei hoje</button>' + (x.it.origem === 'ha' ? '<span class="chip">Veio do Home Assistant</span>' : '');
-      // 1.30.0: o tirar desta lista (ou remover) fica no pé, ao lado do Buscar similares; o item sem preço não tem pé: fica nos botões
-      var tirar = '<button type="button" class="rm" data-rm="' + x.i + '">' + (aberta ? 'tirar desta lista' : 'remover') + '</button>';
+      var acoes = '<div class="i-actions">' + seletorQtd(x) + '<button type="button" class="ghost ic-btn" data-comprei="' + x.i + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.3 14.2l2 2 3.6-3.7"/></svg>Comprei hoje</button>' + (x.it.origem === 'ha' ? '<span class="chip">Veio do Home Assistant</span>' : '') + '</div>';
+      // 1.36.0: Buscar de novo, os similares, o setor e o tirar desta lista (ou remover) são botões como os outros do app,
+      // dois por linha na largura do cartão (antes, links no pé); o item sem preço tem só o setor e o tirar
+      var tirar = '<button type="button" class="ghost big ic-btn rm" data-rm="' + x.i + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>' + (aberta ? 'Tirar desta lista' : 'Remover') + '</button>';
+      var botoes = function(mais){ return '<div class="i-botoes">' + mais + seletorSetor(x) + tirar + '</div>'; };
       if (!p.length){
         var procurou = arr((D.relatorio || {}).sem_preco).map(norm).indexOf(norm(x.it.produto)) >= 0;
         var buscando = buscaItem === x.it.produto;
@@ -3131,36 +3284,38 @@ input.field,select.field{min-height:var(--altura)}
           + '<div class="i-best"><span class="lbl">Sem preço ainda</span>'
           + (procurou ? '<span class="i-wait">A última busca não achou.' + (((D.relatorio || {}).sugestoes || {})[x.it.produto] ? ' Quis dizer <button type="button" class="link corr-btn" data-de="' + esc(x.it.produto) + '" data-para="' + esc(D.relatorio.sugestoes[x.it.produto]) + '">' + esc(D.relatorio.sugestoes[x.it.produto]) + '</button>?' : '') + '</span>' : '')
           + '<button type="button" class="ghost ic-btn i-busca" data-buscaitem="' + x.i + '"' + (buscando ? ' disabled' : '') + '><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>' + (buscando ? 'Buscando…' : 'Buscar este item') + '</button></div>'
-          + acoes + seletorSetor(x) + tirar + '</div></li>';
+          + acoes + botoes('') + '</li>';
       }
       var best = p[0], conta = {}, mt = melhorTamanho(x.it, x.r, p), dc = mt && mt.principal ? mt.dica : null;
       // economia: o que se deixa de pagar em relação à segunda opção mais barata; com o tamanho que compensa, por quilo ou
       // litro em relação ao avulso mais barato (1.35.0: antes era pelo tamanho de sempre, 400 g ou 30 ml)
-      var ecoUn = dc ? Math.round((best.v / dc.q0 - dc.porUn) * 100) / 100 : 0;
+      var ecoUn = dc ? Math.round(((dc.comum || best.v / dc.q0) - dc.porUn) * 100) / 100 : 0;
       var eco = dc ? ecoUn : (p.length > 1 ? p[1].v - best.v : 0) * N;
       var ecoTxt = dc ? porUn(ecoUn, 1, dc.b) : brl.format(eco);
       var es = escolhaDe(x.it, p);
       p.forEach(function(y){ conta[G[y.id].cat] = (conta[G[y.id].cat] || 0) + 1; });
       var onde = D.categorias.filter(function(c){ return conta[c.id]; }).map(function(c){ return plural(conta[c.id], c.id); }).join(' e ');
-      return '<li class="item"><div class="i-head"' + fechaRes(x, resumida) + '>' + iconeItem(x.it.produto, G[best.id].cat) + '<p class="i-prod">' + esc(x.it.produto) + '</p>' + (eco > 0.004 ? '<span class="i-save num" title="' + (dc ? 'Comparado ao avulso mais barato' : 'Comparado à segunda loja mais barata') + '">economia de ' + ecoTxt + '</span>' : '') + '</div>'
+      return '<li class="item"><div class="i-head"' + fechaRes(x, resumida) + '>' + iconeItem(x.it.produto, G[best.id].cat) + '<p class="i-prod">' + esc(x.it.produto) + '</p>' + (eco > 0.004 ? '<span class="i-save num" title="' + (dc ? (dc.comum ? 'Comparado ao preço comum' : 'Comparado ao avulso mais barato') : 'Comparado à segunda loja mais barata') + '">economia de ' + ecoTxt + '</span>' : '') + '</div>'
         + (x.r.txt ? '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>' : '')
         + (x.it.escolha && !es ? '<p class="i-esc-nota">Sua escolha (' + esc(G[x.it.escolha.rede] ? G[x.it.escolha.rede].nome : 'a loja') + ') não veio na última busca. <button type="button" class="link" data-desescolher="' + x.i + '">Desfazer escolha</button></p>' : '')
         + (es ? caixaEscolha(x, es, best, dc) : dc
-          ? abreLink(linkCompra(dc.id, x.it.produto + ' ' + dc.como, dc.link), 'i-best i-link', '<span class="lbl">Melhor compra</span><span class="por num">' + brl.format(dc.porUn) + '<span class="un">por ' + esc(dc.un) + '</span></span><span class="i-store">' + esc(dc.como) + ' por ' + brl.format(dc.total) + ' · ' + esc(G[dc.id].nome) + ' <span class="chip">' + esc(G[dc.id].singular) + '</span></span>' + setaLink(linkCompra(dc.id, '', dc.link)))
-            + '<p class="i-avulso num">Avulso, o mais barato: <b>' + brl.format(best.v / dc.q0) + '</b> por ' + esc(dc.un) + (igualQ(dc.q0, 1) ? '' : ' · ' + esc(medidaTxt(dc.q0, dc.b)) + ' por ' + brl.format(best.v))
-            + ' (' + abreLink(linkCompra(best.id, best.obs || x.it.produto, best.link), 'i-txtlink', esc(G[best.id].nome)) + ')</p>'
-          : abreLink(linkCompra(best.id, best.obs || x.it.produto, best.link), 'i-best i-link', '<span class="lbl">Mais barato</span><span class="por num">' + brl.format(best.v * N) + (N > 1 ? '<span class="un">' + N + ' × ' + brl.format(best.v) + '</span>' : '') + '</span><span class="i-store">' + esc(G[best.id].nome) + ' <span class="chip">' + esc(G[best.id].singular) + '</span>' + (best.clube ? ' <span class="chip selo">Clube</span>' : '') + '</span>' + setaLink(linkCompra(best.id, '', best.link)))
+          ? abreLink(linkCompra(dc.id, x.it.produto + ' ' + dc.como, dc.link), 'i-best i-link', '<span class="lbl">Melhor compra</span><span class="por num">' + brl.format(dc.porUn) + '<span class="un">por ' + esc(dc.un) + '</span></span><span class="i-store">' + esc(dc.como) + ' por ' + brl.format(dc.total) + ' · ' + esc(G[dc.id].nome) + ' <span class="chip">' + esc(G[dc.id].singular) + '</span></span>' + setaLink(linkCompra(dc.id, '', dc.link)), cmpAttr(x.it.produto, dc.como, G[dc.id].nome, dc.total, dc.Q, dc.b))
+            + (dc.comum ? '<p class="i-avulso num">O comum é <b>' + brl.format(dc.comum) + '</b> por ' + esc(dc.un) + ', em ' + dc.n + ' opções.</p>'
+              : '<p class="i-avulso num">Avulso, o mais barato: <b>' + brl.format(best.v / dc.q0) + '</b> por ' + esc(dc.un) + (igualQ(dc.q0, 1) ? '' : ' · ' + esc(medidaTxt(dc.q0, dc.b)) + ' por ' + brl.format(best.v))
+                + ' (' + abreLink(linkCompra(best.id, best.obs || x.it.produto, best.link), 'i-txtlink', esc(G[best.id].nome)) + ')</p>')
+          : abreLink(linkCompra(best.id, best.obs || x.it.produto, best.link), 'i-best i-link', '<span class="lbl">Mais barato</span><span class="por num">' + brl.format(best.v * N) + (N > 1 ? '<span class="un">' + N + ' × ' + brl.format(best.v) + '</span>' : '') + '</span><span class="i-store">' + esc(G[best.id].nome) + ' <span class="chip">' + esc(G[best.id].singular) + '</span>' + (best.clube ? ' <span class="chip selo">Clube</span>' : '') + '</span>' + setaLink(linkCompra(best.id, '', best.link)), cmpAttr(x.it.produto, best.obs || x.it.produto, G[best.id].nome, best.v, q0De(x.it.produto), baseDe(x.it.produto)))
             + (best.obs && !best.online ? '<p class="i-avulso">Produto: ' + esc(best.obs) + '</p>' : ''))
-        + (p.length > 1 ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li' + (ehEscolha(x.it, y.id, null, y.obs) ? ' class="escolhida"' : '') + '>' + abreLink(linkCompra(y.id, y.obs || x.it.produto, y.link), 'i-chip', '<span class="ic-n">' + esc(G[y.id].curto) + '</span><b>' + brl.format(y.v) + '</b>' + (y.online && y.carrinho ? '<small>+ frete</small>' : y.online && y.frete ? '<small>c/ frete</small>' : '') + (y.clube ? '<small>clube</small>' : '')) + '' + botaoEscolher(x.it, y.id, null, y.obs, G[y.id].nome + ' por ' + brl.format(y.v)) + '</li>'; }).join('') + '</ul>' : '')
+        + (p.length > 1 && !(dc && dc.comum && !es) ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li' + (ehEscolha(x.it, y.id, null, y.obs) ? ' class="escolhida"' : '') + cmpAttr(x.it.produto, y.obs || x.it.produto, G[y.id].nome, y.v, q0De(x.it.produto), baseDe(x.it.produto)) + '>' + abreLink(linkCompra(y.id, y.obs || x.it.produto, y.link), 'i-chip', '<span class="ic-n">' + esc(G[y.id].curto) + '</span><b>' + brl.format(y.v) + '</b>' + (y.online && y.carrinho ? '<small>+ frete</small>' : y.online && y.frete ? '<small>c/ frete</small>' : '') + (y.clube ? '<small>clube</small>' : '')) + '' + botaoEscolher(x.it, y.id, null, y.obs, G[y.id].nome + ' por ' + brl.format(y.v)) + '</li>'; }).join('') + '</ul>' : '')
         + dicaClube(p, best)
         + detalhesCompra(x, p, dc, mt)
         + blocoSimilares(x, p)
-        + acoes + '<span class="i-foot">Em ' + onde + quandoPrecos(p) + ' · <button type="button" class="link i-rebusca" data-buscaitem="' + x.i + '"'
-        + (buscaItem === x.it.produto ? ' disabled>Buscando…' : '>Buscar de novo') + '</button>'
-        // 1.28.0: os similares (a mesma seção da loja) só vêm da busca direta; ligados, o mesmo lugar os esconde
-        + (estado.opcoes.lojas_diretas || x.it.similares ? ' · <button type="button" class="link i-sim" data-sim="' + x.i + '"' + (buscaItem === x.it.produto ? ' disabled' : '') + '>' + (x.it.similares ? 'Esconder similares' : 'Buscar similares') + '</button>' : '')
-        + (seletorSetor(x) ? ' · ' + seletorSetor(x) : '') + ' · ' + tirar + '</span></div></li>';
+        + acoes + '<p class="i-foot">Em ' + onde + quandoPrecos(p) + '</p>'
+        + botoes('<button type="button" class="ghost big ic-btn i-rebusca" data-buscaitem="' + x.i + '"' + (buscaItem === x.it.produto ? ' disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>Buscando…' : '><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>Buscar de novo') + '</button>'
+          // 1.28.0: os similares (a mesma seção da loja) só vêm da busca direta; ligados, o mesmo lugar os esconde
+          + (estado.opcoes.lojas_diretas || x.it.similares ? '<button type="button" class="ghost big ic-btn i-sim" data-sim="' + x.i + '"' + (buscaItem === x.it.produto ? ' disabled' : '') + '>' + SVG_SIM + (x.it.similares ? 'Esconder similares' : 'Buscar similares') + '</button>' : ''))
+        + '</li>';
     }).join('');
+    pintaCmp();
   }
   // ----- a lista resumida: o item, o preço escolhido (a sua escolha, a melhor compra ou o mais barato) e onde comprar -----
   var RES_ABERTO = {};
@@ -3216,7 +3371,8 @@ input.field,select.field{min-height:var(--altura)}
       : y.id === best.id && !es.q ? 'É também o mais barato.' : 'O mais barato é ' + brl.format(best.v) + ' no ' + G[best.id].nome + '.';
     if (es.sim) barato = 'Similar no lugar do item. O item pedido sai ' + brl.format(best.v) + ' no ' + G[best.id].nome + '.';
     var N = vezesDe(x.it, es);
-    return abreLink(l, 'i-best i-link', '<span class="lbl">' + (es.sim ? 'Sua escolha · similar' : 'Sua escolha') + '</span><span class="por num">' + brl.format(es.total * N) + (N > 1 ? '<span class="un">' + N + ' × ' + brl.format(es.total) + '</span>' : '') + '</span><span class="i-store">' + (es.emb ? esc(es.emb) + ' · ' : '') + esc(G[y.id].nome) + ' <span class="chip">' + esc(G[y.id].singular) + '</span>' + (y.online ? '<small>' + esc(freteTxt(y, true)) + '</small>' : '') + '</span>' + setaLink(l))
+    var cmp = cmpAttr(x.it.produto, y.obs || es.emb || x.it.produto, G[y.id].nome, es.total, es.q || q0De(x.it.produto), es.sim ? {unidade:(similaresDe(x.it).filter(function(z){ return ehSim(x.it, z); })[0] || {}).unidade} : baseDe(x.it.produto));
+    return abreLink(l, 'i-best i-link', '<span class="lbl">' + (es.sim ? 'Sua escolha · similar' : 'Sua escolha') + '</span><span class="por num">' + brl.format(es.total * N) + (N > 1 ? '<span class="un">' + N + ' × ' + brl.format(es.total) + '</span>' : '') + '</span><span class="i-store">' + (es.emb ? esc(es.emb) + ' · ' : '') + esc(G[y.id].nome) + ' <span class="chip">' + esc(G[y.id].singular) + '</span>' + (y.online ? '<small>' + esc(freteTxt(y, true)) + '</small>' : '') + '</span>' + setaLink(l), cmp)
       + (y.obs && !y.online && !es.emb ? '<p class="i-avulso">Produto: ' + esc(y.obs) + '</p>' : '')
       + '<p class="i-esc-nota num">' + esc(barato) + ' <button type="button" class="link" data-desescolher="' + x.i + '">Desfazer escolha</button></p>';
   }
@@ -3240,6 +3396,29 @@ input.field,select.field{min-height:var(--altura)}
   $('wish').addEventListener('toggle', function(e){
     var d = e.target; if (d && d.classList && d.classList.contains('i-det')) DET_ABERTO[d.dataset.det] = d.open;
   }, true);
+  // Comparar: o toque numa opção marca ou desmarca (e não abre o link nem escolhe)
+  $('wish').addEventListener('click', function(e){
+    if (!CMP) return;
+    var el = e.target.closest && e.target.closest('[data-cmp]'); if (!el) return;
+    e.preventDefault(); e.stopPropagation();
+    var k = el.dataset.cmp;
+    if (CMP.sel[k]) delete CMP.sel[k];
+    else if (Object.keys(CMP.sel).length >= MAX_CMP){ toast('No máximo ' + MAX_CMP + ' opções'); return; }
+    else if (CMP_REG[k]) CMP.sel[k] = CMP_REG[k];
+    pintaCmp();
+  }, true);
+  $('cmpBtn').addEventListener('click', function(){ if (CMP) saiComparar(); else entraComparar(); });
+  $('cmpCancel').addEventListener('click', function(){ saiComparar(); });
+  $('cmpGo').addEventListener('click', function(){
+    var ops = CMP ? Object.keys(CMP.sel).map(function(k){ return CMP.sel[k]; }) : [];
+    if (ops.length < 2) return;
+    var t = 'Compare e diga o que vale mais a pena comprar:\n' + ops.map(function(o, i){ return (i + 1) + '. ' + linhaCmp(o); }).join('\n');
+    saiComparar(function(){ if (!CHAT.aberto) abreChat(); enviaChat(t, true); });
+  });
+  window.addEventListener('popstate', function(){
+    if (CMP_VOLTA){ var f = CMP_VOLTA; CMP_VOLTA = null; f(); return; }  // a entrada desfeita ao sair
+    if (CMP && !histCmp()){ CMP = null; pintaCmp(); }  // o Voltar do celular
+  });
   $('wish').addEventListener('change', function(e){
     var s = e.target.closest && e.target.closest('select[data-setor]'); if (!s) return;
     var it = estado.lista[Number(s.dataset.setor)]; if (!it) return;
@@ -3851,6 +4030,7 @@ input.field,select.field{min-height:var(--altura)}
   }
   function exemploChat(){
     var ult = CHAT.msgs[CHAT.msgs.length - 1];
+    if (ult && ult.web && /^Compare/.test(ult.texto)) return {resposta:'No Home Assistant, a sua IA compara as opções: se a marca é boa e confiável, o rendimento de verdade (como o osso do frango) e o preço do que se aproveita, e diz qual levar.', acoes:[]};
     if (ult && ult.web) return {resposta:'Depende. No Home Assistant, a sua IA procura na web a nota e as avaliações de quem comprou, as reclamações e o preço de costume deste produto, e diz se vale a pena.', acoes:[]};
     var novo = ['Detergente 500 ml', 'Papel toalha', 'Sabonete'].filter(function(n){ return itemDaLista(n) < 0; })[0];
     return {resposta:'No Home Assistant, a sua IA responde aqui, com a sua lista, os preços e as ofertas. Quando ela sugerir uma mudança, só acontece com o seu toque:',
@@ -4022,7 +4202,7 @@ input.field,select.field{min-height:var(--altura)}
     var it = estado.lista.filter(function(i){ return i.produto === de; })[0];
     if (!it) return false;
     if (estado.lista.some(function(i){ return i !== it && norm(i.produto) === norm(para); })){ toast('"' + para + '" já está na lista'); return false; }
-    it.produto = para;
+    it.produto = para; it.desde = marcaDesde();
     salvar('Trocado para "' + para + '"'); pintaLista(); pintaOfertasTela();
     return true;
   }
@@ -4537,7 +4717,7 @@ input.field,select.field{min-height:var(--altura)}
     return u ? '<a class="src map-a" href="' + esc(u) + '" target="_blank" rel="noopener" aria-label="Abrir o site de ' + esc(nome) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>' + esc(host(u)) + '</a>' : '';
   }
   function botaoSite(l){
-    return '<button type="button" class="linkbtn" data-site="' + esc(l.rede) + '">' + (siteDe(l) ? 'Trocar site' : 'Adicionar site de ofertas') + '</button>';
+    return '<button type="button" class="ghost big ic-btn loja-btn" data-site="' + esc(l.rede) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>' + (siteDe(l) ? 'Trocar site' : 'Adicionar site de ofertas') + '</button>';
   }
   // botão Mapa: abre a loja no Google Maps (pelo lugar do Google, pelas coordenadas ou pelo endereço)
   function mapaUrl(l, nome){
@@ -4584,11 +4764,13 @@ input.field,select.field{min-height:var(--altura)}
   var SVG_CLUBE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/></svg>';
   function clubeHtml(c, l){
     if (!/^(farmacias|mercados|petshops)$/.test(c.id)) return '';
-    var k = clubeDe(c, l), socio = estado.clubes.indexOf(l.rede) >= 0;
-    if (k === null && !socio) return '';
-    // clube conferido: o nome; marcado pela busca: "Tem clube"; sem informação: "Adicionar clube"
-    var rot = socio ? (k && k !== 'tem' ? 'Sou do ' + k : 'Sou do clube') : (k === 'tem' ? 'Tem clube' : k || 'Adicionar clube');
-    return '<button type="button" class="src clube" data-clube="' + esc(l.rede) + '" aria-pressed="' + socio + '" aria-label="' + esc((socio ? 'Sair do clube: ' : 'Sou do clube: ') + G[l.rede].nome) + '">' + SVG_CLUBE + esc(rot) + '</button>';
+    var k = clubeDe(c, l), socio = estado.clubes.indexOf(l.rede) >= 0, rb = CLUBES_BEN[chaveLoja(G[l.rede].nome)];
+    if ((k === null || rb && !rb.clube && !arr(rb.beneficios).length) && !socio) return '';
+    // 1.36.0: um botão do app com a caixinha de marcar, para ficar claro que o toque diz que você é do clube (o preço
+    // de sócio passa a valer); com o nome do clube quando a busca sabe
+    var rot = 'Sou do ' + (k && k !== 'tem' ? k : 'clube');
+    return '<button type="button" class="ghost big ic-btn loja-btn clube" data-clube="' + esc(l.rede) + '" aria-pressed="' + socio + '" aria-label="' + esc(rot + ': ' + G[l.rede].nome) + '">'
+      + (socio ? '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8 12.5l3 3 5.5-6"/></svg>' : '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/></svg>') + esc(rot) + '</button>';
   }
   // 1.24.0: Benefícios do clube: a IA procura o que o clube da loja dá (guardado no servidor, por loja); com a IA ligada
   var CLUBES_BEN = {}, CLUBE_BUSCA = null, CLUBE_ABERTO = {};
@@ -4599,8 +4781,8 @@ input.field,select.field{min-height:var(--altura)}
     if (k === null && !r) return '';
     if (CLUBE_BUSCA === l.rede) return '<span class="testando">Procurando os benefícios…</span>';
     var btn = function(t){ return iaOn() ? '<button type="button" class="linkbtn" data-clube-ben="' + esc(l.rede) + '"' + (CLUBE_BUSCA ? ' disabled' : '') + '>' + t + '</button>' : ''; };
-    if (!r) return btn('Benefícios do clube');
-    if (!r.clube && !arr(r.beneficios).length) return '<span>Não achei clube de vantagens</span>' + btn('Procurar de novo');
+    if (!r) return '';  // 1.36.0: o Benefícios do clube fica nos botões da loja
+    if (!r.clube && !arr(r.beneficios).length) return '<span class="r-l">Sem clube de vantagens</span>';  // 1.36.0
     var linhas = arr(r.beneficios).map(function(b){ return '<li><b>' + esc(b.titulo) + '</b>' + (b.detalhe ? ' ' + esc(b.detalhe) : '') + '</li>'; }).join('');
     var extra = [r.custo ? 'Custo: ' + r.custo : '', r.como_entrar ? 'Como entrar: ' + r.como_entrar : ''].filter(Boolean).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('');
     return '<details class="fonte-det clube-ben"' + (CLUBE_ABERTO[l.rede] ? ' open' : '') + ' data-clube-det="' + esc(l.rede) + '"><summary>Benefícios ' + esc(r.clube ? 'do ' + r.clube : 'do clube')
@@ -4688,10 +4870,15 @@ input.field,select.field{min-height:var(--altura)}
         return '<li class="row has-track' + (on ? '' : ' out') + '">'
           + '<label class="track"><input type="checkbox" data-rede="' + l.rede + '"' + (on ? ' checked' : '') + '><span class="r-name">' + esc(G[l.rede].nome) + '</span></label>'
           + '<span class="r-val num">' + (web ? '' : km(l.distancia_km)) + '</span>'
-          + '<span class="r-sub">' + (txt ? '<span>' + esc(txt) + '</span>' : '') + (l.endereco ? '<span>' + esc(l.endereco) + '</span>' : '') + (web ? '' : mapaChip(l, G[l.rede].nome)) + siteChip(l) + instaChip(l) + clubeHtml(c, l) + beneficiosHtml(c, l) + arr(l.fontes).filter(function(f){ return f !== 'Mapa' && f !== 'Clube' && !(f === 'Site' && siteDe(l)) && !(f === 'Instagram' && instaDe(l)); }).map(function(f){ return '<span class="src">' + esc(f) + '</span>'; }).join('')
+          // 1.36.0: em ordem: o horário e o endereço, os links, de onde vem o preço, o clube, os recolhidos e os botões
+          + '<span class="r-sub">' + (txt ? '<span class="r-l">' + esc(txt) + '</span>' : '') + (l.endereco ? '<span class="r-l">' + esc(l.endereco) + '</span>' : '')
+          + '<span class="r-links">' + (web ? '' : mapaChip(l, G[l.rede].nome)) + siteChip(l) + instaChip(l) + arr(l.fontes).filter(function(f){ return f !== 'Mapa' && f !== 'Clube' && !(f === 'Site' && siteDe(l)) && !(f === 'Instagram' && instaDe(l)); }).map(function(f){ return '<span class="src">' + esc(f) + '</span>'; }).join('')
+          + (l.instagram ? '<a class="linkbtn" href="' + esc(l.instagram) + '" target="_blank" rel="noopener">Encarte do Instagram' + (l.instagram_ate ? ' até ' + dataBR(l.instagram_ate) : '') + '</a>' : '') + '</span>'
           + (c.id === 'online' && regional(l.rede) ? entregaHtml(l) : '')
-          + (l.encarte_auto ? '<span>Encarte lido do site ' + esc(host(l.site)) + '</span>' : '') + (l.folheto ? '<span>Folheto da semana' + (l.folheto_ate ? ' até ' + dataBR(l.folheto_ate) : '') + '</span>' : '') + (l.instagram ? '<a class="linkbtn" href="' + esc(l.instagram) + '" target="_blank" rel="noopener">Encarte do Instagram' + (l.instagram_ate ? ' até ' + dataBR(l.instagram_ate) : '') + '</a>' : '') + (l.preco_fonte ? fonteHtml(l, c.id, c) : web ? fonteOnline(G[l.rede].nome) + botaoTestar(l, c.id) : avisoSemPreco(c, l) + botaoTestar(l, c.id))
-          + (mi >= 0 ? '<span>Adicionada por você</span><button type="button" class="rm" data-loja="' + mi + '">remover</button>' : '') + '</span>'
+          + (l.encarte_auto ? '<span class="r-l">Encarte lido do site ' + esc(host(l.site)) + '</span>' : '') + (l.folheto ? '<span class="r-l">Folheto da semana' + (l.folheto_ate ? ' até ' + dataBR(l.folheto_ate) : '') + '</span>' : '')
+          + '<span class="r-preco">' + (l.preco_fonte ? fonteHtml(l, c.id, c) : web ? fonteOnline(G[l.rede].nome) : avisoSemPreco(c, l)) + '</span>'
+          + beneficiosHtml(c, l) + fonteDet(l)
+          + (mi >= 0 ? '<span class="r-l">Adicionada por você</span>' : '') + botoesLoja(c, l, c.id, mi) + '</span>'
           + (siteAberto === l.rede ? '<form class="site-form" novalidate data-site-form="' + esc(l.rede) + '" data-cat="' + c.id + '"><input class="field" type="url" inputmode="url" value="' + esc(siteDe(l)) + '" placeholder="Site, página de ofertas ou @ do Instagram" aria-label="Site de ofertas de ' + esc(G[l.rede].nome) + '"><button class="btn" type="submit">Salvar</button><button type="button" class="ghost big" data-site-fecha="1">Cancelar</button></form>' : '')
           + '</li>';
       });
@@ -4713,7 +4900,7 @@ input.field,select.field{min-height:var(--altura)}
           if ((SO_SEM_FONTE && !sf) || (TERMO_LOJA && norm(m.nome).indexOf(TERMO_LOJA) < 0)) return;
           (on ? mktOn : mktOff).push('<li class="row has-track' + (on ? '' : ' out') + '"><label class="track"><input type="checkbox" data-mkt="' + m.id + '"' + (on ? ' checked' : '') + '><span class="r-name">' + esc(m.nome) + '</span></label><span class="r-val num"></span>'
             + '<span class="r-sub"><span>' + (on ? 'Entrega no seu CEP' : 'Você não acompanha') + '</span>' + chipSite(MKT_SITE[m.id], m.nome) + '<span class="src">App</span>'
-            + (f ? fonteHtml(l, 'online') : fonteOnline(m.nome) + botaoTestar(l, 'online')) + '</span></li>');
+            + '<span class="r-preco">' + (f ? fonteHtml(l, 'online') : fonteOnline(m.nome)) + '</span>' + fonteDet(l) + botoesLoja(null, l, 'online') + '</span></li>');
         });
       }
       if (SO_SEM_FONTE || TERMO_LOJA){  // só as sem fonte de preço (as adicionadas à mão ainda não foram testadas) e/ou só o nome procurado
@@ -4748,8 +4935,20 @@ input.field,select.field{min-height:var(--altura)}
   var TESTANDO = null, FONTE_ABERTA = {};
   function botaoTestar(l, cid){
     if (!/^(farmacias|mercados|petshops|online)$/.test(cid)) return '';
-    return TESTANDO === l.rede ? '<span class="testando">Testando…</span>'
-      : '<button type="button" class="linkbtn" data-testar="' + esc(l.rede) + '" data-cat="' + cid + '"' + (TESTANDO ? ' disabled' : '') + '>Testar agora</button>';
+    return '<button type="button" class="ghost big ic-btn loja-btn" data-testar="' + esc(l.rede) + '" data-cat="' + cid + '"' + (TESTANDO ? ' disabled' : '') + '>'
+      + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>' + (TESTANDO === l.rede ? 'Testando…' : 'Testar agora') + '</button>';
+  }
+  // 1.36.0: os botões da loja no padrão do app, juntos no fim da linha (dois por linha no celular): Sou do clube,
+  // Benefícios do clube, Testar agora e o site de ofertas
+  function botoesLoja(c, l, cid, mi){
+    var f = l.preco_fonte, k = c ? clubeDe(c, l) : null, r = c && G[l.rede] ? CLUBES_BEN[chaveLoja(G[l.rede].nome)] : null;
+    var ben = c && /^(farmacias|mercados|petshops)$/.test(c.id) && k !== null && !r && iaOn() && CLUBE_BUSCA !== l.rede
+      ? '<button type="button" class="ghost big ic-btn loja-btn" data-clube-ben="' + esc(l.rede) + '"' + (CLUBE_BUSCA ? ' disabled' : '') + '>' + SVG_CLUBE + 'Benefícios do clube</button>' : '';
+    var semP = !f && c && c.id !== 'online' && G[l.rede] && !(l.nova && acompanha(l.rede)) && semPrecos(c).indexOf(l) >= 0 && !siteManual(G[l.rede].nome);
+    var site = (f && (f.como === 'ia' || f.como === 'nenhum') && !(cid === 'online' && !regional(l.rede))) || semP ? botaoSite(l) : '';
+    var rm = mi >= 0 ? '<button type="button" class="ghost big ic-btn loja-btn rm" data-loja="' + mi + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>Remover</button>' : '';
+    var bs = [c ? clubeHtml(c, l) : '', ben, botaoTestar(l, cid), site, rm].filter(Boolean);
+    return bs.length ? '<span class="loja-botoes">' + bs.join('') + '</span>' : '';
   }
   function testaLoja(cid, rid){
     if (MODO !== 'addon'){ toast('No Home Assistant, este botão testa o preço desta loja na hora.'); return; }
@@ -4781,12 +4980,15 @@ input.field,select.field{min-height:var(--altura)}
     var rot = f.como === 'ia' && !iaOn() ? FONTE_ROT.nenhum : r;
     // 1.21.1: testada com fonte, mas a última busca foi antes: os preços dela vêm na próxima
     var depois = c && fonteOk(l) && semPrecosBusca(c).indexOf(l) >= 0;
-    return '<span class="chip ' + rot[0] + '">' + rot[1] + '</span>' + (f.exemplo ? '<span>ex.: ' + esc(f.exemplo) + '</span>' : '')
-      + (depois ? '<span>Preços na próxima busca</span>' : '')
-      + ((f.como === 'ia' || f.como === 'nenhum') && !iaOn() ? '<span>Ligue a IA para ter o preço</span>' : '')
-      + (arr(f.passos).length ? '<details class="fonte-det"' + (FONTE_ABERTA[l.rede] ? ' open' : '') + ' data-fonte="' + esc(l.rede) + '"><summary>Como foi testado' + (f.em ? ' · ' + esc(quandoCurto(f.em)) : '') + '</summary><ul>'
-        + arr(f.passos).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></details>' : '')
-      + botaoTestar(l, cid) + ((f.como === 'ia' || f.como === 'nenhum') && !(cid === 'online' && !regional(l.rede)) ? botaoSite(l) : '');
+    return '<span class="chip ' + rot[0] + '">' + rot[1] + '</span>' + (f.exemplo ? '<span class="r-l">ex.: ' + esc(f.exemplo) + '</span>' : '')
+      + (depois ? '<span class="r-l">Preços na próxima busca</span>' : '')
+      + ((f.como === 'ia' || f.como === 'nenhum') && !iaOn() ? '<span class="r-l">Ligue a IA para ter o preço</span>' : '');
+  }
+  // 1.36.0: o Como foi testado fica junto dos outros recolhidos, antes dos botões da loja
+  function fonteDet(l){
+    var f = l.preco_fonte;
+    return f && arr(f.passos).length ? '<details class="fonte-det"' + (FONTE_ABERTA[l.rede] ? ' open' : '') + ' data-fonte="' + esc(l.rede) + '"><summary>Como foi testado' + (f.em ? ' · ' + esc(quandoCurto(f.em)) : '') + '</summary><ul>'
+      + arr(f.passos).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></details>' : '';
   }
   // 1.22.0: mercado da região: se entrega no CEP (pelo site, ou confirmado por você), com o Como foi testado
   function entregaSim(id){
@@ -4809,8 +5011,7 @@ input.field,select.field{min-height:var(--altura)}
     if (semPrecos(c).indexOf(l) < 0) return '';
     var man = siteManual(G[l.rede].nome);
     if (man) return '<span class="chip warn">Sem preços</span><span>O site ' + esc(host(man.site)) + ' entra na próxima busca</span>';
-    return '<span class="chip warn">Sem preços</span>' + (l.site_sem_encarte ? '<span>Não achei encarte em ' + esc(host(l.site)) + '</span>' : '')
-      + botaoSite(l);
+    return '<span class="chip warn">Sem preços</span>' + (l.site_sem_encarte ? '<span class="r-l">Não achei encarte em ' + esc(host(l.site)) + '</span>' : '');
   }
   function salvaSite(rid, cat, url){
     url = url.trim();
@@ -5109,7 +5310,7 @@ input.field,select.field{min-height:var(--altura)}
   $('usarIA').addEventListener('change', function(){
     estado.usar_ia = this.checked;
     salvar(this.checked ? 'IA ligada' : 'IA desligada');
-    pintaAjustes(); carregaVoz(); pintaLista(); pintaLado(); pintaLojas(); pintaIntegSt();
+    pintaAjustes(); carregaVoz(); pintaLista(); pintaLado(); pintaLojas(); pintaIntegSt(); pintaOfertasTela();
     if (this.checked){ carregaIAs(); carregaUso(); }
   });
   // ----- CorrerIA: o contato no WhatsApp e os apps no Claude e no Gemini (sem depender da IA daqui) -----
@@ -5723,7 +5924,8 @@ input.field,select.field{min-height:var(--altura)}
         var acompanha_ = function(){
           fetch('api/lojas-mapa/teste', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(t){
             if (t.rodando){
-              msg.className = 'hint'; msg.textContent = achou + ' Testando o preço de cada loja' + (t.total ? ': ' + (t.loja || '') + ' (' + t.atual + ' de ' + t.total + ')' : '') + '…';
+              msg.className = 'hint'; msg.textContent = achou + (t.etapa === 'clubes' ? ' Procurando os benefícios do clube: ' + (t.loja || '') + '…'
+                : ' Testando o preço de cada loja' + (t.total ? ': ' + (t.loja || '') + ' (' + t.atual + ' de ' + t.total + ')' : '') + '…');
               setTimeout(acompanha_, 2000); return;
             }
             b.disabled = false; msg.className = 'hint ok';
@@ -5753,6 +5955,8 @@ input.field,select.field{min-height:var(--altura)}
       : velha ? 'Última busca há ' + diasDaBusca() + ' dias (' + dataBR(String(D.gerado_em).slice(0, 10)) + ')' + resumoBusca()
       : 'Última busca ' + quando(D.gerado_em) + resumoBusca();
     $('sync').classList.toggle('velha', velha);
+    // 1.36.0: sem nenhum item na lista aberta, a data da última busca não diz nada: some
+    $('sync').hidden = !exemplo && !BUSCANDO && !estado.lista.some(naListaAtual);
     $('syncBuscar').hidden = !velha || BUSCANDO;
     $('banner').hidden = !exemplo;
     $('bannerTxt').textContent = MODO === 'addon'

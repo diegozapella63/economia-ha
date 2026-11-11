@@ -97,23 +97,33 @@ async def main():
             sp = await pg.text_content("#semPrecos")
             check("Sem preços de: Farmácia Vida." in sp and "Mandar encarte" in sp and "Adicionar site" in sp, f"loja sem preços ({sp})")
             # filtro por loja
-            filtros = [t.strip() for t in await pg.locator("#filters button").all_inner_texts()]
-            check(filtros == ["Todas", "Panvel", "Farmácias Nissei"], f"filtros: só as lojas com oferta, sem a Farmácia Vida ({filtros})")
-            await pg.click('#filters [data-rede="farm-nissei"]')
+            # 1.36.0: a loja numa caixa de seleção, ao lado da busca nas ofertas
+            filtros = [t.strip() for t in await pg.locator("#filters option").all_inner_texts()]
+            check(filtros == ["Todas as lojas", "Panvel", "Farmácias Nissei"], f"filtros: só as lojas com oferta, sem a Farmácia Vida ({filtros})")
+            await pg.select_option("#filters", "farm-nissei")
             check(await deals(pg) == ["Dipirona 1 g · 10 comprimidos", "Rivotril 2 mg"], f"só a Nissei ({await deals(pg)})")
+            await pg.select_option("#filters", "todas")
+            await pg.fill("#ofBusca", "dipirona")
+            check(await deals(pg) == ["Dipirona 1 g · 10 comprimidos"], f"a busca nas ofertas ({await deals(pg)})")
+            await pg.fill("#ofBusca", "xyz")
+            check("Nenhuma oferta com “xyz”." in await pg.text_content("#deals"), "nada com a palavra")
+            await pg.fill("#ofBusca", "")
+            await pg.select_option("#filters", "farm-nissei")
             # o Destaque leva à oferta: volta para Todas e a linha pisca no meio da tela
             await pg.click("#factTop")
-            check(await pg.get_attribute('#filters [data-rede="todas"]', "aria-pressed") == "true", "o Destaque volta para Todas")
+            check(await pg.input_value("#filters") == "todas", "o Destaque volta para Todas")
             linha = pg.locator('#deals .deal', has_text="Protetor solar")
             check("achada" in (await linha.get_attribute("class")), "a oferta do Destaque fica marcada")
             await pg.wait_for_timeout(900)
             caixa = await linha.bounding_box()
             check(0 < caixa["y"] < 844 - caixa["height"], f"e aparece na tela ({caixa})")
             check(await pg.locator('#deals [data-act="avaliar"]').count() == len(await deals(pg)), "cada oferta tem Vale a pena?")
-            acts = [x.strip() for x in await linha.locator(".d-acts .hide-btn").all_inner_texts()]
-            check(acts == ["Comparar preço", "Vale a pena?", "Não mostrar"], f"Comparar preço, Vale a pena? e Não mostrar ({acts})")
-            ys = [(await linha.locator(".d-acts .hide-btn").nth(i).bounding_box())["y"] for i in range(3)]
-            check(max(ys) - min(ys) < 2, f"os três na mesma linha ({ys})")
+            acts = [x.strip() for x in await linha.locator(".d-acts .d-btn").all_inner_texts()]
+            check(acts == ["Abrir na loja", "Comparar preço", "Vale a pena?", "Não mostrar"], f"Abrir na loja, Comparar preço, Vale a pena? e Não mostrar ({acts})")
+            # 1.36.0: botões do app, dois por linha, do mesmo tamanho, com 50 px (o link da oferta virou o Abrir na loja)
+            cx = [await linha.locator(".d-acts .d-btn").nth(i).bounding_box() for i in range(4)]
+            check(abs(cx[0]["y"] - cx[1]["y"]) < 2 and abs(cx[2]["y"] - cx[3]["y"]) < 2 and cx[2]["y"] > cx[0]["y"] + 10
+                  and abs(cx[0]["width"] - cx[3]["width"]) < 2 and all(c["height"] >= 49 for c in cx), f"dois por linha, com 50 px ({cx})")
             await pg.evaluate("window.scrollTo(0, 0)")
             # Não mostrar: o tipo inteiro (bebidas alcoólicas), ver as escondidas e mostrar de novo
             cerveja = pg.locator("#deals .deal", has_text="Cerveja")
@@ -208,8 +218,9 @@ async def main():
             await pg.click('#cats [data-cat="online"]')
             await pg.wait_for_timeout(300)
             check(await pg.text_content("#ofertasMeta") == "Preço com frete para o seu CEP.", "online: preço com frete")
-            filtros = (await pg.text_content("#filters")).replace("\xa0", " ")
-            check("Mercados da região que entregam" in filtros and filtros.index("Amazon") < filtros.index("Mercados da região") < filtros.index("Bistek"), "os mercados da região separados")
+            grupo = pg.locator('#filters optgroup[label="Mercados da região que entregam"]')
+            soltas = [t.strip() for t in await pg.locator("#filters > option").all_inner_texts()]
+            check(await grupo.count() == 1 and "Bistek" in await grupo.text_content() and "Amazon" in soltas, f"os mercados da região separados ({soltas})")
             cafe = (await pg.locator("#deals .deal", has_text="Café").inner_text()).replace("\xa0", " ")
             check("Frete grátis" in cafe and "Chega em 2 dias" in cafe and "Loja oficial" in cafe and "Você se interessa por café" in cafe, f"café na Amazon ({cafe[:120]})")
             arroz = await pg.locator("#deals .deal", has_text="Arroz").inner_text()

@@ -247,6 +247,9 @@ class Conversa(Cenario):
         c = ha.chamadas_ia[-1]
         self.assertEqual(c["entity_id"], "ai_task.busca")
         self.assertIn("Comece com o veredito (Vale a pena, Depende ou Não vale)", c["instructions"])
+        # 1.36.0: Comparar com IA (as opções marcadas na Minha lista): a marca, o rendimento e o preço do que se aproveita
+        self.assertIn("Para comparar opções", c["instructions"])
+        self.assertIn("quanto custa o que se aproveita de verdade (o osso e a pele do frango", c["instructions"])
         S.conversar({"mensagens": [{"de": "eu", "texto": "e o café?"}], "web": "sim"})
         self.assertEqual(ha.chamadas_ia[-1]["entity_id"], "ai_task.fotos", "só web: true vale; o resto é conversa")
         self.prepara(ia={"fotos": "ai_task.fotos", "busca": "conversation.gemini"})

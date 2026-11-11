@@ -112,7 +112,7 @@ async def main():
             # numa lista, "tirar desta lista": sem outra lista, o item sai da lista e fica no histórico (nada vai para Nenhuma)
             await abre(pg, "Compra semanal")
             leite = pg.locator("#wish > li.item", has_text="Leite integral")
-            check(await leite.locator('[data-rm]').inner_text() == "tirar desta lista", "o remover vira tirar desta lista")
+            check((await leite.locator('[data-rm]').inner_text()).strip() == "Tirar desta lista", "o remover vira tirar desta lista")
             await leite.locator('[data-rm]').click()
             await pg.wait_for_timeout(300)
             c = app.config_salva()

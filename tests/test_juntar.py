@@ -117,6 +117,18 @@ class Juntar(Base):
         self.assertEqual(so_farm, {}, "nada do setor: o item fica sem preço")
         self.assertEqual([S.cat_da_rede(r) for r in ("merc-x", "farm-x", "pets-x", "onli-x", "x")], ["mercados", "farmacias", "petshops", "online", None])
 
+    def test_item_que_entrou_na_lista_so_com_preco_novo(self):
+        # 1.36.0: o item novo ou de volta do Histórico (desde) fica só com o preço visto depois disso
+        S = self.S
+        of = {"lista": [{"produto": "Arroz 5 kg", "precos": {"merc-a": 20, "merc-b": 22, "merc-c": 25},
+                         "vistos": {"merc-a": {"em": "2026-11-02T10:00:00-03:00"}, "merc-b": {"em": "2026-11-11T19:30:00-03:00"}}},
+                        {"produto": "Café", "precos": {"merc-a": 15}, "vistos": {"merc-a": {"em": "2026-11-02T10:00:00-03:00"}}}]}
+        cfg = {"lista": [{"produto": "Arroz 5 kg", "desde": "2026-11-11T21:00:00.000Z"}, {"produto": "Café", "desde": "não é data"}]}
+        ps = S.precos_da_lista(cfg, of)
+        self.assertEqual(ps[S.norm("Arroz 5 kg")], {"merc-b": 22}, "só o visto depois (18:00 aqui); sem a hora, fica de fora")
+        self.assertEqual(ps[S.norm("Café")], {"merc-a": 15}, "sem uma data que valha, tudo")
+        self.assertIsNone(S._quando("2026-11-11T10:00:00"), "sem fuso não vale")
+
     def test_item_ofertas_ordena_e_tira_repetidos(self):
         S = self.S
         ent = {"precos": {"a": 1}, "links": {"a": "u", "b": "v"}, "vistos": {"a": {"em": "x"}}, "base": {"quantidade": 1, "unidade": "kg"},

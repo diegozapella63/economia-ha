@@ -36,7 +36,7 @@ async def main():
             check([x[0] for x in await linhas(pg)] == ["cartao"] * 3, "completa: os cartões de sempre")
             # Buscar de novo, no pé do cartão com preço; o sem preço tem o Buscar este item
             arroz = pg.locator("#wish > li.item", has_text="Arroz 5 kg")
-            check(await arroz.locator(".i-foot .i-rebusca").inner_text() == "Buscar de novo", "Buscar de novo no pé do cartão")
+            check((await arroz.locator(".i-botoes .i-rebusca").inner_text()).strip() == "Buscar de novo", "Buscar de novo nos botões do cartão")
             check(await pg.locator("#wish > li.item", has_text="Bolacha").locator(".i-rebusca").count() == 0, "o item sem preço tem o Buscar este item")
             async with pg.expect_request(lambda r: "api/buscar-itens" in r.url and r.method == "POST") as rq:
                 await arroz.locator(".i-rebusca").click()

@@ -78,8 +78,8 @@ async def main():
                             "Filé de Peito de Frango Kg"], f"todos os da seção, por kg ({nomes})")
             check("4 saem mais em conta que o item." in await sim.inner_text() and await sim.locator(".sim-list li.conta").count() == 4,
                   "os mais em conta marcados (o filé, mais caro, também aparece)")
-            check(await cox.locator(".i-foot .i-sim").inner_text() == "Esconder similares" and await cox.locator(".sim-btn").count() == 0,
-                  "no pé do cartão, ao lado do Buscar de novo")
+            check((await cox.locator(".i-botoes .i-sim").inner_text()).strip() == "Esconder similares" and await cox.locator(".sim-btn").count() == 0,
+                  "nos botões do cartão, ao lado do Buscar de novo")
             await cox.screenshot(path=SHOTS + "/ecl-similares.png")
             await sim.locator(".sim-list li").nth(1).locator(".esc-btn").click()
             await pg.wait_for_timeout(1200)
@@ -166,16 +166,18 @@ async def main():
             await pg.wait_for_timeout(1000)
             carne = await item(pg, "Carne moída")
             check("MAIS BARATO" in (await carne.locator(".i-best").first.inner_text()).upper(), "Desfazer escolha volta ao mais barato")
-            # 1.30.0: o remover fica no pé, ao lado do Buscar similares; no item sem preço (sem pé), nos botões
-            # 1.35.0: com mais de um setor ligado, o setor do item (Setor automático) fica antes do remover
-            pe = await carne.locator(".i-foot").evaluate("el => { const c = el.cloneNode(true); c.querySelectorAll('select').forEach((s) => s.replaceWith(s.selectedOptions[0].text)); return c.textContent; }")
-            pe = " ".join(pe.replace("\xa0", " ").split())
-            check(await carne.locator(".i-foot [data-rm]").count() == 1 and await carne.locator(".i-actions > [data-rm]").count() == 0
-                  and pe.endswith("Buscar de novo · Esconder similares · Setor automático · remover"), f"remover no pé ({pe!r})")
-            check(await (await item(pg, "Detergemte Ypê")).locator(".i-actions > [data-rm]").count() == 1, "sem preço: remover nos botões")
-            # 1.30.0: o item com os similares ligados sai e volta do histórico com eles (os guardados, sem outra busca)
+            # 1.36.0: Buscar de novo, os similares, o setor (com mais de um setor ligado) e o remover são botões do app,
+            # dois por linha na largura do cartão; o item sem preço tem só o setor e o remover
+            bts = await carne.locator(".i-botoes > *").evaluate_all("els => els.map((e) => (e.tagName === 'SELECT' ? e.selectedOptions[0].text : e.textContent).trim())")
+            check(bts == ["Buscar de novo", "Esconder similares", "Setor automático", "Remover"], f"os botões do cartão ({bts})")
+            caixas = await carne.locator(".i-botoes > *").evaluate_all("els => els.map((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)]; })")
+            check(caixas[0][1] == caixas[1][1] and caixas[2][1] == caixas[3][1] and caixas[0][2] == caixas[1][2] and all(c[3] >= 50 for c in caixas),
+                  f"dois por linha, do mesmo tamanho, com 50 px ({caixas})")
+            sem = await item(pg, "Detergemte Ypê")
+            check(await sem.locator(".i-botoes [data-rm]").count() == 1 and await sem.locator(".i-rebusca").count() == 0, "sem preço: o remover nos botões")
+            # 1.36.0: o item volta do histórico sem os preços de antes (nem os similares guardados): só depois de uma busca
             pedidos = len(app.lojas.pedidos_de("intelligent-search"))
-            await carne.locator(".i-foot [data-rm]").click()
+            await carne.locator(".i-botoes [data-rm]").click()
             await pg.wait_for_timeout(800)
             check(any(h["produto"].startswith("Carne moída") and h.get("similares") is True for h in app.config_salva()["historico"]), "no histórico, com os similares ligados")
             await pg.click("#histBtn")
@@ -184,8 +186,10 @@ async def main():
             await pg.wait_for_timeout(900)
             await pg.click("#histBtn")
             carne = await item(pg, "Carne moída")
-            check(await carne.locator(".i-sim").inner_text() == "Esconder similares" and "Acém Moído Bovino Kg" in await carne.inner_text()
-                  and len(app.lojas.pedidos_de("intelligent-search")) == pedidos, "voltou com os similares, sem buscar")
+            t = await carne.inner_text()
+            check("SEM PREÇO AINDA" in t.upper() and "Acém Moído Bovino Kg" not in t and "R$" not in t
+                  and len(app.lojas.pedidos_de("intelligent-search")) == pedidos, f"voltou sem os preços de antes ({t[:120]})")
+            check(next(i for i in app.config_salva()["lista"] if i["produto"].startswith("Carne moída")).get("similares") is True, "com os similares ligados, como saiu")
 
             # ----- Quis dizer… no item sem preço -----
             det = await item(pg, "Detergemte Ypê")
@@ -255,6 +259,7 @@ async def main():
             check(await pg.locator("#wish > li.item").count() == 0, "Tirar tudo esvazia a lista")
             c = app.config_salva()
             check(len(c.get("lista") or []) == 0 and len(c.get("historico") or []) >= n, "os itens foram para o histórico")
+            check(await pg.locator("#sync").is_hidden(), "1.36.0: com a lista vazia, a última busca some")
             check(not pg.erros, f"sem erros na página {pg.erros}")
             await b.close()
 

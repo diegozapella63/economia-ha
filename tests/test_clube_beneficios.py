@@ -39,6 +39,27 @@ class Beneficios(Cenario):
         with self.assertRaises(S.ErroBusca):
             S.limpa_clube(["lista"])
 
+    def test_encontrar_lojas_procura_os_clubes(self):
+        # 1.36.0: no Encontrar lojas, uma pergunta por rede acompanhada (farmácias, mercados e pet shops) ainda não procurada
+        # ou procurada há mais de 60 dias; uma vez cada rede, até o máximo; online fica de fora
+        S, ha = self.S, self.ha
+        cfg = self.config()
+        ha.responde_ia("clube", {"clube": "Clube Teste", "beneficios": [{"titulo": "Desconto", "detalhe": "10%"}]})
+        velho = (S.datetime.now(S.timezone.utc) - S.timedelta(days=90)).isoformat(timespec="seconds")
+        S.gravar_json(S.CLUBES_FILE, {S.chave_loja("Farmácia Lua"): {"clube": None, "beneficios": [], "em": S.agora()},
+                                      S.chave_loja("Atacado Sol"): {"clube": "Velho", "beneficios": [], "em": velho}})
+        alvos = [("farmacias", "farm-lua", "Farmácia Lua", {}), ("mercados", "merc-sol", "Atacado Sol", {}),
+                 ("mercados", "merc-azul", "Mercado Azul", {}), ("mercados", "merc-azul2", "Mercado Azul", {}),
+                 ("online", "onli-x", "Loja Online", {}), ("petshops", "pets-cao", "Pet Cão", {})]
+        self.assertEqual(S.clubes_das_lojas(cfg, alvos), 3, "Atacado Sol (velho), Mercado Azul (uma vez) e Pet Cão")
+        nomes = [p[3]["instructions"] for p in ha.pedidos_de("ai_task/generate_data")]
+        self.assertEqual(sum("Mercado Azul" in t for t in nomes), 1)
+        self.assertFalse(any("Farmácia Lua" in t or "Loja Online" in t for t in nomes))
+        self.assertEqual(S.ler_json(S.CLUBES_FILE)[S.chave_loja("Atacado Sol")]["clube"], "Clube Teste")
+        self.assertEqual(S.clubes_das_lojas(cfg, alvos), 0, "tudo procurado: nenhuma pergunta")
+        self.assertEqual(S.clubes_das_lojas(cfg, [("mercados", "m1", "Rede Um", {}), ("mercados", "m2", "Rede Dois", {})], maximo=1), 1)
+        self.assertEqual(S.clubes_das_lojas(dict(cfg, usar_ia=False), [("mercados", "m3", "Rede Tres", {})]), 0, "sem a IA, nada")
+
     def test_ia_desligada(self):
         self.config(usar_ia=False)
         with self.assertRaises(self.S.ErroBusca):

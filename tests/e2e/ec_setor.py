@@ -15,7 +15,12 @@ OFERTAS = {"versao": 2, "gerado_em": "2026-11-02T10:00:00-03:00", "categorias": 
          "tamanhos": [{"rede": "merc-sol", "embalagem": "Peito de frango 1,5 kg", "quantidade": 1.5, "preco": 14.4}]},
         {"produto": "Álcool 70", "precos": {"farm-lua": 6.26, "farm-mar": 6.28}, "base": {"quantidade": 0.03, "unidade": "L"},
          "tamanhos": [{"rede": "merc-sol", "embalagem": "Galão 5 L", "quantidade": 5, "preco": 42.98}]},
-        {"produto": "Leite sem lactose", "precos": {"merc-azul": 4.98, "merc-sol": 5.59, "farm-lua": 23.88}, "base": {"quantidade": 1, "unidade": "L"}}]}
+        {"produto": "Leite sem lactose", "precos": {"merc-azul": 4.98, "merc-sol": 5.59, "farm-lua": 23.88}, "base": {"quantidade": 1, "unidade": "L"}},
+        # 1.36.0: o tamanho de sempre achado pela busca (400 g) bem acima do comum: a referência é o preço comum do quilo
+        {"produto": "Coxa de frango", "precos": {"merc-azul": 18.48, "merc-sol": 19.9}, "base": {"quantidade": 0.4, "unidade": "kg"},
+         "tamanhos": [{"rede": "merc-azul", "embalagem": "Coxa 1 kg", "quantidade": 1, "preco": 15.9},
+                      {"rede": "merc-sol", "embalagem": "Coxa bandeja 1 kg", "quantidade": 1, "preco": 17.98},
+                      {"rede": "merc-sol", "embalagem": "Coxa congelada 1,5 kg", "quantidade": 1.5, "preco": 14.38}]}]}
 
 
 def limpo(s):
@@ -24,7 +29,7 @@ def limpo(s):
 
 async def main():
     cfg = {"cep": CEP, "raio_km": 5, "categorias": ["mercados", "farmacias"],
-           "lista": [{"produto": "Peito de frango"}, {"produto": "Álcool 70"}, {"produto": "Leite sem lactose"}]}
+           "lista": [{"produto": "Peito de frango"}, {"produto": "Álcool 70"}, {"produto": "Leite sem lactose"}, {"produto": "Coxa de frango"}]}
     with App(cfg, buscar=False, antes=lambda S: S.gravar_json(S.OFERTAS, OFERTAS)) as app:
         async with async_playwright() as p:
             b, pg = await pagina(p)
@@ -42,6 +47,17 @@ async def main():
             eco = limpo(await frango.locator(".i-save").inner_text())
             check(eco == "economia de R$ 35,40/kg", f"a economia por quilo ({eco})")
             await frango.screenshot(path=__import__("os").path.join(__import__("base_e2e").SHOTS, "setor-frango.png"))
+            # ----- 1.36.0: o pacote de 400 g a R$ 46/kg não é a referência: o comum das 5 opções (R$ 17,98/kg) -----
+            coxa = item("Coxa de frango")
+            best = limpo(await coxa.locator(".i-best").inner_text())
+            check("R$ 9,59 por quilo" in best and "Coxa congelada 1,5 kg por R$ 14,38 · Atacado Sol" in best, f"a mais barata por quilo ({best})")
+            av = limpo(await coxa.locator(".i-avulso").first.inner_text())
+            check(av == "O comum é R$ 17,98 por quilo, em 5 opções.", f"comparada ao comum ({av})")
+            check(limpo(await coxa.locator(".i-save").inner_text()) == "economia de R$ 8,39/kg" and await coxa.locator(".i-others").count() == 0,
+                  "a economia contra o comum, sem os pacotes de 400 g soltos (estão no Comparar tamanhos)")
+            await coxa.locator("details.i-det").first.evaluate("d => { d.open = true; }")
+            det = limpo(await coxa.locator("details.i-det").first.inner_text())
+            check("MAIS BARATO POR QUILO" in det.upper() and "Sai R$ 9,59/kg; o comum é R$ 17,98/kg." in det, f"o porquê ({det[:200]})")
             # ----- automático: o álcool fica nas farmácias (onde mais aparece); o galão do atacado não entra -----
             alc = item("Álcool 70")
             t = limpo(await alc.inner_text())
@@ -66,8 +82,15 @@ async def main():
             await pg.wait_for_timeout(700)
             check("setor" not in next(i for i in app.config_salva()["lista"] if i["produto"] == "Álcool 70"), "de volta ao automático")
             # ----- Onde comprar, ao adicionar -----
-            row = pg.locator("#novoSetorRow")
-            check(await row.is_visible(), "Onde comprar aparece com mais de um setor ligado")
+            sel = pg.locator("#novoSetor")
+            check(await sel.is_visible(), "Onde comprar aparece com mais de um setor ligado")
+            ops = [limpo(x) for x in await sel.locator("option").all_inner_texts()]
+            check(ops == ["Qualquer", "Mercado", "Farmácia"], f"as opções de onde comprar ({ops})")
+            # antes do Adicionar: o nome numa linha; embaixo, onde comprar e os botões, na mesma linha e da mesma altura
+            cx = {k: await pg.locator(s_).bounding_box() for k, s_ in (("nome", "#novoItem"), ("onde", "#novoSetor"), ("add", '#addForm button[type="submit"]'))}
+            check(cx["onde"]["y"] > cx["nome"]["y"] + cx["nome"]["height"] - 1 and abs(cx["onde"]["y"] - cx["add"]["y"]) < 1
+                  and abs(cx["onde"]["height"] - cx["add"]["height"]) < 1 and cx["onde"]["x"] + cx["onde"]["width"] <= cx["add"]["x"],
+                  f"onde comprar antes do Adicionar ({cx})")
             await pg.select_option("#novoSetor", "farmacias")
             await pg.fill("#novoItem", "Dipirona 1 g")
             await pg.click('#addForm button[type="submit"]')

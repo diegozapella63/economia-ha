@@ -976,6 +976,31 @@ _sensores_lista = {"sig": None, "em": 0.0, "erro": False}
 _sensores_trava = threading.Lock()
 
 
+def _quando(iso):
+    """Um instante ISO 8601 (com fuso ou Z) em segundos; None se não for um."""
+    try:
+        d = datetime.fromisoformat(str(iso or "").replace("Z", "+00:00"))
+        return d.timestamp() if d.tzinfo else None
+    except ValueError:
+        return None
+
+
+def precos_da_lista(cfg, of):
+    """{nome normalizado: preços} dos itens da última busca, como a tela mostra (1.36.0): o item que entrou na lista
+    (desde: a hora dos dados de então, novo ou de volta do Histórico) só fica com o preço visto depois disso."""
+    desde = {norm(nome_item(i)): _quando(i.get("desde")) for i in (cfg or {}).get("lista") or [] if isinstance(i, dict) and i.get("desde")}
+    out = {}
+    for i in (of or {}).get("lista") or []:
+        if not isinstance(i, dict):
+            continue
+        k, ps, d = norm(i.get("produto")), i.get("precos") or {}, desde.get(norm(i.get("produto")))
+        if d:
+            vistos = i.get("vistos") or {}
+            ps = {r: v for r, v in ps.items() if (_quando((vistos.get(r) or {}).get("em")) or 0) > d}
+        out[k] = ps
+    return out
+
+
 def estados_lista(cfg=None, of=None):
     """{entidade: corpo} dos dois sensores. A melhor loja é a loja física acompanhada que tem preço de mais itens da lista
     e, entre elas, a de menor total (com a quantidade de cada item; o clube só nas lojas em que a pessoa é sócia); a
@@ -985,7 +1010,7 @@ def estados_lista(cfg=None, of=None):
     of = (ler_json(OFERTAS, {}) or {}) if of is None else of
     info, acompanha = redes_acompanhadas(cfg, of)
     socios = set(cfg.get("clubes") or [])
-    precos = {norm(i.get("produto")): i.get("precos") or {} for i in of.get("lista") or [] if isinstance(i, dict)}
+    precos = precos_da_lista(cfg, of)
     itens = [(nome_item(it), qtd_item(it)) for it in cfg.get("lista") or [] if nome_item(it)]
     por_loja = {}
     for prod, q in itens:
@@ -6117,8 +6142,41 @@ def marca_fontes(categorias):
                     l["site"] = st["site_url"]
 
 
+MAX_CLUBES_SONDA = 12  # redes por Encontrar lojas (uma pergunta à IA, com a busca na web, cada)
+DIAS_CLUBE = 60  # os benefícios guardados valem por esse tempo
+
+
+def clubes_das_lojas(cfg, alvos, maximo=MAX_CLUBES_SONDA):
+    """1.36.0: no Encontrar lojas, os benefícios do clube de cada rede acompanhada (farmácias, mercados e pet shops),
+    com a IA ligada: uma pergunta por rede ainda não procurada ou procurada há mais de DIAS_CLUBE dias. Devolve quantas."""
+    if not ia_ligada(cfg):
+        return 0
+    todos = ler_json(CLUBES_FILE, {}) or {}
+    limite = time.time() - DIAS_CLUBE * 86400
+    feitos, vistos = 0, set()
+    for cat_id, _, nome, _ in alvos:
+        k = chave_loja(nome)
+        if cat_id not in ("mercados", "farmacias", "petshops") or not k or k in vistos:
+            continue
+        vistos.add(k)
+        r = todos.get(k)
+        if isinstance(r, dict) and (_quando(r.get("em")) or 0) >= limite:
+            continue
+        if feitos >= maximo:
+            break
+        SONDA.update({"etapa": "clubes", "loja": nome})
+        try:
+            beneficios_clube({"nome": nome})
+            feitos += 1
+        except ErroCota:
+            break
+        except ErroBusca as e:
+            log(f"benefícios do clube de {nome}: {e}")
+    return feitos
+
+
 def sonda_lojas(cfg):
-    SONDA.update({"rodando": True, "atual": 0, "total": 0, "loja": None, "resumo": None})
+    SONDA.update({"rodando": True, "atual": 0, "total": 0, "loja": None, "resumo": None, "etapa": None})
     try:
         atualiza_diretas(cfg, max_novas=30)
         of = ler_json(OFERTAS, {}) or {}
@@ -6152,6 +6210,7 @@ def sonda_lojas(cfg):
             of = ler_json(OFERTAS, {}) or {}
             marca_fontes(of.get("categorias") or [])
             gravar_json(OFERTAS, of)
+        n_clubes = clubes_das_lojas(cfg, alvos)
         sem_ia = sum(conta.get(k, 0) for k in ("site", "paginas", "ofertas_site", "busca_site"))
         partes = [f"{sem_ia} com preço direto do site"] if sem_ia else []
         enc = sum(conta.get(k, 0) for k in ("folheto", "folheto_novo", "instagram", "instagram_novo"))
@@ -6161,7 +6220,8 @@ def sonda_lojas(cfg):
             partes.append(f"{conta['ia']} só pela busca com IA")
         if conta.get("nenhum"):
             partes.append(f"{conta['nenhum']} sem fonte de preço sem IA")
-        SONDA["resumo"] = ("Testei " + str(len(alvos)) + (" loja: " if len(alvos) == 1 else " lojas: ") + ", ".join(partes) + ".") if alvos else "Nenhuma loja para testar."
+        SONDA["resumo"] = (("Testei " + str(len(alvos)) + (" loja: " if len(alvos) == 1 else " lojas: ") + ", ".join(partes) + ".") if alvos else "Nenhuma loja para testar.") \
+            + (f" Benefícios do clube de {n_clubes} rede{'s' if n_clubes != 1 else ''}." if n_clubes else "")
     except Exception as e:  # noqa: BLE001
         SONDA["resumo"] = f"O teste parou: {e}"
         log(SONDA["resumo"])
@@ -7124,7 +7184,7 @@ def dados_lista(cfg=None, of=None):
     cfg = (ler_json(CONFIG, {}) or {}) if cfg is None else cfg
     of = (ler_json(OFERTAS, {}) or {}) if of is None else of
     info, acompanha = redes_acompanhadas(cfg, of)
-    precos = {norm(i.get("produto")): i.get("precos") or {} for i in of.get("lista") or [] if isinstance(i, dict)}
+    precos = precos_da_lista(cfg, of)
     socios = set(cfg.get("clubes") or [])
     itens = []
     for it in cfg.get("lista") or []:
@@ -7317,6 +7377,12 @@ def instrucoes_chat(contexto, mensagens):
         "Para avaliar um produto (\"vale a pena?\", \"é bom?\"), use a busca na web se puder: a nota e as avaliações de quem "
         "comprou, as reclamações mais comuns e o preço de costume dele. Comece com o veredito (Vale a pena, Depende ou Não vale) "
         "e depois diga o porquê em até 4 linhas; se não achar avaliações, diga.\n"
+        "Para comparar opções (\"Compare e diga o que vale mais a pena\", com a lista numerada): use a busca na web se puder. "
+        "Comece pelo veredito (qual levar). Depois, uma linha por opção: se a marca é boa e confiável (avaliações, reclamações, "
+        "recall, origem) e quanto custa o que se aproveita de verdade (o osso e a pele do frango, a água do congelado, o "
+        "concentrado que rende mais, as lavagens por embalagem), em reais por quilo, litro ou uso aproveitado. Diga se o mais "
+        "barato compensa ou se a diferença de qualidade justifica pagar mais. Até 8 linhas; se não souber o rendimento, estime e diga "
+        "que é uma estimativa.\n"
         "Escreva texto simples, sem Markdown (sem asteriscos nem #); para listas, comece cada linha com \"• \".\n\n"
         "Você não muda nada sozinho. Quando ajudar, sugira ações, e a pessoa confirma com um toque:\n"
         "- por_na_lista (produto): pôr um produto na lista, com o tamanho quando fizer sentido, como \"Café 500 g\".\n"
