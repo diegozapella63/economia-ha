@@ -2561,7 +2561,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.24.0';
+  var VERSAO = '1.25.0';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -4476,9 +4476,17 @@ dialog.ss-wrap::backdrop{background:transparent}
   var rotVer = null;  // plano que a pessoa tocou para ver (null = o recomendado)
   function distLoja(id){ var l = LOJA[id]; return l && l.distancia_km != null ? l.distancia_km : 5; }
   // principal: os da lista aberta (o cupom do Início); senão, os das listas escolhidas no Roteiro (nenhuma: todos)
+  // 1.25.0: sem uma escolha sua, o tamanho que compensa mais (a Melhor compra da Minha lista, numa loja física) vale como
+  // escolhido no roteiro: o preço do pacote e a loja dele; a escolha com o ✓ continua mandando
+  function compensaDe(it, p, r){
+    if (it.escolha) return null;
+    var mt = melhorTamanho(it, r, p), dc = mt && mt.principal ? mt.dica : null;
+    if (!dc || dc.online || !G[dc.id]) return null;
+    return {y:{id:dc.id, v:dc.total, preco:dc.total, frete:0, online:false, obs:dc.como, link:dc.link || ''}, emb:dc.como, total:dc.total, q:1, auto:true};
+  }
   function itensDoRoteiro(principal){
     var ls = listasOn() ? estado.roteiro.listas : [];
-    return estado.lista.filter(function(it){ return principal ? naListaAtual(it) : !ls.length || ls.some(function(id){ return emLista(it, id); }); }).map(function(it){ var p = precosDe(it.produto), es = escolhaDe(it, p); return {it:it, r:ritmo(it.compras), p:es ? [es.y] : p, n:vezesDe(it, es)}; })
+    return estado.lista.filter(function(it){ return principal ? naListaAtual(it) : !ls.length || ls.some(function(id){ return emLista(it, id); }); }).map(function(it){ var p = precosDe(it.produto), r = ritmo(it.compras), es = escolhaDe(it, p) || compensaDe(it, p, r); return {it:it, r:r, p:es ? [es.y] : p, n:vezesDe(it, es), auto:!!(es && es.auto)}; })
       .filter(function(x){ return estado.roteiro.escopo !== 'acabando' || (x.r.dias != null && x.r.dias <= 7); });
   }
   function avaliaPlano(itens, combo, online){
@@ -4595,8 +4603,9 @@ dialog.ss-wrap::backdrop{background:transparent}
       var its = pl.lojas[id], sub = its.reduce(function(s, z){ return s + z.y.v * (z.x.n || 1); }, 0), l = LOJA[id];
       return '<li class="parada"><div class="parada-h"><span class="parada-n">' + (i + 1) + '</span><b>' + esc(G[id].nome) + '</b><span class="chip">' + esc(G[id].singular) + '</span><span class="sub num">' + (l && l.distancia_km != null ? km(l.distancia_km) + ' · ' : '') + brl.format(sub) + '</span></div>'
         + '<ul>' + its.map(function(z){
-          var e = z.x.it.escolha, mt = e && e.sim ? null : melhorTamanho(z.x.it, z.x.r, z.x.p);
-          var dica = e && e.sim && e.rede === id ? '<small class="r-dica">Similar: ' + esc(e.obs) + '</small>' : mt && mt.dica && mt.dica.id === id ? '<small class="r-dica">Compensa levar ' + esc(mt.dica.txt) + '</small>' : '';
+          var e = z.x.it.escolha, mt = e && e.sim || z.x.auto ? null : melhorTamanho(z.x.it, z.x.r, z.x.p);
+          var dica = z.x.auto ? '<small class="r-dica">' + esc(z.y.obs) + ', o que compensa mais</small>'
+            : e && e.sim && e.rede === id ? '<small class="r-dica">Similar: ' + esc(e.obs) + '</small>' : mt && mt.dica && mt.dica.id === id ? '<small class="r-dica">Compensa levar ' + esc(mt.dica.txt) + '</small>' : '';
           return '<li><span>' + (z.x.n > 1 ? z.x.n + ' × ' : '') + esc(z.x.it.produto) + dica + '</span><span class="num">' + brl.format(z.y.v * (z.x.n || 1)) + (z.y.clube ? ' <small>clube</small>' : '') + '</span></li>';
         }).join('') + '</ul></li>';
     });
@@ -4964,6 +4973,8 @@ dialog.ss-wrap::backdrop{background:transparent}
   // mesma regra do selo: "Sem fonte de preço" (teste sem fonte, ou só com IA e a IA desligada) e "Sem preços"
   var SO_SEM_FONTE = !!ui.soSemFonte, TERMO_LOJA = '';
   function semFonte(c, l, web){
+    // 1.24.1: o mercado da região que entrega sem a entrega confirmada (pelo site ou por você) ainda não tem de onde tirar o preço
+    if (c.id === 'online' && regional(l.rede) && l.entrega && !l.entrega.atende && !entregaSim(l.rede) && !l.preco_fonte) return true;
     if (l.preco_fonte) return l.preco_fonte.como === 'nenhum' || (l.preco_fonte.como === 'ia' && !iaOn());
     if (web) return !iaOn() && !(norm(G[l.rede].nome) === 'shopee' && (D.relatorio || {}).shopee);
     return semPrecos(c).indexOf(l) >= 0;

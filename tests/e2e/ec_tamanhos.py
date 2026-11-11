@@ -69,6 +69,14 @@ async def main():
             linhas = [await txt(li) for li in await lys.locator(".tam-list li").all()]
             check(len(linhas) == 3 and "Galão 5 L" in linhas[0] and "R$ 13,98/L" in linhas[0] and "R$ 21,90/L" in linhas[2], "do mais barato por litro para o mais caro")
             await lys.screenshot(path=SHOTS + "/ect-lysoform.png")
+            # 1.25.0: no Roteiro, sem escolha sua, o que compensa mais já vale: o galão no Fort, pelo preço do galão
+            await pg.click('.tabbar [data-view="roteiro"]')
+            await pg.wait_for_timeout(400)
+            fort = " ".join((await pg.locator("#rotRes .parada", has_text="Fort Atacadista").inner_text()).replace("\xa0", " ").split())
+            check("Lysoform Galão 5 L, o que compensa mais R$ 69,90" in fort, f"o roteiro já leva o galão ({fort[:160]})")
+            await pg.click('.tabbar [data-view="lista"]')
+            await pg.wait_for_timeout(400)
+            lys = await abre(pg, "Lysoform")
             await lys.locator(".tam-list li").nth(0).locator(".esc-btn").click()
             await pg.wait_for_timeout(800)
             e = next(i for i in app.config_salva()["lista"] if i["produto"] == "Lysoform").get("escolha")

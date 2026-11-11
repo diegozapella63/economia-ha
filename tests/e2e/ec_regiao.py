@@ -66,6 +66,13 @@ async def main():
             inat = pg.locator("#mp-lojas details.inativas")
             check(await inat.count() == 1 and "Rede Longe" in await inat.text_content(), "não entrega: em Inativas")
             await pg.screenshot(path=SHOTS + "/ecr-lojas.png", full_page=True)
+            # 1.24.1: Só sem fonte de preço mostra o que ainda não tem a entrega confirmada
+            await pg.check("#soSemFonte")
+            await pg.wait_for_timeout(400)
+            nomes = [n.strip() for n in await pg.locator("#mp-lojas .group > ul.rows .r-name").all_inner_texts()]
+            check("Rede Comum" in nomes and "Rede Entrega" not in nomes, f"Só sem fonte de preço: o mercado sem a entrega confirmada ({nomes})")
+            await pg.uncheck("#soSemFonte")
+            await pg.wait_for_timeout(400)
             # confirmar à mão
             await pg.locator("#mp-lojas li.row", has=pg.locator(".r-name", has_text="Rede Comum")).first.locator("[data-entrega]").click()
             await pg.wait_for_timeout(800)

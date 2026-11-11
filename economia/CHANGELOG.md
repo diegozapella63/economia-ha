@@ -1,5 +1,11 @@
 # Mudanças
 
+## 1.25.0
+
+- **Roteiro**: sem uma escolha sua, o item já vai no tamanho que **compensa mais** (a Melhor compra da Minha lista), com o preço do pacote e a loja dele; antes só aparecia "Compensa levar…". O ✓ de **Sua escolha** continua mandando.
+- **Encontrar lojas** também procura os **mercados que entregam**, até a distância de entrega, e diz quantos achou. As redes de mercado com loja online (Bistek, Fort, Atacadão, Giassi, Angeloni) são procuradas pelo nome, também no Google, porque o mapa perto de casa traz só as lojas mais perto.
+- **Só sem fonte de preço** mostra também, em Online, o mercado da região que ainda não teve a entrega confirmada.
+
 ## 1.24.0
 
 - **Benefícios do clube** (Mais › Lojas, com a IA ligada): nas lojas com clube, um toque pede à IA o que o clube dá (preço de clube, descontos, cashback, pontos, cupons, frete grátis…), quanto custa e como entrar, com a fonte. Fica guardado na loja; **Procurar de novo** atualiza.

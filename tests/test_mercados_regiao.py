@@ -101,6 +101,37 @@ class Regiao(Cenario):
         cfg2 = self.cfg(online={"entrega_km": 15, "entrega_sim": ["Rede Longe"]})
         self.assertTrue(S.redes_acompanhadas(cfg2, S.ler_json(S.OFERTAS))[1](longe), "confirmada à mão: entra")
 
+    def test_pelo_google_as_redes_pelo_nome(self):
+        """1.24.1: o Nearby do Google traz só os 20 mais perto: as redes conhecidas vêm uma por uma, pelo nome; o mapa fora
+        (o OpenStreetMap costuma não responder) não impede."""
+        S, lj = self.S, self.lojas
+        S.grava_segredos({"google": {"key": "chave-google"}})
+        del lj.rotas["/overpass"]
+        pedidos = []
+
+        def texto(p):
+            c = p.json()
+            pedidos.append(c)
+            if c["textQuery"] == "Bistek":
+                return {"places": [{"id": "pl-b", "displayName": {"text": "BISTEK SUPERMERCADOS"}, "location": {"latitude": LAT - 8 * KM, "longitude": LON},
+                                    "shortFormattedAddress": "Rua B, 8"},
+                                   {"id": "pl-x", "displayName": {"text": "Outra Loja"}, "location": {"latitude": LAT - 6 * KM, "longitude": LON}},
+                                   {"id": "pl-f", "displayName": {"text": "Bistek Fechado"}, "location": {"latitude": LAT - 7 * KM, "longitude": LON}, "businessStatus": "CLOSED_PERMANENTLY"}]}
+            return {"places": []}
+        lj.rotas["/google/texto"] = texto
+        lojas = S.mercados_da_regiao(self.cfg())
+        self.assertEqual([(l["nome"], l["distancia_km"]) for l in lojas], [("Bistek Supermercados", 8.0)])
+        self.assertEqual(lojas[0]["site"], "https://www.bistek.com.br", "o site da rede, quando o Google não traz")
+        self.assertEqual({p["textQuery"] for p in pedidos}, {"Bistek", "Fort Atacadista", "Atacadão", "Giassi", "Angeloni"})
+        self.assertEqual(pedidos[0]["locationBias"]["circle"]["radius"], 10000.0)
+
+    def test_encontrar_lojas_diz_os_da_regiao(self):
+        S = self.S
+        self.cfg()
+        r = S.atualizar_lojas_mapa({"categorias": ["mercados", "online"]})
+        self.assertTrue(r["ok"], r)
+        self.assertIn("Mercados que entregam, até 10 km: 4, 1 confirmado pelo site (veja em Online).", r["msg"])
+
     def test_desligado_nao_le_nada(self):
         S = self.S
         self.assertEqual(S.mercados_da_regiao(self.cfg(online={"mercados_entrega": False})), [])

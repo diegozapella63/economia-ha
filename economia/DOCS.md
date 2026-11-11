@@ -101,7 +101,7 @@ Pode escrever só o produto, como **Lysoform**. Na busca, o EconomIA traz també
 Na aba **Roteiro**, ao lado da Minha lista, diga em até quantas lojas você topa parar (1 a 4) e se é a lista toda ou só o que está acabando. O EconomIA testa as combinações de lojas e mostra:
 
 - o total e a economia sobre o preço médio;
-- o que comprar em cada parada, da loja mais perto para a mais longe, com link para a rota no Maps;
+- o que comprar em cada parada, da loja mais perto para a mais longe, com link para a rota no Maps; sem uma escolha sua, cada item vai no tamanho que compensa mais (a Melhor compra da Minha lista), com o preço do pacote;
 - o que compensa pedir online (pode desligar);
 - quanto uma parada a mais economizaria. Se for pouco, ele recomenda menos paradas, e dá para comparar as opções com um toque.
 
@@ -242,6 +242,7 @@ A aba **Online** compara iFood, Rappi, Mercado Livre, Amazon e outros que você 
   - **Distância dos mercados que entregam** (logo abaixo, só com o interruptor ligado): até 10, 15, 20, 30 ou 50 km, sempre mais que a distância da casa (de começo, 15 km). O app procura no mapa os mercados entre a distância da casa e essa, e pergunta ao site de cada um se entrega no seu CEP (a consulta de entrega dos sites de mercado; vale por uma semana, e de novo ao mudar a distância ou no **Encontrar lojas**).
   - Em **Mais › Lojas › Online**, cada um aparece em **Mercados da região que entregam**, com a distância: **Entrega no seu CEP** (o site confirmou: os preços vêm direto do site na busca), **Sem preços · Não sei se entrega no seu CEP** (o site não diz; **Como foi testado** mostra o porquê) ou, em **Inativas**, **Não entrega no seu CEP**. **Entrega no meu CEP** confirma à mão (a busca com IA passa a procurar os preços dele); **Não entrega** desfaz.
   - Um mercado com loja no raio da casa fica só na aba dele (do bairro); com a loja mais longe, aparece também em Online.
+  - As redes de mercado com loja online (Bistek, Fort, Atacadão, Giassi, Angeloni) são procuradas também pelo nome (no OpenStreetMap e, com a chave, no Google), porque o mapa perto de casa traz só as lojas mais perto. O **Encontrar lojas** diz quantos achou.
 - **De quando é o preço**: o cartão mostra a hora dos preços. Preço da busca na web aparece marcado para você conferir no link: a Amazon, por exemplo, muda o preço várias vezes por dia, e o Google Shopping costuma estar atrasado.
 
 ## Lista por voz

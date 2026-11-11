@@ -4866,8 +4866,9 @@ def google_chave():
     return str((segredos().get("google") or {}).get("key") or "").strip() or None
 
 
-def osm_lojas(lat, lon, raio_m, cats):
-    partes = "".join(f"{t}(around:{raio_m},{lat},{lon});" for c in cats for t in OSM_TIPOS.get(c, []))
+def osm_lojas(lat, lon, raio_m, cats, tipos=None):
+    """As lojas do OpenStreetMap no raio; tipos: os filtros do Overpass no lugar dos de OSM_TIPOS (os mercados da região)."""
+    partes = "".join(f"{t}(around:{raio_m},{lat},{lon});" for t in (tipos or [t for c in cats for t in OSM_TIPOS.get(c, [])]))
     q = f"[out:json][timeout:25];({partes});out center tags;"
     req = urllib.request.Request(OVERPASS, data=urllib.parse.urlencode({"data": q}).encode(), method="POST",
                                  headers={"User-Agent": "EconomIA (add-on do Home Assistant)", "Accept": "application/json"})
@@ -5163,15 +5164,19 @@ def mercados_da_regiao(cfg, forcar=False):
     if not forcar and memo.get("chave") == chave and memo.get("em", "") >= semana:
         return memo.get("lojas") or []
     todas, respondeu = [], False
-    try:
-        todas += osm_lojas(lat, lon, int(km * 1000), ["mercados"])
-        respondeu = True
-    except Exception as e:  # noqa: BLE001
-        log(f"mercados da região: OpenStreetMap sem resposta ({e})")
-    g = google_chave()
-    if g:
+    # primeiro as redes conhecidas pelo nome (leve, mesmo com a distância grande); depois os supermercados e atacados
+    redes = "|".join(REDES_REGIAO.values())
+    for tipos in ([f'nwr["shop"~"^(supermarket|wholesale)$"]["name"~"{redes}",i]', f'nwr["shop"~"^(supermarket|wholesale)$"]["brand"~"{redes}",i]'],
+                  ['nwr["shop"~"^(supermarket|wholesale)$"]']):
         try:
-            todas += google_lojas(lat, lon, int(km * 1000), ["mercados"], g)
+            todas += osm_lojas(lat, lon, int(km * 1000), ["mercados"], tipos=tipos)
+            respondeu = True
+        except Exception as e:  # noqa: BLE001
+            log(f"mercados da região: OpenStreetMap sem resposta ({e})")
+    g = google_chave()
+    if g:  # o Nearby traz só os 20 mais perto (todos no raio da casa): as redes conhecidas, uma por uma, pelo nome
+        try:
+            todas += google_redes(lat, lon, int(km * 1000), g)
             respondeu = True
         except Exception as e:  # noqa: BLE001
             log(f"mercados da região: {e}")
@@ -5195,6 +5200,32 @@ def mercados_da_regiao(cfg, forcar=False):
         l["entrega"] = dict(testa_entrega(l["site"], cfg.get("cep")), em=agora())
     gravar_json(REGIAO_FILE, {"chave": chave, "em": agora(), "km": km, "lojas": out})
     log(f"mercados da região até {km} km: " + (", ".join(f"{l['nome']} ({'entrega' if l['entrega']['atende'] else 'não entrega' if l['entrega']['atende'] is False else 'sem resposta'})" for l in out) or "nenhum"))
+    return out
+
+
+# as redes de mercado com loja online própria (o site delas em SITES_REDES): o nome como aparece no mapa
+REDES_REGIAO = {"bistek": "Bistek", "fort": "Fort Atacadista", "atacadao": "Atacad[aã]o", "giassi": "Giassi", "angeloni": "Angeloni"}
+
+
+def google_redes(lat, lon, raio_m, chave):
+    """Cada rede de REDES_REGIAO pelo nome no Google (Text Search perto da casa): as lojas dela até a distância."""
+    campos = "places.id,places.displayName,places.shortFormattedAddress,places.location,places.businessStatus,places.websiteUri"
+    out = []
+    for k, nome in REDES_REGIAO.items():
+        busca = nome.replace("[aã]", "ã")
+        corpo = {"textQuery": busca, "pageSize": 5, "languageCode": "pt-BR", "regionCode": "BR",
+                 "locationBias": {"circle": {"center": {"latitude": lat, "longitude": lon}, "radius": float(min(raio_m, 50000))}}}
+        d = google_post(GOOGLE_TEXTO, corpo, chave, campos)
+        for pl in d.get("places") or []:
+            loc = pl.get("location") or {}
+            n = nome_bonito((pl.get("displayName") or {}).get("text"))
+            if not n or loc.get("latitude") is None or pl.get("businessStatus") == "CLOSED_PERMANENTLY" or not mesma_loja(n, busca):
+                continue
+            km = km_entre(lat, lon, loc["latitude"], loc["longitude"])
+            if km * 1000 <= raio_m:
+                out.append({"nome": n, "categoria": "mercados", "endereco": texto(pl.get("shortFormattedAddress"), 90), "distancia_km": km,
+                            "fonte": "Google", "lat": round(float(loc["latitude"]), 6), "lon": round(float(loc["longitude"]), 6),
+                            "site": site_loja(pl.get("websiteUri")) or SITES_REDES.get(k)})
     return out
 
 
@@ -5329,8 +5360,9 @@ def atualizar_lojas_mapa(dado):
     except Exception:  # noqa: BLE001
         return {"ok": False, "msg": "Não achei a localização da Casa no Home Assistant. Confira em Configurações › Sistema › Geral."}
     mapa = lojas_do_mapa(cfg, cats, forcar=True)
+    regiao = []
     try:
-        mercados_da_regiao(cfg, forcar=True)
+        regiao = mercados_da_regiao(cfg, forcar=True)
     except Exception as e:  # noqa: BLE001
         log(f"mercados da região: {e}")
     if not any(mapa.values()):
@@ -5346,8 +5378,12 @@ def atualizar_lojas_mapa(dado):
     txt = partes[0] if len(partes) == 1 else ", ".join(partes[:-1]) + " e " + partes[-1]
     fontes = (ler_json(LOJAS_MAPA, {}) or {}).get("fontes") or []
     raio = str(cfg.get("raio_km") or 2).replace(".0", "")
-    return {"ok": True, "msg": f"Achei {txt} até {raio} km ({' e '.join(fontes)}).",
-            "lojas": {c: len(v) for c, v in mapa.items()}, "teste": True}
+    msg = f"Achei {txt} até {raio} km ({' e '.join(fontes)})."
+    if regiao_ligada(cfg):  # 1.24.1: e os mercados da região que entregam, até a distância de entrega
+        sim = sum(1 for l in regiao if (l.get("entrega") or {}).get("atende"))
+        msg += (f" Mercados que entregam, até {entrega_km(cfg)} km: {len(regiao)}" + (f", {sim} confirmado{'s' if sim != 1 else ''} pelo site" if sim else "")
+                + " (veja em Online)." if regiao else f" Nenhum mercado com site até {entrega_km(cfg)} km.")
+    return {"ok": True, "msg": msg, "lojas": {c: len(v) for c, v in mapa.items()}, "teste": True}
 
 
 def atualizar_regiao(dado):
