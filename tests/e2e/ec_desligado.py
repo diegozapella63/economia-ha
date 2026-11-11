@@ -124,7 +124,7 @@ async def main():
             await pg.click("#opDiretas")
             await pg.wait_for_timeout(400)
             await pg.click('.tabbar [data-view="lista"]')
-            check(await pg.locator("#wish > li.item", has_text="Carne moída").first.locator(".i-sim").inner_text() == "Buscar similares", "com busca direta: Buscar similares")
+            check(await pg.locator("#wish > li.item", has_text="Carne moída").first.locator(".i-sim").get_attribute("aria-pressed") == "false", "com busca direta: o Similares, desligado")
             # ----- aba Online ligada: Compras online volta, e a Shopee pela IA quando marcada -----
             c = app.config_salva()  # a busca ainda não trouxe nada online: liga a aba pela config, como o Salvar de Mais › Casa
             c["categorias"] = ["mercados", "online"]

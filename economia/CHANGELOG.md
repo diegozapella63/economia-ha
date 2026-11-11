@@ -1,5 +1,20 @@
 # Mudanças
 
+## 1.36.1
+
+- **Mais › Lojas** mais arrumada:
+  - de onde vem o preço (pelo site, pela busca, pela IA) e o exemplo achado no teste ficam dentro de **Como foi testado**; à vista, só o que falta (Sem fonte de preço);
+  - os inativos e os mercados sem localização ficam juntos numa só seção no fim, **Inativas (n)**, recolhida;
+  - o **Benefícios** aparece também nas lojas online (Mercado Livre, iFood, Amazon);
+  - nos mercados da região, **Entrega aqui** virou um botão com a caixinha, como o **Sou do clube**: marcado, o mercado entrega no seu CEP; desmarcado, não (no lugar do link Não entrega).
+- "Preços na próxima busca" agora explica: a última busca foi antes do teste desta loja.
+- **Ofertas**:
+  - o **Comparar preço** fica recolhido como o **Comparar tamanhos** da Minha lista e abre num toque (aberto logo depois de comparar);
+  - quando a oferta foi vista numa página geral da loja (o início, uma seção, o encarte), o **Abrir na loja** procura o produto no site da loja, em vez de abrir aquela página.
+- Os botões dos cartões, das lojas e das ofertas ficam sempre dois por linha no celular, sem texto cortado: num celular estreito, o texto vai para a segunda linha dentro do botão. O **Remover** tem borda como os outros.
+- No cartão do item, **Similares** liga e desliga com a caixinha (no lugar de Buscar similares e Esconder similares).
+- O **Onde comprar** do cartão tem as mesmas opções de quando se adiciona (Qualquer, Mercado, Farmácia, Pet shop); *Setor automático* saía cortado.
+
 ## 1.36.0
 
 - **Comparar com IA**, na Minha lista: toque em **Comparar** (ao lado de Completa e Resumida) e marque de 2 a 6 opções nos cartões: a melhor compra, as outras lojas, os tamanhos ou os similares, até de itens diferentes. **Comparar** leva as escolhidas para a Conversa. A IA diz qual levar, se a marca mais barata é boa e confiável, e quanto custa o que se aproveita de verdade: o peito de frango com osso por R$ 15 contra o filé sem osso por R$ 13, pelo quilo aproveitado. O Voltar do celular e **Cancelar** saem sem comparar.

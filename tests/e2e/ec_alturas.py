@@ -16,14 +16,31 @@ OFERTAS = {"versao": 2, "gerado_em": "2026-11-01T10:00:00-03:00", "categorias": 
            "lista": [{"produto": "Arroz 5 kg", "precos": {"merc-giassi": 24.9, "merc-fort": 22.9}}]}
 
 
+# 1.36.0: e nenhum texto cortado nos botões das linhas (o cartão do item, as lojas e as ofertas)
+CORTADOS = """() => {
+  const ctx = document.createElement('canvas').getContext('2d');
+  const botoes = [...document.querySelectorAll('.i-botoes > button, .loja-botoes > button, .d-acts > .d-btn')].filter(e => e.offsetParent && (e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 1))
+    .map(e => e.textContent.replace(/\\s+/g, ' ').trim());
+  // 1.36.1: a caixa de seleção fechada também (o Setor automático saía Setor auto...): a opção mais longa cabe
+  const caixas = [...document.querySelectorAll('.i-botoes > select')].filter(e => e.offsetParent).flatMap(e => {
+    const cs = getComputedStyle(e); ctx.font = cs.font;
+    const livre = e.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    return [...e.options].filter(o => ctx.measureText(o.text).width > livre + 1).map(o => o.text);
+  });
+  return botoes.concat(caixas);
+}"""
+
+
 async def conferir(pg, onde):
     hs = await pg.evaluate(MEDIR, CONTROLES)
     fora = [x for x in hs if x[0] != H]
     check(hs and not fora, f"{onde}: {len(hs)} controles, todos com {H} px {fora[:4]}")
+    cortados = await pg.evaluate(CORTADOS)
+    check(not cortados, f"{onde}: nenhum botão com o texto cortado {cortados[:4]}")
 
 
 async def main():
-    cfg = {"cep": CEP, "raio_km": 5, "categorias": ["mercados"], "lista": [{"produto": "Arroz 5 kg"}, {"produto": "Bolacha"}]}
+    cfg = {"cep": CEP, "raio_km": 5, "categorias": ["mercados", "farmacias"], "lista": [{"produto": "Arroz 5 kg"}, {"produto": "Bolacha"}]}
     with App(cfg, buscar=False, antes=lambda S: S.gravar_json(S.OFERTAS, OFERTAS)) as app:
         async with async_playwright() as p:
             for largura, altura in ((390, 844), (320, 700), (1280, 860)):

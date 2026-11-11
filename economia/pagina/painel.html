@@ -307,13 +307,16 @@ li.deal:first-child{border-top:0}
 @media (min-width:1000px){.of-filtros{grid-template-columns:minmax(0,1fr) 280px}}
 .d-acts > a.d-btn{text-decoration:none;color:var(--ink)}
 .d-acts{grid-column:1 / -1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:6px}
-.d-acts > .d-btn{width:100%;min-width:0;justify-content:center;white-space:normal;line-height:1.2;text-align:center;font-size:14px}
+.d-acts > .d-btn{width:100%;min-width:0;justify-content:center;text-align:center;line-height:1.15;font-size:14px;padding:0 8px}
 .d-acts > :last-child:nth-child(odd){grid-column:1/-1}
 @media (min-width:1000px){.d-acts{grid-template-columns:repeat(auto-fill,250px)}.d-acts > :last-child:nth-child(odd){grid-column:auto}}
 /* 1.36.0: sem desconto, o preço fica na direita (antes, um espaço vazio no lugar do desconto o deixava no meio) */
 li.deal > .price.so-preco{grid-column:2 / -1;justify-self:end}
-.cmp{grid-column:1 / -1;display:flex;flex-direction:column;gap:7px;background:var(--bg);border-radius:10px;padding:9px 10px;min-width:0}
+.cmp{grid-column:1 / -1;min-width:0;margin-top:4px}
+.cmp > ul{margin-top:8px}
 .cmp-t{font-size:13px;font-weight:600;color:var(--muted)}
+.cmp.nada > summary{color:var(--muted);cursor:default}
+.cmp.nada > summary::before{content:none}
 .cmp.caro .cmp-t{color:var(--deal)}
 .cmp.ok .cmp-t{color:var(--accent)}
 .cmp .i-chip{display:flex;align-items:baseline;justify-content:center;gap:5px;padding:6px 9px;color:inherit;text-decoration:none;min-width:0}
@@ -585,6 +588,8 @@ li.escolhida{border-color:var(--accent) !important}
 .fonte-det > summary::before{content:"▸ "}
 .fonte-det[open] > summary::before{content:"▾ "}
 .fonte-det ul{margin:4px 0 2px;display:flex;flex-direction:column;gap:3px;color:var(--muted)}
+.fonte-det .fonte-info{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin:6px 0 4px;color:var(--muted)}
+.fonte-det .fonte-info > .r-l{flex:1 1 100%}
 .inativas > summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--muted);list-style:none;padding:8px 0;-webkit-tap-highlight-color:transparent}
 .inativas > summary::-webkit-details-marker{display:none}
 .inativas > summary::before{content:"▸ "}
@@ -644,9 +649,13 @@ li.escolhida{border-color:var(--accent) !important}
 @media (min-width:1000px){#addForm:has(> #novoSetor:not([hidden])){grid-template-columns:minmax(0,1fr) 180px auto auto auto}#addForm:has(> #novoSetor:not([hidden])) > #novoItem{grid-column:auto}}
 .i-botoes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .i-botoes > *{width:100%;min-width:0;min-height:var(--altura,50px);margin:0}
-.i-botoes > .ic-btn{justify-content:center;white-space:normal;line-height:1.2;text-align:center}
+.i-botoes > .ic-btn{justify-content:center;text-align:center;line-height:1.15;padding:0 8px}
+.i-botoes > .i-sim[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
 .i-botoes > :last-child:nth-child(odd){grid-column:1/-1}
 .i-botoes > .rm{color:var(--ink);text-decoration:none;font-size:14px;padding:0 12px}
+/* 1.36.1: o Remover com a borda dos outros botões (o .rm de antes era um link sem borda) */
+.i-botoes > .rm,.loja-botoes > .rm{border:1px solid var(--line);text-decoration:none;color:var(--ink)}
+.i-botoes > select.field{font-size:14.5px;padding-left:12px;padding-right:28px;background-position:calc(100% - 16px) 52%,calc(100% - 11px) 52%} /* a letra dos botões ao lado */
 .i-botoes > .rm svg{stroke:var(--muted)}
 @media (min-width:1000px){.i-botoes{grid-template-columns:repeat(auto-fill,250px);justify-content:end}.i-botoes > :last-child:nth-child(odd){grid-column:auto}}
 .cod-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;margin-top:8px}
@@ -715,12 +724,13 @@ textarea.field.grow{field-sizing:content;min-height:var(--altura,50px);max-heigh
 .r-links,.r-preco{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
 .r-links:empty,.r-preco:empty{display:none}
 .r-preco > .r-l{flex:1 1 100%}
-/* 1.36.0: os botões da loja no padrão do app: na largura da linha, dois por linha no celular; 250 px no computador */
+/* 1.36.0: os botões da loja no padrão do app: na largura da linha, dois por linha no celular; 250 px no computador.
+   1.36.1: sempre dois por linha no celular; num celular estreito, um texto longo vai para a segunda linha (nunca cortado) */
 .loja-botoes{flex:1 1 100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:6px}
-.loja-botoes > .loja-btn{width:100%;min-width:0;justify-content:center;white-space:normal;line-height:1.2;text-align:center;font-size:14px;padding-top:6px;padding-bottom:6px}
+.loja-botoes > .loja-btn{width:100%;min-width:0;justify-content:center;text-align:center;line-height:1.15;font-size:14px;padding:0 8px}
 .clube-ben > a,.clube-ben > button{display:block;margin-top:6px}
 .loja-botoes > :last-child:nth-child(odd){grid-column:1/-1}
-.loja-btn.clube[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.loja-btn.clube[aria-pressed="true"],.loja-btn.marca[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
 @media (min-width:1000px){.loja-botoes{grid-template-columns:repeat(auto-fill,250px)}.loja-botoes > :last-child:nth-child(odd){grid-column:auto}}
 .note{font-size:13px;color:var(--muted)}
 
@@ -1654,7 +1664,7 @@ input.field,select.field{min-height:var(--altura)}
       <div class="sh-row"><label for="iKey"><span>Chave de acesso <span class="chip selo" id="iKeyOk" hidden>Guardada</span></span><input class="field" id="iKey" type="password" autocomplete="off" spellcheck="false"></label></div>
       <div class="row-form"><button type="button" class="btn" id="iSalvar">Salvar e testar</button><button type="button" class="ghost big" id="iTestar">Testar</button><button type="button" class="ghost big" id="iApagar" hidden>Apagar</button></div>
       <p class="ia-st" id="iSt"></p>
-      <p class="hint">O @ da loja vem do mapa, ou escreva em Adicionar site de ofertas, na loja.</p>
+      <p class="hint">O @ da loja vem do mapa, ou escreva em Adicionar site, na loja.</p>
     </section>
     <section class="panel settings" aria-labelledby="h-ha">
       <div class="set-head"><h2 id="h-ha"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6h11M10 12h11M10 18h11"/><path d="M3 6l1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/></svg></span>Lista do Home Assistant</h2><p class="sec-meta" id="syncDesc">O que entrar na lista do Home Assistant aparece aqui; marcado lá conta como "Comprei hoje".</p></div>
@@ -1860,7 +1870,20 @@ input.field,select.field{min-height:var(--altura)}
   function linkOferta(o){
     var u = /^https?:\/\//.test(o.fonte || '') ? o.fonte : '';
     if (u && /mercado ?livre/.test(norm((G[o.rede] || {}).nome || '')) && !/MLB-?\d{6,}/i.test(u)) u = '';
+    if (u && paginaGeral(u)){
+      // 1.36.1: a página onde a oferta foi vista (o início, o encarte), não a do produto: procura o produto no site da loja
+      var l = linkCompra(o.rede, o.produto, '');
+      var host = ''; try { host = new URL(u).hostname.replace(/^www\./, ''); } catch(e){}
+      if (host && /^https:\/\/www\.google\.com\//.test(l.url)) l.url = 'https://www.google.com/search?q=' + encodeURIComponent('site:' + host + ' ' + String(o.produto || '').split(' · ')[0].trim());
+      return l;
+    }
     return linkCompra(o.rede, o.produto, u);
+  }
+  function paginaGeral(u){
+    var p;
+    try { p = new URL(u).pathname.replace(/\/+$/, ''); } catch(e){ return true; }
+    var partes = p.split('/').filter(Boolean);
+    return (partes.length <= 1 && !/\d/.test(p)) || /(^|\/)(ofertas?|encartes?|promocao|promocoes|folhetos?|tabloides?)$/i.test(p);
   }
   function fonteLink(u){ return /^https?:\/\//.test(u || '') ? '<a href="' + esc(u) + '" target="_blank" rel="noopener">fonte</a>' : ''; }
 
@@ -2480,14 +2503,16 @@ input.field,select.field{min-height:var(--altura)}
       return '<li' + (p.equivale < alvo - 0.005 ? ' class="barato"' : '') + (p.obs ? ' title="' + esc(p.obs) + '"' : '') + '>'
         + (p.fonte ? abreLink({url:p.fonte}, 'i-chip', dentro) : '<span class="i-chip">' + dentro + '</span>') + '</li>';
     };
-    return '<div class="cmp ' + (baratos.length ? 'caro' : ps.length ? 'ok' : 'nada') + '"><p class="cmp-t">' + tit + quando + '</p>'
-      + (ps.length ? '<ul class="i-others num">' + ps.slice(0, 4).map(chip).join('') + '</ul>' : '') + '</div>';
+    // 1.36.1: recolhido, como o Comparar tamanhos da Minha lista (aberto logo depois de comparar)
+    return '<details class="i-det cmp ' + (baratos.length ? 'caro' : ps.length ? 'ok' : 'nada') + '" data-cmpdet="' + esc(id) + '"' + (CMP_ABERTO[id] && ps.length ? ' open' : '') + '><summary class="cmp-t">' + tit + quando + '</summary>'
+      + (ps.length ? '<ul class="i-others num">' + ps.slice(0, 4).map(chip).join('') + '</ul>' : '') + '</details>';
   }
+  var CMP_ABERTO = {};
   function comparar(id){
     if (MODO !== 'addon'){ toast('No Home Assistant, este botão procura o mesmo produto nas outras lojas.'); return; }
     if (!estado.cep){ abrirMais('casa'); toast('Salve o CEP antes de buscar.'); return; }
     if (BUSCANDO){ toast('Já tem uma busca rodando. Espere ela terminar.'); return; }
-    comparando = id; menuAberto = null; pintaDeals(); botaoBusca(true, 'Começando');
+    comparando = id; CMP_ABERTO[id] = true; menuAberto = null; pintaDeals(); botaoBusca(true, 'Começando');
     var solta = function(){ comparando = null; pintaDeals(); };
     fetch('api/comparar', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id:id})})
       .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
@@ -2513,6 +2538,7 @@ input.field,select.field{min-height:var(--altura)}
     pintaOfertasTela(); pintaPerfil();
   }
   $('deals').addEventListener('click', acaoOferta);
+  $('deals').addEventListener('toggle', function(e){ var d = e.target; if (d && d.dataset && d.dataset.cmpdet) CMP_ABERTO[d.dataset.cmpdet] = d.open; }, true);
   $('deals').addEventListener('submit', function(e){
     var f = e.target.closest('.termo-form'); if (!f) return;
     e.preventDefault();
@@ -2854,10 +2880,6 @@ input.field,select.field{min-height:var(--altura)}
   }
   // 1.35.0: o setor do item no pé do cartão (só com mais de um setor ligado): automático, mercado, farmácia ou pet shop
   function setoresLigados(){ return Object.keys(SETORES).filter(function(c){ return estado.categorias.indexOf(c) >= 0; }); }
-  function opcoesSetor(atual, auto){
-    var cs = setoresLigados(); if (atual && cs.indexOf(atual) < 0) cs.push(atual);
-    return '<option value="">' + esc(auto) + '</option>' + cs.map(function(c){ return '<option value="' + c + '"' + (c === atual ? ' selected' : '') + '>Só ' + esc(SETORES[c].toLowerCase()) + '</option>'; }).join('');
-  }
   function pintaSetorAdd(){  // antes do Adicionar: Qualquer, Mercado, Farmácia ou Pet shop (cada item pode ser de um lugar)
     var sel = $('novoSetor'), v = SETORES[sel.value] ? sel.value : '', cs = setoresLigados();
     sel.hidden = cs.length < 2;
@@ -2867,7 +2889,10 @@ input.field,select.field{min-height:var(--altura)}
   function seletorSetor(x){
     var s = SETORES[x.it.setor] ? x.it.setor : '';
     if (!s && setoresLigados().length < 2) return '';
-    return '<select class="field setor-sel" data-setor="' + x.i + '" aria-label="Onde comprar ' + esc(x.it.produto) + '">' + opcoesSetor(s, 'Setor automático') + '</select>';
+    // 1.36.1: as mesmas opções do Onde comprar ao adicionar (Setor automático e Só farmácia não cabiam no meio cartão)
+    var cs = setoresLigados(); if (s && cs.indexOf(s) < 0) cs.push(s);
+    return '<select class="field setor-sel" data-setor="' + x.i + '" aria-label="Onde comprar ' + esc(x.it.produto) + '"><option value="">Qualquer</option>'
+      + cs.map(function(c){ return '<option value="' + c + '"' + (c === s ? ' selected' : '') + '>' + esc(SETORES[c]) + '</option>'; }).join('') + '</select>';
   }
   // ===== 1.36.0: Comparar com IA. Em Comparar, as opções dos cartões (a melhor compra, as lojas, os tamanhos, os
   // similares, de um item ou de vários) ficam marcáveis; Comparar leva as escolhidas à Conversa, e a IA diz se a marca
@@ -3312,7 +3337,7 @@ input.field,select.field{min-height:var(--altura)}
         + acoes + '<p class="i-foot">Em ' + onde + quandoPrecos(p) + '</p>'
         + botoes('<button type="button" class="ghost big ic-btn i-rebusca" data-buscaitem="' + x.i + '"' + (buscaItem === x.it.produto ? ' disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>Buscando…' : '><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>Buscar de novo') + '</button>'
           // 1.28.0: os similares (a mesma seção da loja) só vêm da busca direta; ligados, o mesmo lugar os esconde
-          + (estado.opcoes.lojas_diretas || x.it.similares ? '<button type="button" class="ghost big ic-btn i-sim" data-sim="' + x.i + '"' + (buscaItem === x.it.produto ? ' disabled' : '') + '>' + SVG_SIM + (x.it.similares ? 'Esconder similares' : 'Buscar similares') + '</button>' : ''))
+          + (estado.opcoes.lojas_diretas || x.it.similares ? '<button type="button" class="ghost big ic-btn i-sim" data-sim="' + x.i + '" aria-pressed="' + !!x.it.similares + '" aria-label="' + (x.it.similares ? 'Esconder os similares' : 'Buscar similares') + '"' + (buscaItem === x.it.produto ? ' disabled' : '') + '>' + (x.it.similares ? '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8 12.5l3 3 5.5-6"/></svg>' : '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/></svg>') + 'Similares</button>' : ''))
         + '</li>';
     }).join('');
     pintaCmp();
@@ -4717,7 +4742,7 @@ input.field,select.field{min-height:var(--altura)}
     return u ? '<a class="src map-a" href="' + esc(u) + '" target="_blank" rel="noopener" aria-label="Abrir o site de ' + esc(nome) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>' + esc(host(u)) + '</a>' : '';
   }
   function botaoSite(l){
-    return '<button type="button" class="ghost big ic-btn loja-btn" data-site="' + esc(l.rede) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>' + (siteDe(l) ? 'Trocar site' : 'Adicionar site de ofertas') + '</button>';
+    return '<button type="button" class="ghost big ic-btn loja-btn" data-site="' + esc(l.rede) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>' + (siteDe(l) ? 'Trocar site' : 'Adicionar site') + '</button>';
   }
   // botão Mapa: abre a loja no Google Maps (pelo lugar do Google, pelas coordenadas ou pelo endereço)
   function mapaUrl(l, nome){
@@ -4769,15 +4794,17 @@ input.field,select.field{min-height:var(--altura)}
     // 1.36.0: um botão do app com a caixinha de marcar, para ficar claro que o toque diz que você é do clube (o preço
     // de sócio passa a valer); com o nome do clube quando a busca sabe
     var rot = 'Sou do ' + (k && k !== 'tem' ? k : 'clube');
-    return '<button type="button" class="ghost big ic-btn loja-btn clube" data-clube="' + esc(l.rede) + '" aria-pressed="' + socio + '" aria-label="' + esc(rot + ': ' + G[l.rede].nome) + '">'
-      + (socio ? '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8 12.5l3 3 5.5-6"/></svg>' : '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/></svg>') + esc(rot) + '</button>';
+    return '<button type="button" class="ghost big ic-btn loja-btn clube" data-clube="' + esc(l.rede) + '" aria-pressed="' + socio + '" aria-label="' + esc(rot + ': ' + G[l.rede].nome) + '" title="' + esc(rot) + '">'
+      + (socio ? '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8 12.5l3 3 5.5-6"/></svg>' : '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/></svg>') + 'Sou do clube</button>';
   }
   // 1.24.0: Benefícios do clube: a IA procura o que o clube da loja dá (guardado no servidor, por loja); com a IA ligada
   var CLUBES_BEN = {}, CLUBE_BUSCA = null, CLUBE_ABERTO = {};
   var SIM_SALVOS = {};  // 1.28.0: {item: {em, itens}}, os similares que uma busca de antes achou (o servidor guarda)
+  // 1.36.0: o nome da loja também das online que a busca ainda não trouxe (mkt:amazon), para os benefícios (Prime, Meli+)
+  function nomeLoja(rid){ return G[rid] ? G[rid].nome : ((MKT.filter(function(m){ return 'mkt:' + m.id === rid; })[0]) || {}).nome || ''; }
   function beneficiosHtml(c, l){
-    if (!/^(farmacias|mercados|petshops)$/.test(c.id)) return '';
-    var k = clubeDe(c, l), nome = G[l.rede].nome, r = CLUBES_BEN[chaveLoja(nome)];
+    if (c && !/^(farmacias|mercados|petshops|online)$/.test(c.id)) return '';
+    var k = c ? clubeDe(c, l) : '', nome = nomeLoja(l.rede), r = CLUBES_BEN[chaveLoja(nome)];
     if (k === null && !r) return '';
     if (CLUBE_BUSCA === l.rede) return '<span class="testando">Procurando os benefícios…</span>';
     var btn = function(t){ return iaOn() ? '<button type="button" class="linkbtn" data-clube-ben="' + esc(l.rede) + '"' + (CLUBE_BUSCA ? ' disabled' : '') + '>' + t + '</button>' : ''; };
@@ -4791,7 +4818,7 @@ input.field,select.field{min-height:var(--altura)}
   }
   function buscaBeneficios(rid){
     if (MODO !== 'addon'){ toast('No Home Assistant, a IA procura os benefícios do clube desta loja.'); return; }
-    var nome = G[rid].nome, cat = (D.categorias.filter(function(c){ return c.id === G[rid].cat; })[0]) || {}, k = clubeDe(cat, LOJA[rid] || {rede:rid});
+    var nome = nomeLoja(rid), cat = G[rid] ? (D.categorias.filter(function(c){ return c.id === G[rid].cat; })[0]) || {} : null, k = cat ? clubeDe(cat, LOJA[rid] || {rede:rid}) : '';
     CLUBE_BUSCA = rid; CLUBE_ABERTO[rid] = true; pintaLojas();
     fetch('api/clube/beneficios', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({nome:nome, clube:k && k !== 'tem' ? k : ''})})
       .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
@@ -4841,6 +4868,7 @@ input.field,select.field{min-height:var(--altura)}
     $('lojasCats').classList.toggle('com-abas', !TERMO_LOJA && todasAtivas.length > 1);  // a aba já diz o tipo
     // loja sem localização conta como online: sai da aba dela e aparece em Online
     var semLocal = function(l){ return l.distancia_km == null && !mapaUrl(l, G[l.rede] ? G[l.rede].nome : ''); };
+    var todasInat = [];  // 1.36.1: as inativas de todos os grupos da aba, juntas numa só, no fim
     var grupo = function(c, modo){
       var fis = c.id !== 'online';
       var dist = function(l){ return l.distancia_km == null ? 99 : l.distancia_km; };
@@ -4876,8 +4904,8 @@ input.field,select.field{min-height:var(--altura)}
           + (l.instagram ? '<a class="linkbtn" href="' + esc(l.instagram) + '" target="_blank" rel="noopener">Encarte do Instagram' + (l.instagram_ate ? ' até ' + dataBR(l.instagram_ate) : '') + '</a>' : '') + '</span>'
           + (c.id === 'online' && regional(l.rede) ? entregaHtml(l) : '')
           + (l.encarte_auto ? '<span class="r-l">Encarte lido do site ' + esc(host(l.site)) + '</span>' : '') + (l.folheto ? '<span class="r-l">Folheto da semana' + (l.folheto_ate ? ' até ' + dataBR(l.folheto_ate) : '') + '</span>' : '')
-          + '<span class="r-preco">' + (l.preco_fonte ? fonteHtml(l, c.id, c) : web ? fonteOnline(G[l.rede].nome) : avisoSemPreco(c, l)) + '</span>'
-          + beneficiosHtml(c, l) + fonteDet(l)
+          + '<span class="r-preco">' + (l.preco_fonte ? (fonteFalta(l) ? fonteHtml(l, c.id, c, 'falta') : '') : web ? fonteOnline(G[l.rede].nome) : avisoSemPreco(c, l)) + '</span>'
+          + beneficiosHtml(c, l) + fonteDet(l, c.id, c)
           + (mi >= 0 ? '<span class="r-l">Adicionada por você</span>' : '') + botoesLoja(c, l, c.id, mi) + '</span>'
           + (siteAberto === l.rede ? '<form class="site-form" novalidate data-site-form="' + esc(l.rede) + '" data-cat="' + c.id + '"><input class="field" type="url" inputmode="url" value="' + esc(siteDe(l)) + '" placeholder="Site, página de ofertas ou @ do Instagram" aria-label="Site de ofertas de ' + esc(G[l.rede].nome) + '"><button class="btn" type="submit">Salvar</button><button type="button" class="ghost big" data-site-fecha="1">Cancelar</button></form>' : '')
           + '</li>';
@@ -4900,7 +4928,7 @@ input.field,select.field{min-height:var(--altura)}
           if ((SO_SEM_FONTE && !sf) || (TERMO_LOJA && norm(m.nome).indexOf(TERMO_LOJA) < 0)) return;
           (on ? mktOn : mktOff).push('<li class="row has-track' + (on ? '' : ' out') + '"><label class="track"><input type="checkbox" data-mkt="' + m.id + '"' + (on ? ' checked' : '') + '><span class="r-name">' + esc(m.nome) + '</span></label><span class="r-val num"></span>'
             + '<span class="r-sub"><span>' + (on ? 'Entrega no seu CEP' : 'Você não acompanha') + '</span>' + chipSite(MKT_SITE[m.id], m.nome) + '<span class="src">App</span>'
-            + '<span class="r-preco">' + (f ? fonteHtml(l, 'online') : fonteOnline(m.nome)) + '</span>' + fonteDet(l) + botoesLoja(null, l, 'online') + '</span></li>');
+            + '<span class="r-preco">' + (f ? (fonteFalta(l) ? fonteHtml(l, 'online', null, 'falta') : '') : fonteOnline(m.nome)) + '</span>' + beneficiosHtml(null, l) + fonteDet(l, 'online') + botoesLoja(null, l, 'online') + '</span></li>');
         });
       }
       if (SO_SEM_FONTE || TERMO_LOJA){  // só as sem fonte de preço (as adicionadas à mão ainda não foram testadas) e/ou só o nome procurado
@@ -4908,20 +4936,21 @@ input.field,select.field{min-height:var(--altura)}
         rows = rows.filter(function(_, i){ return fica[i]; }); ativa = ativa.filter(function(_, i){ return fica[i]; });
         ord = ord.filter(function(_, i){ return fica[i]; }); if (SO_SEM_FONTE) manuais = [];
       }
-      var inat = rows.filter(function(_, i){ return !ativa[i]; }).concat(mktOff);
-      var kInat = c.id + (modo === 'semLocal' ? '-sl' : '');
-      var inativas = inat.length ? '<details class="inativas" data-inat="' + kInat + '"' + (INAT_ABERTO[kInat] || TERMO_LOJA ? ' open' : '') + '><summary>Inativas (' + inat.length + ')</summary><ul class="rows">' + inat.join('') + '</ul></details>' : '';
+      todasInat.push.apply(todasInat, rows.filter(function(_, i){ return !ativa[i]; }).concat(mktOff));
       var reg = ord.map(function(l){ return c.id === 'online' && regional(l.rede); });
       var mk = rows.filter(function(_, i){ return ativa[i] && !reg[i]; }), rg = rows.filter(function(_, i){ return ativa[i] && reg[i]; });
-      if ((SO_SEM_FONTE || TERMO_LOJA || modo === 'semLocal') && !mk.length && !mktOn.length && !manuais.length && !rg.length && !inat.length) return '';
-      return '<div class="group"><h3>' + esc(modo === 'semLocal' ? c.nome + ' sem localização' : c.nome) + '</h3>' + (modo === 'semLocal' ? '<p class="hint">Sem endereço no mapa: contam como online, que entregam.</p>' : '')
-        + '<ul class="rows">' + mk.concat(mktOn, manuais).join('') + '</ul>' + (rg.length ? '' : inativas) + '</div>'
-        + (rg.length ? '<div class="group"><h3>Mercados da região que entregam</h3><ul class="rows">' + rg.join('') + '</ul>' + inativas + '</div>' : '');
+      var principal = mk.concat(mktOn, manuais);
+      if (!principal.length && !rg.length) return '';
+      return (principal.length ? '<div class="group"><h3>' + esc(modo === 'semLocal' ? c.nome + ' sem localização' : c.nome) + '</h3>' + (modo === 'semLocal' ? '<p class="hint">Sem endereço no mapa: contam como online, que entregam.</p>' : '')
+        + '<ul class="rows">' + principal.join('') + '</ul></div>' : '')
+        + (rg.length ? '<div class="group"><h3>Mercados da região que entregam</h3><ul class="rows">' + rg.join('') + '</ul></div>' : '');
     };
     var html = ativas.map(function(c){ return grupo(c, 'local'); }).join('');
     if (TERMO_LOJA || aba === 'online') html += todasAtivas.filter(function(c){ return c.id !== 'online'; }).map(function(c){ return grupo(c, 'semLocal'); }).join('');
     // sem a aba Online (a busca ainda não trouxe nada online), as lojas sem localização ficam na aba delas
     else if (!todasAtivas.some(function(c){ return c.id === 'online'; })) html += ativas.map(function(c){ return grupo(c, 'semLocal'); }).join('');
+    var kInat = TERMO_LOJA ? 'busca' : 'aba:' + aba;
+    if (todasInat.length) html += '<div class="group"><details class="inativas" data-inat="' + kInat + '"' + (INAT_ABERTO[kInat] || TERMO_LOJA ? ' open' : '') + '><summary>Inativas (' + todasInat.length + ')</summary><ul class="rows">' + todasInat.join('') + '</ul></details></div>';
     $('lojasCats').innerHTML = html || (TERMO_LOJA ? '<p class="hint">Nenhuma loja com esse nome.</p>' : SO_SEM_FONTE ? '<p class="hint">Todas as lojas têm fonte de preço.</p>' : '');
     $('clubeSemIA').hidden = iaOn() || !estado.clubes.length;
     var nSem = contaSemFonte(todasAtivas);
@@ -4941,13 +4970,14 @@ input.field,select.field{min-height:var(--altura)}
   // 1.36.0: os botões da loja no padrão do app, juntos no fim da linha (dois por linha no celular): Sou do clube,
   // Benefícios do clube, Testar agora e o site de ofertas
   function botoesLoja(c, l, cid, mi){
-    var f = l.preco_fonte, k = c ? clubeDe(c, l) : null, r = c && G[l.rede] ? CLUBES_BEN[chaveLoja(G[l.rede].nome)] : null;
-    var ben = c && /^(farmacias|mercados|petshops)$/.test(c.id) && k !== null && !r && iaOn() && CLUBE_BUSCA !== l.rede
-      ? '<button type="button" class="ghost big ic-btn loja-btn" data-clube-ben="' + esc(l.rede) + '"' + (CLUBE_BUSCA ? ' disabled' : '') + '>' + SVG_CLUBE + 'Benefícios do clube</button>' : '';
+    // os benefícios também nas online (Mercado Livre: Meli+; Amazon: Prime; iFood: Clube iFood)
+    var f = l.preco_fonte, k = c ? clubeDe(c, l) : '', r = CLUBES_BEN[chaveLoja(nomeLoja(l.rede))];
+    var ben = (!c || /^(farmacias|mercados|petshops|online)$/.test(c.id)) && nomeLoja(l.rede) && k !== null && !r && iaOn() && CLUBE_BUSCA !== l.rede
+      ? '<button type="button" class="ghost big ic-btn loja-btn" data-clube-ben="' + esc(l.rede) + '"' + (CLUBE_BUSCA ? ' disabled' : '') + '>' + SVG_CLUBE + 'Benefícios</button>' : '';
     var semP = !f && c && c.id !== 'online' && G[l.rede] && !(l.nova && acompanha(l.rede)) && semPrecos(c).indexOf(l) >= 0 && !siteManual(G[l.rede].nome);
     var site = (f && (f.como === 'ia' || f.como === 'nenhum') && !(cid === 'online' && !regional(l.rede))) || semP ? botaoSite(l) : '';
     var rm = mi >= 0 ? '<button type="button" class="ghost big ic-btn loja-btn rm" data-loja="' + mi + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>Remover</button>' : '';
-    var bs = [c ? clubeHtml(c, l) : '', ben, botaoTestar(l, cid), site, rm].filter(Boolean);
+    var bs = [c ? clubeHtml(c, l) : '', ben, c && c.id === 'online' && regional(l.rede) ? botaoEntrega(l) : '', botaoTestar(l, cid), site, rm].filter(Boolean);
     return bs.length ? '<span class="loja-botoes">' + bs.join('') + '</span>' : '';
   }
   function testaLoja(cid, rid){
@@ -4975,20 +5005,26 @@ input.field,select.field{min-height:var(--altura)}
       })
       .catch(function(){ TESTANDO = null; pintaLojas(); toast('Sem conexão com o Home Assistant.'); });
   }
-  function fonteHtml(l, cid, c){
+  // parte: 'falta' só o selo e o Ligue a IA (à vista, quando falta fonte); 'det' o resto (o exemplo do teste e a próxima busca)
+  function fonteHtml(l, cid, c, parte){
     var f = l.preco_fonte, r = FONTE_ROT[f.como] || FONTE_ROT.nenhum;
     var rot = f.como === 'ia' && !iaOn() ? FONTE_ROT.nenhum : r;
     // 1.21.1: testada com fonte, mas a última busca foi antes: os preços dela vêm na próxima
     var depois = c && fonteOk(l) && semPrecosBusca(c).indexOf(l) >= 0;
-    return '<span class="chip ' + rot[0] + '">' + rot[1] + '</span>' + (f.exemplo ? '<span class="r-l">ex.: ' + esc(f.exemplo) + '</span>' : '')
-      + (depois ? '<span class="r-l">Preços na próxima busca</span>' : '')
-      + ((f.como === 'ia' || f.como === 'nenhum') && !iaOn() ? '<span class="r-l">Ligue a IA para ter o preço</span>' : '');
+    var selo = '<span class="chip ' + rot[0] + '">' + rot[1] + '</span>', ia = (f.como === 'ia' || f.como === 'nenhum') && !iaOn() ? '<span class="r-l">Ligue a IA para ter o preço</span>' : '';
+    var resto = (f.exemplo ? '<span class="r-l">ex.: ' + esc(f.exemplo) + '</span>' : '') + (depois ? '<span class="r-l">A última busca foi antes deste teste: os preços desta loja vêm na próxima.</span>' : '');
+    return parte === 'falta' ? selo + ia : parte === 'det' ? resto : selo + resto + ia;
   }
-  // 1.36.0: o Como foi testado fica junto dos outros recolhidos, antes dos botões da loja
-  function fonteDet(l){
-    var f = l.preco_fonte;
-    return f && arr(f.passos).length ? '<details class="fonte-det"' + (FONTE_ABERTA[l.rede] ? ' open' : '') + ' data-fonte="' + esc(l.rede) + '"><summary>Como foi testado' + (f.em ? ' · ' + esc(quandoCurto(f.em)) : '') + '</summary><ul>'
-      + arr(f.passos).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></details>' : '';
+  // 1.36.0: o Como foi testado fica junto dos outros recolhidos, antes dos botões da loja, e leva dentro de onde vem o
+  // preço (Preço pelo site, pela busca da IA, o exemplo); só o que falta (Sem fonte de preço) fica à vista
+  function fonteFalta(l){ var f = l.preco_fonte; return !!f && (f.como === 'nenhum' || (f.como === 'ia' && !iaOn())); }
+  function fonteDet(l, cid, c){
+    var f = l.preco_fonte; if (!f) return '';
+    var info = fonteHtml(l, cid, c, fonteFalta(l) ? 'det' : '');
+    if (!info && !arr(f.passos).length) return '';
+    return '<details class="fonte-det"' + (FONTE_ABERTA[l.rede] ? ' open' : '') + ' data-fonte="' + esc(l.rede) + '"><summary>Como foi testado' + (f.em ? ' · ' + esc(quandoCurto(f.em)) : '') + '</summary>'
+      + (info ? '<p class="fonte-info">' + info + '</p>' : '')
+      + (arr(f.passos).length ? '<ul>' + arr(f.passos).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' : '') + '</details>';
   }
   // 1.22.0: mercado da região: se entrega no CEP (pelo site, ou confirmado por você), com o Como foi testado
   function entregaSim(id){
@@ -4999,15 +5035,22 @@ input.field,select.field{min-height:var(--altura)}
     var e = l.entrega; if (!e) return '';
     var sim = entregaSim(l.rede), k = 'e:' + l.rede;
     var chip = e.atende ? '<span class="chip selo">Entrega no seu CEP</span>'
-      : sim ? '<span class="chip selo">Entrega no seu CEP</span><span>Confirmado por você</span>'
+      : sim ? '<span class="chip selo">Entrega no seu CEP</span>'
       : e.atende === false ? '<span class="chip warn">Não entrega no seu CEP</span>'
       : '<span class="chip warn">Sem preços</span><span>Não sei se entrega no seu CEP</span>';
-    var det = arr(e.passos).length ? '<details class="fonte-det"' + (FONTE_ABERTA[k] ? ' open' : '') + ' data-fonte="' + esc(k) + '"><summary>Como foi testado' + (e.em ? ' · ' + esc(quandoCurto(e.em)) : '') + '</summary><ul>'
+    var det = arr(e.passos).length ? '<details class="fonte-det"' + (FONTE_ABERTA[k] ? ' open' : '') + ' data-fonte="' + esc(k) + '"><summary>Como foi testada a entrega' + (e.em ? ' · ' + esc(quandoCurto(e.em)) : '') + '</summary><ul>'
       + arr(e.passos).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></details>' : '';
-    return chip + det + (e.atende ? '' : '<button type="button" class="linkbtn" data-entrega="' + esc(l.rede) + '">' + (sim ? 'Não entrega' : 'Entrega no meu CEP') + '</button>');
+    return '<span class="r-preco">' + chip + '</span>' + det;  // 1.36.1: o Entrega aqui (marcar ou desmarcar) fica nos botões da loja
+  }
+  // 1.36.1: como o Sou do clube: um botão com a caixinha, marcado quando você confirmou que entrega no seu CEP
+  function botaoEntrega(l){
+    var e = l.entrega; if (!e || e.atende) return '';
+    var sim = entregaSim(l.rede);
+    return '<button type="button" class="ghost big ic-btn loja-btn marca" data-entrega="' + esc(l.rede) + '" aria-pressed="' + sim + '" aria-label="' + esc('Entrega no meu CEP: ' + G[l.rede].nome) + '">'
+      + (sim ? '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8 12.5l3 3 5.5-6"/></svg>' : '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/></svg>') + 'Entrega aqui</button>';
   }
   function avisoSemPreco(c, l){
-    if (l.nova && acompanha(l.rede)) return '<span>Preços na próxima busca</span>';
+    if (l.nova && acompanha(l.rede)) return '<span>Loja nova: os preços vêm na próxima busca</span>';
     if (semPrecos(c).indexOf(l) < 0) return '';
     var man = siteManual(G[l.rede].nome);
     if (man) return '<span class="chip warn">Sem preços</span><span>O site ' + esc(host(man.site)) + ' entra na próxima busca</span>';

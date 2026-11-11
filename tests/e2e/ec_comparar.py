@@ -77,6 +77,7 @@ async def main():
                 await espera(pg, "() => document.querySelector('#deals .deal .cmp')", 20000)
                 await espera(pg, "() => !document.getElementById('buscar').disabled")
                 bloco = cafe.locator(".cmp")
+                check(await bloco.evaluate("d => d.tagName === 'DETAILS' && d.open"), f"{tag}: aberto logo depois de comparar (1.36.1)")
                 check(await txt(bloco.locator(".cmp-t")) == "Mais barato em outra loja", f"{tag}: Mais barato em outra loja ({await txt(bloco.locator('.cmp-t'))})")
                 chips = [await txt(x) for x in await bloco.locator("li").all()]
                 check(chips == ["Giassi R$ 19,90", "Angeloni R$ 23,50"], f"{tag}: as lojas, da mais barata para a mais cara ({chips})")
@@ -111,6 +112,14 @@ async def main():
                 await pg.click('.tabbar [data-view="ofertas"]')
                 await espera(pg, "() => document.querySelectorAll('#deals .cmp').length === 3")
                 check(True, f"{tag}: as três comparações ficam depois de recarregar")
+                # 1.36.1: recolhidas, como o Comparar tamanhos da Minha lista; abrem num toque
+                abertos = await pg.evaluate("() => [...document.querySelectorAll('#deals details.cmp')].map(d => d.open)")
+                check(abertos == [False, False, False], f"{tag}: recolhidas depois de recarregar ({abertos})")
+                cafe = pg.locator("#deals .deal", has_text="Café Pilão")
+                check(not await cafe.locator(".cmp li").first.is_visible(), f"{tag}: as lojas escondidas")
+                await cafe.locator(".cmp-t").click()
+                await pg.wait_for_timeout(200)
+                check(await cafe.locator(".cmp li").first.is_visible(), f"{tag}: um toque abre")
                 check(app.config_salva()["lista"] == [], f"{tag}: a lista não muda")
                 check(not pg.erros, f"{tag}: sem erros na página {pg.erros}")
                 await b.close()

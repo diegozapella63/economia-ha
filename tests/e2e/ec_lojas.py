@@ -13,10 +13,12 @@ OFERTAS = {"versao": 2, "gerado_em": "2026-11-02T10:00:00-03:00", "categorias": 
                {"rede": "farm-nissei", "distancia_km": 1.4, "endereco": "Rua B, 2", "fontes": ["Mapa"],
                 "preco_fonte": {"como": "site", "exemplo": "Dipirona 1g por R$ 9,90"}}], "cupons": [], "ofertas": []},
     {"id": "mercados", "nome": "Mercados", "singular": "Mercado",
-     "redes": [{"id": "merc-giassi", "nome": "Giassi"}, {"id": "merc-angeloni", "nome": "Angeloni"}, {"id": "merc-fort", "nome": "Fort Atacadista"}],
+     "redes": [{"id": "merc-giassi", "nome": "Giassi"}, {"id": "merc-angeloni", "nome": "Angeloni"}, {"id": "merc-fort", "nome": "Fort Atacadista"},
+               {"id": "merc-lua", "nome": "Mercado Lua"}],
      "lojas": [{"rede": "merc-giassi", "distancia_km": 1.1, "endereco": "Rua C, 3", "fontes": ["Mapa", "Site"]},
                {"rede": "merc-angeloni", "distancia_km": 2.0, "endereco": "Rua D, 4", "fontes": ["Mapa", "Site"]},
-               {"rede": "merc-fort", "distancia_km": 4.2, "endereco": "Rua E, 5", "fontes": ["Mapa"]}], "cupons": [], "ofertas": []},
+               {"rede": "merc-fort", "distancia_km": 4.2, "endereco": "Rua E, 5", "fontes": ["Mapa"]},
+               {"rede": "merc-lua", "distancia_km": None, "fontes": ["Site"]}], "cupons": [], "ofertas": []},
     {"id": "petshops", "nome": "Pet shops", "singular": "Pet shop",
      "redes": [{"id": "pets-cobasi", "nome": "Cobasi"}],
      "lojas": [{"rede": "pets-cobasi", "distancia_km": None, "fontes": ["Site"]}], "cupons": [], "ofertas": []},
@@ -65,6 +67,30 @@ async def main():
             await pg.wait_for_timeout(300)
             txt = await pg.locator("#mp-lojas").inner_text()
             check("PET SHOPS SEM LOCALIZAÇÃO" in txt.upper() and "Cobasi" in txt, "e aparece em Online, no grupo sem localização")
+            # 1.36.1: o Benefícios também nas lojas online (o Meli+ do Mercado Livre)
+            ml = pg.locator("#mp-lojas li.row", has=pg.locator(".r-name", has_text="Mercado Livre")).first
+            check(await ml.locator('[data-clube-ben="mkt:mercadolivre"]').count() == 1, "Mercado Livre com o botão Benefícios")
+            # 1.36.1: as inativas da aba (de todos os grupos: online, mercados e pet shops sem localização) numa só, no fim
+            inat = pg.locator("#mp-lojas details.inativas")
+            n0 = await inat.locator("li.row").count()  # os marketplaces não escolhidos
+            for rede in ("merc-lua", "pets-cobasi"):
+                await pg.locator(f'#mp-lojas input[data-rede="{rede}"]').uncheck()
+                await pg.wait_for_timeout(800)
+            check(await inat.count() == 1 and f"Inativas ({n0 + 2})" in await inat.locator("summary").inner_text()
+                  and await inat.locator('input[data-rede="merc-lua"]').count() == 1 and await inat.locator('input[data-rede="pets-cobasi"]').count() == 1,
+                  f"uma só Inativas na aba, com as dos outros grupos ({await inat.count()}, {n0})")
+            check(not await inat.evaluate("d => d.open"), "recolhida")
+            check(await inat.evaluate("d => !d.nextElementSibling || !d.nextElementSibling.querySelector('li.row')") and
+                  await pg.evaluate("() => { const d = document.querySelector('#mp-lojas details.inativas'); return [...document.querySelectorAll('#mp-lojas li.row')].every(r => d.contains(r) || (r.compareDocumentPosition(d) & Node.DOCUMENT_POSITION_FOLLOWING)); }"),
+                  "no fim, depois de todas as lojas ativas")
+            txt = (await pg.locator("#mp-lojas").inner_text()).upper()
+            check("MERCADOS SEM LOCALIZAÇÃO" not in txt and "PET SHOPS SEM LOCALIZAÇÃO" not in txt, "os grupos sem nenhuma loja ativa somem")
+            await inat.locator("summary").click()
+            for rede in ("merc-lua", "pets-cobasi"):
+                await pg.locator(f'#mp-lojas input[data-rede="{rede}"]').check()
+                await pg.wait_for_timeout(800)
+            check(await inat.locator("li.row").count() == n0 and await pg.locator("#mp-lojas .group h3", has_text="Mercados sem localização").count() == 1,
+                  "marcadas de novo, voltam ao grupo delas")
             # procurar pelo nome: vale em todas as abas
             await pg.fill("#lojaBusca", "nis")
             await pg.wait_for_timeout(400)
@@ -80,8 +106,9 @@ async def main():
             # 1.21.1: a Nissei foi testada e tem fonte, mas a última busca não trouxe preço dela: os preços vêm na próxima
             await pg.uncheck("#soSemFonte")
             await pg.wait_for_timeout(300)
-            ni = await pg.locator("#mp-lojas li", has=pg.locator('input[data-rede="farm-nissei"]')).first.inner_text()
-            check("Preços na próxima busca" in ni, f"Nissei testada: os preços vêm na próxima busca ({ni[:120]})")
+            # 1.36.0: de onde vem o preço fica dentro do Como foi testado
+            ni = await pg.locator("#mp-lojas li", has=pg.locator('input[data-rede="farm-nissei"]')).first.locator("details[data-fonte]").text_content()
+            check("A última busca foi antes deste teste: os preços desta loja vêm na próxima." in ni, f"Nissei testada: os preços vêm na próxima busca ({ni[:120]})")
             await pg.check("#soSemFonte")
             await pg.wait_for_timeout(300)
             await pg.uncheck("#soSemFonte")
@@ -109,7 +136,8 @@ async def main():
             await pg.wait_for_timeout(300)
             # clube na linha da loja (Nissei: Club Nissei)
             clube = pg.locator('#mp-lojas [data-clube="farm-nissei"]')
-            check(await clube.count() == 1 and "Club Nissei" in await clube.inner_text(), "clube da Nissei na linha da loja")
+            check(await clube.count() == 1 and (await clube.inner_text()).strip() == "Sou do clube" and "Club Nissei" in await clube.get_attribute("aria-label"),
+                  "clube da Nissei na linha da loja: Sou do clube, com a caixinha")
             await clube.click()
             await pg.wait_for_timeout(1000)
             check(await pg.get_attribute('#mp-lojas [data-clube="farm-nissei"]', "aria-pressed") == "true", "toque marca que é do clube")

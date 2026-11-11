@@ -69,7 +69,7 @@ async def main():
             check("Farmácia Lua" not in t and "Em 2 mercados" in t and "economia de R$ 0,61" in t, f"leite: só os mercados ({t[:200]})")
             sel = alc.locator("select[data-setor]")
             ops = [limpo(x) for x in await sel.locator("option").all_inner_texts()]
-            check(ops == ["Setor automático", "Só mercado", "Só farmácia"], f"o setor no pé do cartão ({ops})")
+            check(ops == ["Qualquer", "Mercado", "Farmácia"], f"o setor no pé do cartão, como ao adicionar ({ops})")
             # ----- só mercado: o galão vira o preço do item -----
             await sel.select_option("mercados")
             await pg.wait_for_timeout(700)
@@ -77,7 +77,7 @@ async def main():
             alc = item("Álcool 70")
             t = limpo(await alc.inner_text())
             check("R$ 42,98" in t and "Atacado Sol" in t and "Farmácia Lua" not in t and "Em 1 mercado" in t, f"só mercado: o galão do atacado ({t[:200]})")
-            check(await alc.locator("select[data-setor]").input_value() == "mercados", "o pé mostra Só mercado")
+            check(await alc.locator("select[data-setor]").input_value() == "mercados", "o pé mostra Mercado")
             await alc.locator("select[data-setor]").select_option("")
             await pg.wait_for_timeout(700)
             check("setor" not in next(i for i in app.config_salva()["lista"] if i["produto"] == "Álcool 70"), "de volta ao automático")

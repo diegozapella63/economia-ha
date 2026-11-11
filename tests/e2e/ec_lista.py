@@ -78,7 +78,7 @@ async def main():
                             "Filé de Peito de Frango Kg"], f"todos os da seção, por kg ({nomes})")
             check("4 saem mais em conta que o item." in await sim.inner_text() and await sim.locator(".sim-list li.conta").count() == 4,
                   "os mais em conta marcados (o filé, mais caro, também aparece)")
-            check((await cox.locator(".i-botoes .i-sim").inner_text()).strip() == "Esconder similares" and await cox.locator(".sim-btn").count() == 0,
+            check(await cox.locator(".i-botoes .i-sim").get_attribute("aria-pressed") == "true" and await cox.locator(".sim-btn").count() == 0,
                   "nos botões do cartão, ao lado do Buscar de novo")
             await cox.screenshot(path=SHOTS + "/ecl-similares.png")
             await sim.locator(".sim-list li").nth(1).locator(".esc-btn").click()
@@ -99,7 +99,7 @@ async def main():
             await (await item(pg, "Coxinha da asa")).locator(".i-sim").click()
             await pg.wait_for_timeout(1200)
             cox = await item(pg, "Coxinha da asa")
-            check(await cox.locator("details.i-det", has_text="Similares").count() == 0 and await cox.locator(".i-sim").inner_text() == "Buscar similares",
+            check(await cox.locator("details.i-det", has_text="Similares").count() == 0 and await cox.locator(".i-sim").get_attribute("aria-pressed") == "false",
                   "escondidos: o grupo some e volta o Buscar similares")
             it = next(i for i in app.config_salva()["lista"] if i["produto"] == "Coxinha da asa")
             check("similares" not in it and "escolha" not in it, f"config sem similares e sem a escolha do similar ({it})")
@@ -169,7 +169,7 @@ async def main():
             # 1.36.0: Buscar de novo, os similares, o setor (com mais de um setor ligado) e o remover são botões do app,
             # dois por linha na largura do cartão; o item sem preço tem só o setor e o remover
             bts = await carne.locator(".i-botoes > *").evaluate_all("els => els.map((e) => (e.tagName === 'SELECT' ? e.selectedOptions[0].text : e.textContent).trim())")
-            check(bts == ["Buscar de novo", "Esconder similares", "Setor automático", "Remover"], f"os botões do cartão ({bts})")
+            check(bts == ["Buscar de novo", "Similares", "Qualquer", "Remover"], f"os botões do cartão ({bts})")
             caixas = await carne.locator(".i-botoes > *").evaluate_all("els => els.map((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)]; })")
             check(caixas[0][1] == caixas[1][1] and caixas[2][1] == caixas[3][1] and caixas[0][2] == caixas[1][2] and all(c[3] >= 50 for c in caixas),
                   f"dois por linha, do mesmo tamanho, com 50 px ({caixas})")

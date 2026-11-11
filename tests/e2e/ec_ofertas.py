@@ -21,10 +21,10 @@ def oferta(i, rede, produto, por, de=None, **kw):
 OFERTAS = {"versao": 2, "gerado_em": "2026-11-02T10:00:00-03:00", "lista": [], "categorias": [
     categoria("farmacias", [("farm-panvel", "Panvel", 0.8), ("farm-nissei", "Farmácias Nissei", 1.4), ("farm-vida", "Farmácia Vida", 1.0)], ofertas=[
         oferta("o-cerveja", "farm-panvel", "Cerveja Heineken 350 ml", 4.49, 5.99, tags=["alcool"]),
-        oferta("o-protetor", "farm-panvel", "Protetor solar Nivea FPS 50 · 200 ml", 59.9, 79.9, tags=["skincare"], fonte="https://www.panvel.com/protetor"),
+        oferta("o-protetor", "farm-panvel", "Protetor solar Nivea FPS 50 · 200 ml", 59.9, 79.9, tags=["skincare"], fonte="https://www.panvel.com/panvel/protetor-solar-nivea-fps-50/p-12345"),
         oferta("o-dipirona", "farm-nissei", "Dipirona 1 g · 10 comprimidos", 8.9, 12.9, receita="mip"),
         oferta("o-fralda", "farm-nissei", "Fralda Pampers Confort Sec G", 79.9, 99.9, tags=["bebe"]),
-        oferta("o-shampoo", "farm-panvel", "Shampoo Seda 325 ml", 11.9, 15.9, tipo="clube"),
+        oferta("o-shampoo", "farm-panvel", "Shampoo Seda 325 ml", 11.9, 15.9, tipo="clube", fonte="https://www.panvel.com/ofertas/"),
         oferta("o-rivotril", "farm-nissei", "Rivotril 2 mg", 9.9, receita="tarja")],
         cupons=[{"rede": "farm-panvel", "codigo": "PANVEL20", "valor": 20, "beneficio": "R$ 20 de desconto", "condicao": "Acima de R$ 100", "valido_ate": D(2), "status": "confirmado"},
                 {"rede": "farm-nissei", "codigo": "NISSEI10", "valor": 10, "beneficio": "10% em tudo", "condicao": "No app", "valido_ate": None, "status": "testar"},
@@ -91,7 +91,10 @@ async def main():
             check("Tarja vermelha · com receita" in riv and "Preço atual" in riv, "tarja vermelha e preço sem o 'de'")
             sh = (await pg.locator("#deals .deal", has_text="Shampoo").inner_text()).replace("\xa0", " ")
             check("SEU CLUBE" in sh.upper() and "Sem clube R$ 15,90" in sh, f"oferta de clube de quem é do clube ({sh[:80]})")
-            check(await pg.locator('#deals .deal', has_text="Protetor").locator('a[href="https://www.panvel.com/protetor"]').count() == 1, "link da fonte")
+            check(await pg.locator('#deals .deal', has_text="Protetor").locator('a[href="https://www.panvel.com/panvel/protetor-solar-nivea-fps-50/p-12345"]').count() == 1, "link da fonte")
+            # 1.36.1: a fonte é a página das ofertas (não a do produto): o Abrir na loja procura o produto no site da loja
+            href = await pg.locator('#deals .deal', has_text="Shampoo").locator(".d-acts a").get_attribute("href")
+            check(href == "https://www.google.com/search?q=site%3Apanvel.com%20Shampoo%20Seda%20325%20ml", f"procura o produto no site da loja ({href})")
             await pg.locator("#v-ofertas").screenshot(path=SHOTS + "/eco-farmacias.png")
             # sem preços: a loja do raio sem nada
             sp = await pg.text_content("#semPrecos")
