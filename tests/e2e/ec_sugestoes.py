@@ -48,8 +48,8 @@ async def main():
                 await digita(pg, "arroz")
                 await espera(pg, "() => document.querySelectorAll('.sug-box .sug-op').length >= 3")
                 ops = await opcoes(pg)
-                check(ops == ["Arroz cateto", "Arroz branco", "Arroz parboilizado"],
-                      f"[{largura}] o do histórico primeiro, depois os das lojas, sem marca; o Arroz integral já está na lista ({ops})")
+                check(ops[:3] == ["Arroz cateto", "Arroz branco", "Arroz parboilizado"] and "Arroz integral" not in ops and "Arroz agulhinha" in ops,
+                      f"[{largura}] o do histórico primeiro, depois os das lojas, sem marca, e os da lista pronta (1.33.0); o Arroz integral já está na lista ({ops})")
                 caixa = await pg.evaluate("""() => { const f = document.getElementById('addForm').getBoundingClientRect(), s = document.querySelector('.sug-box');
                   return { abaixo: s.getBoundingClientRect().top >= f.bottom - 6, depois: s.previousElementSibling.id, largura: Math.round(s.getBoundingClientRect().width),
                            cabe: document.documentElement.scrollWidth <= innerWidth }; }""")
@@ -66,7 +66,7 @@ async def main():
                 # a palavra que está sendo digitada completa, com o acento das lojas
                 await digita(pg, "sab")
                 await espera(pg, "() => document.querySelectorAll('.sug-box .sug-op').length >= 2")
-                check(await opcoes(pg) == ["Sabão", "Sabão em pó"], f"[{largura}] sab → Sabão, Sabão em pó ({await opcoes(pg)})")
+                check((await opcoes(pg))[:2] == ["Sabão", "Sabão em pó"], f"[{largura}] sab → Sabão, Sabão em pó, depois a lista pronta ({await opcoes(pg)})")
                 await pg.locator(".sug-op", has_text="Sabão em pó").click()
                 item = f"Sabão em pó {1 if largura == 390 else 2} kg"  # o tamanho a pessoa escreve depois
                 await pg.locator("#novoItem").press_sequentially(item[len("Sabão em pó"):], delay=30)

@@ -29,8 +29,9 @@ NOMES = (
 
 
 class Sugestoes(unittest.TestCase):
+    """Os nomes vistos nas lojas, sem a lista pronta (1.33.0: ela fica nos testes de baixo)."""
     def setUp(self):
-        self.S, self.pasta, self.log = servidor()
+        self.S, self.pasta, self.log = servidor({"OFERTAS_ITENS": ""})
         self.S.aprende_nomes(NOMES, MARCAS)
 
     def tearDown(self):
@@ -109,6 +110,43 @@ class Sugestoes(unittest.TestCase):
         self.S.aprende_nomes(["Feijão Carioca Pratinho 1kg", "Feijão Carioca Brilhux 1kg", "Feijão Preto Pratinho 1kg"], [])
         self.S.grava_vocab()  # o vocabulário novo refaz as contas
         self.assertEqual(self.S.sugestoes_nomes("feijao"), ["Feijão carioca"])
+
+
+class ListaPronta(unittest.TestCase):
+    """1.33.0: a lista pronta dos itens comuns e das marcas mais vendidas (economia/app/itens_comuns.txt)."""
+    def setUp(self):
+        self.S, self.pasta, self.log = servidor()
+
+    def tearDown(self):
+        limpa(self.pasta)
+
+    def test_a_lista_tem_os_itens_comuns_sem_repetir(self):
+        lista = self.S.itens_comuns()
+        self.assertGreater(len(lista), 2000)
+        self.assertEqual(len({n for n, _, _ in lista}), len(lista), "sem repetir")
+        nomes = {x for _, x, _ in lista}
+        self.assertTrue({"Leite sem lactose", "Tira manchas Vanish", "Sabão em pó", "Papel higiênico", "Dipirona"} <= nomes)
+        self.assertTrue(all(x[:1].isupper() or x[:1].isdigit() for x in nomes), "a primeira letra maiúscula")
+
+    def test_sem_nada_visto_nas_lojas_a_lista_pronta_sugere(self):
+        self.assertEqual(self.S.sugestoes_nomes("vanish")[:2], ["Tira manchas Vanish", "Tira manchas Vanish Oxi Action"], "só a marca")
+        self.assertEqual(self.S.sugestoes_nomes("leite sem lac"), ["Leite sem lactose"])
+        self.assertEqual(self.S.sugestoes_nomes("arroz")[:3], ["Arroz branco", "Arroz integral", "Arroz parboilizado"])
+        self.assertIn("Arroz Tio João", self.S.sugestoes_nomes("arroz ti"), "a marca com o item")
+        self.assertIn("Sabão em pó Omo", self.S.sugestoes_nomes("sabão omo"), "as palavras na ordem, com outras no meio")
+        self.assertTrue(all("doce" in self.S.norm(x) for x in self.S.sugestoes_nomes("doce de lei")))
+        self.assertEqual(self.S.sugestoes_nomes("xyzw"), [])
+        self.assertLessEqual(len(self.S.sugestoes_nomes("sab")), 8)
+
+    def test_os_vistos_nas_lojas_vem_primeiro(self):
+        self.S.aprende_nomes(["Arroz Arbóreo Pratinho 1kg", "Arroz Arbóreo Brilhux 1kg"], ["Pratinho", "Brilhux"])
+        self.assertEqual(self.S.sugestoes_nomes("arroz")[0], "Arroz arbóreo", "visto nas lojas: antes da lista pronta")
+        self.assertEqual(self.S.sugestoes_nomes("arroz").count("Arroz arbóreo"), 1, "sem repetir com a lista")
+
+    def test_sem_o_arquivo_nao_quebra(self):
+        self.S.ITENS_ARQ = "/nao/existe.txt"
+        self.assertEqual(self.S.itens_comuns(), [])
+        self.assertEqual(self.S.sugestoes_nomes("vanish"), [])
 
 
 if __name__ == "__main__":

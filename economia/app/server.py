@@ -2397,6 +2397,57 @@ def _marca_em(ws, j, marcas):
     return ws[j] in marcas or " ".join(ws[j:j + 2]) in marcas or " ".join(ws[j:j + 3]) in marcas
 
 
+# 1.33.0: a lista pronta dos itens comuns (e das marcas mais vendidas com o produto delas), para sugerir o que as lojas
+# ainda não mostraram; OFERTAS_ITENS troca o arquivo (vazio: sem a lista; testes)
+ITENS_ARQ = os.environ.get("OFERTAS_ITENS", os.path.join(os.path.dirname(os.path.abspath(__file__)), "itens_comuns.txt"))
+_itens = {"arq": None, "lista": []}
+
+
+def itens_comuns():
+    """[(nome sem acento, nome como aparece, é de marca)] da lista pronta, na ordem do arquivo (do mais comum ao menos)."""
+    if _itens["arq"] != ITENS_ARQ:
+        lista, marca = [], False
+        try:
+            with open(ITENS_ARQ, encoding="utf-8") as f:
+                for ln in f:
+                    ln = ln.strip()
+                    if ln.startswith("#"):
+                        marca = ln.startswith("# Marcas")
+                    elif ln and norm(ln):
+                        lista.append((norm(ln), ln, marca))
+        except OSError:
+            pass
+        _itens.update(arq=ITENS_ARQ, lista=lista)
+    return _itens["lista"]
+
+
+def _palavras_em_ordem(ws, qs):
+    """Cada palavra digitada é o começo de uma palavra do nome, na mesma ordem ("arr int" está em "arroz integral")."""
+    j = 0
+    for q in qs:
+        while j < len(ws) and not ws[j].startswith(q):
+            j += 1
+        if j >= len(ws):
+            return False
+        j += 1
+    return True
+
+
+def da_lista_pronta(qs):
+    """Os itens da lista pronta para o que foi digitado: (os que começam por ele, os que têm as palavras no meio), os de
+    marca depois dos outros."""
+    qn, comeca, meio = " ".join(qs), [], []
+    for n, nome, marca in itens_comuns():
+        if n == qn:
+            continue
+        if n.startswith(qn):
+            comeca.append((marca, nome))
+        elif _palavras_em_ordem(n.split(), qs):
+            meio.append((marca, nome))
+    por_marca = lambda l: [x[1] for x in sorted(l, key=lambda x: x[0])]  # noqa: E731 (a ordem do arquivo fica)
+    return por_marca(comeca), por_marca(meio)
+
+
 # 1.32.0: "sem" e "zero" querem dizer o mesmo nos nomes ("Leite Zero Lactose" é leite sem lactose)
 IGUAIS_SUG = {"sem": "zero", "zero": "sem"}
 
@@ -2458,20 +2509,25 @@ def sugestoes_nomes(q, limite=8):
                 t = " ".join(ws[:k] + ext)
                 conta[t] = conta.get(t, 0) + 1
     formas = v.get("formas") or {}
-    out = []
-    ordem = sorted(conta.items(), key=lambda x: (-x[1], x[0]))
+    escrever = lambda t: (lambda s: s[:1].upper() + s[1:])(" ".join(w.capitalize() if w in marcas else formas.get(w) or CURTAS_SUG.get(w) or w for w in t.split()))  # noqa: E731
+    vistos = lambda ordem: [escrever(t) for t, c in ordem if c >= 2]  # noqa: E731 (visto uma vez só: pode ser um nome estranho de uma loja)
+    comeca = vistos(sorted(conta.items(), key=lambda x: (-x[1], x[0])))
     if k >= 2:  # depois, os que têm outras palavras no meio
-        ordem += [x for x in sorted(_com_saltos(qs, idx, marcas).items(), key=lambda x: (-x[1], x[0])) if x[0] not in conta and x[1] >= 2]
+        meio = vistos(x for x in sorted(_com_saltos(qs, idx, marcas).items(), key=lambda x: (-x[1], x[0])) if x[0] not in conta)
     elif len(parcial) >= 4:  # uma palavra só: também no meio do nome (a marca, "leite" de Doce de leite)
-        ordem += [x for x in sorted(_no_meio(parcial, marcas).items(), key=lambda x: (-x[1], x[0])) if x[0] not in conta and x[1] >= 2]
-    for t, c in ordem:
-        if c < 2:
-            continue  # visto uma vez só: pode ser um nome estranho de uma loja
-        s = " ".join(w.capitalize() if w in marcas else formas.get(w) or CURTAS_SUG.get(w) or w for w in t.split())
-        out.append(s[:1].upper() + s[1:])
-        if len(out) >= limite:
-            break
-    return out
+        meio = vistos(x for x in sorted(_no_meio(parcial, marcas).items(), key=lambda x: (-x[1], x[0])) if x[0] not in conta)
+    else:
+        meio = []
+    # 1.33.0: os vistos nas lojas, depois os da lista pronta (os do começo antes dos do meio)
+    pronta_c, pronta_m = da_lista_pronta(qs)
+    if k == 1 and len(parcial) < 3:
+        pronta_m = []  # duas letras no meio do nome acham qualquer coisa
+    out, ja = [], set()
+    for x in comeca + pronta_c + meio + pronta_m:
+        if norm(x) not in ja:
+            ja.add(norm(x))
+            out.append(x)
+    return out[:limite]
 
 
 # 1.32.0: o que não é o item ("Pacote", "IQF", "Preço por quilo"): sai do nome que vai para a lista

@@ -119,6 +119,8 @@ class Estado(Rotas):
         self.assertEqual(self.pede("GET", "/api/corrigir?texto=leite")[1], {"texto": None})
 
     def test_sugestoes_ao_digitar(self):
+        self.assertIn("Tira manchas Vanish", self.pede("GET", "/api/sugestoes?q=vanish")[1]["nomes"], "1.33.0: a lista pronta")
+        self.S.ITENS_ARQ = ""  # daqui para baixo, só o vocabulário das lojas
         self.assertEqual(self.pede("GET", "/api/sugestoes?q=sab%C3%A3o")[1], {"nomes": []}, "sem vocabulário, nenhuma")
         self.S.aprende_nomes(["Sabão em Pó Marca Um 1kg", "Sabão em Pó Marca Dois 2kg", "Sabão Líquido Marca Um 1L"], ["Marca Um", "Marca Dois"])
         self.S.grava_vocab()  # como depois de uma busca: o vocabulário novo refaz as contas

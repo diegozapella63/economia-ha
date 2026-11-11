@@ -1,5 +1,10 @@
 # Mudanças
 
+## 1.33.0
+
+- As sugestões ao digitar o item agora têm uma lista pronta com 2.600 itens comuns de supermercado, hortifrúti, açougue, padaria, farmácia e pet, e as marcas mais vendidas com o produto delas. Aparecem mesmo antes de qualquer busca: "Vanish" sugere *Tira manchas Vanish*, "leite sem lac" sugere *Leite sem lactose*. O que as lojas já mostraram vem primeiro.
+- As palavras digitadas valem na ordem, com outras no meio: "sabão omo" sugere *Sabão em pó Omo*.
+
 ## 1.32.0
 
 - As sugestões ao digitar o item acham também a palavra no meio do nome: só a marca ("Vanish" sugere *Tira manchas Vanish*) ou "leite" sugere também *Doce de leite* e *Creme de leite*.

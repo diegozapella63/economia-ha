@@ -3364,12 +3364,22 @@ input.field,select.field{min-height:var(--altura)}
   // com data-sug="<nome>" mostra logo abaixo até 6 sugestões de SUG_FONTES[nome]() que combinam com o que foi digitado
   // (sem acento). Tocar numa preenche o campo (com os eventos input e change de sempre); sair do campo ou escolher fecha.
   var SUG_FONTES = {}, SUG = null;
+  // 1.33.0: cada palavra digitada é o começo de uma palavra da sugestão, na mesma ordem ("sabao omo" em "sabao em po omo")
+  function emOrdem(k, q){
+    var kw = k.split(' '), qw = q.split(' '), j = 0;
+    for (var i = 0; i < qw.length; i++){
+      while (j < kw.length && kw[j].indexOf(qw[i]) !== 0) j++;
+      if (j >= kw.length) return false;
+      j++;
+    }
+    return true;
+  }
   function sugFechar(){ if (SUG){ if (SUG.box.parentNode) SUG.box.parentNode.removeChild(SUG.box); SUG = null; } }
   function sugMostrar(inp){
     var fonte = SUG_FONTES[inp.dataset.sug], q = norm(inp.value), vistos = {};
     var ops = (fonte ? fonte(inp) : []).filter(function(v){
       var k = norm(v);
-      if (!k || vistos[k] || k === q || (q && k.indexOf(q) < 0)) return false;
+      if (!k || vistos[k] || k === q || (q && !emOrdem(k, q))) return false;
       vistos[k] = true; return true;
     }).slice(0, 6);
     if (!ops.length){ sugFechar(); return; }
