@@ -622,6 +622,16 @@ sec("Bazar e utilidades", L("""Panela de pressão | Panela antiaderente | Frigid
     Flanela para carro | Aromatizador de carro | Vela de aniversário número | Balão de festa | Prato de festa | Copo de festa | Toalha de festa |
     Chapéu de festa | Língua de sogra | Saco de presente | Papel de presente | Fita de cetim | Laço de presente | Cartão de presente""")
 )
+# 1.34.1: os nomes de cada região para a mesma coisa
+sec("Nomes regionais", L("""Bolacha água e sal | Bolacha cream cracker | Bolacha recheada | Bolacha maizena | Bolacha maria | Bolacha de polvilho |
+    Bolacha de chocolate | Bolacha doce | Bolacha salgada | Areia de gato | Areia para gato | Macaxeira | Aipim | Jerimum | Bergamota | Mimosa |
+    Pão de sal | Cacetinho | Pão careca | Pão jacó | Vina | Jabá | Carne de charque | Feijão de corda | Feijão-macassar | Jabuticaba |
+    Cândida | Água de lavadeira | Pasta de dente | Pasta de dentes | Refri | Guaraná | Chimia | Schmier | Cuscuz | Farinha de milho flocada |
+    Tapioca de goma | Polvilho | Mortadela de frango | Linguiça de carne | Requeijão de corte | Queijo manteiga | Queijo de coalho | Manteiga da terra |
+    Nata de leite | Doce de leite em tablete | Sabão de pedra | Sabão em pedra | Palha de aço | Bombril | Esponja de pia | Rodo de pia |
+    Bolinho de chuva | Pão de batata | Salsichão | Cebolinha verde | Cheiro verde | Coentro fresco | Pimenta de cheiro | Vinagrete pronto |
+    Pastel de feira | Caldo de cana | Farofa de mandioca | Farinha de puba | Massa puba | Paçoca de amendoim | Cocada mole | Rapadura de leite""")
+)
 DOSES = {"Losartana": ["25 mg", "100 mg"], "Atorvastatina": ["10 mg", "40 mg", "80 mg"], "Sinvastatina": ["10 mg", "40 mg"],
          "Rosuvastatina": ["10 mg", "20 mg"], "Metformina": ["500 mg", "1 g", "XR 500 mg"], "Anlodipino": ["5 mg", "10 mg"],
          "Enalapril": ["10 mg", "20 mg"], "Hidroclorotiazida": ["25 mg"], "Atenolol": ["25 mg", "50 mg"], "Propranolol": ["40 mg"],

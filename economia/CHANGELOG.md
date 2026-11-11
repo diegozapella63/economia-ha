@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.34.1
+
+- A lista pronta das sugestões ganhou os nomes de cada região para a mesma coisa: *Bolacha água e sal*, *Macaxeira*, *Bergamota*, *Pão de sal*, *Cacetinho*, *Cândida*, *Pasta de dente*, *Areia de gato*…
+
 ## 1.34.0
 
 - A lista pronta das sugestões passou de 2.600 para quase 6.000 itens: as linhas de produtos das marcas mais vendidas de cada fabricante (Nestlé, Unilever, Ypê, Reckitt, BRF, Ambev, Coca-Cola…), os sabores e tipos mais pedidos ("Iogurte Danone morango", "Fralda Pampers G", "Cerveja Heineken long neck"), frutas regionais, pratos prontos, confeitaria, cozinhas do mundo, suplementos, bazar e remédios com a dosagem ("Losartana 50 mg").

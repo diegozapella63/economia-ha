@@ -2521,6 +2521,66 @@ Fita de cetim
 Laço de presente
 Cartão de presente
 
+# Nomes regionais
+Bolacha água e sal
+Bolacha cream cracker
+Bolacha recheada
+Bolacha maizena
+Bolacha maria
+Bolacha de polvilho
+Bolacha de chocolate
+Bolacha doce
+Bolacha salgada
+Areia de gato
+Macaxeira
+Jerimum
+Bergamota
+Mimosa
+Pão de sal
+Cacetinho
+Pão careca
+Pão jacó
+Vina
+Jabá
+Carne de charque
+Feijão de corda
+Feijão-macassar
+Cândida
+Água de lavadeira
+Pasta de dente
+Pasta de dentes
+Refri
+Guaraná
+Chimia
+Schmier
+Cuscuz
+Farinha de milho flocada
+Tapioca de goma
+Polvilho
+Linguiça de carne
+Requeijão de corte
+Queijo manteiga
+Queijo de coalho
+Manteiga da terra
+Nata de leite
+Doce de leite em tablete
+Sabão de pedra
+Sabão em pedra
+Bombril
+Esponja de pia
+Bolinho de chuva
+Cebolinha verde
+Coentro fresco
+Vinagrete pronto
+Pastel de feira
+Caldo de cana
+Farofa de mandioca
+Farinha de puba
+Massa puba
+Paçoca de amendoim
+Cocada mole
+Rapadura de leite
+
 # Farmácia com dosagem
 Losartana 25 mg
 Losartana 100 mg
@@ -2698,7 +2758,6 @@ Limpador Flash Limp
 Multiuso Ypê
 Esponja Scotch-Brite
 Esponja Bombril
-Bombril
 Esponja de aço Bombril
 Esponja de aço Assolan
 Assolan
