@@ -306,6 +306,8 @@ li.deal:first-child{border-top:0}
 .de s{text-decoration-thickness:1px}
 .por{display:inline-flex;align-items:baseline;gap:4px;font-family:var(--font-display);font-stretch:70%;font-weight:800;font-size:1.6rem;letter-spacing:.005em;white-space:nowrap}
 .chip.selo{background:var(--accent-soft);color:var(--accent)}
+.clube-ben ul{display:flex;flex-direction:column;gap:4px}
+.clube-ben b{color:var(--ink);font-weight:600}
 .off-enc{visibility:hidden}
 .sem-precos{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;background:var(--warn-soft);border-radius:10px;padding:10px 12px;font-size:14px}
 .sem-precos b{color:var(--warn)}
@@ -4502,6 +4504,36 @@ input.field,select.field{min-height:var(--altura)}
     var rot = socio ? (k && k !== 'tem' ? 'Sou do ' + k : 'Sou do clube') : (k === 'tem' ? 'Tem clube' : k || 'Adicionar clube');
     return '<button type="button" class="src clube" data-clube="' + esc(l.rede) + '" aria-pressed="' + socio + '" aria-label="' + esc((socio ? 'Sair do clube: ' : 'Sou do clube: ') + G[l.rede].nome) + '">' + SVG_CLUBE + esc(rot) + '</button>';
   }
+  // 1.24.0: Benefícios do clube: a IA procura o que o clube da loja dá (guardado no servidor, por loja); com a IA ligada
+  var CLUBES_BEN = {}, CLUBE_BUSCA = null, CLUBE_ABERTO = {};
+  function beneficiosHtml(c, l){
+    if (!/^(farmacias|mercados|petshops)$/.test(c.id)) return '';
+    var k = clubeDe(c, l), nome = G[l.rede].nome, r = CLUBES_BEN[chaveLoja(nome)];
+    if (k === null && !r) return '';
+    if (CLUBE_BUSCA === l.rede) return '<span class="testando">Procurando os benefícios…</span>';
+    var btn = function(t){ return iaOn() ? '<button type="button" class="linkbtn" data-clube-ben="' + esc(l.rede) + '"' + (CLUBE_BUSCA ? ' disabled' : '') + '>' + t + '</button>' : ''; };
+    if (!r) return btn('Benefícios do clube');
+    if (!r.clube && !arr(r.beneficios).length) return '<span>Não achei clube de vantagens</span>' + btn('Procurar de novo');
+    var linhas = arr(r.beneficios).map(function(b){ return '<li><b>' + esc(b.titulo) + '</b>' + (b.detalhe ? ' ' + esc(b.detalhe) : '') + '</li>'; }).join('');
+    var extra = [r.custo ? 'Custo: ' + r.custo : '', r.como_entrar ? 'Como entrar: ' + r.como_entrar : ''].filter(Boolean).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('');
+    return '<details class="fonte-det clube-ben"' + (CLUBE_ABERTO[l.rede] ? ' open' : '') + ' data-clube-det="' + esc(l.rede) + '"><summary>Benefícios ' + esc(r.clube ? 'do ' + r.clube : 'do clube')
+      + (r.em ? ' · ' + esc(quandoCurto(r.em)) : '') + '</summary><ul>' + linhas + extra + '</ul>'
+      + (r.fonte ? '<a class="linkbtn" href="' + esc(r.fonte) + '" target="_blank" rel="noopener">Fonte: ' + esc(host(r.fonte)) + '</a>' : '') + btn('Procurar de novo') + '</details>';
+  }
+  function buscaBeneficios(rid){
+    if (MODO !== 'addon'){ toast('No Home Assistant, a IA procura os benefícios do clube desta loja.'); return; }
+    var nome = G[rid].nome, cat = (D.categorias.filter(function(c){ return c.id === G[rid].cat; })[0]) || {}, k = clubeDe(cat, LOJA[rid] || {rede:rid});
+    CLUBE_BUSCA = rid; CLUBE_ABERTO[rid] = true; pintaLojas();
+    fetch('api/clube/beneficios', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({nome:nome, clube:k && k !== 'tem' ? k : ''})})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+      .then(function(x){
+        CLUBE_BUSCA = null;
+        if (!x.ok){ toast(x.j.erro || 'Não deu para procurar agora.'); pintaLojas(); return; }
+        CLUBES_BEN[chaveLoja(nome)] = x.j; pintaLojas();
+        toast(x.j.clube || arr(x.j.beneficios).length ? 'Benefícios ' + (x.j.clube ? 'do ' + x.j.clube : 'do clube') + ' guardados' : 'Não achei clube de vantagens em ' + nome);
+      })
+      .catch(function(){ CLUBE_BUSCA = null; toast('Sem conexão com o Home Assistant. Tente de novo.'); pintaLojas(); });
+  }
   // mesma regra do selo: "Sem fonte de preço" (teste sem fonte, ou só com IA e a IA desligada) e "Sem preços"
   var SO_SEM_FONTE = !!ui.soSemFonte, TERMO_LOJA = '';
   function semFonte(c, l, web){
@@ -4567,7 +4599,7 @@ input.field,select.field{min-height:var(--altura)}
         return '<li class="row has-track' + (on ? '' : ' out') + '">'
           + '<label class="track"><input type="checkbox" data-rede="' + l.rede + '"' + (on ? ' checked' : '') + '><span class="r-name">' + esc(G[l.rede].nome) + '</span></label>'
           + '<span class="r-val num">' + (web ? '' : km(l.distancia_km)) + '</span>'
-          + '<span class="r-sub">' + (txt ? '<span>' + esc(txt) + '</span>' : '') + (l.endereco ? '<span>' + esc(l.endereco) + '</span>' : '') + (web ? '' : mapaChip(l, G[l.rede].nome)) + siteChip(l) + instaChip(l) + clubeHtml(c, l) + arr(l.fontes).filter(function(f){ return f !== 'Mapa' && f !== 'Clube' && !(f === 'Site' && siteDe(l)) && !(f === 'Instagram' && instaDe(l)); }).map(function(f){ return '<span class="src">' + esc(f) + '</span>'; }).join('')
+          + '<span class="r-sub">' + (txt ? '<span>' + esc(txt) + '</span>' : '') + (l.endereco ? '<span>' + esc(l.endereco) + '</span>' : '') + (web ? '' : mapaChip(l, G[l.rede].nome)) + siteChip(l) + instaChip(l) + clubeHtml(c, l) + beneficiosHtml(c, l) + arr(l.fontes).filter(function(f){ return f !== 'Mapa' && f !== 'Clube' && !(f === 'Site' && siteDe(l)) && !(f === 'Instagram' && instaDe(l)); }).map(function(f){ return '<span class="src">' + esc(f) + '</span>'; }).join('')
           + (c.id === 'online' && regional(l.rede) ? entregaHtml(l) : '')
           + (l.encarte_auto ? '<span>Encarte lido do site ' + esc(host(l.site)) + '</span>' : '') + (l.folheto ? '<span>Folheto da semana' + (l.folheto_ate ? ' até ' + dataBR(l.folheto_ate) : '') + '</span>' : '') + (l.instagram ? '<a class="linkbtn" href="' + esc(l.instagram) + '" target="_blank" rel="noopener">Encarte do Instagram' + (l.instagram_ate ? ' até ' + dataBR(l.instagram_ate) : '') + '</a>' : '') + (l.preco_fonte ? fonteHtml(l, c.id, c) : web ? fonteOnline(G[l.rede].nome) + botaoTestar(l, c.id) : avisoSemPreco(c, l) + botaoTestar(l, c.id))
           + (mi >= 0 ? '<span>Adicionada por você</span><button type="button" class="rm" data-loja="' + mi + '">remover</button>' : '') + '</span>'
@@ -4709,6 +4741,8 @@ input.field,select.field{min-height:var(--altura)}
       salvar((on ? 'Preço de clube ligado: ' : 'Preço de clube desligado: ') + G[id].nome);
       tudo(); return;
     }
+    var cb2 = e.target.closest('[data-clube-ben]');
+    if (cb2){ if (!CLUBE_BUSCA) buscaBeneficios(cb2.dataset.clubeBen); return; }
     var en = e.target.closest('[data-entrega]');
     if (en){
       var rid = en.dataset.entrega, nome = G[rid].nome, sim = entregaSim(rid);
@@ -4731,6 +4765,7 @@ input.field,select.field{min-height:var(--altura)}
   $('lojasCats').addEventListener('toggle', function(e){
     var d = e.target; if (d && d.classList && d.classList.contains('inativas')) INAT_ABERTO[d.dataset.inat] = d.open;
     if (d && d.dataset && d.dataset.fonte) FONTE_ABERTA[d.dataset.fonte] = d.open;
+    if (d && d.dataset && d.dataset.clubeDet) CLUBE_ABERTO[d.dataset.clubeDet] = d.open;
   }, true);
   $('lojasAbas').addEventListener('click', function(e){
     var b = e.target.closest('[data-loja-aba]'); if (!b) return;
@@ -5304,7 +5339,7 @@ input.field,select.field{min-height:var(--altura)}
 
   // ----- uso da IA -----
   var USO = null, usoDia = null;
-  var USO_TIPO = {busca:'Busca de ofertas', itens:'Itens sem preço', encarte:'Encartes', fotos:'Fotos e mensagens', cupons:'Cupons por print', fala:'Falar', conversa:'Conversa', teste:'Testes'};
+  var USO_TIPO = {busca:'Busca de ofertas', itens:'Itens sem preço', encarte:'Encartes', fotos:'Fotos e mensagens', cupons:'Cupons por print', fala:'Falar', conversa:'Conversa', clube:'Benefícios do clube', teste:'Testes'};
   var USO_RES = {ok:'', cota:'cota excedida', formato:'fora do formato', erro:'erro'};
   var DIA_SEM = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
   function usoExemplo(){
@@ -5721,7 +5756,7 @@ input.field,select.field{min-height:var(--altura)}
   function recarrega(comp){
     fetch('api/estado', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(api){
       if (api.uso_ia){ USO = api.uso_ia; pintaUso(); }
-      COMP = api.comparacoes || {};
+      COMP = api.comparacoes || {}; CLUBES_BEN = api.clubes || {};
       if (api.ofertas && api.ofertas.categorias){ D = api.ofertas; exemplo = false; indexa(); pintaSync(); tudo(); if (!comp) toast('Ofertas atualizadas'); }
       else if (comp) pintaDeals();
       if (comp && ui.view === 'ofertas' && api.busca && arr(api.busca.avisos).length) toast(api.busca.avisos[0]);
@@ -5759,7 +5794,7 @@ input.field,select.field{min-height:var(--altura)}
     .then(function(r){ var ct = r.headers.get('content-type') || ''; if (!r.ok || ct.indexOf('json') < 0) throw new Error('sem add-on'); return r.json(); })
     .then(function(api){
       clearTimeout(limite);
-      MODO = 'addon'; usuario = api.usuario || null; COMP = api.comparacoes || {}; CORRERIA_ST = api.correria || null;
+      MODO = 'addon'; usuario = api.usuario || null; COMP = api.comparacoes || {}; CLUBES_BEN = api.clubes || {}; CORRERIA_ST = api.correria || null;
       pintaAtalho(api.atalho);
       D = api.ofertas && api.ofertas.categorias ? api.ofertas : EX; exemplo = D === EX; indexa();
       estado = normaliza(api.config || (exemplo ? EX.config_exemplo : null)); iniciar();

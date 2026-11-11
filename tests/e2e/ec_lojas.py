@@ -26,6 +26,10 @@ OFERTAS = {"versao": 2, "gerado_em": "2026-11-02T10:00:00-03:00", "categorias": 
 
 def antes(S):
     S.gravar_json(S.OFERTAS, OFERTAS)
+    # 1.24.0: os benefícios do clube que a IA já achou para a Nissei
+    S.gravar_json(S.CLUBES_FILE, {S.chave_loja("Farmácias Nissei"): {"loja": "Farmácias Nissei", "clube": "Club Nissei", "custo": "Grátis",
+                                  "como_entrar": "CPF no caixa", "beneficios": [{"titulo": "Desconto de clube", "detalhe": "Até 40% em remédios marcados."}],
+                                  "fonte": "https://www.farmaciasnissei.com.br/club", "em": "2026-11-09T10:00:00+00:00"}})
 
 
 async def abre_lojas(pg):
@@ -92,6 +96,17 @@ async def main():
             await pg.locator('#mp-lojas input[data-rede="farm-raia"]').check()
             await pg.wait_for_timeout(1000)
             check("farm-raia" not in (app.config_salva().get("lojas") or {}).get("ignorar", []), "marcar de novo volta a acompanhar")
+            # 1.24.0: os benefícios do clube, guardados, num toque; numa loja com clube ainda sem os benefícios, o botão para a IA procurar
+            ben = pg.locator('#mp-lojas details[data-clube-det="farm-nissei"]')
+            check(await ben.count() == 1 and "Benefícios do Club Nissei" in await ben.locator("summary").inner_text(), "os benefícios do Club Nissei")
+            await ben.locator("summary").click()
+            bt = (await ben.inner_text()).replace("\xa0", " ")
+            check("Desconto de clube Até 40% em remédios marcados." in bt and "Custo: Grátis" in bt and "Como entrar: CPF no caixa" in bt and "farmaciasnissei.com.br" in bt, f"o que o clube dá, com a fonte ({bt[:160]})")
+            await pg.click('#lojasAbas [data-loja-aba="mercados"]')
+            await pg.wait_for_timeout(300)
+            check(await pg.locator('#mp-lojas [data-clube-ben]').count() >= 1, "loja com clube sem os benefícios: Benefícios do clube")
+            await pg.click('#lojasAbas [data-loja-aba="farmacias"]')
+            await pg.wait_for_timeout(300)
             # clube na linha da loja (Nissei: Club Nissei)
             clube = pg.locator('#mp-lojas [data-clube="farm-nissei"]')
             check(await clube.count() == 1 and "Club Nissei" in await clube.inner_text(), "clube da Nissei na linha da loja")

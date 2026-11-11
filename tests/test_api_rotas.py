@@ -99,7 +99,7 @@ class Estado(Rotas):
     def test_estado_com_o_usuario_do_ingress(self):
         st, d = self.pede("GET", "/api/estado", cab={"X-Remote-User-Display-Name": "Davi"})
         self.assertEqual(d["usuario"], "Davi")
-        self.assertEqual(set(d), {"config", "ofertas", "comparacoes", "usuario", "busca", "sync", "uso_ia", "correria", "atalho"})
+        self.assertEqual(set(d), {"config", "ofertas", "comparacoes", "usuario", "busca", "sync", "uso_ia", "clubes", "correria", "atalho"})
         self.assertIsNone(self.pede("GET", "/api/estado")[1]["usuario"])
 
     def test_o_caminho_do_atalho_no_celular(self):
@@ -161,6 +161,17 @@ class Config(Rotas):
         st, d = self.pede("PUT", "/api/config", {"rev": 99, "cep": "2"})
         self.assertEqual((st, d["config"]["cep"]), (200, "2"))
         self.assertIn("versão anterior: disco cheio", self.log)
+
+    def test_beneficios_do_clube_pela_rota(self):
+        """1.24.0: POST /api/clube/beneficios; o que a IA achou vai para a página em /api/estado (clubes)."""
+        self.ha.responde_ia("clube Giassi", {"clube": "Clube Giassi", "beneficios": [{"titulo": "Preço de clube", "detalhe": "Nos produtos marcados."}]})
+        st, d = self.pede("POST", "/api/clube/beneficios", {"nome": "Giassi"})
+        self.assertEqual((st, d["clube"]), (200, "Clube Giassi"))
+        self.assertEqual(self.pede("GET", "/api/estado")[1]["clubes"][self.S.chave_loja("Giassi")]["beneficios"][0]["titulo"], "Preço de clube")
+        self.assertEqual(self.pede("POST", "/api/clube/beneficios", {"nome": ""}), (400, {"erro": "Qual loja?"}))
+        self.assertEqual(self.pede("POST", "/api/clube/beneficios", bruto=b"[1]")[0], 400)
+        self.config(usar_ia=False)
+        self.assertEqual(self.pede("POST", "/api/clube/beneficios", {"nome": "Giassi"})[0], 409)
 
     def test_mercados_da_regiao_pela_rota(self):
         """1.22.0: POST /api/regiao/atualizar (Mais › Lojas › Compras online); não durante a busca."""

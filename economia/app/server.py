@@ -29,6 +29,7 @@ Rotas:
 - GET  /api/lojas-mapa   lojas do raio pelo mapa (OpenStreetMap e, com chave, Google Places)
 - POST /api/lojas-mapa/atualizar   {"raio_km", "categorias"}: lê o mapa agora, registra as lojas e começa o teste de preço de cada uma
 - POST /api/regiao/atualizar   {"entrega_km", "mercados_entrega"}: os mercados da região até a distância, e se entregam no CEP
+- POST /api/clube/beneficios   {"nome", "clube"}: a IA procura os benefícios do clube da loja (guardados em clubes.json)
 - GET  /api/lojas-mapa/teste   andamento do teste de preço das lojas
 - POST /api/ler-encarte   {"imagens": [...], "loja", "categoria"}: a IA lê o encarte ou o print de preços e junta ao resultado
 - POST /api/versoes/guardar {"motivo"} | /api/versoes/restaurar {"nome"}
@@ -888,6 +889,8 @@ def tipo_uso(nome):
         return "fotos"
     if n == "falar":
         return "fala"
+    if n.startswith("clube "):  # 1.24.0: Benefícios do clube
+        return "clube"
     if n == "conversa":
         return "conversa"
     return "busca"
@@ -5682,6 +5685,53 @@ Para cada uma, o endereço do site da própria loja, de preferência a página d
 Responda somente com um objeto JSON, sem texto antes ou depois: {{"lojas": [{{"n": 1, "site": "https://... ou null"}}]}}"""
 
 
+# ---------- Benefícios do clube (1.24.0): a IA procura na web o que o clube de vantagens da loja dá (desconto, preço de
+# clube, cashback, pontos, cupons…), com a fonte; fica guardado em clubes.json (por loja) e aparece em Mais › Lojas.
+CLUBES_FILE = os.path.join(DATA, "clubes.json")
+MAX_BENEFICIOS = 8
+
+
+def instrucoes_clube(nome, clube, cidade, uf):
+    onde = f"{cidade} ({uf})" if cidade else "o Brasil"
+    return f"""Use a busca na web agora e ache os benefícios do clube de vantagens (programa de fidelidade) da loja {nome}{f' ({clube})' if clube else ''}, que atende {onde}.
+Diga o que o cliente ganha ao usar o clube: preço de clube nos produtos, descontos, cashback, pontos, cupons, frete grátis, ofertas no aniversário e o que mais tiver. Use a página oficial da loja ou do programa (regulamento, perguntas frequentes) e diga a fonte. Não invente: o que não achar, deixe de fora.
+Responda somente com um objeto JSON, sem texto antes ou depois:
+{{"clube": "o nome do programa", "custo": "Grátis ou o preço", "como_entrar": "como se cadastra (app, CPF no caixa…)", "beneficios": [{{"titulo": "curto", "detalhe": "uma frase"}}], "fonte": "https://..."}}
+Até {MAX_BENEFICIOS} benefícios, do que mais economiza para o que menos. Se a loja não tiver clube, responda {{"clube": null}}."""
+
+
+def limpa_clube(r):
+    """O que a IA respondeu, conferido: textos curtos, só os benefícios com título, a fonte só se for um endereço."""
+    if not isinstance(r, dict):
+        raise ErroBusca("A IA respondeu fora do formato. Tente de novo.")
+    clube = texto(r.get("clube"), 60)
+    bens = []
+    for b in r.get("beneficios") or []:
+        if isinstance(b, dict) and texto(b.get("titulo"), 80):
+            bens.append({"titulo": texto(b.get("titulo"), 80), "detalhe": texto(b.get("detalhe"), 220) or ""})
+    if not clube and not bens:
+        return {"clube": None, "beneficios": [], "em": agora()}
+    return {"clube": clube or None, "custo": texto(r.get("custo"), 60) or None, "como_entrar": texto(r.get("como_entrar"), 160) or None,
+            "beneficios": bens[:MAX_BENEFICIOS], "fonte": r.get("fonte") if url_ok(r.get("fonte")) else None, "em": agora()}
+
+
+def beneficios_clube(dado):
+    """POST /api/clube/beneficios {nome, clube}: pergunta à IA e guarda (por loja, pelo nome)."""
+    nome, clube = texto(dado.get("nome"), 60), texto(dado.get("clube"), 60)
+    if not nome:
+        raise ErroBusca("Qual loja?")
+    cfg = ler_config()
+    try:
+        cidade, uf = cidade_do_cep(cfg.get("cep"), ler_json(FOLHETOS, {}) or {})
+    except Exception:  # noqa: BLE001
+        cidade, uf = "", ""
+    r = limpa_clube(chamar_ai_task(f"EconomIA: clube {nome}", instrucoes_clube(nome, clube, cidade or "", uf or ""), uso="busca"))
+    todos = ler_json(CLUBES_FILE, {}) or {}
+    todos[chave_loja(nome)] = dict(r, loja=nome)
+    gravar_json(CLUBES_FILE, todos)
+    return todos[chave_loja(nome)]
+
+
 BRAVE = os.environ.get("OFERTAS_BRAVE", "https://api.search.brave.com/res/v1/web/search")
 # resultados que não são o site da própria loja
 NAO_SITE = ("google.", "facebook.", "instagram.", "linkedin.", "youtube.", "tiktok.", "twitter.", "x.com", "wa.me", "whatsapp.",
@@ -7524,6 +7574,7 @@ class Painel(BaseHTTPRequestHandler):
                 "busca": BUSCA,
                 "sync": SYNC,
                 "uso_ia": uso_resumo(),
+                "clubes": ler_json(CLUBES_FILE, {}) or {},
                 "correria": {"ligada": correria_ligada(), "ultimo": CORRERIA_USO["ultimo"]},
                 "atalho": atalho(),
             })
@@ -7741,6 +7792,18 @@ class Painel(BaseHTTPRequestHandler):
             except (ValueError, OSError):
                 dado = {}
             return self._json(200, atualizar_lojas_mapa(dado if isinstance(dado, dict) else {}))
+        if urllib.parse.urlsplit(self.path).path == "/api/clube/beneficios":
+            if not ia_ligada():
+                return self._json(409, {"erro": IA_DESLIGADA})
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+                dado = json.loads(self.rfile.read(n) or b"{}") if 0 < n < 2000 else {}
+            except (ValueError, OSError):
+                dado = {}
+            try:
+                return self._json(200, beneficios_clube(dado if isinstance(dado, dict) else {}))
+            except ErroBusca as e:
+                return self._json(400, {"erro": str(e)})
         if urllib.parse.urlsplit(self.path).path == "/api/regiao/atualizar":
             if BUSCA["rodando"]:
                 return self._json(200, {"ok": False, "msg": "Espere a busca terminar."})

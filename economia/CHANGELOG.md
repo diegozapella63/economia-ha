@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.24.0
+
+- **Benefícios do clube** (Mais › Lojas, com a IA ligada): nas lojas com clube, um toque pede à IA o que o clube dá (preço de clube, descontos, cashback, pontos, cupons, frete grátis…), quanto custa e como entrar, com a fonte. Fica guardado na loja; **Procurar de novo** atualiza.
+
 ## 1.23.0
 
 - **Compra rápida** recomenda a loja de **melhor preço** entre as que têm mais itens; antes ficava com a mais perto quando a outra saía menos de R$ 5 mais barata. Se a recomendada fica mais longe, o app diz quanto você economiza.
