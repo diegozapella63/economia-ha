@@ -21,6 +21,7 @@ async def main():
             await pg.goto(app.url)
             await pg.wait_for_timeout(1200)
             await abre_integracoes(pg)
+            check(await pg.locator("#iaGemini").count() == 1 and await pg.locator("#iaGemini").is_hidden(), "1.36.2: sem Gemini no Home Assistant, sem a dica do Gemini")
             card = pg.locator('section[aria-labelledby="h-ml"]')
             check(await card.is_visible(), "card do Mercado Livre em Integrações")
             check("Desligado" in await pg.text_content("#mlSt"), "começa desligado")

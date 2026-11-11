@@ -796,10 +796,30 @@ def opcoes():
     return ler_json(OPTIONS, {}) or {}
 
 
-COMO_BUSCA = ("Na Anthropic, ligue a busca na web nas opções da tarefa de IA. "
-              "No Google Gemini, a Pesquisa Google só funciona num assistente de conversa: ligue \"Enable Google Search tool\" "
-              "nele e escolha esse assistente em Mais › Configurações › Integrações › Para buscar ofertas.")
+COMO_BUSCA_ANTHROPIC = ("Na Anthropic, marque \"Enable web search\" na engrenagem da tarefa de IA escolhida em Para buscar ofertas "
+                        "(a do assistente de conversa não vale para ela).")
+COMO_BUSCA_GEMINI = ("No Google Gemini, a Pesquisa Google só funciona num assistente de conversa: ligue \"Enable Google Search tool\" "
+                     "nele e escolha esse assistente em Mais › Configurações › Integrações › Para buscar ofertas.")
+COMO_BUSCA = "Na Anthropic, ligue a busca na web nas opções da tarefa de IA. " + COMO_BUSCA_GEMINI
 SEM_BUSCA = "A IA escolhida não usou a busca na web. " + COMO_BUSCA
+# 1.36.2: a ferramenta existe, mas o limite de buscas por resposta (5 de começo na Anthropic) acaba no meio de uma busca
+# grande: a IA responde com o que achou, em vez de dizer que não tem busca (e jogar fora o que já achou)
+REGRA_SEM_BUSCA = ('Se nenhuma busca na web funcionar (a ferramenta não existe), responda apenas {"erro": "sem_busca"}. '
+                   "Se o limite de buscas acabar no meio, responda com o que já achou.")
+
+
+def como_busca(ent=None):
+    """A dica para ligar a busca na web, só a do fornecedor da IA escolhida (pelo nome da entidade); sem saber, as duas."""
+    n = norm(ent if ent is not None else ia_escolhida("busca"))
+    if "claude" in n or "anthropic" in n:
+        return COMO_BUSCA_ANTHROPIC
+    if "gemini" in n or "google" in n:
+        return COMO_BUSCA_GEMINI
+    return COMO_BUSCA
+
+
+def sem_busca():
+    return "A IA escolhida não usou a busca na web. " + como_busca()
 
 
 def ia_escolhida(uso):
@@ -1211,11 +1231,11 @@ Se não conseguir usar a busca na web, responda apenas {{"erro": "sem_busca"}}."
     except ErroFormato as e:
         if "{" in e.trecho:
             return {"ok": False, "msg": str(e)}
-        return {"ok": False, "msg": "A IA respondeu sem usar a busca na web" + (f" (\"{e.trecho[:140]}\")" if e.trecho else "") + ". " + COMO_BUSCA}
+        return {"ok": False, "msg": "A IA respondeu sem usar a busca na web" + (f" (\"{e.trecho[:140]}\")" if e.trecho else "") + ". " + como_busca()}
     except ErroBusca as e:
         return {"ok": False, "msg": str(e)}
     if r.get("erro") == "sem_busca" or not url_ok(r.get("fonte")):
-        return {"ok": False, "msg": SEM_BUSCA}
+        return {"ok": False, "msg": sem_busca()}
     return {"ok": True, "msg": "Pronta para buscar ofertas." + (" Exemplo: " + texto(r.get("exemplo"), 80) if texto(r.get("exemplo"), 80) else "")}
 
 
@@ -1370,7 +1390,7 @@ def instrucoes_online(cfg):
     lista = itens_prompt(cfg)
     return f"""Encontre preços válidos hoje ({hoje_br()}) {('em ' + ', '.join(mkts)) if mkts else 'em lojas online'} para entrega no CEP {cfg.get('cep')}, no Brasil.
 
-Use a busca na web agora. Use só o que encontrar nas páginas: não invente produtos, preços, fretes nem prazos. Se não conseguir usar a busca na web, responda apenas {{"erro": "sem_busca"}}.
+Use a busca na web agora. Use só o que encontrar nas páginas: não invente produtos, preços, fretes nem prazos. {REGRA_SEM_BUSCA}
 
 Assinaturas do morador: {', '.join(assin) or 'nenhuma'}. Quando a assinatura der frete grátis no item, use frete 0.
 {APPS_TXT if any(m in (on.get("marketplaces") or []) for m in ("ifood", "rappi")) else ""}
@@ -1417,7 +1437,7 @@ def instrucoes_para(cat_id, cfg):
             extra += f' O morador é do clube de {", ".join(nomes_c[:8])}: traga o "preco_clube" dessas lojas sempre que a loja mostrar.'
     return f"""Encontre ofertas e cupons válidos hoje ({hoje_br()}) de {cat['o_que']} perto do CEP {cfg.get('cep')}, num raio de {cfg.get('raio_km') or 2} km, no Brasil.
 
-Use a busca na web agora. Use só o que encontrar nas páginas: não invente lojas, preços nem cupons. Se não conseguir usar a busca na web, responda apenas {{"erro": "sem_busca"}}.
+Use a busca na web agora. Use só o que encontrar nas páginas: não invente lojas, preços nem cupons. {REGRA_SEM_BUSCA}
 
 Casa: {casa}.
 Não traga: {', '.join(excluir) or 'nada a excluir'}.
@@ -1456,7 +1476,7 @@ def normalizar(cat_id, bruto, cfg):
     if not isinstance(bruto, dict):
         raise ErroBusca("A IA respondeu fora do formato esperado.")
     if bruto.get("erro") == "sem_busca":
-        raise ErroBusca(SEM_BUSCA)
+        raise ErroBusca(sem_busca())
     pre = cat_id[:4] + "-"
     redes = {}
     visto = {"em": agora(), "via": bruto.get("_via") if bruto.get("_via") in ("site", "api", "encarte") else "web"}
@@ -6364,7 +6384,7 @@ def instrucoes_focada(cfg, itens, cats):
     numerados = [f"{k}) {n}" for k, n in enumerate(itens, 1)]
     return f"""Preciso do preço atual ({hoje_br()}) destes itens de uma lista de compras, para o CEP {cfg.get('cep')}, no Brasil: {'; '.join(numerados)}.
 
-Use a busca na web agora e procure item por item: no site e no app das lojas, em encartes, no Google Shopping e em comparadores de preço. Use só o que encontrar: não invente preços. Se não conseguir usar a busca na web, responda apenas {{"erro": "sem_busca"}}.
+Use a busca na web agora e procure item por item: no site e no app das lojas, em encartes, no Google Shopping e em comparadores de preço. Use só o que encontrar: não invente preços. {REGRA_SEM_BUSCA}
 
 Onde procurar: {', '.join(locais) or 'nenhuma loja física'}{f' num raio de {cfg.get("raio_km") or 2} km do CEP' if locais else ''}{('; e online em ' + ', '.join(mkts) + ' com entrega no CEP') if mkts else ''}{'; e em mercados que entregam no CEP, mesmo fora do raio (categoria "online")' if entrega else ''}.
 Assinaturas do morador: {', '.join(assin) or 'nenhuma'}.
@@ -6408,7 +6428,7 @@ def busca_focada(cfg, itens, cats):
     if not isinstance(r, dict):
         raise ErroBusca("A IA respondeu fora do formato esperado.")
     if r.get("erro") == "sem_busca":
-        raise ErroBusca(SEM_BUSCA)
+        raise ErroBusca(sem_busca())
     por_cat = {}
     for it in r.get("lista") or []:
         if not isinstance(it, dict):

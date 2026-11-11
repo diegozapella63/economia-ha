@@ -1602,7 +1602,7 @@ input.field,select.field{min-height:var(--altura)}
         <select class="field" id="iaVoz"></select>
       </div>
       <div class="row-form"><button type="button" class="ghost big" id="iaTestar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>Verificar de novo</button></div>
-      <p class="hint">Gemini: para buscar ofertas, use um <b>assistente de conversa</b> com "Enable Google Search tool" ligado; para fotos, o Google AI Task.</p>
+      <p class="hint" id="iaGemini" hidden>Gemini: para buscar ofertas, use um <b>assistente de conversa</b> com "Enable Google Search tool" ligado; para fotos, o Google AI Task.</p>
       </div>
     </section>
     <section class="panel settings so-ia" aria-labelledby="h-uso">
@@ -5766,6 +5766,8 @@ input.field,select.field{min-height:var(--altura)}
     $('iaBusca').innerHTML = '<option value="">Padrão do Home Assistant</option>' + t.map(function(x){ return opt(x, 'Tarefa de IA: '); }).join('') + a.map(function(x){ return opt(x, 'Assistente: '); }).join('') + extra(ia.busca, t.concat(a));
     $('iaFotos').innerHTML = '<option value="">Padrão do Home Assistant</option>' + t.map(function(x){ return opt(x, x.anexos ? '' : '(não lê imagens) '); }).join('') + extra(ia.fotos, t);
     $('iaBusca').value = ia.busca; $('iaFotos').value = ia.fotos;
+    // 1.36.2: a dica do Gemini só com uma IA do Google no Home Assistant
+    $('iaGemini').hidden = !t.concat(a).some(function(x){ return /gemini|google/.test(norm(x.id + ' ' + x.nome)); });
     [['busca', 'iaBuscaSt', 'Toque em Verificar de novo para testar.'], ['fotos', 'iaFotosSt', 'Usando a IA preferida do Home Assistant.']].forEach(function(x){
       var st = IA_ST[x[0]], el = $(x[1]);
       el.className = 'ia-st' + (st && st.ok === true ? ' ok' : st && st.ok === false ? ' erro' : '');

@@ -136,6 +136,10 @@ class Busca(Cenario):
         S.buscar()
         self.assertEqual(S.BUSCA["erro"], S.SEM_BUSCA)
         self.assertEqual(len(ha.chamadas_ia), 1)
+        # 1.36.2: o limite de buscas por resposta acabando no meio não é "sem busca": a IA responde com o que achou
+        ins = ha.chamadas_ia[0]["instructions"]
+        self.assertIn('Se nenhuma busca na web funcionar (a ferramenta não existe), responda apenas {"erro": "sem_busca"}.', ins)
+        self.assertIn("Se o limite de buscas acabar no meio, responda com o que já achou.", ins)
 
     def test_sem_cep(self):
         S = self.S

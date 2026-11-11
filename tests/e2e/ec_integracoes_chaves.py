@@ -114,6 +114,7 @@ async def main():
             check(opts == ["Padrão do Home Assistant", "Tarefa de IA: Claude", "Tarefa de IA: OpenAI", "Assistente: Gemini"], f"IAs para buscar ({opts})")
             fotos = [t.strip() for t in await pg.locator("#iaFotos option").all_inner_texts()]
             check(fotos == ["Padrão do Home Assistant", "Claude", "(não lê imagens) OpenAI"], f"IAs para fotos ({fotos})")
+            check(await pg.locator("#iaGemini").is_visible(), "com um Gemini no Home Assistant, a dica do Gemini")
             await pg.select_option("#iaBusca", "ai_task.claude")
             t = await st(pg, "iaBuscaSt", "Pronta")
             check(t == "Pronta para buscar ofertas. Exemplo: Giassi, café por R$ 19,90", f"testa sozinho ao escolher ({t})")

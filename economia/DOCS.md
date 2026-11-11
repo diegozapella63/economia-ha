@@ -7,7 +7,7 @@ Cupons, ofertas e a sua lista de compras nas farmácias, mercados e pet shops pe
 O EconomIA usa a IA do próprio Home Assistant (Anthropic Claude, OpenAI, Google Gemini...). Escolha qual usar em **Mais › Configurações › Integrações › IA do Home Assistant** e toque em **Verificar de novo** para testar. A chave **Usar IA**, no mesmo lugar, desliga tudo o que usa IA (leitura de fotos e mensagens, cupons e encartes por print, Falar e Conversa), para todos os aparelhos. O **Buscar** continua, só com o que não gasta IA.
 
 - **Para buscar ofertas**, a IA precisa de busca na web:
-  - **Anthropic**: ligue a busca na web nas opções da tarefa de IA.
+  - **Anthropic**: marque **Enable web search** na engrenagem da tarefa de IA escolhida (a do assistente de conversa não vale para ela). O **Maximum web searches** é o limite de buscas por resposta: quando acaba no meio, a IA traz o que já achou, e o resto vem na próxima busca.
   - **Google Gemini**: a Pesquisa Google só funciona num **assistente de conversa**. Nas opções do Google Generative AI, crie ou ajuste um assistente com "Controlar o Home Assistant" em nenhum e **Enable Google Search tool** ligado, e escolha esse assistente.
 - **Para ler fotos**, escolha uma tarefa de IA que aceite imagens (Google AI Task e Anthropic aceitam).
 

@@ -256,6 +256,24 @@ class TestarIA(Cenario):
         ha.responde_ia("teste", Erro(429, "quota"), vezes=1)
         self.assertIn("A cota da IA acabou", S.testar_ia("busca")["msg"])
 
+    def test_dica_do_fornecedor(self):
+        """1.36.2: o aviso sem busca na web traz só a dica do fornecedor da IA escolhida (pelo nome da entidade)."""
+        S, ha = self.S, self.ha
+        ha.tarefa_ia("ai_task.claude_ai_task", "Claude AI Task")
+        self.config(ia={"busca": "ai_task.claude_ai_task"})
+        ha.responde_ia("teste", {"erro": "sem_busca"}, vezes=1)
+        msg = S.testar_ia("busca")["msg"]
+        self.assertEqual(msg, "A IA escolhida não usou a busca na web. " + S.COMO_BUSCA_ANTHROPIC)
+        self.assertIn('"Enable web search"', msg)
+        self.assertNotIn("Gemini", msg)
+        self.config(ia={"busca": "conversation.google_generative_ai"})
+        self.assertEqual(S.sem_busca(), "A IA escolhida não usou a busca na web. " + S.COMO_BUSCA_GEMINI)
+        self.config(ia={"busca": "ai_task.openai"})
+        self.assertEqual(S.sem_busca(), S.SEM_BUSCA, "sem saber o fornecedor: as duas dicas")
+        ha.responde_ia("teste", "Não tenho acesso à internet.", vezes=1)
+        self.config(ia={"busca": "ai_task.claude_ai_task"})
+        self.assertTrue(S.testar_ia("busca")["msg"].endswith(S.COMO_BUSCA_ANTHROPIC))
+
     def test_fotos(self):
         S, ha = self.S, self.ha
         self.config()

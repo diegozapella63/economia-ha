@@ -1,5 +1,10 @@
 # Mudanças
 
+## 1.36.2
+
+- Busca com IA: quando o limite de buscas na web por resposta acaba no meio (5 de começo na Anthropic), a IA traz o que já achou, em vez de responder que não usou a busca na web e perder tudo.
+- O aviso de busca na web desligada mostra só a dica da IA que você usa: com o Claude, a do **Enable web search** na engrenagem da tarefa de IA escolhida. A dica do Gemini em Integrações só aparece com uma IA do Google no Home Assistant.
+
 ## 1.36.1
 
 - **Mais › Lojas** mais arrumada:
