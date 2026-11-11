@@ -1,5 +1,11 @@
 # Mudanças
 
+## 1.28.0
+
+- **Similares**: o botão saiu do meio do cartão e virou **Buscar similares**, no pé, ao lado de **Buscar de novo**: um toque já busca o item com os parecidos.
+- O que a busca acha aparece em **Similares (n)**, recolhido como o Comparar tamanhos: todos os da mesma seção, do mais barato pelo quilo ou litro para o mais caro, com os que saem mais em conta marcados (antes, sem nenhum mais barato, não aparecia nada).
+- Os similares achados ficam guardados: quando o item volta à lista ou você pede de novo, eles aparecem na hora, sem outra busca, com a data da busca.
+
 ## 1.27.0
 
 - **Listas prontas**: todo item fica numa lista. Sem uma lista aberta, nada entra: o app pede **Crie uma lista** ou **Abra uma lista** (também na leitura com IA, na Conversa e no CorrerIA, que pergunta em qual lista pôr).

@@ -146,6 +146,8 @@ BUSCA = {"rodando": False, "etapa": None, "atual": 0, "total": 0, "erro": None, 
 _trava = threading.Lock()
 # configuração: cada gravação aumenta "rev"; o diário guarda o que veio do HA para juntar com o painel
 _cfg_trava = threading.Lock()
+_similares_trava = threading.Lock()
+SIMILARES_FILE = os.path.join(DATA, "similares.json")  # os similares achados de cada item (guardar_similares)
 DIARIO = []
 SYNC = {"ultima": None, "erro": None, "chegaram": 0, "enviados": 0}
 
@@ -1807,6 +1809,38 @@ def juntar_categoria(dest, cat):
     dest.setdefault("ofertas", []).extend(o for o in cat["ofertas"] if o["id"] not in ids)
 
 
+# ---------- similares guardados (1.28.0): o que a busca achou de parecido para cada item fica em /data/similares.json,
+# para o item que volta à lista (ou os similares ligados de novo) já mostrar sem outra busca ----------
+MAX_SIMILARES_SALVOS = 300
+
+
+def guardar_similares(itens):
+    """Guarda os similares de cada item do ofertas.json gravado agora (item_ofertas), com a data da busca."""
+    achados = {norm(i["produto"]): i for i in itens if isinstance(i, dict) and i.get("produto") and i.get("similares")}
+    if not achados:
+        return
+    with _similares_trava:
+        reg = ler_json(SIMILARES_FILE, {}) or {}
+        for k, i in achados.items():
+            if (reg.get(k) or {}).get("itens") != i["similares"][:6]:  # os mesmos de antes (o que a busca manteve): fica a data deles
+                reg[k] = {"produto": i["produto"], "em": hoje_br(), "itens": i["similares"][:6]}
+        if len(reg) > MAX_SIMILARES_SALVOS:  # ficam os mais recentes
+            reg = dict(sorted(reg.items(), key=lambda kv: str(kv[1].get("em") or ""))[-MAX_SIMILARES_SALVOS:])
+        gravar_json(SIMILARES_FILE, reg)
+
+
+def similares_salvos(cfg):
+    """{nome do item na lista: {em, itens}} dos itens da lista que têm similares guardados (vai para a página)."""
+    reg = ler_json(SIMILARES_FILE, {}) or {}
+    out = {}
+    for i in cfg.get("lista") or []:
+        nome = nome_item(i)
+        g = reg.get(norm(nome)) if nome else None
+        if isinstance(g, dict) and isinstance(g.get("itens"), list) and g["itens"] and data_ok(str(g.get("em") or "")):
+            out[nome] = {"em": g["em"], "itens": g["itens"]}
+    return out
+
+
 def juntar_item(dest, ent):
     """Junta o que uma categoria achou para um item da lista ao que as outras já acharam."""
     if ent.get("similares"):
@@ -2562,9 +2596,10 @@ def filtra_secao(item, loja, cand, eans):
     return ok, firmes
 
 
-def similares_vtex(chave, regiao, item, cand, n=3):
-    """Mais em conta na mesma seção da loja ("sobrecoxa" e "asa" para quem pediu "coxinha da asa"), comparando pelo
-    preço do quilo (ou litro). Só com seção de 2 níveis ou mais: "Açougue" sozinho junta boi, porco e frango."""
+def similares_vtex(chave, regiao, item, cand, n=6):
+    """Os parecidos da mesma seção da loja ("sobrecoxa" e "asa" para quem pediu "coxinha da asa"), na mesma medida
+    (quilo ou litro), do mais barato para o mais caro: a página marca os que saem mais em conta (1.28.0: antes, só esses).
+    Só com seção de 2 níveis ou mais: "Açougue" sozinho junta boi, porco e frango."""
     conta = {}
     for c in cand:
         if c.get("secao") and "/" in c["secao"]:
@@ -2579,7 +2614,6 @@ def similares_vtex(chave, regiao, item, cand, n=3):
     if not unid:
         return []
     un = max(unid, key=unid.get)
-    melhor = min(c["preco"] / c["tam"][0] for c in cand if c.get("tam") and c["tam"][1] == un)
     rotulo = next((c["secao_nome"] for c in cand if c.get("secao") == sec and c.get("secao_nome")), "")
     facetas = "/".join(f"category-{i}/{re.sub(r'[^a-z0-9]+', '-', parte).strip('-')}" for i, parte in enumerate(sec.split("/"), 1))
     achados = busca_vtex(chave, "", regiao, 40, facetas=facetas)
@@ -2591,8 +2625,7 @@ def similares_vtex(chave, regiao, item, cand, n=3):
             continue
         if not (p["secao"] == sec or p["secao"].startswith(sec + "/")):
             continue
-        if p["preco"] / p["tam"][0] < melhor * 0.98:
-            out.setdefault(p["link"], p)
+        out.setdefault(p["link"], p)
     return sorted(out.values(), key=lambda p: p["preco"] / p["tam"][0])[:n]
 
 
@@ -6333,9 +6366,11 @@ def buscar():
         relatorio["chamadas_ia"] = _uso_local.chamadas
         BUSCA["chamadas_ia"] = _uso_local.chamadas
         marca_fontes(novas)
+        itens_of = [item_ofertas(p, v) for p, v in lista.items()]
+        guardar_similares(itens_of)
         gravar_json(OFERTAS, {
             "versao": 2, "gerado_em": agora(), "origem": "ia_home_assistant",
-            "lista": [item_ofertas(p, v) for p, v in lista.items()],
+            "lista": itens_of,
             "categorias": novas,
             "relatorio": relatorio,
         })
@@ -6404,8 +6439,10 @@ def mesclar_resultado(resultado, cfg, extra=None, mapa=None, completa=False, nov
         for k, v in (extra or {}).items():
             if k in ("diretas", "shopee", "folhetos"):
                 relatorio[k] = v
+        itens_of = [item_ofertas(p, v) for p, v in lista.items()]
+        guardar_similares(itens_of)
         gravar_json(OFERTAS, dict(anterior, versao=2, origem="ia_home_assistant", gerado_em=agora() if completa else anterior.get("gerado_em") or agora(),
-                                  atualizado_em=agora(), lista=[item_ofertas(p, v) for p, v in lista.items()],
+                                  atualizado_em=agora(), lista=itens_of,
                                   categorias=novas, relatorio=relatorio))
         return lista
 
@@ -7647,6 +7684,7 @@ class Painel(BaseHTTPRequestHandler):
                 "sync": SYNC,
                 "uso_ia": uso_resumo(),
                 "clubes": ler_json(CLUBES_FILE, {}) or {},
+                "similares": similares_salvos(ler_json(CONFIG, {}) or {}),
                 "correria": {"ligada": correria_ligada(), "ultimo": CORRERIA_USO["ultimo"]},
                 "atalho": atalho(),
             })

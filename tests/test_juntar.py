@@ -186,5 +186,43 @@ class Arquivos(Base):
         self.assertEqual(S.ler_json(p, []), [])
 
 
+class SimilaresGuardados(Base):
+    """1.28.0: os similares achados ficam guardados por item, para o item que volta à lista não pedir outra busca."""
+
+    def test_guardar_e_mandar_para_a_pagina(self):
+        S = self.S
+        S.hoje_br = lambda: "2026-11-02"
+        sobre = {"rede": "merc-giassi", "nome": "Sobrecoxa kg", "preco": 12.48, "quantidade": 1, "unidade": "kg"}
+        S.guardar_similares([{"produto": "Coxinha da asa", "precos": {}, "similares": [sobre] * 8}, {"produto": "Leite integral", "precos": {}}, None])
+        reg = S.ler_json(S.SIMILARES_FILE, {})
+        self.assertEqual(list(reg), ["coxinha da asa"], "só quem achou similar")
+        self.assertEqual((reg["coxinha da asa"]["em"], len(reg["coxinha da asa"]["itens"])), ("2026-11-02", 6), "a data da busca e até 6")
+        self.assertEqual(S.similares_salvos(self.cfg), {"Coxinha da asa": {"em": "2026-11-02", "itens": [sobre] * 6}})
+        self.assertEqual(S.similares_salvos({"lista": [{"produto": "Leite integral"}, "Café"]}), {}, "só os itens da lista que têm")
+        S.guardar_similares([{"produto": "Leite integral", "precos": {}}])
+        self.assertEqual(list(S.ler_json(S.SIMILARES_FILE, {})), ["coxinha da asa"], "nada achado: não apaga o que estava guardado")
+        S.gravar_json(S.SIMILARES_FILE, {"coxinha da asa": {"em": "ontem", "itens": [sobre]}})
+        self.assertEqual(S.similares_salvos(self.cfg), {}, "data estranha: fica de fora")
+
+    def test_ficam_os_mais_recentes(self):
+        S = self.S
+        S.MAX_SIMILARES_SALVOS = 3
+        sim = [{"rede": "merc-giassi", "nome": "X", "preco": 1, "quantidade": 1, "unidade": "kg"}]
+        for d, nome in (("2026-10-01", "A"), ("2026-10-02", "B"), ("2026-10-03", "C"), ("2026-10-04", "D")):
+            S.hoje_br = lambda d=d: d
+            S.guardar_similares([{"produto": nome, "precos": {}, "similares": sim}])
+        self.assertEqual(sorted(S.ler_json(S.SIMILARES_FILE, {})), ["b", "c", "d"])
+
+    def test_a_busca_guarda(self):
+        S = self.S
+        S.hoje_br = lambda: "2026-11-02"
+        sim = {"rede": "merc-giassi", "nome": "Sobrecoxa kg", "preco": 12.48, "quantidade": 1, "unidade": "kg"}
+        S.gravar_json(S.OFERTAS, {"categorias": [], "lista": [{"produto": "Coxinha da asa", "precos": {"merc-giassi": 21.9}, "similares": [sim]}]})
+        S.mesclar_resultado([], self.cfg)
+        self.assertEqual(S.ler_json(S.SIMILARES_FILE, {})["coxinha da asa"], {"produto": "Coxinha da asa", "em": "2026-11-02", "itens": [sim]})
+        S.hoje_br = lambda: "2026-11-09"
+        S.mesclar_resultado([], self.cfg)
+        self.assertEqual(S.ler_json(S.SIMILARES_FILE, {})["coxinha da asa"]["em"], "2026-11-02", "os mesmos de antes: fica a data em que foram achados")
+
 if __name__ == "__main__":
     unittest.main()

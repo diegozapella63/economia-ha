@@ -1,8 +1,11 @@
 # EconomIA 0.18.0–0.19.0: Minha lista com os preços da busca de verdade (lojas falsas): ícones, mais barato, outras lojas,
-# Similares (ligar, escolher um similar, Roteiro, desligar), Escolher esse e Desfazer, "ou" no item, adicionar,
+# Similares (ligar, escolher um similar, Roteiro, desligar; 1.28.0: num grupo recolhido, Buscar similares no pé do cartão e os
+# achados guardados para a próxima vez), Escolher esse e Desfazer, "ou" no item, adicionar,
 # "Quis dizer…?" ao adicionar e no item sem preço, Comprei hoje, remover → Histórico → voltar, Limpar lista.
 import asyncio
 import copy
+import json
+import os
 
 from playwright.async_api import async_playwright
 
@@ -64,12 +67,19 @@ async def main():
             check('coxinha da asa ou asinha' in (await pg.text_content("#wishDica")).lower(), "a dica do 'ou' aparece em cima da lista")
             await shot(pg, "ecl-lista", full_page=True)
 
-            # ----- Similares -----
-            sim = cox.locator("details.i-det", has_text="Similares mais em conta")
-            check(await sim.count() == 1 and await sim.get_attribute("open") is not None, "similares ligados: bloco aberto")
+            # ----- Similares (1.28.0: tudo o que a busca achou na seção, num grupo recolhido como o Comparar tamanhos) -----
+            sim = cox.locator("details.i-det", has_text="Similares (")
+            check(await sim.count() == 1 and await sim.get_attribute("open") is None and (await sim.locator("summary").inner_text()).strip() == "Similares (5)",
+                  f"similares ligados: grupo recolhido ({await sim.locator('summary').inner_text()})")
+            await sim.locator("summary").click()
+            await pg.wait_for_timeout(200)
             nomes = [t.split("\n")[0] for t in await sim.locator(".sim-list li b").all_inner_texts()]
-            check(nomes == ["Frango Inteiro Congelado Kg", "Sobrecoxa de Frango Resfriada Kg", "Asa de Frango Congelada Kg"], f"3 similares por kg ({nomes})")
-            check(await cox.locator(".sim-btn").get_attribute("aria-pressed") == "true", "botão Similares ligado")
+            check(nomes == ["Frango Inteiro Congelado Kg", "Sobrecoxa de Frango Resfriada Kg", "Asa de Frango Congelada Kg", "Asinha de Frango Temperada Kg",
+                            "Filé de Peito de Frango Kg"], f"todos os da seção, por kg ({nomes})")
+            check("4 saem mais em conta que o item." in await sim.inner_text() and await sim.locator(".sim-list li.conta").count() == 4,
+                  "os mais em conta marcados (o filé, mais caro, também aparece)")
+            check(await cox.locator(".i-foot .i-sim").inner_text() == "Esconder similares" and await cox.locator(".sim-btn").count() == 0,
+                  "no pé do cartão, ao lado do Buscar de novo")
             await cox.screenshot(path=SHOTS + "/ecl-similares.png")
             await sim.locator(".sim-list li").nth(1).locator(".esc-btn").click()
             await pg.wait_for_timeout(1200)
@@ -85,18 +95,38 @@ async def main():
             await pg.locator(".parada").first.screenshot(path=SHOTS + "/ecl-roteiro.png")
             await pg.click('.tabbar [data-view="lista"]')
             await pg.wait_for_timeout(400)
-            # desligar os similares desfaz a escolha do similar
-            await (await item(pg, "Coxinha da asa")).locator(".sim-btn").click()
+            # Esconder similares desfaz a escolha do similar
+            await (await item(pg, "Coxinha da asa")).locator(".i-sim").click()
             await pg.wait_for_timeout(1200)
             cox = await item(pg, "Coxinha da asa")
-            check(await cox.locator("details.i-det", has_text="Similares").count() == 0, "desligado: o bloco some")
+            check(await cox.locator("details.i-det", has_text="Similares").count() == 0 and await cox.locator(".i-sim").inner_text() == "Buscar similares",
+                  "escondidos: o grupo some e volta o Buscar similares")
             it = next(i for i in app.config_salva()["lista"] if i["produto"] == "Coxinha da asa")
             check("similares" not in it and "escolha" not in it, f"config sem similares e sem a escolha do similar ({it})")
-            # ligar num item sem similares ainda
-            await (await item(pg, "Carne moída")).locator(".sim-btn").click()
-            await pg.wait_for_timeout(1000)
-            vazio = await (await item(pg, "Carne moída")).locator(".sim-vazio").inner_text()
-            check("aparecem na próxima busca" in vazio and "Buscar agora" in vazio, "sem dados: avisa e oferece Buscar agora")
+            # Buscar similares num item sem eles: grava e já busca o item; o grupo abre com o que veio
+            await (await item(pg, "Carne moída")).locator(".i-sim").click()
+            await pg.wait_for_function("() => [...document.querySelectorAll('#wish > li.item')].some(li => /Carne moída/.test(li.textContent) && li.querySelector('details.i-det[data-det^=\"sim|\"]'))", timeout=30000)
+            await pg.wait_for_timeout(500)
+            carne = await item(pg, "Carne moída")
+            sc = carne.locator("details.i-det", has_text="Similares (")
+            check(await sc.get_attribute("open") is not None and "Acém Moído Bovino Kg" in await sc.inner_text() and "1 sai mais em conta que o item." in await sc.inner_text(),
+                  "achou o acém, mais em conta, e o grupo abre")
+            check(next(i for i in app.config_salva()["lista"] if i["produto"].startswith("Carne moída")).get("similares") is True, "ligado na config")
+            with open(os.path.join(app.pasta, "similares.json"), encoding="utf-8") as f:
+                reg = json.load(f)
+            check("carne moida bovina de primeira" in reg and reg["carne moida bovina de primeira"]["itens"][0]["nome"] == "Acém Moído Bovino Kg",
+                  "os achados ficam guardados para a próxima vez")
+            # escondidos e pedidos de novo: os guardados aparecem na hora, sem outra busca
+            await carne.locator(".i-sim").click()
+            await pg.wait_for_timeout(800)
+            pedidos = len(app.lojas.pedidos_de("intelligent-search"))
+            await (await item(pg, "Carne moída")).locator(".i-sim").click()
+            await pg.wait_for_timeout(800)
+            carne = await item(pg, "Carne moída")
+            check("Acém Moído Bovino Kg" in await carne.inner_text() and await carne.locator(".i-rebusca").inner_text() == "Buscar de novo",
+                  "de volta na hora, sem buscar")
+            check(len(app.lojas.pedidos_de("intelligent-search")) == pedidos, "nenhum pedido novo às lojas")
+            await carne.screenshot(path=SHOTS + "/ecl-similares-carne.png")
 
             # ----- Escolher esse (outra loja) e Desfazer -----
             carne = await item(pg, "Carne moída")

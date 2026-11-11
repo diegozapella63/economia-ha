@@ -60,7 +60,7 @@ async def main():
             cafe = pg.locator("#wish > li.item:not(.mini)")
             check("SUA ESCOLHA" in (await cafe.inner_text()).upper() and await cafe.locator(".i-rebusca").count() == 1, "o cartão inteiro, com o Buscar de novo")
             await shot(pg, "lista-resumida-aberta")
-            await cafe.locator(".i-actions .sim-btn").click()  # um botão do cartão não fecha
+            await cafe.locator(".i-actions [data-d=\"1\"]").click()  # um botão do cartão não fecha
             await pg.wait_for_timeout(300)
             check([x[0] for x in await linhas(pg)] == ["mini", "cartao", "mini"], "os botões do cartão não fecham")
             await cafe.locator(".i-head .i-prod").click()

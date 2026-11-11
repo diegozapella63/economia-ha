@@ -305,11 +305,13 @@ O item com `similares: true` (na lista da config) ganha, na busca direta, `simil
 
 1. A seção mais comum entre os candidatos que casaram, com pelo menos 2 níveis, e a unidade mais comum.
 2. A busca por facetas da VTEX (`product_search/category-1/<slug>/category-2/<slug>`, slug como o da loja: minúsculas, sem acento, hífens). Se nenhum produto vier daquela seção, busca pelo nome dela (`secao_nome`).
-3. Ficam os produtos da seção (ou de dentro dela), na mesma unidade, que não são candidatos e saem pelo menos 2% mais baratos por unidade que o melhor candidato. Os 3 mais baratos por unidade.
+3. Ficam os produtos da seção (ou de dentro dela), na mesma unidade, que não são candidatos: os 6 mais baratos por unidade (1.28.0: antes, só os 3 que saíam ao menos 2% mais baratos que o melhor candidato; agora a página marca esses).
 
 `montar_item(…, similares={rede: [produtos]})` põe `similares` na entrada: rede, nome, preço, quantidade, unidade, fonte. O campo passa por `normalizar` (rede vira id), `juntar_item` (soma), `mesclar_resultado` (guarda os de antes e tira os da loja que acabou de ser consultada) e `item_ofertas` (um por loja e nome, o mais recente; os 6 mais baratos por unidade).
 
-Página: o botão `data-sim` liga `estado.lista[i].similares`. `blocoSimilares` mostra até 3 mais baratos por unidade que o melhor preço do item (na mesma unidade da base). A escolha de um similar é `{rede, q, obs: nome, sim: true}`; `ehEscolha` ignora essas escolhas, e `escolhaDe` resolve o similar por loja e nome (`ehSim`).
+Página (1.28.0): o **Buscar similares** do pé do cartão (`data-sim`, ao lado do Buscar de novo; só com `lojas_diretas` ou com os similares já ligados, quando vira **Esconder similares**) liga `estado.lista[i].similares`, grava (`salvar` devolve a promessa) e chama `buscarItem`; com similares guardados há até 7 dias, mostra esses e não busca. `blocoSimilares` mostra tudo num `<details>` recolhido como o Comparar tamanhos (**Similares (n)**, aberto depois do toque): primeiro os da medida do item, do mais barato por unidade; os que saem ao menos 2% mais baratos que o melhor preço ganham `li.conta` e a contagem ("2 saem mais em conta que o item.").
+
+**Guardados** (1.28.0): `guardar_similares` (a cada `mesclar_resultado` e busca completa) põe os similares de cada item em `/data/similares.json` (`{norm(produto): {produto, em, itens}}`, até 300, os mais recentes; os mesmos de antes ficam com a data de quando foram achados) e `/api/estado` manda `similares` (`similares_salvos`: `{nome do item na lista: {em, itens}}`). Sem similares na última busca, `similaresDe` usa os guardados e o grupo diz "Da busca de dd/mm". A escolha de um similar é `{rede, q, obs: nome, sim: true}`; `ehEscolha` ignora essas escolhas, e `escolhaDe` resolve o similar por loja e nome (`ehSim`).
 
 ## "ou" no item
 
@@ -455,7 +457,7 @@ A tela só diz que algo vai acontecer quando a opção ou a integração que faz
   Instagram e folhetos já lidos: `opcoes.folhetos`, que `busca_folhetos` e `busca_instagram` conferem) e `so-itens`
   (`opcoes.itens_sem_preco`). `pintaEtapas` põe `sem-diretas`, `sem-folhetos` e `sem-itens` no `<html>`.
 - **Similares e código de barras**: só a busca direta traz similares (`similares_vtex`) e usa o código do item
-  (`eans_da_lista`). Com `lojas_diretas` desligada, `blocoSimilares` diz que ela está desligada (sem o Buscar agora) e o
+  (`eans_da_lista`). Com `lojas_diretas` desligada, o cartão não tem o Buscar similares, `blocoSimilares` diz que ela está desligada e o
   item posto pelo código não promete ser achado nas lojas.
 - **Integrações**: `carregaShopee` guarda a resposta de `/api/integracoes` em `INTEG`, e `pintaIntegSt` (também ao mudar
   Usar IA) escreve o estado do Instagram e da Shopee. Instagram: "os encartes … entram na busca" só com IA e

@@ -129,7 +129,7 @@ Se uma palavra do item não aparece em nenhum produto que as lojas já mostraram
 
 ### Similares
 
-Toque em **Similares** no item para ver até 3 produtos parecidos, da mesma seção da loja, que saem mais em conta pelo preço do quilo ou do litro: para "coxinha da asa", sobrecoxa, asa ou frango inteiro. O preço do item continua o mesmo. Se preferir um similar, toque no ✓ dele: vira a sua escolha, também no Roteiro. Os similares vêm das lojas com busca no próprio site (como Giassi e Angeloni) e aparecem na busca seguinte, com a **Busca direta nas lojas** ligada em Mais › Configurações › Opções.
+No pé do cartão do item, ao lado de **Buscar de novo**, **Buscar similares** procura produtos parecidos da mesma seção da loja: para "coxinha da asa", sobrecoxa, asa ou frango inteiro. Eles aparecem em **Similares (n)**, recolhido como o Comparar tamanhos, do mais barato pelo preço do quilo ou do litro para o mais caro; os que saem mais em conta que o item ficam marcados. O preço do item continua o mesmo. Se preferir um similar, toque no ✓ dele: vira a sua escolha, também no Roteiro. **Esconder similares** tira o grupo. Os similares vêm das lojas com busca no próprio site (como Giassi e Angeloni), com a **Busca direta nas lojas** ligada em Mais › Configurações › Opções. O que a busca acha fica guardado: quando o item volta à lista ou você pede os similares de novo (até 7 dias depois), eles aparecem na hora, sem outra busca, com a data da busca.
 
 ## Clubes e cupons
 

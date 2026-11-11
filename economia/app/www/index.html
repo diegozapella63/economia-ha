@@ -455,7 +455,7 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .i-others{display:flex;flex-wrap:wrap;gap:6px}
 .i-others li{flex:1 1 auto;font-size:12.5px;padding:0;border:1px solid var(--line);border-radius:8px;color:var(--muted);min-width:0;max-width:100%;overflow:hidden;white-space:nowrap;text-align:center}
 .i-others b{color:var(--ink);font-weight:600}
-/* os botões do item em duas colunas iguais: o − e o + do mesmo tamanho do Comprei hoje e do Similares */
+/* os botões do item em duas colunas iguais: o − e o + do mesmo tamanho do Comprei hoje */
 .i-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:8px}
 .i-actions > .qtd,.i-actions > .ic-btn{width:100%;min-width:0;justify-content:center;align-self:stretch}
 .i-actions > .ic-btn{padding-top:7px;padding-bottom:7px}
@@ -463,8 +463,8 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .i-actions > .chip,.i-actions > .i-foot{grid-column:1/-1;justify-self:end;margin-left:0}
 .i-actions > .chip{justify-self:start}
 .i-foot{font-size:12px;color:var(--muted);margin-left:auto}
-.i-foot .i-rebusca{font-size:12px;margin-left:2px;white-space:nowrap}
-/* o − e o + do tamanho dos outros botões da linha (Comprei hoje, Similares) */
+.i-foot .i-rebusca,.i-foot .i-sim{font-size:12px;margin-left:2px;white-space:nowrap}
+/* o − e o + do tamanho dos outros botões da linha (Comprei hoje) */
 .qtd{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:8px}
 .qtd .qtd-b{border:0;background:none;flex:1 1 0;min-width:36px;min-height:0;font-size:18px;line-height:1;padding:0;color:var(--accent)}
 .qtd b{display:flex;align-items:center;justify-content:center}
@@ -530,7 +530,7 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .esc-btn svg{width:15px;height:15px;fill:none;stroke:var(--muted);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 .esc-btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent)}
 .esc-btn[aria-pressed="true"] svg{stroke:var(--on-accent)}
-.sim-btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.sim-list li.conta .pu{color:var(--accent);font-weight:600}
 .sim-vazio{align-self:stretch;border-top:1px dashed var(--line);padding-top:8px}
 .ml-passo2{display:flex;flex-direction:column;gap:8px}
 .ml-como > summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--accent)}
@@ -2378,9 +2378,9 @@ dialog.ss-wrap::backdrop{background:transparent}
     var t = $('toast'); t.textContent = msg; t.hidden = false;
     clearTimeout(toastT); toastT = setTimeout(function(){ t.hidden = true; }, Math.min(9000, Math.max(2200, String(msg).length * 55)));
   }
-  function salvar(msg){
+  function salvar(msg){  // devolve a promessa (1.28.0: o Buscar similares busca depois de gravar)
     if (MODO === 'addon'){
-      fetch('api/config', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(estado)})
+      return fetch('api/config', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(estado)})
         .then(function(r){
           if (!r.ok){ toast('Não deu para salvar. Tente de novo.'); return; }
           return r.json().then(function(j){
@@ -2395,6 +2395,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     } else {
       var gravou = gravarLocal(KEY, estado);
       if (msg !== false) toast(gravou ? (msg || 'Salvo') : 'Salvo só até fechar a página');
+      return Promise.resolve();
     }
   }
 
@@ -2543,7 +2544,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.27.0';
+  var VERSAO = '1.28.0';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -3032,36 +3033,47 @@ dialog.ss-wrap::backdrop{background:transparent}
   }
   // Similares: produtos da mesma seção da loja (Açougue › Aves) mais em conta pelo preço do quilo ou litro, só para o item que pediu
   var SVG_SIM = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="7" width="10" height="10" rx="2"/><path d="M10.5 4h8a2 2 0 0 1 2 2v8"/><path d="M6.5 12h4"/></svg>';
+  // os da última busca; sem eles, os guardados de uma busca de antes (simSalvoEm diz de quando)
+  function simSalvoEm(it){
+    var info = itemDe(it.produto), sv = SIM_SALVOS[it.produto];
+    return !arr(info && info.similares).length && sv && arr(sv.itens).length ? String(sv.em || '') : '';
+  }
   function similaresDe(it){
-    var info = itemDe(it.produto);
-    return arr(info && info.similares).filter(function(s){ return s && G[s.rede] && catAtiva(s.rede) && acompanha(s.rede) && Number(s.preco) > 0 && Number(s.quantidade) > 0 && s.nome; });
+    var info = itemDe(it.produto), lst = arr(info && info.similares);
+    if (simSalvoEm(it)) lst = arr(SIM_SALVOS[it.produto].itens);
+    return lst.filter(function(s){ return s && G[s.rede] && catAtiva(s.rede) && acompanha(s.rede) && Number(s.preco) > 0 && Number(s.quantidade) > 0 && s.nome; });
   }
   function ehSim(it, s){ var e = it.escolha; return !!(e && e.sim && e.rede === s.rede && norm(e.obs) === norm(s.nome)); }
   function botaoSim(it, s){
     var on = ehSim(it, s), i = estado.lista.indexOf(it);
     return '<button type="button" class="esc-btn" data-esc-sim="' + i + '" data-esc-rede="' + esc(s.rede) + '" data-esc-q="' + Number(s.quantidade) + '" data-esc-obs="' + esc(s.nome) + '" aria-pressed="' + on + '" aria-label="' + esc((on ? 'Escolhido: ' : 'Escolher: ') + s.nome + ' no ' + G[s.rede].nome + ' por ' + brl.format(Number(s.preco))) + '" title="' + (on ? 'Sua escolha' : 'Escolher esse') + '">' + SVG_ESC + '</button>';
   }
+  // 1.28.0: tudo o que a busca achou na mesma seção da loja, num grupo recolhido como o Comparar tamanhos (Similares (n)):
+  // primeiro os da mesma medida do item, do mais barato por quilo/litro; os que saem mais em conta ficam marcados
   function blocoSimilares(x, p){
     if (!x.it.similares) return '';
     var info = itemDe(x.it.produto), b = info && info.base, best = p[0], k = 'sim|' + norm(x.it.produto);
     var todos = similaresDe(x.it);
-    // os similares só vêm da busca direta nas lojas: desligada em Mais › Configurações › Opções, não há próxima busca que os traga
-    if (!todos.length && !estado.opcoes.lojas_diretas) return '<p class="i-sub sim-vazio">Similares ligados: vêm da busca direta nas lojas, desligada em Mais › Configurações › Opções.</p>';
-    if (!todos.length) return '<p class="i-sub sim-vazio">Similares ligados: eles aparecem na próxima busca, vindos da mesma seção das lojas com busca no próprio site. '
-      + '<button type="button" class="link" data-buscaitem="' + x.i + '"' + (buscaItem === x.it.produto ? ' disabled' : '') + '>' + (buscaItem === x.it.produto ? 'Buscando…' : 'Buscar agora') + '</button></p>';
+    // os similares só vêm da busca direta nas lojas: desligada em Mais › Configurações › Opções, não há busca que os traga
+    if (!todos.length && !estado.opcoes.lojas_diretas) return '<p class="i-sub sim-vazio">Os similares vêm da busca direta nas lojas, desligada em Mais › Configurações › Opções.</p>';
+    if (!todos.length) return '<p class="i-sub sim-vazio">' + (buscaItem === x.it.produto ? 'Buscando similares…' : 'Nenhum similar na última busca. Eles vêm da mesma seção das lojas com busca no próprio site.') + '</p>';
     var ref = best && b ? best.v / Number(b.quantidade) : null;
     var pu = function(s){ return Number(s.preco) / Number(s.quantidade); };
-    var ss = todos.filter(function(s){ return !ref || !b || s.unidade !== b.unidade || pu(s) < ref * 0.98 || ehSim(x.it, s); }).sort(function(a, c){ return pu(a) - pu(c); }).slice(0, 3);
-    if (!ss.length) return '<p class="i-sub sim-vazio">Nenhum similar sai mais em conta que o item agora.</p>';
+    var mesma = function(s){ return !b || s.unidade === b.unidade; };
+    var conta = function(s){ return !!ref && mesma(s) && pu(s) < ref * 0.98; };
+    var ss = todos.slice().sort(function(a, c){ return (Number(mesma(c)) - Number(mesma(a))) || pu(a) - pu(c); }).slice(0, 6);
+    var nConta = ss.filter(conta).length;
     var un = ss[0].unidade === 'L' ? 'litro' : ss[0].unidade === 'kg' ? 'quilo' : ss[0].unidade === 'm' ? 'metro' : 'unidade';
     var lis = ss.map(function(s){
-      var q = Number(s.quantidade), pr = Number(s.preco), bu = {unidade:s.unidade};
-      return '<li' + (ehSim(x.it, s) ? ' class="escolhida"' : '') + '>' + abreLink(linkCompra(s.rede, s.nome, s.fonte), 'tam-a', '<b>' + esc(s.nome) + '</b><span>' + esc(G[s.rede].curto) + ' · ' + esc(medidaTxt(q, bu)) + '</span><span>' + brl.format(pr) + '</span><span class="pu">' + esc(porUn(pr, q, bu)) + '</span>')
+      var q = Number(s.quantidade), pr = Number(s.preco), bu = {unidade:s.unidade}, cls = [ehSim(x.it, s) ? 'escolhida' : '', conta(s) ? 'conta' : ''].join(' ').trim();
+      return '<li' + (cls ? ' class="' + cls + '"' : '') + '>' + abreLink(linkCompra(s.rede, s.nome, s.fonte), 'tam-a', '<b>' + esc(s.nome) + '</b><span>' + esc(G[s.rede].curto) + ' · ' + esc(medidaTxt(q, bu)) + '</span><span>' + brl.format(pr) + '</span><span class="pu">' + esc(porUn(pr, q, bu)) + '</span>')
         + botaoSim(x.it, s) + '</li>';
     }).join('');
     var nota = ref && b && ss[0].unidade === b.unidade ? 'O item pedido sai ' + porUn(best.v, Number(b.quantidade), b) + ' (' + G[best.id].nome + ').' : '';
-    return '<details class="i-det" data-det="' + esc(k) + '"' + (DET_ABERTO[k] === false ? '' : ' open') + '><summary>' + SVG_SIM.replace('<svg ', '<svg class="det-ic" ') + 'Similares mais em conta (' + ss.length + ')</summary>'
-      + '<div class="i-tam"><p class="i-sub">Mesma seção da loja, do mais barato por ' + un + ' para o mais caro. ' + esc(nota) + '</p><ul class="tam-list sim-list num">' + lis + '</ul></div></details>';
+    var quantos = !ref ? '' : nConta ? (nConta === 1 ? '1 sai' : nConta + ' saem') + ' mais em conta que o item. ' : 'Nenhum sai mais em conta que o item agora. ';
+    var salvo = simSalvoEm(x.it);
+    return '<details class="i-det" data-det="' + esc(k) + '"' + (DET_ABERTO[k] ? ' open' : '') + '><summary>' + SVG_SIM.replace('<svg ', '<svg class="det-ic" ') + 'Similares (' + ss.length + ')</summary>'
+      + '<div class="i-tam"><p class="i-sub">' + (salvo ? 'Da busca de ' + dataBR(salvo) + '. ' : '') + quantos + 'Mesma seção da loja, do mais barato por ' + un + ' para o mais caro. ' + esc(nota) + '</p><ul class="tam-list sim-list num">' + lis + '</ul></div></details>';
   }
   function opcoesTamanho(info, p){
     var q0 = Number(info.base.quantidade), ops = [];
@@ -3423,7 +3435,7 @@ dialog.ss-wrap::backdrop{background:transparent}
       var p = precosDe(x.it.produto), soon = x.r.dias != null && x.r.dias <= 3;
       if (resumida && !RES_ABERTO[norm(x.it.produto)]) return linhaResumida(x, p, soon);
       var N = qtdDe(x.it);
-      var acoes = '<div class="i-actions">' + seletorQtd(x) + '<button type="button" class="ghost ic-btn" data-comprei="' + x.i + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.3 14.2l2 2 3.6-3.7"/></svg>Comprei hoje</button><button type="button" class="ghost ic-btn sim-btn" data-sim="' + x.i + '" aria-pressed="' + !!x.it.similares + '" title="Mostrar produtos parecidos, da mesma seção da loja, que saem mais em conta">' + SVG_SIM + 'Similares</button><button type="button" class="rm" data-rm="' + x.i + '">' + (aberta ? 'tirar desta lista' : 'remover') + '</button>' + (x.it.origem === 'ha' ? '<span class="chip">Veio do Home Assistant</span>' : '');
+      var acoes = '<div class="i-actions">' + seletorQtd(x) + '<button type="button" class="ghost ic-btn" data-comprei="' + x.i + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.3 14.2l2 2 3.6-3.7"/></svg>Comprei hoje</button><button type="button" class="rm" data-rm="' + x.i + '">' + (aberta ? 'tirar desta lista' : 'remover') + '</button>' + (x.it.origem === 'ha' ? '<span class="chip">Veio do Home Assistant</span>' : '');
       if (!p.length){
         var procurou = arr((D.relatorio || {}).sem_preco).map(norm).indexOf(norm(x.it.produto)) >= 0;
         var buscando = buscaItem === x.it.produto;
@@ -3453,7 +3465,10 @@ dialog.ss-wrap::backdrop{background:transparent}
         + detalhesCompra(x, p, dc, mt)
         + blocoSimilares(x, p)
         + acoes + '<span class="i-foot">Em ' + onde + quandoPrecos(p) + ' · <button type="button" class="link i-rebusca" data-buscaitem="' + x.i + '"'
-        + (buscaItem === x.it.produto ? ' disabled>Buscando…' : '>Buscar de novo') + '</button></span></div></li>';
+        + (buscaItem === x.it.produto ? ' disabled>Buscando…' : '>Buscar de novo') + '</button>'
+        // 1.28.0: os similares (a mesma seção da loja) só vêm da busca direta; ligados, o mesmo lugar os esconde
+        + (estado.opcoes.lojas_diretas || x.it.similares ? ' · <button type="button" class="link i-sim" data-sim="' + x.i + '"' + (buscaItem === x.it.produto ? ' disabled' : '') + '>' + (x.it.similares ? 'Esconder similares' : 'Buscar similares') + '</button>' : '')
+        + '</span></div></li>';
     }).join('');
   }
   // ----- a lista resumida: o item, o preço escolhido (a sua escolha, a melhor compra ou o mais barato) e onde comprar -----
@@ -3554,10 +3569,14 @@ dialog.ss-wrap::backdrop{background:transparent}
     }
     if (b.dataset.sim != null){
       var isim = estado.lista[Number(b.dataset.sim)]; if (!isim) return;
-      if (isim.similares){ delete isim.similares; if (isim.escolha && isim.escolha.sim) delete isim.escolha; }
-      else isim.similares = true;
-      salvar(isim.similares ? 'Similares ligados para ' + isim.produto : 'Similares desligados para ' + isim.produto);
-      tudo(); return;
+      if (isim.similares){ delete isim.similares; if (isim.escolha && isim.escolha.sim) delete isim.escolha; salvar('Similares escondidos em ' + isim.produto); tudo(); return; }
+      isim.similares = true; tudo();
+      // os achados há até 7 dias aparecem na hora, sem outra busca (Buscar de novo atualiza)
+      var sv = SIM_SALVOS[isim.produto];
+      if (sv && arr(sv.itens).length && diasAte(sv.em) >= -7){ DET_ABERTO['sim|' + norm(isim.produto)] = true; salvar('Similares da busca de ' + dataBR(sv.em)); tudo(); return; }
+      // Buscar similares: grava (o servidor vê quais itens querem similares) e já busca este item; o grupo abre com o que vier
+      DET_ABERTO['sim|' + norm(isim.produto)] = true;
+      salvar(false).then(function(){ buscarItem(isim.produto); }); return;
     }
     if (b.dataset.escSim != null){
       var ies = estado.lista[Number(b.dataset.escSim)]; if (!ies) return;
@@ -4852,6 +4871,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   }
   // 1.24.0: Benefícios do clube: a IA procura o que o clube da loja dá (guardado no servidor, por loja); com a IA ligada
   var CLUBES_BEN = {}, CLUBE_BUSCA = null, CLUBE_ABERTO = {};
+  var SIM_SALVOS = {};  // 1.28.0: {item: {em, itens}}, os similares que uma busca de antes achou (o servidor guarda)
   function beneficiosHtml(c, l){
     if (!/^(farmacias|mercados|petshops)$/.test(c.id)) return '';
     var k = clubeDe(c, l), nome = G[l.rede].nome, r = CLUBES_BEN[chaveLoja(nome)];
@@ -6104,7 +6124,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   function recarrega(comp){
     fetch('api/estado', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(api){
       if (api.uso_ia){ USO = api.uso_ia; pintaUso(); }
-      COMP = api.comparacoes || {}; CLUBES_BEN = api.clubes || {};
+      COMP = api.comparacoes || {}; CLUBES_BEN = api.clubes || {}; SIM_SALVOS = api.similares || {};
       if (api.ofertas && api.ofertas.categorias){ D = api.ofertas; exemplo = false; indexa(); pintaSync(); tudo(); if (!comp) toast('Ofertas atualizadas'); }
       else if (comp) pintaDeals();
       if (comp && ui.view === 'ofertas' && api.busca && arr(api.busca.avisos).length) toast(api.busca.avisos[0]);
@@ -6142,7 +6162,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     .then(function(r){ var ct = r.headers.get('content-type') || ''; if (!r.ok || ct.indexOf('json') < 0) throw new Error('sem add-on'); return r.json(); })
     .then(function(api){
       clearTimeout(limite);
-      MODO = 'addon'; usuario = api.usuario || null; COMP = api.comparacoes || {}; CLUBES_BEN = api.clubes || {}; CORRERIA_ST = api.correria || null;
+      MODO = 'addon'; usuario = api.usuario || null; COMP = api.comparacoes || {}; CLUBES_BEN = api.clubes || {}; SIM_SALVOS = api.similares || {}; CORRERIA_ST = api.correria || null;
       pintaAtalho(api.atalho);
       D = api.ofertas && api.ofertas.categorias ? api.ofertas : EX; exemplo = D === EX; indexa();
       estado = normaliza(api.config || (exemplo ? EX.config_exemplo : null)); iniciar();

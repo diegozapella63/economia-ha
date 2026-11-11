@@ -128,11 +128,13 @@ class Secao(Base):
 
 
 class Similares(Base):
-    def test_mais_em_conta_da_mesma_secao(self):
+    def test_os_da_mesma_secao(self):
         r = self.busca({"produto": "Coxinha da asa", "similares": True})["Coxinha da asa"]
         nomes = [s["nome"] for s in r["similares"]]
-        # por kg: frango inteiro 10,99, sobrecoxa 12,48, a bandeja de 2,3 kg 14,98 (R$ 34,45); a asa, 15,90, fica de fora
-        self.assertEqual(nomes, ["Frango Inteiro Congelado Kg", "Sobrecoxa de Frango Resfriada Kg", "Sobrecoxa de Frango Member's Mark Congelada 2,3kg"])
+        # 1.28.0: todos os da seção na mesma medida, do mais barato por kg (a página marca os mais em conta): frango inteiro
+        # 10,99, sobrecoxa 12,48, a bandeja de 2,3 kg 14,98 (R$ 34,45), a asa 15,90 e os mais caros, até 6
+        self.assertEqual(nomes, ["Frango Inteiro Congelado Kg", "Sobrecoxa de Frango Resfriada Kg", "Sobrecoxa de Frango Member's Mark Congelada 2,3kg",
+                                 "Asa de Frango Congelada Kg", "Asinha de Frango Temperada Kg", "Filé de Peito de Frango Kg"])
         self.assertEqual(r["similares"][2]["preco"], 34.45)
         self.assertTrue(all(s["rede"] == "merc-giassi" and s["unidade"] == "kg" for s in r["similares"]))
         self.assertNotIn("Linguiça Toscana Kg", nomes, "seção de um nível acima (Açougue) não entra")

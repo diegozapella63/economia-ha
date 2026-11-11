@@ -106,14 +106,11 @@ async def main():
             # ----- Minha lista: Similares e código de barras sem a busca direta -----
             await pg.click('.tabbar [data-view="lista"]')
             await pg.wait_for_timeout(400)
+            # 1.28.0: sem a busca direta não há similares: o cartão nem oferece o Buscar similares
             carne = pg.locator("#wish > li.item", has_text="Carne moída").first
-            await carne.locator(".sim-btn").click()
-            await pg.wait_for_timeout(800)
-            vazio = await pg.locator("#wish > li.item", has_text="Carne moída").first.locator(".sim-vazio").inner_text()
-            check(vazio == "Similares ligados: vêm da busca direta nas lojas, desligada em Mais › Configurações › Opções.", f"Similares sem busca direta: não promete a próxima busca ({vazio!r})")
-            check(await pg.locator("#wish > li.item", has_text="Carne moída").first.locator(".sim-vazio button").count() == 0, "e sem o Buscar agora")
+            check(await carne.locator(".i-sim").count() == 0 and await carne.locator(".i-rebusca").count() == 1, "Similares sem busca direta: sem o Buscar similares")
             await pg.evaluate("document.getElementById('toast').hidden = true")
-            await pg.locator("#wish > li.item", has_text="Carne moída").first.screenshot(path=SHOTS + "/ecdl-similares.png")
+            await carne.screenshot(path=SHOTS + "/ecdl-similares.png")
             await pg.click("#codBtn")
             await pg.fill("#codNum", "7891234567895")
             await pg.click("#codProcura")
@@ -122,13 +119,12 @@ async def main():
             await pg.click("#codPor")
             await pg.wait_for_timeout(500)
             check(await pg.text_content("#addMsg") == '"Detergente Teste 500 ml" entrou na lista com o código de barras.', f"código sem busca direta ({await pg.text_content('#addMsg')})")
-            # ----- religar a busca direta: volta a explicação de antes -----
+            # ----- religar a busca direta: volta o Buscar similares -----
             await mais(pg, "opcoes")
             await pg.click("#opDiretas")
             await pg.wait_for_timeout(400)
             await pg.click('.tabbar [data-view="lista"]')
-            vazio = await pg.locator("#wish > li.item", has_text="Carne moída").first.locator(".sim-vazio").inner_text()
-            check("aparecem na próxima busca" in vazio and "Buscar agora" in vazio, f"com busca direta: avisa e oferece Buscar agora ({vazio!r})")
+            check(await pg.locator("#wish > li.item", has_text="Carne moída").first.locator(".i-sim").inner_text() == "Buscar similares", "com busca direta: Buscar similares")
             # ----- aba Online ligada: Compras online volta, e a Shopee pela IA quando marcada -----
             c = app.config_salva()  # a busca ainda não trouxe nada online: liga a aba pela config, como o Salvar de Mais › Casa
             c["categorias"] = ["mercados", "online"]
