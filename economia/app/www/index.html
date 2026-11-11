@@ -129,8 +129,10 @@ h1{font-family:var(--font-display);font-stretch:72%;font-weight:800;font-size:cl
 .tab:hover{color:var(--ink)}
 .tab[aria-current="page"]{color:var(--ink)}
 .tab[aria-current="page"] svg{stroke:var(--accent)}
-.tab-main{color:var(--ink)}
-.tab-main .pill{display:grid;place-items:center;width:58px;height:38px;border-radius:12px;background:var(--accent)}
+/* a ação do meio só com o ícone (1.19.0, em todos os apps da família): o botão já se destaca; o nome fica para o leitor de tela */
+.tab-main{color:var(--ink);align-self:stretch;justify-content:center}
+.tab-main .pill{display:grid;place-items:center;width:62px;height:44px;border-radius:14px;background:var(--accent)}
+.so-leitor{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .tab-main .pill svg{stroke:var(--on-accent)}
 .tab-main:disabled{cursor:progress}
 .tab-main:disabled .pill{opacity:.8}
@@ -232,6 +234,11 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:34px;text-ove
 #mp-dados .btn.perigo{background:transparent;border:1.5px solid color-mix(in srgb,var(--deal) 55%,transparent);color:var(--deal)}
 #mp-dados .opts li{flex-wrap:wrap}
 @media (min-width:1000px){#mp-dados .row-form > .btn,#mp-dados .row-form > .ghost.big,#mp-dados .opts .ghost.big{flex:none;width:250px}}
+/* as outras telas de Mais (1.19.0): os botões de uma linha só de botões na largura do cartão no celular (dois lado a lado
+   dividem a linha), com 250 px no computador, como os de Dados; as linhas com um campo (CEP, Nunca mostrar) ficam como estão */
+.mais-painel:not(#mp-dados) .row-form:not(:has(.field)) > :is(.btn, .ghost.big){flex:1 1 calc(50% - 4px);min-width:fit-content;white-space:nowrap;min-height:50px;
+  justify-content:center;border-radius:12px;padding:12px 18px;font-size:15px;box-sizing:border-box;text-align:center} /* sem caber os dois, um embaixo do outro */
+@media (min-width:1000px){.mais-painel:not(#mp-dados) .row-form:not(:has(.field)) > :is(.btn, .ghost.big){flex:none;width:250px}}
 #mp-dados .confirma .row-form > .btn,#mp-dados .confirma .row-form > .ghost.big{flex:1 1 0;width:auto;min-width:0} /* Apagar tudo e Cancelar lado a lado, do mesmo tamanho */
 #mp-dados .confirma .btn.perigo{background:var(--deal);border-color:transparent;color:var(--surface)} /* na confirmação, o Apagar tudo é o cheio */
 .hint{font-size:12.5px;color:var(--muted)}
@@ -1737,7 +1744,7 @@ input.field,select.field{min-height:var(--altura)}
   <div class="tabbar-in">
     <button type="button" class="tab" data-view="lista"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg>Minha lista</button>
     <button type="button" class="tab" data-view="roteiro"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H16a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h7.5"/></svg>Roteiro</button>
-    <button type="button" class="tab tab-main" id="buscar"><span class="pill"><svg class="ic-busca" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><svg class="ic-gira" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></span><span id="buscarTxt">Buscar</span></button>
+    <button type="button" class="tab tab-main" id="buscar"><span class="pill"><svg class="ic-busca" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><svg class="ic-gira" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></span><span id="buscarTxt" class="so-leitor">Buscar</span></button>
     <button type="button" class="tab" data-view="ofertas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/></svg>Ofertas</button>
     <button type="button" class="tab" data-view="mais"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 12h.01M12 12h.01M18.5 12h.01" stroke-width="3.2"/></svg>Mais</button>
   </div>
@@ -1754,7 +1761,7 @@ input.field,select.field{min-height:var(--altura)}
   <div class="chat-sug" id="chatSug"></div>
   <p class="chat-ouvindo" id="chatOuvindo" aria-live="polite" hidden></p>
   <form class="chat-form" id="chatForm" novalidate>
-    <textarea id="chatTxt" rows="1" maxlength="2000" placeholder="Pergunte o que quiser" aria-label="Mensagem para a IA" enterkeyhint="send"></textarea>
+    <textarea id="chatTxt" rows="1" data-size="off" maxlength="2000" placeholder="Pergunte o que quiser" aria-label="Mensagem para a IA" enterkeyhint="send"></textarea>
     <button type="button" class="chat-mic so-voz" id="chatMic" aria-label="Falar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
     <button type="submit" class="chat-env" id="chatEnv" aria-label="Enviar" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
   </form>
@@ -2104,6 +2111,78 @@ dialog.ss-wrap::backdrop{background:transparent}
   }, true);
   api.open = open;
   api.close = () => close();
+})();
+</script>
+<script>
+// Os campos de texto aberto (textarea) de todos os apps da família: dá para aumentar puxando o canto, e o tamanho fica
+// guardado no aparelho, para cada campo: aberto de novo, o campo volta do tamanho que a pessoa deixou. Vale também dentro
+// do Shadow DOM (as telas em Lit). Um campo que cresce sozinho (a conversa) fica de fora com data-size="off".
+// Arquivo igual em todos os apps (tools/iguais.py): ao mudar, copie para os outros.
+(() => {
+  if (window.__textareas) return;
+  // as telas de todos os apps abrem no mesmo endereço do Home Assistant (o mesmo localStorage): cada app com o seu nome
+  const prefix = () => `textareas:${(document.title || "app").split(/[·|-]/)[0].trim()}:`;
+  const keyOf = (ta) => ta.dataset.size || ta.id || ta.name || ta.getAttribute("aria-label") || ta.placeholder || "";
+  const read = (k) => {
+    try {
+      return Number(localStorage.getItem(prefix() + k)) || 0;
+    } catch (e) {
+      return 0;
+    }
+  };
+  const write = (k, h) => {
+    try {
+      localStorage.setItem(prefix() + k, String(Math.round(h)));
+    } catch (e) {
+      /* navegação privada: só não fica guardado */
+    }
+  };
+  // a pessoa puxou o canto: o navegador põe a altura no style do campo; outra mudança de tamanho (a largura da tela, o
+  // texto) não mexe nela e não conta
+  const saving = new WeakMap();
+  const ro = typeof ResizeObserver === "function" ? new ResizeObserver((list) => list.forEach(({ target: ta }) => {
+    const h = parseFloat(ta.style.height);
+    if (!h || h === ta.__tsSet) return;
+    clearTimeout(saving.get(ta));
+    saving.set(ta, setTimeout(() => {
+      const k = keyOf(ta), now = parseFloat(ta.style.height);
+      if (k && now) write(k, now);
+      ta.__tsSet = now;
+    }, 400));
+  })) : null;
+  const fit = (ta) => {
+    if (!(ta instanceof HTMLTextAreaElement) || ta.dataset.size === "off" || ta.__tsDone) return;
+    ta.__tsDone = true;
+    ta.style.resize = "vertical";
+    const k = keyOf(ta);
+    const h = k && read(k);
+    if (h) {
+      ta.style.height = `${h}px`;
+      ta.__tsSet = h;
+    }
+    if (ro) ro.observe(ta);
+  };
+  const watched = new WeakSet();
+  const scan = (node) => {
+    if (!node || node.nodeType !== 1) return;
+    if (node.tagName === "TEXTAREA") fit(node);
+    if (node.shadowRoot) watch(node.shadowRoot);
+    if (node.querySelectorAll) {
+      node.querySelectorAll("textarea").forEach(fit);
+      node.querySelectorAll("*").forEach((el) => el.shadowRoot && watch(el.shadowRoot));
+    }
+  };
+  function watch(root) {
+    if (watched.has(root)) return;
+    watched.add(root);
+    new MutationObserver((list) => list.forEach((m) => m.addedNodes.forEach(scan))).observe(root, { childList: true, subtree: true });
+    root.querySelectorAll("textarea").forEach(fit);
+    root.querySelectorAll("*").forEach((el) => el.shadowRoot && watch(el.shadowRoot));
+  }
+  window.__textareas = { fit, keyOf };
+  const start = () => watch(document.body || document.documentElement);
+  if (document.body) start();
+  else document.addEventListener("DOMContentLoaded", start);
 })();
 </script>
 <script>
@@ -2461,7 +2540,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.18.0';
+  var VERSAO = '1.19.0';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {

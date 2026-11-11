@@ -1,5 +1,11 @@
 # Mudanças
 
+## 1.19.0
+
+- **Buscar só com o ícone**: o botão do meio da barra de baixo fica só com a lupa, sem o texto embaixo, como em todos os apps da família (buscando, a lupa gira).
+- **Botões na largura do cartão** no celular nas telas de Mais (Casa, Lojas e Configurações), como já era em Dados: um sozinho ocupa a linha, dois dividem a linha.
+- **Campos de texto que aumentam**: o Colar mensagem aumenta puxando o canto, e o tamanho fica guardado no aparelho, como nos outros apps da família.
+
 ## 1.18.0
 
 - **Atalho no celular**, em **Mais › Configurações › Opções**: o caminho do EconomIA no Home Assistant, com **Copiar**, e como criar um ícone na tela inicial do celular que abre o app direto (no app do Home Assistant: Configurações › Aplicativo complementar › Gerenciar atalhos). O mesmo vale em todos os apps da família.

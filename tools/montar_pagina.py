@@ -12,9 +12,9 @@ import sys
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FONTE = os.path.join(RAIZ, "economia", "pagina", "painel.html")
-# as caixas de seleção no visual do app: o mesmo arquivo dos outros apps, ao lado da fonte; no add-on, vai embutido
-CAIXAS = os.path.join(RAIZ, "economia", "pagina", "selectsheet.js")
-TAG_CAIXAS = '<script src="selectsheet.js"></script>'
+# os arquivos iguais aos dos outros apps, ao lado da fonte; no add-on, vão embutidos: as caixas de seleção no visual do
+# app (selectsheet.js) e os campos de texto que guardam o tamanho (textareas.js, 1.19.0)
+IGUAIS = ("selectsheet.js", "textareas.js")
 DESTINO = os.path.join(RAIZ, "economia", "app", "www", "index.html")
 
 CABECALHO = """<!doctype html>
@@ -50,10 +50,12 @@ def montar(fonte_txt):
         s = s.replace(p, "")
     if "fonts.googleapis" in s or "gstatic" in s:
         raise SystemExit("Sobrou link do Google Fonts na página.")
-    caixas = open(CAIXAS, encoding="utf-8").read()
-    if s.count(TAG_CAIXAS) != 1 or "</script" in caixas:
-        raise SystemExit("A fonte precisa carregar o selectsheet.js uma vez, antes do script da página.")
-    s = s.replace(TAG_CAIXAS, "<script>\n" + caixas.rstrip("\n") + "\n</script>")
+    for nome in IGUAIS:
+        tag = '<script src="%s"></script>' % nome
+        js = open(os.path.join(RAIZ, "economia", "pagina", nome), encoding="utf-8").read()
+        if s.count(tag) != 1 or "</script" in js:
+            raise SystemExit("A fonte precisa carregar o %s uma vez, antes do script da página." % nome)
+        s = s.replace(tag, "<script>\n" + js.rstrip("\n") + "\n</script>")
     if s.count("'__VERSAO__'") != 1:
         raise SystemExit("A fonte precisa ter a versão uma vez, como '__VERSAO__'.")
     s = s.replace("'__VERSAO__'", "'" + versao() + "'")
