@@ -18,6 +18,14 @@ for t in "${names[@]}"; do
   [ -f "$f" ] || { echo "?? $t (não existe)"; bad+=("$t"); fail=$((fail+1)); continue; }
   (cd "$HERE" && timeout 400 python3 -u "$f" > "$E2E_TMP/logs/$t.txt" 2>&1)
   code=$?
+  # tempo esgotado no Playwright (o GitHub às vezes fica lento): roda mais uma vez e deixa a 1ª falha no registro.
+  # Uma conferência que falha (FAIL sem tempo esgotado) não repete.
+  if [ $code -ne 0 ] && grep -q "TimeoutError" "$E2E_TMP/logs/$t.txt"; then
+    mv "$E2E_TMP/logs/$t.txt" "$E2E_TMP/logs/$t.1.txt"
+    echo "~~ $t: tempo esgotado, de novo ($(grep -h "TimeoutError" "$E2E_TMP/logs/$t.1.txt" | tail -1 | cut -c1-120))"
+    (cd "$HERE" && timeout 400 python3 -u "$f" > "$E2E_TMP/logs/$t.txt" 2>&1)
+    code=$?
+  fi
   last=$(tail -1 "$E2E_TMP/logs/$t.txt")
   if [ $code -ne 0 ] || grep -q "^FAIL\|Traceback" "$E2E_TMP/logs/$t.txt"; then
     echo "XX $t: $last"; grep -h "^FAIL\|Error" "$E2E_TMP/logs/$t.txt" | head -5 | sed 's/^/     /'

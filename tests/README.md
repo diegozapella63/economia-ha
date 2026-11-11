@@ -10,7 +10,9 @@ Três camadas, rodando a cada push no GitHub (aba Actions):
 
 Só Python 3 para as duas primeiras (uns 60 segundos), e nada de internet: os pedidos para fora vão para um proxy que
 não existe, e tudo o que o app consulta é falso e local. As visuais precisam de `pip install playwright` e
-`python3 -m playwright install chromium`; as capturas ficam em `$E2E_TMP/shots`.
+`python3 -m playwright install chromium`; as capturas ficam em `$E2E_TMP/shots`. Um script visual que falha por tempo esgotado
+(`TimeoutError` do Playwright; o GitHub às vezes fica lento) roda mais uma vez: a linha `~~` e o `logs/<script>.1.txt`
+guardam a 1ª falha. Uma conferência que falha não repete.
 
 Cobertura de linhas (sem dependências): `tests/run.sh --cobertura` (o mesmo que `TZ=America/Sao_Paulo python3
 tools/cobertura.py --linhas`) mostra o % de cada arquivo do servidor e as linhas que nenhum teste roda. Na 1.9.1: 98,1% do
