@@ -134,18 +134,24 @@ async def main():
             # ----- Sensores no Home Assistant -----
             await pg.click("#sensores")
             await espera(pg, "() => /Ligado/.test(document.getElementById('sensoresTxt').textContent)")
-            check(await pg.text_content("#sensoresTxt") == "Ligado: sensor.economia_ia_hoje.", "sensores ligados")
+            check(await pg.text_content("#sensoresTxt") == "Ligado: sensor.economia_ia_hoje, sensor.economia_melhor_loja e binary_sensor.economia_oferta.", "sensores ligados")
             for _ in range(100):
                 if "sensor.economia_ia_hoje" in ha.estados:
                     break
                 await asyncio.sleep(0.05)
             check(ha.estados.get("sensor.economia_ia_hoje", {}).get("attributes", {}).get("friendly_name") == "EconomIA: chamadas de IA hoje", "o sensor aparece no Home Assistant")
-            await pg.click("#sensores")
             for _ in range(100):
-                if "sensor.economia_ia_hoje" not in ha.estados:
+                if "binary_sensor.economia_oferta" in ha.estados:
                     break
                 await asyncio.sleep(0.05)
-            check("sensor.economia_ia_hoje" not in ha.estados and app.config_salva()["sensores"] is False, "desligado: o sensor some do Home Assistant")
+            check("sensor.economia_melhor_loja" in ha.estados and "binary_sensor.economia_oferta" in ha.estados, "1.21.0: a melhor loja e a oferta da lista também")
+            await pg.click("#sensores")
+            for _ in range(100):
+                if not any(e in ha.estados for e in ("sensor.economia_ia_hoje", "sensor.economia_melhor_loja", "binary_sensor.economia_oferta")):
+                    break
+                await asyncio.sleep(0.05)
+            check(not any(e in ha.estados for e in ("sensor.economia_ia_hoje", "sensor.economia_melhor_loja", "binary_sensor.economia_oferta"))
+                  and app.config_salva()["sensores"] is False, "desligado: os sensores somem do Home Assistant")
             # ----- Lista do Home Assistant -----
             opts = [t.strip() for t in await pg.locator("#syncEnt option").all_inner_texts()]
             check(opts == ["Não sincronizar", "Afazeres", "Compras"], f"as listas do Home Assistant ({opts})")

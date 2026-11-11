@@ -253,7 +253,27 @@ Também dá para usar uma lista do **Google Tasks** conectada ao Home Assistant 
 
 Em **Mais › Configurações › Integrações › Uso da IA**: as chamadas de hoje, dos últimos 7 dias e do mês, o gráfico por dia, o tipo de uso (busca, itens sem preço, encartes, fotos, cupons, Falar, Conversa e testes), erros e cota excedida, e as últimas chamadas. Para economizar a cota, desligue em **Mais › Configurações › Opções** a busca extra dos itens sem preço e a leitura automática de encartes.
 
-**Sensores no Home Assistant** vem desligado. Ligado, o app cria o `sensor.economia_ia_hoje`, com as chamadas de hoje e os detalhes nos atributos; desligado, apaga o sensor.
+**Sensores no Home Assistant** vem desligado. Ligado, o app cria no Home Assistant (desligado, apaga os três):
+
+- `sensor.economia_ia_hoje`: as chamadas de IA de hoje, com os detalhes nos atributos;
+- `sensor.economia_melhor_loja`: a loja onde a lista toda sai mais barata (entre as lojas acompanhadas, a que tem preço de mais itens e, entre elas, a de menor total, com a quantidade de cada item e o clube das lojas de que você é sócio), com `total`, `itens` (com preço lá), `faltam` (sem preço lá), `economia` (contra a média das lojas), `distancia_km`, `segunda` (a outra loja mais barata) e `atualizado` (a última busca); as lojas online ficam de fora;
+- `binary_sensor.economia_oferta`: ligado quando uma oferta das lojas acompanhadas bate com um item da lista (as escondidas ficam de fora), com `itens`, `maior_desconto` e `ofertas` (o item, a oferta, a loja, o preço, o preço normal, o desconto e a validade).
+
+Eles mudam em até um minuto depois de uma busca ou de uma mudança na lista. Exemplo de automação:
+
+```yaml
+triggers:
+  - trigger: state
+    entity_id: binary_sensor.economia_oferta
+    to: "on"
+actions:
+  - action: notify.mobile_app_celular_da_ana
+    data:
+      title: "Oferta da lista"
+      message: >-
+        {% set o = state_attr('binary_sensor.economia_oferta', 'ofertas')[0] %}
+        {{ o.produto }} por R$ {{ o.preco }} no {{ o.loja }}.
+```
 
 ## CorrerIA (opcional)
 

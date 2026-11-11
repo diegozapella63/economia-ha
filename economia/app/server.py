@@ -766,6 +766,10 @@ def laco_sincronizacao():
         if _sensor_dia["dia"] != hoje_br() and token_ha():
             publica_sensor_uso()
         try:
+            publica_sensores_lista()
+        except Exception as e:  # noqa: BLE001
+            log(f"sensores da lista: {e}")
+        try:
             sincronizar_lista()
         except ErroBusca as e:
             SYNC["erro"] = str(e)
@@ -941,11 +945,94 @@ _sensor_dia = {"dia": None, "ligado": None}
 
 
 def remove_sensor_uso():
-    """Sensores no Home Assistant desligado: o sensor que o app criou some do Home Assistant."""
+    """Sensores no Home Assistant desligado: os sensores que o app criou somem do Home Assistant."""
+    with _sensores_trava:  # um publica_sensores_lista no meio do caminho não os cria de novo depois
+        _sensores_lista.update(sig=None, em=0.0)
+        for ent in (SENSOR_USO,) + SENSORES_LISTA:
+            try:
+                ha_api("DELETE", "/states/" + ent)
+            except Exception:  # noqa: BLE001  (já não existia, ou o HA está fora: some no próximo reinício)
+                pass
+
+
+# 1.21.0: a loja onde a lista toda sai mais barata e as ofertas dos itens da lista, publicados com os Sensores ligados
+# quando mudam (a lista ou a busca; o laço olha a cada minuto) e a cada 15 minutos (o Home Assistant pode ter reiniciado)
+SENSORES_LISTA = ("sensor.economia_melhor_loja", "binary_sensor.economia_oferta")
+_sensores_lista = {"sig": None, "em": 0.0, "erro": False}
+_sensores_trava = threading.Lock()
+
+
+def estados_lista(cfg=None, of=None):
+    """{entidade: corpo} dos dois sensores. A melhor loja é a loja física acompanhada que tem preço de mais itens da lista
+    e, entre elas, a de menor total (com a quantidade de cada item; o clube só nas lojas em que a pessoa é sócia); a
+    economia é contra a média das lojas em cada item. A oferta liga com uma oferta das lojas acompanhadas (sem as
+    escondidas) que bate com um item da lista (todas as palavras do item no nome da oferta, como no economia_preco)."""
+    cfg = ler_config() if cfg is None else cfg
+    of = (ler_json(OFERTAS, {}) or {}) if of is None else of
+    info, acompanha = redes_acompanhadas(cfg, of)
+    socios = set(cfg.get("clubes") or [])
+    precos = {norm(i.get("produto")): i.get("precos") or {} for i in of.get("lista") or [] if isinstance(i, dict)}
+    itens = [(nome_item(it), qtd_item(it)) for it in cfg.get("lista") or [] if nome_item(it)]
+    por_loja = {}
+    for prod, q in itens:
+        ps = {r: valor_total(v, r in socios) for r, v in precos.get(norm(prod), {}).items() if acompanha(r) and info[r]["cat"] != "online"}
+        ps = {r: v for r, v in ps.items() if v}
+        media = sum(ps.values()) / len(ps) if ps else 0
+        for r, v in ps.items():
+            t = por_loja.setdefault(r, {"itens": 0, "total": 0.0, "economia": 0.0})
+            t["itens"] += 1
+            t["total"] += v * q
+            t["economia"] += (media - v) * q
+    ordem = sorted(por_loja.items(), key=lambda kv: (-kv[1]["itens"], kv[1]["total"], norm(info[kv[0]]["nome"])))
+    attrs = {"friendly_name": "EconomIA: melhor loja", "icon": "mdi:store-check-outline", "atualizado": of.get("gerado_em")}
+    if ordem:
+        (r, t), seg = ordem[0], (ordem[1] if len(ordem) > 1 else None)
+        melhor = {"state": info[r]["nome"], "attributes": dict(
+            attrs, tipo=info[r]["tipo"], total=round(t["total"], 2), itens=t["itens"], faltam=len(itens) - t["itens"],
+            economia=max(0.0, round(t["economia"], 2)), distancia_km=info[r]["dist"],
+            segunda={"loja": info[seg[0]]["nome"], "total": round(seg[1]["total"], 2), "itens": seg[1]["itens"]} if seg else None)}
+    else:
+        melhor = {"state": "unknown", "attributes": dict(attrs, total=None, itens=0, faltam=len(itens))}
+    vivas, _ = _ofertas_vivas(cfg, of)
+    achadas, com = [], set()
+    for prod, _q in itens:
+        palavras = [w for w in norm(prod).split() if len(w) > 2 and not w.isdigit()] or norm(prod).split()
+        for o in vivas:
+            if palavras and all(w in norm(o["produto"]) for w in palavras):
+                com.add(prod)
+                achadas.append({"item": prod, "produto": o["produto"], "loja": o["_loja"], "preco": numero(o["preco_oferta"]),
+                                "preco_normal": numero(o.get("preco_normal")) or None, "desconto": _pct(o) or None,
+                                "valido_ate": o["valido_ate"] if data_ok(o.get("valido_ate")) else None})
+    achadas.sort(key=lambda x: (-(x["desconto"] or 0), x["preco"]))
+    oferta = {"state": "on" if achadas else "off", "attributes": {
+        "friendly_name": "EconomIA: oferta da lista", "icon": "mdi:sale" if achadas else "mdi:tag-outline",
+        "itens": len(com), "maior_desconto": achadas[0]["desconto"] if achadas else None, "ofertas": achadas[:10]}}
+    return {"sensor.economia_melhor_loja": melhor, "binary_sensor.economia_oferta": oferta}
+
+
+def publica_sensores_lista(forcar=False):
+    if not token_ha():
+        return
+    with _sensores_trava:
+        _publica_sensores_lista(forcar)
+
+
+def _publica_sensores_lista(forcar):
+    cfg = ler_config()
+    if not sensores_ligados(cfg):
+        return
+    corpos = estados_lista(cfg)
+    sig = json.dumps(corpos, sort_keys=True, ensure_ascii=False)
+    if not forcar and sig == _sensores_lista["sig"] and time.time() - _sensores_lista["em"] < 900:
+        return
     try:
-        ha_api("DELETE", "/states/" + SENSOR_USO)
-    except Exception:  # noqa: BLE001  (já não existia, ou o HA está fora: some no próximo reinício)
-        pass
+        for ent, corpo in corpos.items():
+            ha_api("POST", "/states/" + ent, corpo)
+        _sensores_lista.update(sig=sig, em=time.time(), erro=False)
+    except Exception as e:  # noqa: BLE001
+        if not _sensores_lista["erro"]:
+            log(f"sensores da lista: {e}")
+        _sensores_lista.update(sig=None, erro=True)
 
 
 def publica_sensor_uso():
@@ -971,6 +1058,7 @@ def publica_sensor_uso():
         if _sensor_dia["dia"] != hoje_br():
             log(f"sensor de uso da IA: {e}")
         _sensor_dia["dia"] = hoje_br()
+    publica_sensores_lista()
 
 
 def chamar_ai_task(nome, instrucoes, anexos=None, uso="busca"):

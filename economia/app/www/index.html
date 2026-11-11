@@ -1625,7 +1625,7 @@ input.field,select.field{min-height:var(--altura)}
       </div>
     </section>
     <section class="panel settings so-ia" aria-labelledby="h-sens">
-      <div class="set-head"><h2 id="h-sens"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span>Sensores no Home Assistant</h2><p class="sec-meta">As chamadas de IA de hoje, para painéis e automações.</p></div>
+      <div class="set-head"><h2 id="h-sens"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span>Sensores no Home Assistant</h2><p class="sec-meta">As chamadas de IA, a loja mais barata para a lista e as ofertas dela, para painéis e automações.</p></div>
       <div class="set-row">
         <div><h3 class="set-t"><label for="sensores">Criar os sensores</label></h3><p class="sec-meta" id="sensoresTxt"></p></div>
         <input type="checkbox" class="switch" id="sensores">
@@ -2544,7 +2544,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.20.0';
+  var VERSAO = '1.21.0';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -5327,7 +5327,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     $('sensores').checked = estado.sensores;
     pintaCorreria();
     $('sensoresTxt').innerHTML = estado.sensores
-      ? 'Ligado: <code>sensor.economia_ia_hoje</code>.'
+      ? 'Ligado: <code>sensor.economia_ia_hoje</code>, <code>sensor.economia_melhor_loja</code> e <code>binary_sensor.economia_oferta</code>.'
       : 'Desligado.';
     $('opItens').checked = estado.opcoes.itens_sem_preco; $('opEncartes').checked = estado.opcoes.encartes_auto; $('opListas').checked = estado.opcoes.listas;
     $('opDiretas').checked = estado.opcoes.lojas_diretas; $('opFolhetos').checked = estado.opcoes.folhetos;

@@ -1,5 +1,12 @@
 # Mudanças
 
+## 1.21.0
+
+- **Sensores novos** no Home Assistant (com **Sensores no Home Assistant** ligado em **Mais › Configurações › Integrações**):
+  - `sensor.economia_melhor_loja`: a loja onde a lista toda sai mais barata, com o total e quanto economiza;
+  - `binary_sensor.economia_oferta`: ligado quando um item da lista está em oferta, com a loja e o preço.
+- A aba **Documentação** traz um exemplo de automação.
+
 ## 1.20.0
 
 - **A leitura por IA mostra o texto todo**: o nome de cada item achado (Ler com IA) e o benefício de cada cupom crescem com o texto, sem ficar cortados, e aumentam puxando o canto.
