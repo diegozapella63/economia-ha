@@ -1,5 +1,10 @@
 # Mudanças
 
+## 1.25.2
+
+- **Compra rápida**: os itens do mesmo tamanho, lado a lado da esquerda para a direita.
+- Quando a busca termina, a caixa **Busca concluída** no alto não aparece mais; só os avisos, quando houver.
+
 ## 1.25.1
 
 - **Roteiro**: a **Lista** fica só com as suas listas e **Nenhuma**, sem **Todas**. De começo vale a lista aberta na Minha lista.

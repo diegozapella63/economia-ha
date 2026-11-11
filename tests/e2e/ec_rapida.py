@@ -74,6 +74,9 @@ async def main():
             check(await chips(pg) == ["Pão de forma", "Arroz 5 kg"], f"os itens, com o nome da lista ({await chips(pg)})")
             # 1.23.0: o melhor preço, mesmo um pouco mais longe (antes, a mais perto quando a outra saía menos de R$ 5 mais barata)
             check(await onde(pg) == "Onde comprar Fort 2,0 km · os 2 itens por R$ 31,40", f"onde comprar: o melhor preço ({await onde(pg)})")
+            # 1.25.2: os itens do mesmo tamanho, da esquerda para a direita (dois por linha)
+            cx = await pg.evaluate("[...document.querySelectorAll('#rapItens .rap-t')].map(e => { const r = e.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)]; })")
+            check(len(cx) == 2 and cx[0][2] == cx[1][2] and cx[0][1] == cx[1][1] and cx[0][0] < cx[1][0], f"os itens do mesmo tamanho, lado a lado ({cx})")
             check(await compare(pg) == ["Fort · 2,0 km · recomendado R$ 31,40", "Giassi · 1,0 km R$ 34,80"], f"compare ({await compare(pg)})")
             check(limpo(await pg.inner_text("#rapRes .i-nota")) == "Fica mais longe, mas sai R$ 3,40 mais barato que Giassi (1,0 km).", "diz por que mais longe")
             # Buscar de novo e Limpar logo embaixo dos itens, lado a lado, do mesmo tamanho

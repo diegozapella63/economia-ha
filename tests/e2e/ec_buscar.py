@@ -1,5 +1,5 @@
 # EconomIA 0.19.0: o botão Buscar com o Home Assistant falso: do exemplo para as ofertas do CEP, o andamento enquanto a IA
-# pensa ("Buscando mercados…", botão girando), "Busca concluída, com 1 chamada de IA", os preços na lista (o do site vale
+# pensa ("Buscando mercados…", botão girando), a caixa some quando termina (1.25.2), os preços na lista (o do site vale
 # mais), a cota da IA acabando (mensagem de erro, o resultado anterior fica), "Buscar este item" e Buscar sem CEP.
 import asyncio
 import threading
@@ -45,8 +45,8 @@ async def main():
             await pg.locator("#views").screenshot(path=SHOTS + "/ecb-botao-girando.png")
             await pg.screenshot(path=SHOTS + "/ecb-buscando.png")
             solta.set()
-            await espera(pg, "() => /Busca concluída/.test(document.getElementById('buscaMsg').textContent)", 20000)
-            check(await pg.text_content("#buscaMsg") == "Busca concluída, com 1 chamada de IA.", f"concluída ({await pg.text_content('#buscaMsg')})")
+            await espera(pg, "() => !document.getElementById('buscar').disabled", 20000)
+            check(await pg.locator("#buscaMsg").is_hidden(), "1.25.2: concluída sem aviso: a caixa some (sem o Busca concluída)")
             check(not await pg.is_disabled("#buscar") and await pg.text_content("#buscarTxt") == "Buscar", "o botão volta")
             await espera(pg, "() => /Última busca/.test(document.getElementById('syncText').textContent)")
             check(await pg.locator("#banner").is_hidden(), "o exemplo sai")

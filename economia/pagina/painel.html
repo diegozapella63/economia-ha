@@ -591,12 +591,15 @@ li.escolhida{border-color:var(--accent) !important}
 .rot-ops{display:flex;flex-direction:column;gap:6px}
 /* Compra rápida: os itens de agora (um toque tira) e a loja aonde ir */
 #rapForm .field{flex:1 1 8em;min-width:0}
-.rap-itens{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+/* 1.25.2: os itens do mesmo tamanho, lado a lado da esquerda para a direita (dois por linha no celular) */
+.rap-itens{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:10px 0 0}
+.rap-itens .rap-t{width:100%;justify-content:space-between;padding-top:8px;padding-bottom:8px;box-sizing:border-box}
 #rapAcoes{margin-top:12px}
 #rapAcoes:empty{display:none}
 .rap-itens:empty{display:none}
 .rap-t{max-width:100%}
 .rap-t span{min-width:0;overflow-wrap:anywhere;text-align:left}
+.rap-t small{display:block}
 .rap-t small{color:var(--muted);font-weight:500}
 .rap-t.sem{background:var(--bg);border-style:dashed}
 #rapRes{display:flex;flex-direction:column;gap:10px;margin-top:12px}
@@ -5752,7 +5755,8 @@ input.field,select.field{min-height:var(--altura)}
     botaoBusca(false, 'Buscar');
     if (!inicial && (st.erro || st.terminou_em) && ui.view !== 'ofertas') toast(st.erro ? st.erro : arr(st.avisos).length ? st.avisos[0] : 'Busca concluída');
     if (st.erro){ m.hidden = false; m.className = 'busca-msg err'; m.textContent = st.erro; }
-    else if (!inicial && st.terminou_em){ m.hidden = false; m.className = 'busca-msg ok'; m.textContent = 'Busca concluída' + (st.chamadas_ia ? ', com ' + st.chamadas_ia + (st.chamadas_ia > 1 ? ' chamadas' : ' chamada') + ' de IA.' : '.') + (arr(st.avisos).length ? ' ' + st.avisos.join(' ') : ''); }
+    // 1.25.2: terminou sem nada a dizer, a caixa some (os preços novos já dizem que acabou); só os avisos ficam
+    else if (!inicial && st.terminou_em && arr(st.avisos).length){ m.hidden = false; m.className = 'busca-msg ok'; m.textContent = st.avisos.join(' '); }
     else m.hidden = true;
   }
   function acompanhaBusca(inicial){

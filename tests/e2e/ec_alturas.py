@@ -42,8 +42,12 @@ async def main():
                         await pg.click('#rapForm button[type="submit"]')
                     await pg.wait_for_timeout(300)
                     await conferir(pg, f"{largura} px › Compra rápida")
-                    chips = await pg.evaluate("[...document.querySelectorAll('#rapItens .rap-t')].map(e => e.offsetHeight)")
-                    check(chips and all(h == H for h in chips), f"{largura} px › os itens da Compra rápida com {H} px ({chips})")
+                    # 1.25.2: os itens do mesmo tamanho na linha; nome comprido quebra a linha (nada cortado), com 50 px no mínimo
+                    chips = await pg.evaluate("[...document.querySelectorAll('#rapItens .rap-t')].map(e => [e.offsetHeight, Math.round(e.getBoundingClientRect().top)])")
+                    linhas = {}
+                    for h, t in chips:
+                        linhas.setdefault(t, set()).add(h)
+                    check(chips and all(h >= H for h, _ in chips) and all(len(v) == 1 for v in linhas.values()), f"{largura} px › os itens da Compra rápida com {H} px ou mais, iguais na linha ({chips})")
                     await pg.click('#rotModo [data-modo="roteiro"]')
                 # 1.21.1: Encarte ou print de preços, nas Ofertas: na largura do cartão no celular, 250 px no computador
                 await pg.click('#lado [data-lado="ofertas"]' if pc else '.tabbar [data-view="ofertas"]')

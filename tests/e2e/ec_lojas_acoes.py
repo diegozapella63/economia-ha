@@ -96,7 +96,8 @@ async def main():
             check(not any(a["nome"] == "Mercado da Esquina" for a in app.config_salva()["lojas"]["adicionar"]), "remover")
             # ----- Buscar preços agora -----
             await pg.click("#lojasAcharMsg [data-buscar-ja]")
-            await espera(pg, "() => /Busca concluída/.test(document.getElementById('buscaMsg').textContent)", 30000)
+            await espera(pg, "() => document.getElementById('buscar').disabled", 10000)
+            await espera(pg, "() => !document.getElementById('buscar').disabled", 30000)
             await pg.click('.tabbar [data-view="lista"]')
             await espera(pg, "() => /4,59/.test(document.getElementById('wish').textContent)")
             leite = (await pg.locator("#wish > li.item", has_text="Leite integral").inner_text()).replace("\xa0", " ")
