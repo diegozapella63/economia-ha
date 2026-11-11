@@ -1,5 +1,11 @@
 # Mudanças
 
+## 1.22.0
+
+- **Distância dos mercados que entregam** (Mais › Lojas › Compras online, com **Mercados da região que entregam** ligado): até 10, 15, 20, 30 ou 50 km, sempre mais que a da casa. O app procura no mapa os mercados nessa distância e pergunta ao site de cada um se entrega no seu CEP: os que entregam trazem o preço direto do site, mesmo com a loja fora do raio (como o Bistek).
+- Em **Mais › Lojas › Online**, cada mercado da região mostra a distância e se entrega: quando o site não diz, aparece **Sem preços**, com o porquê em **Como foi testado**, e **Entrega no meu CEP** para você confirmar; os que não entregam vão para **Inativas**.
+- **Botões na largura do cartão em todas as telas**, não só em Mais: **Abrir rota no Maps**, **Ler com IA** e **Fechar**, **Preencher o perfil** e **Importar lista**, **Mover** e **Cancelar**.
+
 ## 1.21.1
 
 - **Sem preços de** (nas Ofertas) segue o **Testar agora**: uma loja que o teste achou de onde tirar o preço sai do aviso, e em **Mais › Lojas** diz **Preços na próxima busca**. Antes o aviso olhava só a última busca e não sumia depois do teste.

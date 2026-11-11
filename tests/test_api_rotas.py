@@ -162,6 +162,18 @@ class Config(Rotas):
         self.assertEqual((st, d["config"]["cep"]), (200, "2"))
         self.assertIn("versão anterior: disco cheio", self.log)
 
+    def test_mercados_da_regiao_pela_rota(self):
+        """1.22.0: POST /api/regiao/atualizar (Mais › Lojas › Compras online); não durante a busca."""
+        st, d = self.pede("POST", "/api/regiao/atualizar", {"mercados_entrega": False})
+        self.assertEqual((st, d), (200, {"ok": True, "msg": ""}))
+        st, d = self.pede("POST", "/api/regiao/atualizar", bruto=b"[1]")
+        self.assertEqual(st, 200, "corpo estranho: vale a configuração gravada")
+        self.S.BUSCA["rodando"] = True
+        try:
+            self.assertEqual(self.pede("POST", "/api/regiao/atualizar", {})[1], {"ok": False, "msg": "Espere a busca terminar."})
+        finally:
+            self.S.BUSCA["rodando"] = False
+
     def test_ligar_sensores_publica_no_ha(self):
         st, d = self.pede("PUT", "/api/config", {"rev": 0, "cep": CEP, "sensores": True})
         self.espera(lambda: "sensor.economia_ia_hoje" in self.ha.estados, msg="o sensor não apareceu")

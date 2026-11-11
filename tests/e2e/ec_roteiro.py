@@ -63,6 +63,9 @@ async def main():
             check("Café Pilão 500 g" in amz and "chega em 2 dias" in amz, "o café pedido online, com o prazo")
             check("Ainda sem preço: Abacaxi." in await pg.text_content("#rotRes"), "o que ainda não tem preço")
             href = await pg.get_attribute('#rotRes a:has-text("Abrir rota no Maps")', "href")
+            # 1.22.0: o Abrir rota no Maps na largura do cartão, como os botões de todos os apps
+            w = await pg.evaluate("() => { const a = [...document.querySelectorAll('#rotRes a')].find(x => /Abrir rota/.test(x.textContent)); return [Math.round(a.getBoundingClientRect().width), Math.round(a.parentElement.getBoundingClientRect().width)]; }")
+            check(abs(w[0] - w[1]) <= 1, f"Abrir rota no Maps na largura do cartão ({w})")
             q = urllib.parse.parse_qs(urllib.parse.urlsplit(href).query)
             check(q["origin"] == [CEP + ", Brasil"] and q["destination"] == [CEP + ", Brasil"], "a rota sai de casa e volta para casa")
             check(q["waypoints"] == [f"Panvel, Rua P, 12, {CEP}|Fort Atacadista, Rua F, 400, {CEP}"], f"as paradas na ordem, com o endereço ({q.get('waypoints')})")

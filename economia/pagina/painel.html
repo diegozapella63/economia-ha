@@ -225,12 +225,11 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:34px;text-ove
 @media (min-width:1000px){#mp-dados .row-form > .btn,#mp-dados .row-form > .ghost.big,#mp-dados .opts .ghost.big{flex:none;width:250px}}
 /* as outras telas de Mais (1.19.0): os botões de uma linha só de botões na largura do cartão no celular (dois lado a lado
    dividem a linha), com 250 px no computador, como os de Dados; as linhas com um campo (CEP, Nunca mostrar) ficam como estão */
-.mais-painel:not(#mp-dados) .row-form:not(:has(.field)) > :is(.btn, .ghost.big){flex:1 1 calc(50% - 4px);min-width:fit-content;white-space:nowrap;min-height:50px;
+/* 1.22.0: em todas as telas (antes só em Mais), como em todos os apps da família: Encarte ou print de preços, Abrir rota no
+   Maps, Ler com IA e Fechar, Preencher o perfil e Importar lista, Mover e Cancelar… */
+.row-form:not(:has(.field)):not(#mp-dados .row-form) > :is(.btn, .ghost.big){flex:1 1 calc(50% - 4px);min-width:fit-content;white-space:nowrap;min-height:50px;
   justify-content:center;border-radius:12px;padding:12px 18px;font-size:15px;box-sizing:border-box;text-align:center} /* sem caber os dois, um embaixo do outro */
-@media (min-width:1000px){.mais-painel:not(#mp-dados) .row-form:not(:has(.field)) > :is(.btn, .ghost.big){flex:none;width:250px}}
-/* 1.21.1: o Encarte ou print de preços (Ofertas), como os botões de Mais: na largura do cartão no celular, 250 px no computador */
-.enc > .row-form > .ghost.big{flex:1 1 100%;min-height:50px;justify-content:center;border-radius:12px;padding:12px 18px;font-size:15px;box-sizing:border-box}
-@media (min-width:1000px){.enc > .row-form > .ghost.big{flex:none;width:250px}}
+@media (min-width:1000px){.row-form:not(:has(.field)):not(#mp-dados .row-form) > :is(.btn, .ghost.big){flex:none;width:250px}}
 #mp-dados .confirma .row-form > .btn,#mp-dados .confirma .row-form > .ghost.big{flex:1 1 0;width:auto;min-width:0} /* Apagar tudo e Cancelar lado a lado, do mesmo tamanho */
 #mp-dados .confirma .btn.perigo{background:var(--deal);border-color:transparent;color:var(--surface)} /* na confirmação, o Apagar tudo é o cheio */
 .hint{font-size:12.5px;color:var(--muted)}
@@ -1480,6 +1479,8 @@ input.field,select.field{min-height:var(--altura)}
           <div class="group"><h3>Assinaturas com frete grátis</h3><div class="picks" id="pAss"></div></div>
           <label class="set-line"><input type="checkbox" class="switch" id="onEntrega"><span>Mercados da região que entregam no seu CEP</span></label>
           <p class="hint">Como o Bistek. Aparecem em Online.</p>
+          <div class="group" id="entregaKmG" hidden><h3><label for="entregaKm">Distância dos mercados que entregam</label></h3>
+            <select class="field" id="entregaKm"></select><p class="hint" id="entregaMsg" aria-live="polite"></p></div>
           <p class="hint">Prime e Meli+ valem só para os produtos elegíveis; o frete de cada item já conta isso.</p>
         </section>
       </div></div>
@@ -1909,7 +1910,8 @@ input.field,select.field{min-height:var(--altura)}
       cep: c.cep || null,
       raio_km: Number(c.raio_km) || 2,
       categorias: cats.length ? cats : D.categorias.map(function(x){ return x.id; }),
-      online: {marketplaces: arr(on.marketplaces).length ? arr(on.marketplaces) : ['mercadolivre', 'amazon'], assinaturas: arr(on.assinaturas), mercados_entrega: on.mercados_entrega !== false},
+      online: {marketplaces: arr(on.marketplaces).length ? arr(on.marketplaces) : ['mercadolivre', 'amazon'], assinaturas: arr(on.assinaturas), mercados_entrega: on.mercados_entrega !== false,
+        entrega_km: Number(on.entrega_km) || null, entrega_sim: arr(on.entrega_sim).filter(function(x){ return typeof x === 'string' && x; })},
       lojas: {ignorar: arr(l.ignorar), manter: arr(l.manter), adicionar: arr(l.adicionar), folhetos: arr(l.folhetos).filter(function(f){ return f && f.nome; }).map(function(f){ return {nome:String(f.nome), categoria:f.categoria || 'mercados'}; })},
       lista: arr(c.lista).map(function(i){ return typeof i === 'string' ? {produto:i, compras:[]} : {produto:String(i.produto || ''), compras:arr(i.compras), origem:i.origem === 'ha' ? 'ha' : undefined,
         similares:i.similares ? true : undefined, ean:/^\d{8,14}$/.test(String(i.ean || '')) ? String(i.ean) : undefined, qtd:qtdDe(i) > 1 ? qtdDe(i) : undefined,
@@ -1986,6 +1988,8 @@ input.field,select.field{min-height:var(--altura)}
       if (regional(id) && !estado.online.mercados_entrega) return false;
       var mk = mktDe(G[id].nome);
       if (mk && estado.online.marketplaces.indexOf(mk) < 0) return false;
+      var lr = LOJA[id];  // 1.22.0: o site disse que não entrega no CEP e você não confirmou
+      if (regional(id) && lr && lr.entrega && lr.entrega.atende === false && !entregaSim(id)) return false;
     }
     if (estado.lojas.manter.indexOf(id) >= 0) return true;
     var l = LOJA[id];
@@ -1993,8 +1997,10 @@ input.field,select.field{min-height:var(--altura)}
       var gm = GEMEA[G[id].cat + '|' + chaveLoja(G[id].nome)];
       return gm && gm !== id ? acompanha(gm) : false;
     }
-    return l ? (l.distancia_km == null || l.distancia_km <= estado.raio_km) : true;
+    return l ? (l.distancia_km == null || l.distancia_km <= raioDe(id)) : true;
   }
+  // o raio que vale para a loja: o da casa; para o mercado da região que entrega (em Online), o de entrega (1.22.0)
+  function raioDe(id){ return G[id] && G[id].cat === 'online' ? (kmEntrega() || estado.raio_km) : estado.raio_km; }
   function setAcompanha(id, on){
     tira(estado.lojas.ignorar, id); tira(estado.lojas.manter, id);
     var mk = G[id] && G[id].cat === 'online' ? mktDe(G[id].nome) : '';
@@ -2003,7 +2009,7 @@ input.field,select.field{min-height:var(--altura)}
       if (on) estado.online.marketplaces.push(mk);
     }
     if (on && regional(id)) estado.online.mercados_entrega = true;
-    var l = LOJA[id], auto = !l || l.distancia_km == null || l.distancia_km <= estado.raio_km;
+    var l = LOJA[id], auto = !l || l.distancia_km == null || l.distancia_km <= raioDe(id);
     if (on !== auto) (on ? estado.lojas.manter : estado.lojas.ignorar).push(id);
   }
   function catAtiva(id){ return G[id] && estado.categorias.indexOf(G[id].cat) >= 0; }
@@ -4531,7 +4537,8 @@ input.field,select.field{min-height:var(--altura)}
       if (fis) ord = ord.filter(function(l){ return modo === 'semLocal' ? semLocal(l) : !semLocal(l); });
       if (c.id === 'online'){
         var fisicas = {};
-        D.categorias.forEach(function(k){ if (k.id !== 'online') arr(k.lojas).forEach(function(l){ if (G[l.rede]) fisicas[chaveLoja(G[l.rede].nome)] = 1; }); });
+        // só a loja do raio da casa (a do bairro) esconde o mesmo mercado em Online; a de longe, não (1.22.0)
+        D.categorias.forEach(function(k){ if (k.id !== 'online') arr(k.lojas).forEach(function(l){ if (G[l.rede] && (l.distancia_km == null || l.distancia_km <= estado.raio_km)) fisicas[chaveLoja(G[l.rede].nome)] = 1; }); });
         ord = ord.filter(function(l){ return !(regional(l.rede) && fisicas[chaveLoja(G[l.rede].nome)]); });
       }
       var ativa = ord.map(function(l){ return acompanha(l.rede); });
@@ -4545,14 +4552,15 @@ input.field,select.field{min-height:var(--altura)}
       };
       var semF = [], nomeOk = [];
       var rows = ord.map(function(l){
-        var on = acompanha(l.rede), longe = l.distancia_km > estado.raio_km, mi = manualDe(G[l.rede].nome), web = c.id === 'online' && !regional(l.rede);
+        var on = acompanha(l.rede), longe = l.distancia_km > raioDe(l.rede), mi = manualDe(G[l.rede].nome), web = c.id === 'online' && !regional(l.rede);
         if (mi >= 0) usadas[mi] = true;
         semF.push(semFonte(c, l, web)); nomeOk.push(!TERMO_LOJA || norm(G[l.rede].nome).indexOf(TERMO_LOJA) >= 0);
-        var txt = longe ? (on ? 'Mais longe, mas você acompanha' : 'Mais longe que ' + estado.raio_km + ' km') : (on ? (l.horario || '') : 'Você não acompanha');
+        var txt = longe ? (on ? 'Mais longe, mas você acompanha' : 'Mais longe que ' + raioDe(l.rede) + ' km') : (on ? (l.horario || '') : 'Você não acompanha');
         return '<li class="row has-track' + (on ? '' : ' out') + '">'
           + '<label class="track"><input type="checkbox" data-rede="' + l.rede + '"' + (on ? ' checked' : '') + '><span class="r-name">' + esc(G[l.rede].nome) + '</span></label>'
           + '<span class="r-val num">' + (web ? '' : km(l.distancia_km)) + '</span>'
           + '<span class="r-sub">' + (txt ? '<span>' + esc(txt) + '</span>' : '') + (l.endereco ? '<span>' + esc(l.endereco) + '</span>' : '') + (web ? '' : mapaChip(l, G[l.rede].nome)) + siteChip(l) + instaChip(l) + clubeHtml(c, l) + arr(l.fontes).filter(function(f){ return f !== 'Mapa' && f !== 'Clube' && !(f === 'Site' && siteDe(l)) && !(f === 'Instagram' && instaDe(l)); }).map(function(f){ return '<span class="src">' + esc(f) + '</span>'; }).join('')
+          + (c.id === 'online' && regional(l.rede) ? entregaHtml(l) : '')
           + (l.encarte_auto ? '<span>Encarte lido do site ' + esc(host(l.site)) + '</span>' : '') + (l.folheto ? '<span>Folheto da semana' + (l.folheto_ate ? ' até ' + dataBR(l.folheto_ate) : '') + '</span>' : '') + (l.instagram ? '<a class="linkbtn" href="' + esc(l.instagram) + '" target="_blank" rel="noopener">Encarte do Instagram' + (l.instagram_ate ? ' até ' + dataBR(l.instagram_ate) : '') + '</a>' : '') + (l.preco_fonte ? fonteHtml(l, c.id, c) : web ? fonteOnline(G[l.rede].nome) + botaoTestar(l, c.id) : avisoSemPreco(c, l) + botaoTestar(l, c.id))
           + (mi >= 0 ? '<span>Adicionada por você</span><button type="button" class="rm" data-loja="' + mi + '">remover</button>' : '') + '</span>'
           + (siteAberto === l.rede ? '<form class="site-form" novalidate data-site-form="' + esc(l.rede) + '" data-cat="' + c.id + '"><input class="field" type="url" inputmode="url" value="' + esc(siteDe(l)) + '" placeholder="Site, página de ofertas ou @ do Instagram" aria-label="Site de ofertas de ' + esc(G[l.rede].nome) + '"><button class="btn" type="submit">Salvar</button><button type="button" class="ghost big" data-site-fecha="1">Cancelar</button></form>' : '')
@@ -4651,6 +4659,22 @@ input.field,select.field{min-height:var(--altura)}
         + arr(f.passos).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></details>' : '')
       + botaoTestar(l, cid) + ((f.como === 'ia' || f.como === 'nenhum') && !(cid === 'online' && !regional(l.rede)) ? botaoSite(l) : '');
   }
+  // 1.22.0: mercado da região: se entrega no CEP (pelo site, ou confirmado por você), com o Como foi testado
+  function entregaSim(id){
+    var n = G[id] ? chaveLoja(G[id].nome) : '';
+    return !!n && estado.online.entrega_sim.some(function(x){ return chaveLoja(x) === n; });
+  }
+  function entregaHtml(l){
+    var e = l.entrega; if (!e) return '';
+    var sim = entregaSim(l.rede), k = 'e:' + l.rede;
+    var chip = e.atende ? '<span class="chip selo">Entrega no seu CEP</span>'
+      : sim ? '<span class="chip selo">Entrega no seu CEP</span><span>Confirmado por você</span>'
+      : e.atende === false ? '<span class="chip warn">Não entrega no seu CEP</span>'
+      : '<span class="chip warn">Sem preços</span><span>Não sei se entrega no seu CEP</span>';
+    var det = arr(e.passos).length ? '<details class="fonte-det"' + (FONTE_ABERTA[k] ? ' open' : '') + ' data-fonte="' + esc(k) + '"><summary>Como foi testado' + (e.em ? ' · ' + esc(quandoCurto(e.em)) : '') + '</summary><ul>'
+      + arr(e.passos).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></details>' : '';
+    return chip + det + (e.atende ? '' : '<button type="button" class="linkbtn" data-entrega="' + esc(l.rede) + '">' + (sim ? 'Não entrega' : 'Entrega no meu CEP') + '</button>');
+  }
   function avisoSemPreco(c, l){
     if (l.nova && acompanha(l.rede)) return '<span>Preços na próxima busca</span>';
     if (semPrecos(c).indexOf(l) < 0) return '';
@@ -4675,6 +4699,14 @@ input.field,select.field{min-height:var(--altura)}
       var id = cb.dataset.clube, on = estado.clubes.indexOf(id) < 0;
       if (on) estado.clubes.push(id); else tira(estado.clubes, id);
       salvar((on ? 'Preço de clube ligado: ' : 'Preço de clube desligado: ') + G[id].nome);
+      tudo(); return;
+    }
+    var en = e.target.closest('[data-entrega]');
+    if (en){
+      var rid = en.dataset.entrega, nome = G[rid].nome, sim = entregaSim(rid);
+      estado.online.entrega_sim = estado.online.entrega_sim.filter(function(x){ return chaveLoja(x) !== chaveLoja(nome); });
+      if (!sim) estado.online.entrega_sim.push(nome);
+      salvar(sim ? nome + ': não entrega no seu CEP' : nome + ': entrega no seu CEP, os preços vêm na próxima busca');
       tudo(); return;
     }
     var tl = e.target.closest('[data-testar]');
@@ -4915,6 +4947,7 @@ input.field,select.field{min-height:var(--altura)}
     $('opItens').checked = estado.opcoes.itens_sem_preco; $('opEncartes').checked = estado.opcoes.encartes_auto; $('opListas').checked = estado.opcoes.listas;
     $('opDiretas').checked = estado.opcoes.lojas_diretas; $('opFolhetos').checked = estado.opcoes.folhetos;
     $('onEntrega').checked = estado.online.mercados_entrega;
+    pintaEntregaKm();
     pintaEtapas();
   }
   // a ordem da busca (fim de Mais › Lojas) mostra só as etapas ligadas em Mais › Configurações › Opções
@@ -4963,7 +4996,27 @@ input.field,select.field{min-height:var(--altura)}
   $('opEncartes').addEventListener('change', function(){ estado.opcoes.encartes_auto = this.checked; salvar('Opção salva'); });
   $('opDiretas').addEventListener('change', function(){ estado.opcoes.lojas_diretas = this.checked; salvar(this.checked ? 'Busca direta ligada' : 'Busca direta desligada'); pintaEtapas(); pintaLista(); });
   $('opFolhetos').addEventListener('change', function(){ estado.opcoes.folhetos = this.checked; salvar(this.checked ? 'Folhetos ligados' : 'Folhetos desligados'); pintaEtapas(); });
-  $('onEntrega').addEventListener('change', function(){ estado.online.mercados_entrega = this.checked; salvar(this.checked ? 'Mercados que entregam: ligado' : 'Mercados que entregam: desligado'); });
+  $('onEntrega').addEventListener('change', function(){
+    estado.online.mercados_entrega = this.checked; salvar(this.checked ? 'Mercados que entregam: ligado' : 'Mercados que entregam: desligado');
+    pintaEntregaKm(); if (this.checked) atualizaRegiao();
+  });
+  // 1.22.0: até quantos km procurar os mercados que entregam (só as distâncias maiores que a da casa)
+  function kmsEntrega(){ return [10, 15, 20, 30, 50].filter(function(k){ return k > estado.raio_km; }); }
+  function kmEntrega(){ var ks = kmsEntrega(); return ks.indexOf(estado.online.entrega_km) >= 0 ? estado.online.entrega_km : (ks.indexOf(15) >= 0 ? 15 : ks[0]); }
+  function pintaEntregaKm(){
+    var ks = kmsEntrega(), atual = kmEntrega();
+    $('entregaKm').innerHTML = ks.map(function(k){ return '<option value="' + k + '"' + (k === atual ? ' selected' : '') + '>até ' + k + ' km</option>'; }).join('');
+    $('entregaKmG').hidden = !estado.online.mercados_entrega || !ks.length;
+  }
+  function atualizaRegiao(){
+    if (MODO !== 'addon') return;
+    var msg = $('entregaMsg'); msg.className = 'hint'; msg.textContent = 'Procurando mercados até ' + kmEntrega() + ' km e se entregam no seu CEP…';
+    fetch('api/regiao/atualizar', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({entrega_km:kmEntrega(), mercados_entrega:estado.online.mercados_entrega})})
+      .then(function(r){ return r.json(); })
+      .then(function(j){ msg.className = 'hint ' + (j.ok ? 'ok' : 'err'); msg.textContent = j.msg || ''; recarrega(); })
+      .catch(function(){ msg.className = 'hint err'; msg.textContent = 'Sem resposta. Tente de novo.'; });
+  }
+  $('entregaKm').addEventListener('change', function(){ estado.online.entrega_km = Number(this.value); salvar('Mercados que entregam: até ' + this.value + ' km'); atualizaRegiao(); });
 
   // ----- chave guardada: o campo aparece preenchido (••••); tocar nele limpa para colar outra -----
   var OCULTO = '••••••••••••••••';

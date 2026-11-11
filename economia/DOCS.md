@@ -237,6 +237,9 @@ A aba **Online** compara iFood, Rappi, Mercado Livre, Amazon e outros que você 
 - Na Minha lista, cada item mostra se **compensa pedir** ou se é melhor **comprar na loja**. Se o pedido chegaria depois de o item acabar, o EconomIA sugere comprar na loja agora e diz até quando pedir da próxima vez.
 - Só entram lojas oficiais ou vendedores bem avaliados. Importados ficam marcados, e remédios de receita ficam só nas farmácias.
 - **Mercados da região que entregam** (ligado em Mais › Lojas › Compras online): mercados fora do raio que vendem pelo site ou app e entregam no seu CEP, como o Bistek, aparecem em Online, separados dos marketplaces. Quando a taxa só aparece no carrinho, o preço vem com "+ frete".
+  - **Distância dos mercados que entregam** (logo abaixo, só com o interruptor ligado): até 10, 15, 20, 30 ou 50 km, sempre mais que a distância da casa (de começo, 15 km). O app procura no mapa os mercados entre a distância da casa e essa, e pergunta ao site de cada um se entrega no seu CEP (a consulta de entrega dos sites de mercado; vale por uma semana, e de novo ao mudar a distância ou no **Encontrar lojas**).
+  - Em **Mais › Lojas › Online**, cada um aparece em **Mercados da região que entregam**, com a distância: **Entrega no seu CEP** (o site confirmou: os preços vêm direto do site na busca), **Sem preços · Não sei se entrega no seu CEP** (o site não diz; **Como foi testado** mostra o porquê) ou, em **Inativas**, **Não entrega no seu CEP**. **Entrega no meu CEP** confirma à mão (a busca com IA passa a procurar os preços dele); **Não entrega** desfaz.
+  - Um mercado com loja no raio da casa fica só na aba dele (do bairro); com a loja mais longe, aparece também em Online.
 - **De quando é o preço**: o cartão mostra a hora dos preços. Preço da busca na web aparece marcado para você conferir no link: a Amazon, por exemplo, muda o preço várias vezes por dia, e o Google Shopping costuma estar atrasado.
 
 ## Lista por voz

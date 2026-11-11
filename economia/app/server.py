@@ -28,6 +28,7 @@ Rotas:
 - GET  /api/folhetos   lojas com folheto lido no Kimbino ou no Seus Folhetos e como foi a última leitura
 - GET  /api/lojas-mapa   lojas do raio pelo mapa (OpenStreetMap e, com chave, Google Places)
 - POST /api/lojas-mapa/atualizar   {"raio_km", "categorias"}: lê o mapa agora, registra as lojas e começa o teste de preço de cada uma
+- POST /api/regiao/atualizar   {"entrega_km", "mercados_entrega"}: os mercados da região até a distância, e se entregam no CEP
 - GET  /api/lojas-mapa/teste   andamento do teste de preço das lojas
 - POST /api/ler-encarte   {"imagens": [...], "loja", "categoria"}: a IA lê o encarte ou o print de preços e junta ao resultado
 - POST /api/versoes/guardar {"motivo"} | /api/versoes/restaurar {"nome"}
@@ -1301,8 +1302,12 @@ def entrega_txt(cfg):
         return ""
     tipos = [CATEGORIAS[c]["o_que"].split(",")[0] for c in (cfg.get("categorias") or list(CATEGORIAS)) if c in CATEGORIAS and c != "online"]
     perto = lojas_perto(cfg)
+    km = entrega_km(cfg)
+    sim = [m["nome"] for m in regiao_guardada(cfg) if (m.get("entrega") or {}).get("atende") or entrega_confirmada(cfg, m["nome"])]
     return (f"Mercados que entregam: procure também {', '.join(tipos) or 'supermercados'} da cidade e da região, inclusive fora do raio de "
-            f"{cfg.get('raio_km') or 2} km, que vendem pelo site ou app próprio com entrega neste CEP (redes regionais com loja online). "
+            f"{cfg.get('raio_km') or 2} km" + (f" (até {km} km do CEP)" if km else "") + ", que vendem pelo site ou app próprio com entrega neste CEP (redes regionais com loja online). "
+            + (f"Estes entregam neste CEP: procure o preço dos itens da lista neles: {', '.join(sim)}. " if sim else "")
+            + 
             "Em \"rede\", só o nome da loja, sem \"online\" ou \"delivery\". \"frete\" é a taxa de entrega para este CEP; se o site só mostra "
             "a taxa no carrinho, use \"frete\": \"carrinho\" e escreva em \"obs\" a regra que achar (por exemplo \"frete grátis acima de R$ 550\"). "
             "\"prazo_dias\" é 0 para entrega no mesmo dia."
@@ -2076,6 +2081,10 @@ def candidatos_site(cfg):
             rid = l.get("rede") if isinstance(l, dict) else None
             if l.get("regional") and nomes.get(rid) and url_ok(links.get(rid)):
                 out.setdefault(origem_de(links[rid]), (nomes[rid], "online"))
+    # 1.22.0: os mercados da região que o site diz que entregam no CEP (fora do raio: entram como Online)
+    for m in regiao_guardada(cfg):
+        if (m.get("entrega") or {}).get("atende") and url_ok(m.get("site")):
+            out.setdefault(origem_de(m["site"]), (m["nome"], "online"))
     fixas = {origem_de(v["site"]) for v in LOJAS_DIRETAS.values()} | {"https://www.kimbino.com.br", "https://seusfolhetos.com.br"}
     return {o: v for o, v in out.items() if o not in fixas}
 
@@ -5082,6 +5091,153 @@ def lojas_do_mapa(cfg, cats, forcar=False):
     return lojas
 
 
+# ---------- Mercados da região que entregam (1.22.0): os mercados do mapa entre o raio da casa e o raio de entrega
+# (Mais › Lojas › Compras online, maior que o da casa). O site de cada um diz se entrega no CEP (a consulta de entrega
+# da VTEX); sem resposta, a loja aparece em Online sem preço, com o porquê em Como foi testado, e a pessoa confirma
+# (online.entrega_sim, pelo nome). Os que entregam, pelo site ou confirmados, entram na busca como mercados que entregam.
+ENTREGA_KM = (10, 15, 20, 30, 50)
+REGIAO_FILE = os.path.join(DATA, "mercados_regiao.json")
+MAX_REGIAO = 12
+
+
+def entrega_km(cfg):
+    """O raio de entrega escolhido; sem escolha (ou menor que o da casa), 15 km ou o primeiro maior que o da casa."""
+    try:
+        raio = float(cfg.get("raio_km") or 2)
+    except (TypeError, ValueError):
+        raio = 2.0
+    ok = [k for k in ENTREGA_KM if k > raio]
+    v = (cfg.get("online") or {}).get("entrega_km")
+    return v if v in ok else (15 if 15 in ok else (ok[0] if ok else None))
+
+
+def regiao_ligada(cfg):
+    return entrega_ligada(cfg) and "online" in (cfg.get("categorias") or list(CATEGORIAS)) and bool(entrega_km(cfg))
+
+
+def testa_entrega(site, cep):
+    """Se o mercado entrega no CEP, pelo site: {atende: True | False | None, passos: [...]} (None: o site não diz)."""
+    if not site:
+        return {"atende": None, "passos": ["✗ Sem site no mapa: não dá para saber se entrega no seu CEP.", "Confirme se entrega."]}
+    o = origem_de(site)
+    t = testa_site(o, cep)
+    if t.get("erro"):
+        return {"atende": None, "passos": [f"✗ O site {host_de(o)} {t['erro']}.", "Confirme se entrega."]}
+    if not t.get("permite"):
+        return {"atende": None, "passos": [f"✗ O site {host_de(o)} não deixa programas consultarem a entrega.", "Confirme se entrega."]}
+    if not t.get("vtex"):
+        return {"atende": None, "passos": [f"✗ O site {host_de(o)} não tem a consulta de entrega por CEP.", "Confirme se entrega."]}
+    try:
+        d = http_json(o + "/api/checkout/pub/regions?country=BRA&postalCode=" + re.sub(r"\D", "", str(cep or "")), timeout=15)
+    except Exception as e:  # noqa: BLE001
+        return {"atende": None, "passos": [f"✗ A consulta de entrega de {host_de(o)} não respondeu ({str(e)[:60]}).", "Confirme se entrega."]}
+    atende = bool(isinstance(d, list) and d and (d[0] or {}).get("sellers"))
+    cep_txt = re.sub(r"\D", "", str(cep or ""))
+    cep_txt = f"{cep_txt[:5]}-{cep_txt[5:]}" if len(cep_txt) == 8 else cep_txt
+    return {"atende": atende, "passos": [f"✓ O site {host_de(o)} tem a consulta de entrega por CEP.",
+                                         f"✓ Entrega no CEP {cep_txt}." if atende else f"✗ Não entrega no CEP {cep_txt}."]}
+
+
+def host_de(u):
+    return re.sub(r"^www\.", "", urllib.parse.urlsplit(u).netloc) if "://" in str(u) else str(u)
+
+
+def mercados_da_regiao(cfg, forcar=False):
+    """Os mercados do mapa entre o raio da casa e o de entrega, um por rede (a filial mais perto), com a entrega conferida
+    pelo site. Guardado por 7 dias (e de novo quando muda a casa, o raio ou o CEP)."""
+    if not regiao_ligada(cfg):
+        return []
+    try:
+        lat, lon = casa(cfg)
+    except Exception as e:  # noqa: BLE001
+        log(f"mercados da região: sem a localização da Casa ({e})")
+        return []
+    km = entrega_km(cfg)
+    raio = float(cfg.get("raio_km") or 2)
+    chave = f"r1,{lat:.4f},{lon:.4f},{raio:g},{km},{re.sub(r'[^0-9]', '', str(cfg.get('cep') or ''))}"
+    memo = ler_json(REGIAO_FILE, {}) or {}
+    semana = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat(timespec="seconds")
+    if not forcar and memo.get("chave") == chave and memo.get("em", "") >= semana:
+        return memo.get("lojas") or []
+    todas, respondeu = [], False
+    try:
+        todas += osm_lojas(lat, lon, int(km * 1000), ["mercados"])
+        respondeu = True
+    except Exception as e:  # noqa: BLE001
+        log(f"mercados da região: OpenStreetMap sem resposta ({e})")
+    g = google_chave()
+    if g:
+        try:
+            todas += google_lojas(lat, lon, int(km * 1000), ["mercados"], g)
+            respondeu = True
+        except Exception as e:  # noqa: BLE001
+            log(f"mercados da região: {e}")
+    if not respondeu:  # o mapa não respondeu: fica o que já se sabia
+        return memo.get("lojas") or []
+    try:
+        cidade, _ = cidade_do_cep(cfg.get("cep"), ler_json(FOLHETOS, {}) or {})
+    except Exception:  # noqa: BLE001
+        cidade = ""
+    perto = lojas_perto_cat(cfg)  # a rede que tem loja no raio já é buscada como loja do bairro
+    out = []
+    for l in sorted(todas, key=lambda x: x["distancia_km"]):
+        if not raio < l["distancia_km"] <= km or any(mesma_loja(x["nome"], l["nome"]) for x in out) or categoria_da_loja(l["nome"], perto) != "online":
+            continue
+        site = l.get("site") if site_loja(l.get("site")) else site_da_rede(l["nome"], cidade or "")
+        out.append({"nome": nome_bonito(l["nome"]) if l["nome"] == l["nome"].upper() else l["nome"], "distancia_km": round(l["distancia_km"], 1),
+                    "endereco": l.get("endereco"), "site": site, "lat": l.get("lat"), "lon": l.get("lon")})
+        if len(out) >= MAX_REGIAO:
+            break
+    for l in out:
+        l["entrega"] = dict(testa_entrega(l["site"], cfg.get("cep")), em=agora())
+    gravar_json(REGIAO_FILE, {"chave": chave, "em": agora(), "km": km, "lojas": out})
+    log(f"mercados da região até {km} km: " + (", ".join(f"{l['nome']} ({'entrega' if l['entrega']['atende'] else 'não entrega' if l['entrega']['atende'] is False else 'sem resposta'})" for l in out) or "nenhum"))
+    return out
+
+
+def regiao_guardada(cfg):
+    """Os mercados da região da última leitura (sem ir ao mapa), se ainda valem para a casa e o raio de agora."""
+    if not regiao_ligada(cfg):
+        return []
+    memo = ler_json(REGIAO_FILE, {}) or {}
+    return [l for l in memo.get("lojas") or [] if isinstance(l, dict) and l.get("nome")] if memo.get("km") == entrega_km(cfg) else []
+
+
+def entrega_confirmada(cfg, nome):
+    return any(mesma_loja(n, nome) for n in (cfg.get("online") or {}).get("entrega_sim") or [])
+
+
+def aplica_regiao(categorias, cfg):
+    """Os mercados da região em Online (regional), com a distância, o endereço e a entrega; os que já vieram da busca
+    ganham a distância e a entrega."""
+    regiao = regiao_guardada(cfg)
+    if not regiao:
+        return
+    on = next((c for c in categorias if c.get("id") == "online"), None)
+    if on is None:
+        on = {"id": "online", "nome": CATEGORIAS["online"]["nome"], "singular": CATEGORIAS["online"]["singular"],
+              "redes": [], "lojas": [], "cupons": [], "ofertas": [], "contas": []}
+        categorias.append(on)
+    nomes = {r["id"]: r["nome"] for r in on.get("redes") or [] if isinstance(r, dict) and r.get("id")}
+    for m in regiao:
+        rid = next((k for k, n in nomes.items() if mesma_loja(n, m["nome"])), None)
+        if rid is None:
+            rid = "onli-" + slug(nome_direta(m["nome"]), 30)
+            nomes[rid] = m["nome"]
+            on.setdefault("redes", []).append({"id": rid, "nome": m["nome"], "curto": m["nome"][:16]})
+        l = next((x for x in on.get("lojas") or [] if x.get("rede") == rid), None)
+        if l is None:
+            l = {"rede": rid, "horario": "", "fontes": ["Mapa"]}
+            on.setdefault("lojas", []).append(l)
+        l.update({"regional": True, "distancia_km": m["distancia_km"], "endereco": l.get("endereco") or m.get("endereco"),
+                  "entrega": m.get("entrega") or {"atende": None, "passos": []}})
+        if m.get("site") and not url_ok(l.get("site")):
+            l["site"] = m["site"]
+        l.update({k: m[k] for k in ("lat", "lon") if m.get(k) is not None})
+        if entrega_confirmada(cfg, m["nome"]):
+            l["entrega"] = dict(l["entrega"], confirmada=True)
+
+
 def mapa_txt(cfg, cat_id):
     lojas = (cfg.get("_mapa") or {}).get(cat_id) or []
     if not lojas:
@@ -5170,6 +5326,10 @@ def atualizar_lojas_mapa(dado):
     except Exception:  # noqa: BLE001
         return {"ok": False, "msg": "Não achei a localização da Casa no Home Assistant. Confira em Configurações › Sistema › Geral."}
     mapa = lojas_do_mapa(cfg, cats, forcar=True)
+    try:
+        mercados_da_regiao(cfg, forcar=True)
+    except Exception as e:  # noqa: BLE001
+        log(f"mercados da região: {e}")
     if not any(mapa.values()):
         return {"ok": False, "msg": "O mapa não respondeu agora ou não achou lojas nessa distância. Tente de novo em alguns minutos ou aumente a distância."}
     mesclar_resultado([], cfg, mapa=mapa, novas_lojas=True)
@@ -5185,6 +5345,36 @@ def atualizar_lojas_mapa(dado):
     raio = str(cfg.get("raio_km") or 2).replace(".0", "")
     return {"ok": True, "msg": f"Achei {txt} até {raio} km ({' e '.join(fontes)}).",
             "lojas": {c: len(v) for c, v in mapa.items()}, "teste": True}
+
+
+def atualizar_regiao(dado):
+    """Mais › Lojas › Compras online: ligar os mercados que entregam ou mudar a distância lê os mercados da região agora."""
+    cfg = ler_config()
+    on = dict(cfg.get("online") or {})
+    if dado.get("entrega_km") in ENTREGA_KM:
+        on["entrega_km"] = dado["entrega_km"]
+    if isinstance(dado.get("mercados_entrega"), bool):
+        on["mercados_entrega"] = dado["mercados_entrega"]
+    cfg = dict(cfg, online=on)
+    if not regiao_ligada(cfg):
+        return {"ok": True, "msg": ""}
+    try:
+        casa(cfg)
+    except Exception:  # noqa: BLE001
+        return {"ok": False, "msg": "Não achei a localização da Casa no Home Assistant. Confira em Configurações › Sistema › Geral."}
+    lojas = mercados_da_regiao(cfg, forcar=True)
+    mesclar_resultado([], cfg)
+    km = entrega_km(cfg)
+    if not lojas:
+        return {"ok": True, "msg": f"Nenhum mercado com site entre {str(cfg.get('raio_km') or 2).replace('.0', '')} e {km} km."}
+    sim = sum(1 for l in lojas if (l.get("entrega") or {}).get("atende"))
+    nao = sum(1 for l in lojas if (l.get("entrega") or {}).get("atende") is False)
+    partes = [f"{sim} entrega{'m' if sim != 1 else ''} no seu CEP"] if sim else []
+    if nao:
+        partes.append(f"{nao} não")
+    if len(lojas) - sim - nao:
+        partes.append(f"{len(lojas) - sim - nao} sem resposta (confirme em Online)")
+    return {"ok": True, "msg": f"{len(lojas)} mercado{'s' if len(lojas) != 1 else ''} até {km} km: " + ", ".join(partes) + "."}
 
 
 LOCAIS = os.path.join(DATA, "locais.json")
@@ -5913,6 +6103,11 @@ def buscar():
         _uso_local.chamadas = 0
         ia = ia_ligada(cfg)
         # primeiro o que não gasta IA: site das lojas, Shopee e folhetos guardados
+        BUSCA.update({"etapa": "mercados da região", "total": 0})
+        try:
+            mercados_da_regiao(cfg)
+        except Exception as e:  # noqa: BLE001
+            log(f"mercados da região: {e}")
         BUSCA.update({"etapa": "sites das lojas", "total": 0})
         scripts, rel_s, ja = busca_scripts(cfg, cats, ler_folhetos=ia)
         relatorio.update(rel_s)
@@ -6113,6 +6308,7 @@ def mesclar_resultado(resultado, cfg, extra=None, mapa=None, completa=False, nov
                     l.pop("nova", None)
         if mapa:
             aplica_mapa(novas, mapa, cfg, marcar_novas=novas_lojas)
+        aplica_regiao(novas, cfg)
         marca_fontes(novas)
         lista = juntar_categorias(parciais)
         relatorio = anterior.get("relatorio") if isinstance(anterior.get("relatorio"), dict) else {}
@@ -6597,10 +6793,12 @@ def redes_acompanhadas(cfg, of):
             continue
         dist = {l.get("rede"): l.get("distancia_km") for l in c.get("lojas") or [] if isinstance(l, dict)}
         reg = {l.get("rede") for l in c.get("lojas") or [] if isinstance(l, dict) and l.get("regional")}
+        nao = {l.get("rede") for l in c.get("lojas") or [] if isinstance(l, dict) and l.get("regional") and (l.get("entrega") or {}).get("atende") is False}
         for r in c.get("redes") or []:
             if isinstance(r, dict) and r.get("id"):
                 info[r["id"]] = {"nome": r.get("nome") or r["id"], "tipo": c.get("singular") or c.get("nome") or "",
-                                 "cat": c.get("id"), "dist": dist.get(r["id"]), "loja": r["id"] in dist, "regional": r["id"] in reg}
+                                 "cat": c.get("id"), "dist": dist.get(r["id"]), "loja": r["id"] in dist, "regional": r["id"] in reg,
+                                 "nao_entrega": r["id"] in nao and not entrega_confirmada(cfg, r.get("nome") or "")}
     mkts = set((cfg.get("online") or {}).get("marketplaces") or ["mercadolivre", "amazon"])
 
     def acompanha(rid):
@@ -6609,11 +6807,12 @@ def redes_acompanhadas(cfg, of):
             return False
         if i["cat"] == "online":  # desligados em Online: os mercados da região e o marketplace fora da busca
             mk = mkt_id(i["nome"])
-            if (i["regional"] and not entrega_ligada(cfg)) or (mk and mk not in mkts):
+            if (i["regional"] and not entrega_ligada(cfg)) or (mk and mk not in mkts) or i.get("nao_entrega"):
                 return False
         if not i["loja"] and i["cat"] != "online" and rid not in manter:
             return False  # rede que ficou sem loja (o mapa tirou: de outra categoria ou duplicada)
-        return rid in manter or i["dist"] is None or i["dist"] <= raio
+        # 1.22.0: o mercado da região que entrega vale até a distância de entrega, não a da casa
+        return rid in manter or i["dist"] is None or i["dist"] <= (entrega_km(cfg) or raio if i["cat"] == "online" else raio)
     return info, acompanha
 
 
@@ -7542,6 +7741,15 @@ class Painel(BaseHTTPRequestHandler):
             except (ValueError, OSError):
                 dado = {}
             return self._json(200, atualizar_lojas_mapa(dado if isinstance(dado, dict) else {}))
+        if urllib.parse.urlsplit(self.path).path == "/api/regiao/atualizar":
+            if BUSCA["rodando"]:
+                return self._json(200, {"ok": False, "msg": "Espere a busca terminar."})
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+                dado = json.loads(self.rfile.read(n) or b"{}") if 0 < n < 2000 else {}
+            except (ValueError, OSError):
+                dado = {}
+            return self._json(200, atualizar_regiao(dado if isinstance(dado, dict) else {}))
         if urllib.parse.urlsplit(self.path).path == "/api/lojas-mapa/testar-loja":
             try:
                 n = int(self.headers.get("Content-Length") or 0)
