@@ -1,5 +1,11 @@
 # Mudanças
 
+## 1.23.0
+
+- **Compra rápida** recomenda a loja de **melhor preço** entre as que têm mais itens; antes ficava com a mais perto quando a outra saía menos de R$ 5 mais barata. Se a recomendada fica mais longe, o app diz quanto você economiza.
+- **Compra rápida** mais organizada: **Buscar preços** e **Limpar** logo embaixo dos itens, lado a lado; depois **Onde comprar**, os preços, **Como chegar** na largura do cartão e **Compare**. Antes o Limpar ficava no fim da tela.
+- **Roteiro**: a **Lista** é uma escolha só (**Todas**, uma lista ou **Nenhuma**), com os botões do mesmo tamanho de Paradas e O que comprar.
+
 ## 1.22.0
 
 - **Distância dos mercados que entregam** (Mais › Lojas › Compras online, com **Mercados da região que entregam** ligado): até 10, 15, 20, 30 ou 50 km, sempre mais que a da casa. O app procura no mapa os mercados nessa distância e pergunta ao site de cada um se entrega no seu CEP: os que entregam trazem o preço direto do site, mesmo com a loja fora do raio (como o Bistek).

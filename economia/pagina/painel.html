@@ -568,6 +568,9 @@ li.escolhida{border-color:var(--accent) !important}
 .rot-ctrl > .group{flex:1 1 240px}
 .rot-ctrl .seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);width:100%}
 .rot-ctrl .seg button{padding:9px 4px}
+/* 1.23.0: a Lista do roteiro, uma escolha só como Paradas e O que comprar; muitas listas quebram a linha */
+.rot-ctrl #rotListas{grid-auto-flow:row;grid-template-columns:repeat(auto-fit,minmax(96px,1fr))}
+.rot-ctrl #rotListas button{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .set-line{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer}
 #rotRes{display:flex;flex-direction:column;gap:12px}
 .rot-total{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;background:var(--accent-soft);border-radius:10px;padding:10px 12px}
@@ -587,6 +590,8 @@ li.escolhida{border-color:var(--accent) !important}
 /* Compra rápida: os itens de agora (um toque tira) e a loja aonde ir */
 #rapForm .field{flex:1 1 8em;min-width:0}
 .rap-itens{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+#rapAcoes{margin-top:12px}
+#rapAcoes:empty{display:none}
 .rap-itens:empty{display:none}
 .rap-t{max-width:100%}
 .rap-t span{min-width:0;overflow-wrap:anywhere;text-align:left}
@@ -1337,6 +1342,7 @@ input.field,select.field{min-height:var(--altura)}
         </form>
         <p class="hint" id="rapMsg" hidden></p>
         <div class="rap-itens" id="rapItens"></div>
+        <div class="row-form" id="rapAcoes"></div>
         <div id="rapRes" aria-live="polite"></div>
       </div>
       <div id="rotPlano">
@@ -1344,7 +1350,7 @@ input.field,select.field{min-height:var(--altura)}
       <div class="rot-ctrl">
         <div class="group"><h3>Paradas, no máximo</h3><div class="seg" id="rotParadas" role="group" aria-label="Paradas, no máximo"></div></div>
         <div class="group"><h3>O que comprar</h3><div class="seg" id="rotEscopo" role="group" aria-label="O que comprar"></div></div>
-        <div class="group rot-listas" id="rotListasG" hidden><h3>Listas</h3><div class="listas-bar" id="rotListas" role="group" aria-label="Listas do roteiro"></div></div>
+        <div class="group rot-listas" id="rotListasG" hidden><h3>Lista</h3><div class="seg" id="rotListas" role="group" aria-label="Lista do roteiro"></div></div>
         <label class="set-line" id="rotOnlineRow"><input type="checkbox" class="switch" id="rotOnline"><span>Pedir online o que sair mais barato com frete</span></label>
       </div>
       <div id="rotRes" aria-live="polite"></div>
@@ -1926,7 +1932,7 @@ input.field,select.field{min-height:var(--altura)}
       clubes: arr(c.clubes),
       cupons_meus: arr(c.cupons_meus).filter(function(k){ return k && k.beneficio && k.rede; }),
       roteiro: {paradas:Math.min(4, Math.max(1, Math.round(Number(ro.paradas)) || 2)), escopo:ro.escopo === 'acabando' ? 'acabando' : 'tudo', online:ro.online !== false,
-        listas:arr(ro.listas).filter(function(id, k, a){ return (idsListas[id] || id === NENHUMA) && a.indexOf(id) === k; })},
+        listas:arr(ro.listas).filter(function(id, k, a){ return (idsListas[id] || id === NENHUMA) && a.indexOf(id) === k; }).filter(function(_, k, a){ return a.length === 1; })},  // uma lista ou todas (1.23.0)
       listas: listas,
       ocultas: arr(c.ocultas),
       // a cor do app, da casa toda (1.9.0): null até a casa ter uma (a primeira vez adota a do aparelho)
@@ -4131,7 +4137,8 @@ input.field,select.field{min-height:var(--altura)}
     $('rotOnlineRow').hidden = estado.categorias.indexOf('online') < 0;
     var ls = listasOn() ? estado.listas : [];
     $('rotListasG').hidden = !ls.length;
-    $('rotListas').innerHTML = !ls.length ? '' : idsRoteiro().map(function(id){ return '<button type="button" class="pick" data-rl="' + esc(id) + '" aria-pressed="' + (!ro.listas.length || ro.listas.indexOf(id) >= 0) + '"><span>' + esc(nomeLista(id)) + '</span></button>'; }).join('');
+    var sel = ro.listas.length === 1 ? ro.listas[0] : '';  // uma lista ou Todas (antes dava para marcar várias: vale Todas)
+    $('rotListas').innerHTML = !ls.length ? '' : [''].concat(idsRoteiro()).map(function(id){ return '<button type="button" data-rl="' + esc(id) + '" aria-pressed="' + (id === sel) + '">' + esc(id ? nomeLista(id) : 'Todas') + '</button>'; }).join('');
   }
   function pintaRoteiro(){
     var rap = modoRot() === 'rapida';
@@ -4189,21 +4196,18 @@ input.field,select.field{min-height:var(--altura)}
   $('rotParadas').addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; estado.roteiro.paradas = Number(b.dataset.v); rotVer = null; salvar(); pintaRoteiro(); pintaHero(); });
   $('rotEscopo').addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; estado.roteiro.escopo = b.dataset.v; rotVer = null; salvar(); pintaRoteiro(); pintaHero(); });
   $('rotOnline').addEventListener('change', function(){ estado.roteiro.online = this.checked; rotVer = null; salvar(); pintaRoteiro(); pintaHero(); });
-  // as listas do roteiro: cada lista pronta e Nenhuma, um toque põe ou tira; ao menos uma fica (todas = [])
+  // a lista do roteiro (1.23.0): Todas, uma lista pronta ou Nenhuma (os itens sem lista); uma escolha só (todas = [])
   function idsRoteiro(){ return estado.listas.map(function(l){ return l.id; }).concat([NENHUMA]); }
   $('rotListas').addEventListener('click', function(e){
     var b = e.target.closest('[data-rl]'); if (!b) return;
-    var id = b.dataset.rl, todos = idsRoteiro(), ls = estado.roteiro.listas.length ? estado.roteiro.listas : todos;
-    ls = ls.indexOf(id) >= 0 ? ls.filter(function(x){ return x !== id; }) : ls.concat([id]);
-    if (!ls.length){ toast('Escolha pelo menos uma lista.'); return; }
-    estado.roteiro.listas = todos.every(function(x){ return ls.indexOf(x) >= 0; }) ? [] : todos.filter(function(x){ return ls.indexOf(x) >= 0; });
+    estado.roteiro.listas = b.dataset.rl ? [b.dataset.rl] : [];
     rotVer = null; salvar(); pintaRoteiro();
   });
   $('rotRes').addEventListener('click', function(e){ var b = e.target.closest('[data-rotk]'); if (!b) return; rotVer = Number(b.dataset.rotk); pintaRoteiro(); });
 
   // ===== Compra rápida (1.16.0): uns itens de agora, sem planejar. Não entram na lista (ficam no aparelho, em ui.rapida)
-  // e a resposta é uma loja física só: a mais perto com o máximo de itens, a não ser que outra com os mesmos itens saia bem
-  // mais barata (R$ 5 e 10% a menos). Nada online: quem compra agora não espera a entrega.
+  // e a resposta é uma loja física só: a de melhor preço entre as que têm mais itens (1.23.0; empatado, a mais perto).
+  // Nada online: quem compra agora não espera a entrega.
   var MAX_RAPIDA = 10, MAX_BUSCA_ITENS = 8, rapVer = null, RAP_BUSCA = false;
   var ICO_X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
   function modoRot(){ return ui.rotModo === 'rapida' ? 'rapida' : 'roteiro'; }
@@ -4219,8 +4223,8 @@ input.field,select.field{min-height:var(--altura)}
     var max = ls.reduce(function(m, l){ return Math.max(m, l.itens.length); }, 0);
     var plenas = ls.filter(function(l){ return l.itens.length === max; });
     var perto = plenas.slice().sort(function(a, b){ return a.dist - b.dist || a.total - b.total; })[0];
-    var barata = plenas.slice().sort(function(a, b){ return a.total - b.total || a.dist - b.dist; })[0];
-    var rec = perto && barata !== perto && perto.total - barata.total >= Math.max(5, perto.total * 0.1) ? barata : perto;
+    // 1.23.0: o melhor preço entre as lojas com mais itens (antes, a mais perto, a não ser que outra saísse R$ 5 e 10% mais barata)
+    var rec = plenas.slice().sort(function(a, b){ return a.total - b.total || a.dist - b.dist; })[0];
     ls.sort(function(a, b){ return ((b === rec) - (a === rec)) || (b.itens.length - a.itens.length) || (a.dist - b.dist) || (a.total - b.total); });
     return {itens:its, sem:its.filter(function(x){ return !x.p.length; }), lojas:ls.slice(0, 4), rec:rec, perto:perto};
   }
@@ -4235,6 +4239,10 @@ input.field,select.field{min-height:var(--altura)}
     $('rapItens').innerHTML = c.itens.map(function(x, i){
       return '<button type="button" class="nunca-t rap-t' + (x.p.length ? '' : ' sem') + '" data-rapx="' + i + '" aria-label="Tirar ' + esc(x.nome) + '"><span>' + esc(x.nome) + (x.p.length ? '' : ' <small>sem preço</small>') + '</span>' + ICO_X + '</button>';
     }).join('');
+    // 1.23.0: Buscar preços e Limpar logo embaixo dos itens (antes, um no meio do resultado e o outro no fim)
+    $('rapAcoes').innerHTML = !c.itens.length ? '' : (RAP_BUSCA ? '<button type="button" class="btn" disabled>Buscando…</button>'
+      : '<button type="button" class="' + (c.sem.length ? 'btn' : 'ghost big') + '" data-rapbusca="' + (c.sem.length ? 'sem' : 'todos') + '">' + (c.sem.length ? 'Buscar preços' : 'Buscar de novo') + '</button>')
+      + '<button type="button" class="ghost big" data-raplimpar>Limpar</button>';
     if (!c.itens.length){ el.innerHTML = ''; return; }
     var ver = c.rec, n = c.itens.length - c.sem.length;  // os itens sem preço em loja nenhuma não contam como faltando
     c.lojas.forEach(function(l){ if (l.id === rapVer) ver = l; });
@@ -4256,14 +4264,12 @@ input.field,select.field{min-height:var(--altura)}
       acoes.push('<a class="ghost big" href="' + esc(linkLoja(ver.id)) + '" target="_blank" rel="noopener">Como chegar</a>');
     } else h += '<p class="empty">Ainda não sei o preço ' + (c.itens.length > 1 ? 'destes itens' : 'deste item') + ' nas lojas daqui.</p>';
     if (ver && c.sem.length) h += '<p class="hint">' + esc('Sem preço ainda: ' + c.sem.map(function(x){ return x.nome; }).join(', ') + '.') + '</p>';
-    if (c.sem.length) acoes.push('<button type="button" class="' + (ver ? 'ghost big' : 'btn') + '" data-rapbusca="sem"' + (RAP_BUSCA ? ' disabled' : '') + '>' + (RAP_BUSCA ? 'Buscando…' : 'Buscar preços') + '</button>');
-    h += '<div class="rap-acoes">' + acoes.join('') + '</div>';
+    if (acoes.length) h += '<div class="row-form">' + acoes.join('') + '</div>';
     if (c.lojas.length > 1) h += '<div class="group"><h3>Compare</h3><ul class="rot-ops">' + c.lojas.map(function(o){
       var lo = LOJA[o.id], falta = n - o.itens.length;
       return '<li><button type="button" class="rot-op" data-rapl="' + esc(o.id) + '" aria-pressed="' + (o === ver) + '"><span>' + esc(G[o.id].nome) + (lo && lo.distancia_km != null ? ' · ' + km(lo.distancia_km) : '') + (o === c.rec ? ' · recomendado' : '') + '</span><span class="num">'
         + brl.format(o.total) + (falta ? ' · sem ' + falta + (falta > 1 ? ' itens' : ' item') : '') + '</span></button></li>';
     }).join('') + '</ul></div>';
-    h += '<div class="rap-fim">' + (!c.sem.length && !RAP_BUSCA ? '<button type="button" class="link" data-rapbusca="todos">Buscar de novo</button>' : '') + '<button type="button" class="link" data-raplimpar>Limpar</button></div>';
     el.innerHTML = h;
   }
   function buscarRapida(nomes){
@@ -4309,13 +4315,15 @@ input.field,select.field{min-height:var(--altura)}
     var b = e.target.closest('[data-rapx]'); if (!b) return;
     var its = rapItens(); its.splice(Number(b.dataset.rapx), 1); ui.rapida = its; salvarUI(); rapVer = null; $('rapMsg').hidden = true; pintaRapida();
   });
-  $('rapRes').addEventListener('click', function(e){
+  function rapClique(e){
     var b = e.target.closest('[data-rapl], [data-rapbusca], [data-raplimpar]'); if (!b) return;
     if (b.dataset.rapl != null){ rapVer = b.dataset.rapl; pintaRapida(); return; }
     if (b.hasAttribute('data-raplimpar')){ ui.rapida = []; salvarUI(); rapVer = null; $('rapMsg').hidden = true; pintaRapida(); $('rapItem').focus(); return; }
     var c = calculaRapida();
     buscarRapida((b.dataset.rapbusca === 'sem' ? c.sem : c.itens).map(function(x){ return x.nome; }));
-  });
+  }
+  $('rapRes').addEventListener('click', rapClique);
+  $('rapAcoes').addEventListener('click', rapClique);
 
   // ===== Abertura: oportunidades de economia =====
   function oportunidades(){

@@ -72,10 +72,13 @@ async def main():
             await pg.wait_for_timeout(250)
             await adiciona(pg, "arroz 5 KG")
             check(await chips(pg) == ["Pão de forma", "Arroz 5 kg"], f"os itens, com o nome da lista ({await chips(pg)})")
-            # perto e quase o mesmo preço: o Giassi (o Fort sairia só R$ 3,40 a menos)
-            check(await onde(pg) == "Onde comprar Giassi 1,0 km · os 2 itens por R$ 34,80", f"onde comprar: a mais perto ({await onde(pg)})")
-            check(await compare(pg) == ["Giassi · 1,0 km · recomendado R$ 34,80", "Fort · 2,0 km R$ 31,40"], f"compare ({await compare(pg)})")
-            check(await pg.locator("#rapRes .i-nota").count() == 0, "a mais perto: nada a explicar")
+            # 1.23.0: o melhor preço, mesmo um pouco mais longe (antes, a mais perto quando a outra saía menos de R$ 5 mais barata)
+            check(await onde(pg) == "Onde comprar Fort 2,0 km · os 2 itens por R$ 31,40", f"onde comprar: o melhor preço ({await onde(pg)})")
+            check(await compare(pg) == ["Fort · 2,0 km · recomendado R$ 31,40", "Giassi · 1,0 km R$ 34,80"], f"compare ({await compare(pg)})")
+            check(limpo(await pg.inner_text("#rapRes .i-nota")) == "Fica mais longe, mas sai R$ 3,40 mais barato que Giassi (1,0 km).", "diz por que mais longe")
+            # Buscar de novo e Limpar logo embaixo dos itens, lado a lado, do mesmo tamanho
+            acoes = [t.strip() for t in await pg.locator("#rapAcoes > *").all_inner_texts()]
+            check(acoes == ["Buscar de novo", "Limpar"], f"embaixo dos itens: Buscar de novo e Limpar ({acoes})")
             # outra bem mais barata com os mesmos itens: vale ir mais longe
             await adiciona(pg, "Sabão em pó 1,6 kg")
             check(await onde(pg) == "Onde comprar Fort 2,0 km · os 3 itens por R$ 53,30", f"o Fort, R$ 21,40 mais barato ({await onde(pg)})")
@@ -89,7 +92,7 @@ async def main():
             linhas = [limpo(x) for x in await pg.locator("#rapRes .parada li").all_inner_texts()]
             check(linhas == ["Pão de forma R$ 8,50", "Arroz 5 kg R$ 22,90", "Sabão em pó 1,6 kg R$ 21,90", "Leite integral R$ 5,20", "Café torrado em grãos R$ 95,80"],
                   f"o preço de cada item lá ({linhas})")
-            href = await pg.get_attribute("#rapRes .rap-acoes a", "href")
+            href = await pg.get_attribute("#rapRes .row-form a", "href")
             check(href.startswith("https://www.google.com/maps/dir/?api=1") and "destination=Fort" in href and "origin=" not in href,
                   "Como chegar: do lugar onde está até a loja")
             check(await compare(pg) == ["Fort · 2,0 km · recomendado R$ 154,30", "Giassi · 1,0 km R$ 156,60 · sem 1 item", "Komprão · 4,5 km R$ 4,90 · sem 4 itens"],
@@ -104,12 +107,14 @@ async def main():
             await adiciona(pg, "Pilha AA")
             check(await chips(pg) == ["Pão de forma", "Arroz 5 kg", "Sabão em pó 1,6 kg", "Leite integral", "Café torrado em grãos", "Pilha AA sem preço"], "o item sem preço")
             check("Sem preço ainda: Pilha AA." in limpo(await pg.inner_text("#rapRes")), "diz o que está sem preço")
-            check(await pg.inner_text('#rapRes [data-rapbusca="sem"]') == "Buscar preços", "o botão de buscar")
+            check(await pg.inner_text('#rapAcoes [data-rapbusca="sem"]') == "Buscar preços", "o botão de buscar, embaixo dos itens")
             check((await compare(pg))[0] == "Fort · 2,0 km · recomendado R$ 154,30", f"o item sem preço em loja nenhuma não conta como faltando ({await compare(pg)})")
-            med = await pg.evaluate("[...document.querySelectorAll('#rapRes .rap-acoes > *')].map(e => { const r = e.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; })")
-            check(len(med) == 2 and med[0] == med[1] and med[0][1] == 50, f"Como chegar e Buscar preços lado a lado, do mesmo tamanho ({med})")
+            med = await pg.evaluate("[...document.querySelectorAll('#rapAcoes > *')].map(e => { const r = e.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; })")
+            check(len(med) == 2 and med[0] == med[1] and med[0][1] == 50, f"Buscar preços e Limpar lado a lado, do mesmo tamanho ({med})")
+            cc = await pg.evaluate("() => { const a = document.querySelector('#rapRes .row-form a'); return [Math.round(a.getBoundingClientRect().width), Math.round(a.parentElement.getBoundingClientRect().width), a.offsetHeight]; }")
+            check(abs(cc[0] - cc[1]) <= 1 and cc[2] == 50, f"Como chegar na largura do cartão ({cc})")
             async with pg.expect_request(lambda r: "api/buscar-itens" in r.url and r.method == "POST") as rq:
-                await pg.click('#rapRes [data-rapbusca="sem"]')
+                await pg.click('#rapAcoes [data-rapbusca="sem"]')
             check(json.loads((await rq.value).post_data) == {"itens": ["Pilha AA"], "rapida": True}, "procura só o que está sem preço")
             await espera(pg, "() => !document.getElementById('buscar').disabled", 30000)
             await pg.wait_for_timeout(800)
@@ -131,9 +136,9 @@ async def main():
             await pg.wait_for_timeout(250)
             check("Leite integral" not in await chips(pg), "um toque tira o item")
             check(await pg.evaluate("document.documentElement.scrollWidth <= innerWidth"), "nada passa da largura")
-            await pg.click("#rapRes [data-raplimpar]")
+            await pg.click("#rapAcoes [data-raplimpar]")
             await pg.wait_for_timeout(250)
-            check(await chips(pg) == [] and await pg.locator("#rapRes").inner_text() == "", "Limpar: vazia")
+            check(await chips(pg) == [] and await pg.locator("#rapRes").inner_text() == "" and await pg.locator("#rapAcoes > *").count() == 0, "Limpar: vazia")
             await pg.click('#rotModo [data-modo="roteiro"]')
             await pg.wait_for_timeout(250)
             check(await pg.locator("#rotPlano").is_visible() and await pg.inner_text("#h-rot") == "Roteiro de compras", "de volta ao Roteiro")
@@ -146,8 +151,8 @@ async def main():
             for nome in ("Pão de forma", "Sabão em pó 1,6 kg", "Leite integral", "Papel higiênico folha dupla com 12 rolos"):
                 await adiciona(pg, nome)
             check(await pg.evaluate("document.documentElement.scrollWidth <= innerWidth"), "320 px: nada passa da largura")
-            med = await pg.evaluate("[...document.querySelectorAll('#rapRes .rap-acoes > *')].map(e => { const r = e.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; })")
-            check(len(med) == 2 and med[0] == med[1] and med[0][1] == 50, f"320 px: os dois botões numa linha só, do mesmo tamanho ({med})")
+            med = await pg.evaluate("[...document.querySelectorAll('#rapAcoes > *')].map(e => { const r = e.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height), Math.round(r.top)]; })")
+            check(len(med) == 2 and med[0][:2] == med[1][:2] and med[0][1] == 50, f"320 px: os dois botões do mesmo tamanho (sem caber lado a lado, um embaixo do outro) ({med})")
             caixa = await pg.evaluate("[document.getElementById('rapItem'), document.querySelector('#rapForm .btn')].map(e => Math.round(e.getBoundingClientRect().top))")
             check(caixa[0] == caixa[1], "320 px: o campo e o Adicionar na mesma linha")
             await shot(pg, "rapida-320", full_page=True)

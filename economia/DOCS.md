@@ -76,7 +76,7 @@ Ligue em **Mais › Configurações › Opções › Listas** (vem desligado). N
 - Numa lista, **tirar desta lista** tira o item só dela; sem outra lista, ele vai para Nenhuma. **Limpar lista** fica só em Nenhuma e tira só os itens dela.
 - **Mover itens**, embaixo da barra: escolha para qual lista, marque os itens (ou **Marcar todos**) e toque em **Mover**. Eles saem da lista aberta e entram na outra; de uma lista, dá para mover para Nenhuma.
 - **Renomear** e **Apagar lista** ficam embaixo da barra, com a lista aberta. Apagar uma lista não apaga os itens: os que só estavam nela vão para Nenhuma.
-- No **Roteiro**, escolha quais entram: cada lista e Nenhuma (de começo, todas; ao menos uma fica).
+- No **Roteiro**, em **Lista**, escolha qual entra: **Todas** (de começo), uma lista ou **Nenhuma** (os itens sem lista). Uma escolha só, como Paradas e O que comprar.
 - Desligar a opção esconde as listas, sem apagar: ligue de novo e elas voltam.
 
 ## Quantidade
@@ -109,10 +109,11 @@ Na aba **Roteiro**, ao lado da Minha lista, diga em até quantas lojas você top
 
 Para quando precisa de umas coisas agora, sem planejar: no **Roteiro**, escolha **Compra rápida** e escreva cada item (as sugestões trazem os da sua lista e os nomes das lojas). Os itens não entram na lista e ficam guardados no aparelho até você tirar.
 
-- **Onde comprar**: uma loja física só, a mais perto que tem tudo. Se outra loja com os mesmos itens sair bem mais barata (pelo menos R$ 5 e 10% a menos), ela vira a recomendada, e o app diz quanto economiza indo mais longe. Lojas online ficam de fora.
+- Logo embaixo dos itens: **Buscar preços** (só os que estão sem preço; com todos com preço, **Buscar de novo**) e **Limpar**.
+- **Onde comprar**: uma loja física só, a de melhor preço entre as que têm mais itens (empatadas, a mais perto). Se ela fica mais longe que outra, o app diz quanto economiza indo até lá. Lojas online ficam de fora.
 - O preço de cada item na loja, **Como chegar** (a rota no Maps de onde você está) e, se a loja não tiver tudo, o que falta lá e onde tem.
 - **Compare**: as outras lojas, com o total e quantos itens faltam em cada uma. Um toque mostra a loja.
-- Item ainda **sem preço**: **Buscar preços** procura só esses (até 8), só nas lojas físicas. Com todos com preço, **Buscar de novo** atualiza.
+- Item ainda **sem preço**: **Buscar preços** procura só esses (até 8), só nas lojas físicas.
 - Um toque no item tira ele; **Limpar** tira tudo.
 
 ## Como o item da lista acha o produto
