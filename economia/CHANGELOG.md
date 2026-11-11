@@ -1,5 +1,12 @@
 # Mudanças
 
+## 1.35.0
+
+- A **Melhor compra** e a economia agora são **por quilo, litro ou unidade**: *R$ 9,60 por quilo* e *economia de R$ 35,40/kg*. Antes eram pelo tamanho de sempre do item (por 400 g, por 30 ml). O avulso mais barato mostra o mesmo preço por quilo ou litro, ao lado do preço do pacote.
+- Nada se compara mais **entre setores**: o álcool de 30 ml da farmácia não entra mais na conta com o galão de 5 L do atacado, nem o leite da farmácia com o do mercado. Cada item fica no setor das lojas em que mais aparece; as lojas online valem com qualquer setor.
+- **Onde comprar**: ao adicionar um item, escolha *Mercado*, *Farmácia* ou *Pet shop* (ou deixe em *Automático*). No pé de cada cartão dá para trocar depois; com um setor escolhido, a próxima busca traz o item só das lojas dele.
+- Em **Mais › Configurações › Opções › Busca direta nas lojas**, a lista das lojas fica recolhida em **Lojas (n)**, uma por linha ao abrir.
+
 ## 1.34.1
 
 - A lista pronta das sugestões ganhou os nomes de cada região para a mesma coisa: *Bolacha água e sal*, *Macaxeira*, *Bergamota*, *Pão de sal*, *Cacetinho*, *Cândida*, *Pasta de dente*, *Areia de gato*…

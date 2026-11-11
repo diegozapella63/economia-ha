@@ -167,9 +167,11 @@ async def main():
             carne = await item(pg, "Carne moída")
             check("MAIS BARATO" in (await carne.locator(".i-best").first.inner_text()).upper(), "Desfazer escolha volta ao mais barato")
             # 1.30.0: o remover fica no pé, ao lado do Buscar similares; no item sem preço (sem pé), nos botões
-            pe = (await carne.locator(".i-foot").inner_text()).replace("\xa0", " ")
+            # 1.35.0: com mais de um setor ligado, o setor do item (Setor automático) fica antes do remover
+            pe = await carne.locator(".i-foot").evaluate("el => { const c = el.cloneNode(true); c.querySelectorAll('select').forEach((s) => s.replaceWith(s.selectedOptions[0].text)); return c.textContent; }")
+            pe = " ".join(pe.replace("\xa0", " ").split())
             check(await carne.locator(".i-foot [data-rm]").count() == 1 and await carne.locator(".i-actions > [data-rm]").count() == 0
-                  and pe.rstrip().endswith("Buscar de novo · Esconder similares · remover"), f"remover no pé ({pe!r})")
+                  and pe.endswith("Buscar de novo · Esconder similares · Setor automático · remover"), f"remover no pé ({pe!r})")
             check(await (await item(pg, "Detergemte Ypê")).locator(".i-actions > [data-rm]").count() == 1, "sem preço: remover nos botões")
             # 1.30.0: o item com os similares ligados sai e volta do histórico com eles (os guardados, sem outra busca)
             pedidos = len(app.lojas.pedidos_de("intelligent-search"))

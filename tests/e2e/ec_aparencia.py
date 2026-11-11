@@ -103,8 +103,15 @@ async def main():
             await pg.wait_for_timeout(500)
             # ----- Opções -----
             await mais(pg, "opcoes")
-            await espera(pg, "() => /Giassi/.test(document.getElementById('opDiretasSt').textContent)")
-            check(await pg.text_content("#opDiretasSt") == "Giassi: atende o seu CEP · Angeloni: atende o seu CEP.", f"as lojas diretas do CEP ({await pg.text_content('#opDiretasSt')})")
+            await espera(pg, "() => /preço direto/.test(document.getElementById('opDiretasSt').textContent)")
+            check(await pg.text_content("#opDiretasSt") == "Todas as 2 lojas com preço direto.", f"as lojas diretas do CEP ({await pg.text_content('#opDiretasSt')})")
+            # 1.35.0: cada loja numa linha, recolhidas em Lojas (2)
+            det = pg.locator("#opDiretasLojas")
+            check(await det.is_visible() and not await det.evaluate("d => d.open") and (await det.locator("summary").inner_text()).strip() == "Lojas (2)",
+                  "as lojas ficam recolhidas em Lojas (2)")
+            await det.locator("summary").click()
+            linhas = [x.strip() for x in await det.locator("li").all_inner_texts()]
+            check(linhas == ["Giassi: atende o seu CEP", "Angeloni: atende o seu CEP"], f"abertas, uma por linha ({linhas})")
             for sw in ("#opDiretas", "#opFolhetos", "#opItens", "#opEncartes"):
                 check(await pg.is_checked(sw), f"{sw} ligado de começo")
                 await pg.click(sw)

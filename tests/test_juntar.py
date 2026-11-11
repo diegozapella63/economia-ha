@@ -95,6 +95,28 @@ class Juntar(Base):
         self.assertEqual([(t["rede"], t["quantidade"], t["preco"]) for t in ent["tamanhos"]], [("onli-amazon", 12, 50)], "a base de 12 L vira tamanho")
         self.assertEqual(len(ent["similares"]), 1)
 
+    def test_setor_escolhido_fica_so_com_as_lojas_dele(self):
+        # 1.35.0: o álcool só de mercado: as farmácias (o de 30 ml) saem e a base vem dos mercados; o online fica
+        S = self.S
+        farm = {"Álcool 70": {"precos": {"farm-lua": 6.26, "farm-mar": 6.28}, "base": {"quantidade": 0.03, "unidade": "L"}, "tamanhos": [],
+                              "links": {"farm-lua": "u"}, "vistos": {}, "similares": [{"rede": "farm-lua", "nome": "S", "preco": 9, "quantidade": 0.1, "unidade": "L"}]}}
+        merc = {"Álcool 70": {"precos": {"merc-sol": 42.98}, "base": {"quantidade": 5, "unidade": "L"}, "tamanhos": [{"rede": "merc-azul", "quantidade": 1, "preco": 9.9}],
+                              "links": {}, "vistos": {}}}
+        onli = {"Álcool 70": {"precos": {"onli-amazon": 39.9}, "base": {"quantidade": 5, "unidade": "L"}, "tamanhos": [], "links": {}, "vistos": {}}}
+        cfg = {"lista": [{"produto": "Álcool 70", "setor": "mercados"}, {"produto": "Café", "setor": "padaria"}, "Leite"]}
+        self.assertEqual(S.setores_da_lista(cfg), {S.norm("Álcool 70"): "mercados"}, "só os setores que existem")
+        sem = S.juntar_categorias([farm, merc])["Álcool 70"]
+        self.assertEqual(sem["base"]["quantidade"], 0.03, "sem setor, a base com mais preços (as farmácias)")
+        ent = S.juntar_categorias([farm, merc, onli], S.setores_da_lista(cfg))["Álcool 70"]
+        self.assertEqual(ent["base"]["quantidade"], 5)
+        self.assertEqual(ent["precos"], {"merc-sol": 42.98, "onli-amazon": 39.9})
+        self.assertEqual([(t["rede"], t["quantidade"]) for t in ent["tamanhos"]], [("merc-azul", 1)])
+        self.assertEqual(ent.get("similares") or [], [], "os similares da farmácia saem")
+        self.assertNotIn("farm-lua", ent["links"])
+        so_farm = S.juntar_categorias([farm], {S.norm("Álcool 70"): "petshops"})
+        self.assertEqual(so_farm, {}, "nada do setor: o item fica sem preço")
+        self.assertEqual([S.cat_da_rede(r) for r in ("merc-x", "farm-x", "pets-x", "onli-x", "x")], ["mercados", "farmacias", "petshops", "online", None])
+
     def test_item_ofertas_ordena_e_tira_repetidos(self):
         S = self.S
         ent = {"precos": {"a": 1}, "links": {"a": "u", "b": "v"}, "vistos": {"a": {"em": "x"}}, "base": {"quantidade": 1, "unidade": "kg"},

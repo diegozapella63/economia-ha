@@ -617,6 +617,14 @@ li.escolhida{border-color:var(--accent) !important}
 /* 1.27.0: o que põe itens na lista, junto (some sem lista aberta, com as listas ligadas); o mesmo espaço do .panel */
 #addArea{display:flex;flex-direction:column;gap:14px;min-width:0}
 #addForm{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:8px}
+/* 1.35.0: onde comprar o item novo (setor) e, no pé do cartão, o setor de cada item */
+.add-setor{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:10px;font-size:14px;font-weight:600;color:var(--muted)}
+.add-setor[hidden]{display:none}
+.add-setor select{width:100%}
+@media (min-width:1000px){.add-setor{grid-template-columns:auto 280px;justify-content:start}}
+select.setor-sel{appearance:none;-webkit-appearance:none;font:inherit;font-size:12px;font-weight:600;color:var(--accent);background:none;border:0;padding:0 12px 0 0;margin-left:2px;text-decoration:underline;cursor:pointer;max-width:100%;
+  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 6px) 55%,calc(100% - 2px) 55%;background-size:4px 4px;background-repeat:no-repeat}
+.i-actions > select.setor-sel{justify-self:center;grid-column:1/-1}
 .cod-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;margin-top:8px}
 .cod-foto{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
 .cod-foto svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -1292,6 +1300,7 @@ input.field,select.field{min-height:var(--altura)}
         <button type="button" class="ghost big hist-btn" id="histBtn" aria-expanded="false" aria-controls="histBox" aria-label="Histórico: itens que já estiveram na lista" title="Histórico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></svg><span class="n" id="histN" hidden></span></button>
         <button type="button" class="ghost big hist-btn" id="codBtn" aria-expanded="false" aria-controls="codBox" aria-label="Pôr na lista pelo código de barras" title="Código de barras"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8v8M10 8v8M13 8v8M16.5 8v8"/></svg></button>
       </form>
+      <label class="add-setor" id="novoSetorRow" hidden><span>Onde comprar</span><select class="field" id="novoSetor"></select></label>
       <div class="hist-box" id="histBox" hidden>
         <h3>Histórico</h3>
         <p class="hint" id="histMeta"></p>
@@ -1698,6 +1707,7 @@ input.field,select.field{min-height:var(--altura)}
       <div class="set-row">
         <div><h3 class="set-t"><label for="opDiretas">Busca direta nas lojas</label></h3><p class="sec-meta">Preço direto do site das lojas que permitem, sem IA.</p><p class="ia-st" id="opDiretasSt"></p></div>
         <input type="checkbox" class="switch" id="opDiretas">
+        <details class="fonte-det" id="opDiretasLojas" hidden><summary></summary><ul></ul></details>
       </div>
       <div class="set-row so-ia">
         <div><h3 class="set-t"><label for="opFolhetos">Folhetos dos sites de encartes</label></h3><p class="sec-meta">Kimbino, Portafolhetos, Seus Folhetos e Catálogos Ofertas, lidos uma vez pela IA.</p></div>
@@ -2319,6 +2329,8 @@ dialog.ss-wrap::backdrop{background:transparent}
     });
   }
   function n0(v, d){ v = Number(v); return isFinite(v) && v >= 0 ? Math.min(Math.round(v), 20) : d; }
+  // 1.35.0: os setores de cada item (Minha lista: onde comprar)
+  var SETORES = {mercados:'Mercado', farmacias:'Farmácia', petshops:'Pet shop'};
   function normaliza(c){
     c = c && typeof c === 'object' ? JSON.parse(JSON.stringify(c)) : {};
     var p = c.perfil || {}, r = c.cotidiano || {}, l = c.lojas || {}, sy = c.sync || {}, on = c.online || null, ro = c.roteiro || {};
@@ -2343,11 +2355,11 @@ dialog.ss-wrap::backdrop{background:transparent}
         entrega_km: Number(on.entrega_km) || null, entrega_sim: arr(on.entrega_sim).filter(function(x){ return typeof x === 'string' && x; })},
       lojas: {ignorar: arr(l.ignorar), manter: arr(l.manter), adicionar: arr(l.adicionar), folhetos: arr(l.folhetos).filter(function(f){ return f && f.nome; }).map(function(f){ return {nome:String(f.nome), categoria:f.categoria || 'mercados'}; })},
       lista: arr(c.lista).map(function(i){ return typeof i === 'string' ? {produto:i, compras:[]} : {produto:String(i.produto || ''), compras:arr(i.compras), origem:i.origem === 'ha' ? 'ha' : undefined,
-        similares:i.similares ? true : undefined, ean:/^\d{8,14}$/.test(String(i.ean || '')) ? String(i.ean) : undefined, qtd:qtdDe(i) > 1 ? qtdDe(i) : undefined,
+        similares:i.similares ? true : undefined, ean:/^\d{8,14}$/.test(String(i.ean || '')) ? String(i.ean) : undefined, qtd:qtdDe(i) > 1 ? qtdDe(i) : undefined, setor:SETORES[i.setor] ? i.setor : undefined,
         listas:arr(i.listas).filter(function(id){ return idsListas[id]; }).length ? arr(i.listas).filter(function(id, k, a){ return idsListas[id] && a.indexOf(id) === k; }) : undefined,
         escolha:i.escolha && i.escolha.rede ? {rede:String(i.escolha.rede), q:Number(i.escolha.q) || null, obs:String(i.escolha.obs || '').slice(0, 120), sim:i.escolha.sim ? true : undefined} : undefined}; }).filter(function(i){ return i.produto; }),
       // itens que saíram da lista, com as compras, para voltar com um toque
-      historico: arr(c.historico).filter(function(i){ return i && i.produto; }).map(function(i){ return {produto:String(i.produto).slice(0, 120), compras:arr(i.compras).filter(function(d){ return /^\d{4}-\d{2}-\d{2}$/.test(d); }), saiu:String(i.saiu || ''), ean:/^\d{8,14}$/.test(String(i.ean || '')) ? String(i.ean) : undefined, similares:i.similares === true ? true : undefined}; }).slice(-300),
+      historico: arr(c.historico).filter(function(i){ return i && i.produto; }).map(function(i){ return {produto:String(i.produto).slice(0, 120), compras:arr(i.compras).filter(function(d){ return /^\d{4}-\d{2}-\d{2}$/.test(d); }), saiu:String(i.saiu || ''), ean:/^\d{8,14}$/.test(String(i.ean || '')) ? String(i.ean) : undefined, similares:i.similares === true ? true : undefined, setor:SETORES[i.setor] ? i.setor : undefined}; }).slice(-300),
       perfil: {adultos:n0(p.adultos, 1), criancas:n0(p.criancas, 0), bebes:n0(p.bebes, 0), pets:petsDe(p.pets), restricoes:arr(p.restricoes), interesses:arr(p.interesses), nunca:arr(p.nunca),
         nunca_produtos:arr(p.nunca_produtos).map(function(t){ return String(t).trim().slice(0, 40); }).filter(function(t){ return norm(t); }).slice(0, 100)},
       cotidiano: {mercado:arr(r.mercado), farmacia:arr(r.farmacia), avisar:r.avisar || 'vespera', estoque:['pouco', 'normal', 'bastante'].indexOf(r.estoque) >= 0 ? r.estoque : 'normal'},
@@ -2556,7 +2568,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.34.1';
+  var VERSAO = '1.35.0';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -2922,7 +2934,53 @@ dialog.ss-wrap::backdrop{background:transparent}
     var fim = dias < 0 ? 'já deve ter acabado' : dias === 0 ? 'deve acabar hoje' : dias === 1 ? 'deve acabar amanhã' : 'deve acabar em ' + dias + ' dias';
     return {txt:'Você compra a cada ~' + media + ' dias · ' + fim, dias:dias, media:media};
   }
-  function itemDe(produto){ var k = norm(produto); return arr(D.lista).filter(function(i){ return norm(i.produto) === k; })[0]; }
+  // 1.35.0: nada se compara entre setores (álcool de 30 ml da farmácia e galão de 5 L do atacado são compras diferentes).
+  // Cada item fica num setor: o escolhido (mercado, farmácia ou pet shop) ou, sem escolha, o das lojas físicas em que
+  // ele mais aparece; as lojas online valem com qualquer um
+  function setorEscolhido(produto){
+    var k = norm(produto), it = estado.lista.filter(function(i){ return norm(i.produto) === k; })[0];
+    return it && SETORES[it.setor] ? it.setor : '';
+  }
+  function setorAuto(cru){
+    var conta = {}, base = {};
+    var soma = function(id, b){ var c = catDe(id); if (!SETORES[c] || !catAtiva(id) || !acompanha(id)) return; conta[c] = (conta[c] || 0) + 1; base[c] = (base[c] || 0) + b; };
+    Object.keys((cru && cru.precos) || {}).forEach(function(id){ soma(id, 1); });
+    arr(cru && cru.tamanhos).forEach(function(t){ soma(t.rede, 0); });
+    return Object.keys(SETORES).filter(function(c){ return conta[c]; }).sort(function(a, b){ return (conta[b] - conta[a]) || (base[b] - base[a]); })[0] || '';
+  }
+  function setorDe(produto){ return setorEscolhido(produto) || setorAuto(itemCru(produto)); }
+  function catDe(id){ return (G[id] || {}).cat || ''; }
+  function noSetor(s){ return function(id){ var c = catDe(id); return !s || c === s || c === 'online'; }; }
+  function itemCru(produto){ var k = norm(produto); return arr(D.lista).filter(function(i){ return norm(i.produto) === k; })[0]; }
+  function itemDe(produto){
+    var cru = itemCru(produto), s = setorDe(produto);
+    if (!cru || !s) return cru;
+    var ok = noSetor(s), dele = function(id){ return catDe(id) === s; };
+    var precos = {}, links = Object.assign({}, cru.links || {});
+    Object.keys(cru.precos || {}).forEach(function(id){ if (ok(id)) precos[id] = cru.precos[id]; });
+    var tams = arr(cru.tamanhos).filter(function(t){ return ok(t.rede); });
+    var out = Object.assign({}, cru, {precos:precos, tamanhos:tams, similares:arr(cru.similares).filter(function(x){ return ok(x.rede); })});
+    // nenhuma loja do setor no tamanho de sempre, mas em outros tamanhos: o mais comum deles vira o de sempre
+    var outros = tams.filter(function(t){ return dele(t.rede) && Number(t.quantidade) > 0; });
+    if (!cru.base || Object.keys(precos).some(dele) || !outros.length) return out;
+    var conta = {};
+    outros.forEach(function(t){ conta[Number(t.quantidade)] = (conta[Number(t.quantidade)] || 0) + 1; });
+    var q = Object.keys(conta).map(Number).sort(function(a, b){ return (conta[b] - conta[a]) || a - b; })[0];
+    var novosP = {}, novosT = [], q0 = Number(cru.base.quantidade);
+    Object.keys(precos).forEach(function(id){  // os do tamanho de antes (online) viram outro tamanho
+      var v = precos[id], t = {rede:id, quantidade:q0, preco:Number(v && typeof v === 'object' ? v.preco : v)};
+      if (v && typeof v === 'object' && 'frete' in v){ t.frete = v.frete; if (v.prazo_dias != null) t.prazo_dias = v.prazo_dias; }
+      if (v && v.obs) t.embalagem = v.obs;
+      if (links[id]) t.fonte = links[id];
+      novosT.push(t);
+    });
+    tams.forEach(function(t){
+      if (!igualQ(Number(t.quantidade), q)){ novosT.push(t); return; }
+      novosP[t.rede] = 'frete' in t ? {preco:t.preco, frete:t.frete, prazo_dias:t.prazo_dias} : {preco:t.preco, obs:t.embalagem || ''};
+      if (t.fonte) links[t.rede] = t.fonte; else delete links[t.rede];
+    });
+    return Object.assign(out, {base:Object.assign({}, cru.base, {quantidade:q}), precos:novosP, tamanhos:novosT, links:links});
+  }
   // onde comprar: o link que a busca trouxe ou, sem ele, a busca do produto na própria loja
   function linkCompra(id, produto, link){
     if (/^https?:\/\//.test(link || '')) return {url:link, achado:true};
@@ -2977,7 +3035,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     if (!net) return '';
     if (dc && !dc.online && dc.porBase < net.v - 0.004){
       return '<div class="i-online"><span class="dchip">Compra na loja</span><p>' + esc('Avulso online: ' + brl.format(net.v) + ' na ' + G[net.id].nome + freteTxt(net)) + '</p>'
-        + '<p class="i-nota">' + esc(dc.como + ' na ' + G[dc.id].nome + ' sai ' + brl.format(dc.porBase) + ' por ' + dc.base + ', ' + brl.format(net.v - dc.porBase) + ' a menos que pedir online.') + '</p></div>';
+        + '<p class="i-nota">' + esc(dc.como + ' na ' + G[dc.id].nome + ' sai ' + brl.format(dc.porUn) + ' por ' + dc.un + '; o avulso online, ' + brl.format(net.v / dc.q0) + ' por ' + dc.un + '.') + '</p></div>';
     }
     var dia = function(n){ return n + (n > 1 ? ' dias' : ' dia'); };
     var linha = (avulso ? 'Avulso online: ' : 'Online: ') + brl.format(net.v) + ' na ' + G[net.id].nome + freteTxt(net)
@@ -3017,6 +3075,8 @@ dialog.ss-wrap::backdrop{background:transparent}
     return fmtQ(q) + ' ' + b.unidade;
   }
   function porUn(total, q, b){ return brl.format(total / q) + (b.unidade === 'un' ? ' por ' + (b.rotulo || 'unidade') : '/' + b.unidade); }
+  // 1.35.0: a medida de comparar é sempre a de costume (quilo, litro, metro ou unidade), nunca o tamanho de sempre do item (400 g, 30 ml)
+  function nomeUn(b){ return b.unidade === 'un' ? (b.rotulo || 'unidade') : b.unidade === 'L' ? 'litro' : b.unidade === 'kg' ? 'quilo' : 'metro'; }
   function tempoTxt(d){ return d < 45 ? d + ' dias' : Math.round(d / 30) + ' meses'; }
   function igualQ(a, b){ return Math.abs(a - b) <= b * 0.01; }
   // "Escolher esse": a pessoa fixa uma loja (e um tamanho) para o item, mesmo que não seja o mais barato
@@ -3053,7 +3113,8 @@ dialog.ss-wrap::backdrop{background:transparent}
   function similaresDe(it){
     var info = itemDe(it.produto), lst = arr(info && info.similares);
     if (simSalvoEm(it)) lst = arr(SIM_SALVOS[it.produto].itens);
-    return lst.filter(function(s){ return s && G[s.rede] && catAtiva(s.rede) && acompanha(s.rede) && Number(s.preco) > 0 && Number(s.quantidade) > 0 && s.nome; });
+    var ok = noSetor(setorDe(it.produto));
+    return lst.filter(function(s){ return s && G[s.rede] && catAtiva(s.rede) && acompanha(s.rede) && ok(s.rede) && Number(s.preco) > 0 && Number(s.quantidade) > 0 && s.nome; });
   }
   // 1.32.0: o nome do item, sem a marca, o tamanho e a embalagem ("Frango a Passarinho Congelado IQF Pratinho Pacote 1kg" →
   // "Frango a passarinho congelado"); quem sabe as marcas é o servidor. Na prévia, só sai o tamanho.
@@ -3139,6 +3200,22 @@ dialog.ss-wrap::backdrop{background:transparent}
     return '<span class="qtd" role="group" aria-label="Quantidade de ' + esc(x.it.produto) + '"><button type="button" class="ghost qtd-b" data-qtd="' + x.i + '" data-d="-1" aria-label="Menos"' + (n <= 1 ? ' disabled' : '') + '>−</button>'
       + '<b class="num" aria-live="polite">' + n + '</b><button type="button" class="ghost qtd-b" data-qtd="' + x.i + '" data-d="1" aria-label="Mais"' + (n >= 99 ? ' disabled' : '') + '>+</button></span>';
   }
+  // 1.35.0: o setor do item no pé do cartão (só com mais de um setor ligado): automático, mercado, farmácia ou pet shop
+  function setoresLigados(){ return Object.keys(SETORES).filter(function(c){ return estado.categorias.indexOf(c) >= 0; }); }
+  function opcoesSetor(atual, auto){
+    var cs = setoresLigados(); if (atual && cs.indexOf(atual) < 0) cs.push(atual);
+    return '<option value="">' + esc(auto) + '</option>' + cs.map(function(c){ return '<option value="' + c + '"' + (c === atual ? ' selected' : '') + '>Só ' + esc(SETORES[c].toLowerCase()) + '</option>'; }).join('');
+  }
+  function pintaSetorAdd(){
+    var sel = $('novoSetor'), v = sel.value;
+    $('novoSetorRow').hidden = setoresLigados().length < 2;
+    sel.innerHTML = opcoesSetor(SETORES[v] ? v : '', 'Automático');
+  }
+  function seletorSetor(x){
+    var s = SETORES[x.it.setor] ? x.it.setor : '';
+    if (!s && setoresLigados().length < 2) return '';
+    return '<select class="setor-sel" data-setor="' + x.i + '" aria-label="Onde comprar ' + esc(x.it.produto) + '">' + opcoesSetor(s, 'Setor automático') + '</select>';
+  }
   function melhorTamanho(it, r, p){
     var info = itemDe(it.produto);
     if (!info || !info.base || !arr(info.tamanhos).length) return null;
@@ -3174,7 +3251,8 @@ dialog.ss-wrap::backdrop{background:transparent}
       var nr = noRef(best.Q), d = dura(best.Q);
       eco = economia(best);
       dica = {id:best.o.id, link:best.o.link, txt:comoTxt(best, b) + ' por ' + brl.format(best.total), como:comoTxt(best, b), total:best.total, online:best.o.online, frete:best.o.frete,
-              porBase:Math.round(best.total / (best.Q / q0) * 100) / 100, base:medidaTxt(q0, b)};
+              porBase:Math.round(best.total / (best.Q / q0) * 100) / 100, base:medidaTxt(q0, b),
+              porUn:Math.round(best.total / best.Q * 100) / 100, un:nomeUn(b), q0:q0, b:b};
       principal = !(best.o.online && best.o.prazo != null && r.dias != null && best.o.prazo > r.dias);
       var menor = best.Q < ref.Q;
       chip = '<span class="dchip on">' + (menor ? 'Compensa o menor' : 'Compensa o maior') + '</span>';
@@ -3206,7 +3284,7 @@ dialog.ss-wrap::backdrop{background:transparent}
         else nota.push(rotulo + ' sai ' + porUn(unico.total, unico.q, b) + ', mais caro que o de ' + medidaTxt(ref.Q, b) + '.');
       }
     }
-    return {economia:eco, dica:dica, principal:principal, n:ops.length, lista:det, un:b.unidade === 'un' ? (b.rotulo || 'unidade') : b.unidade === 'L' ? 'litro' : b.unidade === 'kg' ? 'quilo' : 'metro',
+    return {economia:eco, dica:dica, principal:principal, n:ops.length, lista:det, un:nomeUn(b),
       html:'<div class="i-tam">' + chip + (principal ? '' : '<p>' + esc(linha) + '</p>') + (nota.length ? '<p class="i-nota">' + esc(nota.join(' ')) + '</p>' : '') + '</div>'};
   }
   // loja com preço de clube melhor, mas você não marcou que é do clube
@@ -3223,19 +3301,20 @@ dialog.ss-wrap::backdrop{background:transparent}
     itens.forEach(function(it){
       var k = norm(it.produto), h = estado.historico.filter(function(x){ return norm(x.produto) === k; })[0];
       // 1.30.0: os similares ligados também (o item volta com eles, e os guardados aparecem sem outra busca)
-      if (h){ arr(it.compras).forEach(function(d){ if (h.compras.indexOf(d) < 0) h.compras.push(d); }); h.saiu = hoje; if (it.ean) h.ean = it.ean; h.similares = it.similares ? true : undefined; }
-      else estado.historico.push({produto:it.produto, compras:arr(it.compras).slice(), saiu:hoje, ean:it.ean, similares:it.similares ? true : undefined});
+      if (h){ arr(it.compras).forEach(function(d){ if (h.compras.indexOf(d) < 0) h.compras.push(d); }); h.saiu = hoje; if (it.ean) h.ean = it.ean; h.similares = it.similares ? true : undefined; h.setor = it.setor || undefined; }
+      else estado.historico.push({produto:it.produto, compras:arr(it.compras).slice(), saiu:hoje, ean:it.ean, similares:it.similares ? true : undefined, setor:it.setor || undefined});
     });
     if (estado.historico.length > 300){  // fica o que foi mais comprado e saiu por último
       estado.historico.sort(function(a, b){ return (a.compras.length - b.compras.length) || String(a.saiu).localeCompare(String(b.saiu)); });
       estado.historico = estado.historico.slice(-300);
     }
   }
-  function entraNaLista(nome){  // item novo ou de volta do histórico, com as compras de antes (só com uma lista aberta: podePor)
+  function entraNaLista(nome, setor){  // item novo ou de volta do histórico, com as compras de antes (só com uma lista aberta: podePor)
     if (!podePor()) return null;
     var k = norm(nome), h = estado.historico.filter(function(x){ return norm(x.produto) === k; })[0];
     estado.historico = estado.historico.filter(function(x){ return norm(x.produto) !== k; });
-    estado.lista.push({produto:h ? h.produto : nome, compras:h ? h.compras.slice().sort() : [], ean:h && h.ean ? h.ean : undefined, listas:listaAtual() ? [listaAtual()] : undefined, similares:h && h.similares ? true : undefined});
+    estado.lista.push({produto:h ? h.produto : nome, compras:h ? h.compras.slice().sort() : [], ean:h && h.ean ? h.ean : undefined, listas:listaAtual() ? [listaAtual()] : undefined, similares:h && h.similares ? true : undefined,
+      setor:SETORES[setor] ? setor : h && SETORES[h.setor] ? h.setor : undefined});  // 1.35.0: o setor escolhido ao adicionar (ou o de antes)
     return !!h;
   }
   var HIST_ABERTO = false;
@@ -3445,6 +3524,7 @@ dialog.ss-wrap::backdrop{background:transparent}
         var x = a.r.dias == null ? 9999 : a.r.dias, y = b.r.dias == null ? 9999 : b.r.dias;
         return x - y || a.i - b.i;
       });
+    pintaSetorAdd();
     $('limpar').hidden = !itens.length || !!aberta;  // numa lista pronta, nada de limpar: ela é para usar de novo (em Nenhuma, limpa só os dela)
     if (!itens.length) $('limparConf').hidden = true;
     pintaRoteiro();
@@ -3478,20 +3558,24 @@ dialog.ss-wrap::backdrop{background:transparent}
           + '<div class="i-best"><span class="lbl">Sem preço ainda</span>'
           + (procurou ? '<span class="i-wait">A última busca não achou.' + (((D.relatorio || {}).sugestoes || {})[x.it.produto] ? ' Quis dizer <button type="button" class="link corr-btn" data-de="' + esc(x.it.produto) + '" data-para="' + esc(D.relatorio.sugestoes[x.it.produto]) + '">' + esc(D.relatorio.sugestoes[x.it.produto]) + '</button>?' : '') + '</span>' : '')
           + '<button type="button" class="ghost ic-btn i-busca" data-buscaitem="' + x.i + '"' + (buscando ? ' disabled' : '') + '><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>' + (buscando ? 'Buscando…' : 'Buscar este item') + '</button></div>'
-          + acoes + tirar + '</div></li>';
+          + acoes + seletorSetor(x) + tirar + '</div></li>';
       }
       var best = p[0], conta = {}, mt = melhorTamanho(x.it, x.r, p), dc = mt && mt.principal ? mt.dica : null;
-      // economia: o que se deixa de pagar em relação à segunda opção mais barata (com o tamanho que compensa, em relação ao avulso mais barato)
-      var eco = (dc ? best.v - dc.porBase : p.length > 1 ? p[1].v - best.v : 0) * N;
+      // economia: o que se deixa de pagar em relação à segunda opção mais barata; com o tamanho que compensa, por quilo ou
+      // litro em relação ao avulso mais barato (1.35.0: antes era pelo tamanho de sempre, 400 g ou 30 ml)
+      var ecoUn = dc ? Math.round((best.v / dc.q0 - dc.porUn) * 100) / 100 : 0;
+      var eco = dc ? ecoUn : (p.length > 1 ? p[1].v - best.v : 0) * N;
+      var ecoTxt = dc ? porUn(ecoUn, 1, dc.b) : brl.format(eco);
       var es = escolhaDe(x.it, p);
       p.forEach(function(y){ conta[G[y.id].cat] = (conta[G[y.id].cat] || 0) + 1; });
       var onde = D.categorias.filter(function(c){ return conta[c.id]; }).map(function(c){ return plural(conta[c.id], c.id); }).join(' e ');
-      return '<li class="item"><div class="i-head"' + fechaRes(x, resumida) + '>' + iconeItem(x.it.produto, G[best.id].cat) + '<p class="i-prod">' + esc(x.it.produto) + '</p>' + (eco > 0.004 ? '<span class="i-save num" title="' + (dc ? 'Comparado ao avulso mais barato' : 'Comparado à segunda loja mais barata') + '">economia de ' + brl.format(eco) + '</span>' : '') + '</div>'
+      return '<li class="item"><div class="i-head"' + fechaRes(x, resumida) + '>' + iconeItem(x.it.produto, G[best.id].cat) + '<p class="i-prod">' + esc(x.it.produto) + '</p>' + (eco > 0.004 ? '<span class="i-save num" title="' + (dc ? 'Comparado ao avulso mais barato' : 'Comparado à segunda loja mais barata') + '">economia de ' + ecoTxt + '</span>' : '') + '</div>'
         + (x.r.txt ? '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>' : '')
         + (x.it.escolha && !es ? '<p class="i-esc-nota">Sua escolha (' + esc(G[x.it.escolha.rede] ? G[x.it.escolha.rede].nome : 'a loja') + ') não veio na última busca. <button type="button" class="link" data-desescolher="' + x.i + '">Desfazer escolha</button></p>' : '')
         + (es ? caixaEscolha(x, es, best, dc) : dc
-          ? abreLink(linkCompra(dc.id, x.it.produto + ' ' + dc.como, dc.link), 'i-best i-link', '<span class="lbl">Melhor compra</span><span class="por num">' + brl.format(dc.porBase) + '<span class="un">por ' + esc(dc.base) + '</span></span><span class="i-store">' + esc(dc.como) + ' por ' + brl.format(dc.total) + ' · ' + esc(G[dc.id].nome) + ' <span class="chip">' + esc(G[dc.id].singular) + '</span></span>' + setaLink(linkCompra(dc.id, '', dc.link)))
-            + '<p class="i-avulso num">Avulso, o mais barato: <b>' + brl.format(best.v) + '</b> (' + abreLink(linkCompra(best.id, best.obs || x.it.produto, best.link), 'i-txtlink', esc(G[best.id].nome)) + ')</p>'
+          ? abreLink(linkCompra(dc.id, x.it.produto + ' ' + dc.como, dc.link), 'i-best i-link', '<span class="lbl">Melhor compra</span><span class="por num">' + brl.format(dc.porUn) + '<span class="un">por ' + esc(dc.un) + '</span></span><span class="i-store">' + esc(dc.como) + ' por ' + brl.format(dc.total) + ' · ' + esc(G[dc.id].nome) + ' <span class="chip">' + esc(G[dc.id].singular) + '</span></span>' + setaLink(linkCompra(dc.id, '', dc.link)))
+            + '<p class="i-avulso num">Avulso, o mais barato: <b>' + brl.format(best.v / dc.q0) + '</b> por ' + esc(dc.un) + (igualQ(dc.q0, 1) ? '' : ' · ' + esc(medidaTxt(dc.q0, dc.b)) + ' por ' + brl.format(best.v))
+            + ' (' + abreLink(linkCompra(best.id, best.obs || x.it.produto, best.link), 'i-txtlink', esc(G[best.id].nome)) + ')</p>'
           : abreLink(linkCompra(best.id, best.obs || x.it.produto, best.link), 'i-best i-link', '<span class="lbl">Mais barato</span><span class="por num">' + brl.format(best.v * N) + (N > 1 ? '<span class="un">' + N + ' × ' + brl.format(best.v) + '</span>' : '') + '</span><span class="i-store">' + esc(G[best.id].nome) + ' <span class="chip">' + esc(G[best.id].singular) + '</span>' + (best.clube ? ' <span class="chip selo">Clube</span>' : '') + '</span>' + setaLink(linkCompra(best.id, '', best.link)))
             + (best.obs && !best.online ? '<p class="i-avulso">Produto: ' + esc(best.obs) + '</p>' : ''))
         + (p.length > 1 ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li' + (ehEscolha(x.it, y.id, null, y.obs) ? ' class="escolhida"' : '') + '>' + abreLink(linkCompra(y.id, y.obs || x.it.produto, y.link), 'i-chip', '<span class="ic-n">' + esc(G[y.id].curto) + '</span><b>' + brl.format(y.v) + '</b>' + (y.online && y.carrinho ? '<small>+ frete</small>' : y.online && y.frete ? '<small>c/ frete</small>' : '') + (y.clube ? '<small>clube</small>' : '')) + '' + botaoEscolher(x.it, y.id, null, y.obs, G[y.id].nome + ' por ' + brl.format(y.v)) + '</li>'; }).join('') + '</ul>' : '')
@@ -3502,7 +3586,7 @@ dialog.ss-wrap::backdrop{background:transparent}
         + (buscaItem === x.it.produto ? ' disabled>Buscando…' : '>Buscar de novo') + '</button>'
         // 1.28.0: os similares (a mesma seção da loja) só vêm da busca direta; ligados, o mesmo lugar os esconde
         + (estado.opcoes.lojas_diretas || x.it.similares ? ' · <button type="button" class="link i-sim" data-sim="' + x.i + '"' + (buscaItem === x.it.produto ? ' disabled' : '') + '>' + (x.it.similares ? 'Esconder similares' : 'Buscar similares') + '</button>' : '')
-        + ' · ' + tirar + '</span></div></li>';
+        + (seletorSetor(x) ? ' · ' + seletorSetor(x) : '') + ' · ' + tirar + '</span></div></li>';
     }).join('');
   }
   // ----- a lista resumida: o item, o preço escolhido (a sua escolha, a melhor compra ou o mais barato) e onde comprar -----
@@ -3583,6 +3667,13 @@ dialog.ss-wrap::backdrop{background:transparent}
   $('wish').addEventListener('toggle', function(e){
     var d = e.target; if (d && d.classList && d.classList.contains('i-det')) DET_ABERTO[d.dataset.det] = d.open;
   }, true);
+  $('wish').addEventListener('change', function(e){
+    var s = e.target.closest && e.target.closest('select[data-setor]'); if (!s) return;
+    var it = estado.lista[Number(s.dataset.setor)]; if (!it) return;
+    if (s.value) it.setor = s.value; else delete it.setor;
+    if (it.escolha && !noSetor(setorDe(it.produto))(it.escolha.rede)) delete it.escolha;  // a escolha de outro setor sai junto
+    salvar(it.setor ? it.produto + ': só ' + SETORES[it.setor].toLowerCase() : it.produto + ': setor automático'); pintaLista();
+  });
   $('wish').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;
     if (b.dataset.escI != null){
@@ -3603,9 +3694,10 @@ dialog.ss-wrap::backdrop{background:transparent}
     }
     // 1.32.0: o similar vai para a lista só como o item, sem a marca, o tamanho e a embalagem (a busca ainda compara as lojas)
     if (b.dataset.simpor != null){  // 1.29.0: o similar entra na lista (na lista aberta) como um item novo
+      var orig = estado.lista[Number(b.dataset.simpor)];
       nomeDoItem(b.dataset.simNome).then(function(np){
         if (itemDaLista(np) >= 0){ toast('"' + np + '" já está na lista'); return; }
-        if (entraNaLista(np) === null){ toast(porBloqueado()); return; }
+        if (entraNaLista(np, orig && orig.setor) === null){ toast(porBloqueado()); return; }
         salvar('"' + np + '" entrou na lista'); pintaLista(); pintaOfertasTela(); pintaHist();
       }); return;
     }
@@ -4338,7 +4430,7 @@ dialog.ss-wrap::backdrop{background:transparent}
       salvar('Adicionado a ' + nomeLista(listaAtual())); pintaLista(); return;
     }
     if (jaTem){ msg.className = 'hint err'; msg.textContent = listasOn() && arr(jaTem.listas).length ? 'Esse produto já está em ' + jaTem.listas.map(nomeLista).join(', ') + '.' : 'Esse produto já está na lista.'; return; }
-    var voltou = entraNaLista(nome); $('novoItem').value = ''; sugFechar();
+    var voltou = entraNaLista(nome, $('novoSetor').value); $('novoItem').value = ''; $('novoSetor').value = ''; sugFechar();
     msg.className = 'hint ok'; msg.textContent = '"' + nome + '" ' + (voltou ? 'voltou para a lista, com as compras de antes.' : 'entrou na lista.'); pintaHist();
     salvar('Adicionado à lista'); pintaLista(); pintaOfertasTela();
     if (!voltou) perguntaCorrecao(nome);
@@ -4468,7 +4560,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     if (nome.length < 3){ codMsg('Escreva o nome do produto.', 'err'); $('codNome').focus(); return; }
     var igual = estado.lista.filter(function(i){ return norm(i.produto) === norm(nome); })[0];
     if (igual){ igual.ean = ean; salvar('Código guardado em "' + igual.produto + '"'); }
-    else if (entraNaLista(nome) === null){ codMsg(porBloqueado(), 'err'); return; }
+    else if (entraNaLista(nome, $('novoSetor').value) === null){ codMsg(porBloqueado(), 'err'); return; }
     else { estado.lista[estado.lista.length - 1].ean = ean; salvar('Adicionado à lista'); }
     // o código só é usado pela busca direta nas lojas (Mais › Configurações › Opções)
     $('addMsg').className = 'hint ok'; $('addMsg').textContent = igual ? 'O código ficou guardado em "' + igual.produto + '".' : '"' + nome + '" entrou na lista com o código de barras' + (estado.opcoes.lojas_diretas ? ': com ele, o mesmo produto é achado nas lojas com busca no site.' : '.');
@@ -5425,15 +5517,20 @@ dialog.ss-wrap::backdrop{background:transparent}
   // lojas com busca direta: se atendem o CEP e qual loja
   var DIRETAS = null;
   function carregaDiretas(){
-    var el = $('opDiretasSt');
+    var el = $('opDiretasSt'), det = $('opDiretasLojas');
+    det.hidden = true;
     if (MODO !== 'addon'){ el.className = 'ia-st ok'; el.textContent = 'No Home Assistant, aqui aparece qual loja de cada mercado atende o seu CEP.'; return; }
     if (!estado.cep){ el.className = 'ia-st'; el.textContent = 'Salve o CEP em Mais › Casa para ver as lojas.'; return; }
     el.className = 'ia-st'; el.textContent = 'Verificando as lojas do seu CEP…';
     fetch('api/lojas-diretas', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
       DIRETAS = arr(j.lojas);
-      var ok = DIRETAS.filter(function(l){ return l.atende; });
+      var ok = DIRETAS.filter(function(l){ return l.atende || l.paginas; });
       el.className = 'ia-st' + (ok.length ? ' ok' : '');
-      el.textContent = DIRETAS.map(function(l){ return l.nome + ': ' + (l.paginas ? 'pelas páginas de produto' : l.atende ? (l.loja ? 'loja ' + l.loja : 'atende o seu CEP') : l.atende === false ? 'não atende o seu CEP' : 'sem resposta agora'); }).join(' · ') + '.';
+      // 1.35.0: cada loja numa linha, recolhidas em Lojas (n): abertas, só se a pessoa quiser ver
+      el.textContent = !DIRETAS.length ? 'Nenhuma loja com busca direta ainda.' : ok.length === DIRETAS.length ? (ok.length === 1 ? '1 loja com preço direto.' : 'Todas as ' + ok.length + ' lojas com preço direto.') : ok.length + ' de ' + DIRETAS.length + ' lojas com preço direto.';
+      det.hidden = !DIRETAS.length;
+      det.querySelector('summary').textContent = 'Lojas (' + DIRETAS.length + ')';
+      det.querySelector('ul').innerHTML = DIRETAS.map(function(l){ return '<li><b>' + esc(l.nome) + '</b>: ' + esc(l.paginas ? 'pelas páginas de produto' : l.atende ? (l.loja ? 'loja ' + l.loja : 'atende o seu CEP') : l.atende === false ? 'não atende o seu CEP' : 'sem resposta agora') + '</li>'; }).join('');
     }).catch(function(){ el.className = 'ia-st'; el.textContent = 'Não consegui verificar as lojas agora.'; });
   }
   $('usarIA').addEventListener('change', function(){

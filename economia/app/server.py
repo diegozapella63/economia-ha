@@ -1890,11 +1890,45 @@ def juntar_item(dest, ent):
             dest["tamanhos"].append(t)
 
 
-def juntar_categorias(parciais):
-    """Junta os itens da lista de todas as categorias usando, para cada um, a base com mais preços."""
+# 1.35.0: onde comprar cada item. Com um setor escolhido na lista, só as lojas dele (e as online) contam para o item:
+# nada se compara entre setores (o álcool de 30 ml da farmácia não é o galão de 5 L do atacado)
+SETORES = ("mercados", "farmacias", "petshops")
+
+
+def setores_da_lista(cfg):
+    """{nome do item (normalizado): setor} dos itens da lista com um setor escolhido."""
+    return {norm(nome_item(i)): i["setor"] for i in (cfg or {}).get("lista") or []
+            if isinstance(i, dict) and i.get("setor") in SETORES and nome_item(i)}
+
+
+def cat_da_rede(rid):
+    """A categoria de uma loja pelo começo do id (merc-, farm-, pets-, onli-)."""
+    return next((c for c in CATEGORIAS if str(rid or "").startswith(c[:4] + "-")), None)
+
+
+def so_do_setor(ent, setor):
+    """O que uma categoria achou para o item, só com as lojas do setor e as online (None se não sobra nada)."""
+    ok = lambda rid: cat_da_rede(rid) in (setor, "online")  # noqa: E731
+    out = dict(ent, precos={r: v for r, v in (ent.get("precos") or {}).items() if ok(r)},
+               tamanhos=[t for t in ent.get("tamanhos") or [] if isinstance(t, dict) and ok(t.get("rede"))],
+               links={r: v for r, v in (ent.get("links") or {}).items() if ok(r)},
+               vistos={r: v for r, v in (ent.get("vistos") or {}).items() if ok(r)})
+    if ent.get("similares"):
+        out["similares"] = [x for x in ent["similares"] if isinstance(x, dict) and ok(x.get("rede"))]
+    return out if out["precos"] or out["tamanhos"] or out.get("similares") else None
+
+
+def juntar_categorias(parciais, setores=None):
+    """Junta os itens da lista de todas as categorias usando, para cada um, a base com mais preços. setores: os
+    setores escolhidos na lista (setores_da_lista): o item fica só com as lojas do setor dele e as online."""
     lista = {}
     for prod in dict.fromkeys(p for parcial in parciais for p in parcial):
         ents = [parcial[prod] for parcial in parciais if prod in parcial]
+        setor = (setores or {}).get(norm(prod))
+        if setor:
+            ents = [e for e in (so_do_setor(e, setor) for e in ents) if e]
+            if not ents:
+                continue
         votos = {}
         for e in ents:
             if e.get("base"):
@@ -6495,7 +6529,7 @@ def buscar():
             parciais.append(parcial_e)
             l["encarte_auto"] = True
             l["fontes"] = sorted(set(l.get("fontes") or []) | {"Encarte"})
-        lista = juntar_categorias(parciais)
+        lista = juntar_categorias(parciais, setores_da_lista(cfg))
         if falhou_tudo:
             raise ErroBusca(falhas[0] if falhas else "A busca não trouxe resultados.")
         # itens que ninguém achou: uma pergunta só sobre eles
@@ -6504,7 +6538,7 @@ def buscar():
             BUSCA.update({"etapa": f"{len(faltam)} item(ns) sem preço"})
             try:
                 juntar_focada(novas, parciais, busca_focada(cfg, faltam, cats))
-                lista = juntar_categorias(parciais)
+                lista = juntar_categorias(parciais, setores_da_lista(cfg))
             except ErroBusca as e:
                 log(f"busca dos itens sem preço: {e}")
         relatorio["sem_preco"] = [n for n in nomes_da_lista(cfg) if n not in lista]
@@ -6579,7 +6613,7 @@ def mesclar_resultado(resultado, cfg, extra=None, mapa=None, completa=False, nov
             aplica_mapa(novas, mapa, cfg, marcar_novas=novas_lojas)
         aplica_regiao(novas, cfg)
         marca_fontes(novas)
-        lista = juntar_categorias(parciais)
+        lista = juntar_categorias(parciais, setores_da_lista(cfg))
         relatorio = anterior.get("relatorio") if isinstance(anterior.get("relatorio"), dict) else {}
         relatorio["sem_preco"] = [n for n in nomes_da_lista(cfg) if n not in lista]
         relatorio["sugestoes"] = sugestoes_para(relatorio["sem_preco"])

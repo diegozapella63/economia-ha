@@ -58,10 +58,10 @@ async def main():
             # ----- Melhor tamanho -----
             lys = await item(pg, "Lysoform")
             best = await txt(lys.locator(".i-best"))
-            check("MELHOR COMPRA" in best.upper() and "R$ 13,98 por 1 L" in " ".join(best.split()) and "Galão 5 L por R$ 69,90 · Fort Atacadista" in best,
+            check("MELHOR COMPRA" in best.upper() and "R$ 13,98 por litro" in " ".join(best.split()) and "Galão 5 L por R$ 69,90 · Fort Atacadista" in best,
                   f"Melhor compra: o galão, pelo preço do litro ({best})")
-            check("Avulso, o mais barato: R$ 19,90 (Fort Atacadista)" in await txt(lys), "e o avulso mais barato")
-            check("economia de R$ 5,92" in await txt(lys.locator(".i-head")), "economia por litro em relação ao avulso")
+            check("Avulso, o mais barato: R$ 19,90 por litro (Fort Atacadista)" in await txt(lys), "e o avulso mais barato, por litro")
+            check("economia de R$ 5,92/L" in await txt(lys.locator(".i-head")), "economia por litro em relação ao avulso")
             lys = await abre(pg, "Lysoform")
             det = await txt(lys.locator("details.i-det"))
             check(det.startswith("Comparar tamanhos (3)"), f"Comparar tamanhos ({det[:40]})")

@@ -98,6 +98,17 @@ Pode escrever só o produto, como **Lysoform**. Na busca, o EconomIA traz també
 - **Compensa o menor**: uma embalagem menor sai mais barata por quilo ou litro (por exemplo, pote de 700 g contra o pacote de 1 kg).
 - **Compensa, mas dura muito**: o maior é mais barato, mas duraria mais do que você costuma guardar. Ajuste em **Mais › Casa › Rotina de compras › Espaço para estoque**.
 
+A **Melhor compra**, o avulso e a economia aparecem sempre por quilo, litro, metro ou unidade (*R$ 9,60 por quilo*), nunca pelo tamanho do pacote de sempre.
+
+### Onde comprar (setor)
+
+Nada se compara entre setores: o álcool de 30 ml da farmácia e o galão de 5 L do atacado são compras diferentes. Cada item fica num setor:
+
+- **Automático** (de começo): o setor das lojas em que o item mais aparece na busca.
+- **Mercado**, **Farmácia** ou **Pet shop**: escolha em **Onde comprar**, ao adicionar o item, ou no pé do cartão. Só as lojas desse setor contam para o item, e a próxima busca já traz o item só delas.
+
+As lojas online valem com qualquer setor. O campo aparece quando mais de um setor está ligado em **Mais › Lojas**.
+
 ## Roteiro de compras
 
 Na aba **Roteiro**, ao lado da Minha lista, diga em até quantas lojas você topa parar (1 a 4) e se é a lista toda ou só o que está acabando. O EconomIA testa as combinações de lojas e mostra:
