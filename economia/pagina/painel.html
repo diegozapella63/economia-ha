@@ -524,7 +524,13 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .ml-passo2{display:flex;flex-direction:column;gap:8px}
 .ml-como > summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--accent)}
 .ml-como[open] > summary{margin-bottom:8px}
-.sim-list b{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 1.29.0: o nome inteiro, em mais de uma linha (antes, numa linha só, empurrava a borda para fora do cartão); embaixo, as ações */
+.sim-list b{flex:1 1 100%;min-width:0;overflow-wrap:anywhere;white-space:normal}
+.i-det,.i-tam,.tam-list{min-width:0}
+.tam-list.sim-list li{flex-wrap:wrap}
+.tam-list.sim-list a.tam-a{flex:1 1 100%}
+.sim-acoes{flex:1 1 auto;display:flex;flex-wrap:wrap;align-items:center;gap:4px 18px;margin:0 8px 4px;font-size:13px}
+.sim-list .esc-btn{margin-bottom:4px}
 li.escolhida{border-color:var(--accent) !important}
 .i-esc-nota{font-size:13px;color:var(--muted)}
 
@@ -2639,8 +2645,10 @@ input.field,select.field{min-height:var(--altura)}
     var un = ss[0].unidade === 'L' ? 'litro' : ss[0].unidade === 'kg' ? 'quilo' : ss[0].unidade === 'm' ? 'metro' : 'unidade';
     var lis = ss.map(function(s){
       var q = Number(s.quantidade), pr = Number(s.preco), bu = {unidade:s.unidade}, cls = [ehSim(x.it, s) ? 'escolhida' : '', conta(s) ? 'conta' : ''].join(' ').trim();
+      // 1.29.0: embaixo de cada um, pôr na lista como item novo ou trocar o item por ele
       return '<li' + (cls ? ' class="' + cls + '"' : '') + '>' + abreLink(linkCompra(s.rede, s.nome, s.fonte), 'tam-a', '<b>' + esc(s.nome) + '</b><span>' + esc(G[s.rede].curto) + ' · ' + esc(medidaTxt(q, bu)) + '</span><span>' + brl.format(pr) + '</span><span class="pu">' + esc(porUn(pr, q, bu)) + '</span>')
-        + botaoSim(x.it, s) + '</li>';
+        + '<p class="sim-acoes"><button type="button" class="link" data-simpor="' + x.i + '" data-sim-nome="' + esc(s.nome) + '">Pôr na lista</button>'
+        + '<button type="button" class="link" data-simtroca="' + x.i + '" data-sim-nome="' + esc(s.nome) + '">Trocar por este</button></p>' + botaoSim(x.it, s) + '</li>';
     }).join('');
     var nota = ref && b && ss[0].unidade === b.unidade ? 'O item pedido sai ' + porUn(best.v, Number(b.quantidade), b) + ' (' + G[best.id].nome + ').' : '';
     var quantos = !ref ? '' : nConta ? (nConta === 1 ? '1 sai' : nConta + ' saem') + ' mais em conta que o item. ' : 'Nenhum sai mais em conta que o item agora. ';
@@ -3139,6 +3147,22 @@ input.field,select.field{min-height:var(--altura)}
       var nq = Math.max(1, Math.min(99, qtdDe(iq) + Number(b.dataset.d)));
       if (nq > 1) iq.qtd = nq; else delete iq.qtd;
       salvar(iq.produto + ': ' + nq + (nq > 1 ? ' unidades' : ' unidade')); tudo(); return;
+    }
+    if (b.dataset.simpor != null){  // 1.29.0: o similar entra na lista (na lista aberta) como um item novo
+      var np = b.dataset.simNome;
+      if (itemDaLista(np) >= 0){ toast('"' + np + '" já está na lista'); return; }
+      if (entraNaLista(np) === null){ toast(porBloqueado()); return; }
+      salvar('"' + np + '" entrou na lista'); pintaLista(); pintaOfertasTela(); pintaHist(); return;
+    }
+    if (b.dataset.simtroca != null){  // 1.29.0: o item passa a ser o similar (as compras e as listas ficam; o nome de antes vai para o histórico)
+      var it_ = estado.lista[Number(b.dataset.simtroca)], nt = b.dataset.simNome; if (!it_) return;
+      if (itemDaLista(nt) >= 0){ toast('"' + nt + '" já está na lista'); return; }
+      var velho = it_.produto;
+      vaiProHistorico([{produto:velho, compras:arr(it_.compras).slice(), ean:it_.ean}]);
+      estado.historico = estado.historico.filter(function(h){ return norm(h.produto) !== norm(nt); });
+      estado.listas.forEach(function(l){ l.comprados = arr(l.comprados).map(function(k){ return k === norm(velho) ? norm(nt) : k; }); });
+      it_.produto = nt; delete it_.escolha; delete it_.similares; delete it_.ean;
+      salvar('"' + velho + '" trocado por "' + nt + '"'); tudo(); pintaHist(); return;
     }
     if (b.dataset.sim != null){
       var isim = estado.lista[Number(b.dataset.sim)]; if (!isim) return;

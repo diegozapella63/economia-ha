@@ -1,5 +1,10 @@
 # Mudanças
 
+## 1.29.0
+
+- **Similares**: embaixo de cada um, **Pôr na lista** (entra como um item novo) e **Trocar por este** (o item passa a ser o similar, com as compras e as listas; o nome de antes fica no Histórico).
+- O nome do similar aparece inteiro, em mais de uma linha, e a lista não passa mais da borda do cartão.
+
 ## 1.28.0
 
 - **Similares**: o botão saiu do meio do cartão e virou **Buscar similares**, no pé, ao lado de **Buscar de novo**: um toque já busca o item com os parecidos.
