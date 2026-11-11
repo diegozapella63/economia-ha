@@ -2556,7 +2556,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.31.0';
+  var VERSAO = '1.32.0';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -3054,6 +3054,23 @@ dialog.ss-wrap::backdrop{background:transparent}
     var info = itemDe(it.produto), lst = arr(info && info.similares);
     if (simSalvoEm(it)) lst = arr(SIM_SALVOS[it.produto].itens);
     return lst.filter(function(s){ return s && G[s.rede] && catAtiva(s.rede) && acompanha(s.rede) && Number(s.preco) > 0 && Number(s.quantidade) > 0 && s.nome; });
+  }
+  // 1.32.0: o nome do item, sem a marca, o tamanho e a embalagem ("Frango a Passarinho Congelado IQF Pratinho Pacote 1kg" →
+  // "Frango a passarinho congelado"); quem sabe as marcas é o servidor. Na prévia, só sai o tamanho.
+  function nomeDoItem(nome){
+    var local = function(){ var t = String(nome || '').replace(/\d+(?:[.,]\d+)?\s*(?:ml|l|lt|kg|g|gr|un|und|unid)\b/gi, ' ').replace(/\s+/g, ' ').trim(); return t || nome; };
+    if (MODO !== 'addon') return Promise.resolve(local());
+    return fetch('api/nome-item?nome=' + encodeURIComponent(nome), {cache:'no-store'}).then(function(r){ return r.json(); })
+      .then(function(j){ return (j && j.nome) || local(); }).catch(local);
+  }
+  function trocaPorSimilar(it_, nt){
+    if (itemDaLista(nt) >= 0){ toast('"' + nt + '" já está na lista'); return; }
+    var velho = it_.produto;
+    vaiProHistorico([{produto:velho, compras:arr(it_.compras).slice(), ean:it_.ean}]);
+    estado.historico = estado.historico.filter(function(h){ return norm(h.produto) !== norm(nt); });
+    estado.listas.forEach(function(l){ l.comprados = arr(l.comprados).map(function(k){ return k === norm(velho) ? norm(nt) : k; }); });
+    it_.produto = nt; delete it_.escolha; delete it_.similares; delete it_.ean;
+    salvar('"' + velho + '" trocado por "' + nt + '"'); tudo(); pintaHist();
   }
   function ehSim(it, s){ var e = it.escolha; return !!(e && e.sim && e.rede === s.rede && norm(e.obs) === norm(s.nome)); }
   function botaoSim(it, s){
@@ -3584,21 +3601,17 @@ dialog.ss-wrap::backdrop{background:transparent}
       if (nq > 1) iq.qtd = nq; else delete iq.qtd;
       salvar(iq.produto + ': ' + nq + (nq > 1 ? ' unidades' : ' unidade')); tudo(); return;
     }
+    // 1.32.0: o similar vai para a lista só como o item, sem a marca, o tamanho e a embalagem (a busca ainda compara as lojas)
     if (b.dataset.simpor != null){  // 1.29.0: o similar entra na lista (na lista aberta) como um item novo
-      var np = b.dataset.simNome;
-      if (itemDaLista(np) >= 0){ toast('"' + np + '" já está na lista'); return; }
-      if (entraNaLista(np) === null){ toast(porBloqueado()); return; }
-      salvar('"' + np + '" entrou na lista'); pintaLista(); pintaOfertasTela(); pintaHist(); return;
+      nomeDoItem(b.dataset.simNome).then(function(np){
+        if (itemDaLista(np) >= 0){ toast('"' + np + '" já está na lista'); return; }
+        if (entraNaLista(np) === null){ toast(porBloqueado()); return; }
+        salvar('"' + np + '" entrou na lista'); pintaLista(); pintaOfertasTela(); pintaHist();
+      }); return;
     }
     if (b.dataset.simtroca != null){  // 1.29.0: o item passa a ser o similar (as compras e as listas ficam; o nome de antes vai para o histórico)
-      var it_ = estado.lista[Number(b.dataset.simtroca)], nt = b.dataset.simNome; if (!it_) return;
-      if (itemDaLista(nt) >= 0){ toast('"' + nt + '" já está na lista'); return; }
-      var velho = it_.produto;
-      vaiProHistorico([{produto:velho, compras:arr(it_.compras).slice(), ean:it_.ean}]);
-      estado.historico = estado.historico.filter(function(h){ return norm(h.produto) !== norm(nt); });
-      estado.listas.forEach(function(l){ l.comprados = arr(l.comprados).map(function(k){ return k === norm(velho) ? norm(nt) : k; }); });
-      it_.produto = nt; delete it_.escolha; delete it_.similares; delete it_.ean;
-      salvar('"' + velho + '" trocado por "' + nt + '"'); tudo(); pintaHist(); return;
+      var it0 = estado.lista[Number(b.dataset.simtroca)]; if (!it0) return;
+      nomeDoItem(b.dataset.simNome).then(function(nt){ trocaPorSimilar(it0, nt); }); return;
     }
     if (b.dataset.sim != null){
       var isim = estado.lista[Number(b.dataset.sim)]; if (!isim) return;

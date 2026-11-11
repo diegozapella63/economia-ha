@@ -2364,8 +2364,64 @@ def _por_primeira():
     return v["prim_idx"]
 
 
+def _por_palavra():
+    """1.32.0: os nomes do vocabulário por cada palavra do meio (de 4 letras ou mais), com a posição dela."""
+    v = vocab()
+    stats_vocab()
+    if v.get("pal_de") is not v["stats"]:
+        idx = {}
+        for n in v["nomes"]:
+            ws = n.split()
+            for j in range(1, len(ws)):
+                if len(ws[j]) >= 4:
+                    idx.setdefault(ws[j], []).append((n, j))
+        v.update(pal_idx=idx, pal_de=v["stats"])
+    return v["pal_idx"]
+
+
+def _no_meio(parcial, marcas):
+    """1.32.0: a palavra digitada no meio do nome ("vanish" acha "Tira Manchas Vanish Oxi Action"): a sugestão vai do
+    começo do nome até ela ("Tira manchas Vanish"); os nomes que começam pela marca ficam de fora."""
+    conta, idx = {}, _por_palavra()
+    for w in [w for w in idx if w.startswith(parcial)]:
+        for n, j in idx[w]:
+            ws = n.split()
+            if _marca_em(ws, 0, marcas) or any(_marca_em(ws, i, marcas) for i in range(1, j)):
+                continue
+            t = " ".join(ws[:j + 1])
+            conta[t] = conta.get(t, 0) + 1
+    return conta
+
+
 def _marca_em(ws, j, marcas):
     return ws[j] in marcas or " ".join(ws[j:j + 2]) in marcas or " ".join(ws[j:j + 3]) in marcas
+
+
+# 1.32.0: "sem" e "zero" querem dizer o mesmo nos nomes ("Leite Zero Lactose" é leite sem lactose)
+IGUAIS_SUG = {"sem": "zero", "zero": "sem"}
+
+
+def _igual_sug(w, q):
+    return w == q or IGUAIS_SUG.get(q) == w
+
+
+def _com_saltos(qs, idx, marcas):
+    """Os nomes que têm as palavras digitadas na mesma ordem, com outras no meio ("leite sem lac" acha "Leite UHT Integral
+    Zero Lactose"): a sugestão é o que foi digitado com a última palavra completa ("Leite sem lactose")."""
+    conta, parcial = {}, qs[-1]
+    for n in idx.get(qs[0]) or []:
+        ws, j = n.split(), 1
+        for w in qs[1:-1]:
+            while j < len(ws) and not _igual_sug(ws[j], w):
+                j += 1
+            j += 1
+        while j < len(ws) and not ws[j].startswith(parcial):
+            j += 1
+        if j >= len(ws) or ws[j] == parcial or _marca_em(ws, j, marcas):
+            continue
+        t = " ".join(qs[:-1] + [ws[j]])
+        conta[t] = conta.get(t, 0) + 1
+    return conta
 
 
 def sugestoes_nomes(q, limite=8):
@@ -2403,14 +2459,41 @@ def sugestoes_nomes(q, limite=8):
                 conta[t] = conta.get(t, 0) + 1
     formas = v.get("formas") or {}
     out = []
-    for t, c in sorted(conta.items(), key=lambda x: (-x[1], x[0])):
+    ordem = sorted(conta.items(), key=lambda x: (-x[1], x[0]))
+    if k >= 2:  # depois, os que têm outras palavras no meio
+        ordem += [x for x in sorted(_com_saltos(qs, idx, marcas).items(), key=lambda x: (-x[1], x[0])) if x[0] not in conta and x[1] >= 2]
+    elif len(parcial) >= 4:  # uma palavra só: também no meio do nome (a marca, "leite" de Doce de leite)
+        ordem += [x for x in sorted(_no_meio(parcial, marcas).items(), key=lambda x: (-x[1], x[0])) if x[0] not in conta and x[1] >= 2]
+    for t, c in ordem:
         if c < 2:
-            break  # visto uma vez só: pode ser um nome estranho de uma loja
-        s = " ".join(formas.get(w) or CURTAS_SUG.get(w) or w for w in t.split())
+            continue  # visto uma vez só: pode ser um nome estranho de uma loja
+        s = " ".join(w.capitalize() if w in marcas else formas.get(w) or CURTAS_SUG.get(w) or w for w in t.split())
         out.append(s[:1].upper() + s[1:])
         if len(out) >= limite:
             break
     return out
+
+
+# 1.32.0: o que não é o item ("Pacote", "IQF", "Preço por quilo"): sai do nome que vai para a lista
+RUIDO_ITEM = {"iqf", "preco", "quilo", "kg", "kilo", "granel", "aprox", "aproximadamente", "peso", "variavel"}
+
+
+def nome_do_item(nome):
+    """O item sem a marca, o tamanho e a embalagem, para pôr na lista e ainda comparar as lojas (Similares › Pôr na
+    lista): "Frango a Passarinho Congelado IQF Pratinho Pacote 1kg" → "Frango a passarinho congelado"."""
+    ws = [w for w in re.findall(r"[^\W_]+", re.sub(UNIDADE_NOME, " ", str(nome or ""))) if not w.isdigit()]
+    ns, marcas = [norm(w) for w in ws], vocab()["marcas"]
+    corte = next((j for j in range(1, len(ws)) if _marca_em(ns, j, marcas)), len(ws))
+    fica = []
+    for w, n in zip(ws[:corte], ns[:corte]):
+        if n == "preco":  # "Preço por quilo" e o que vem depois
+            break
+        if n not in EMBALAGEM_SUG and n not in RUIDO_ITEM:
+            fica.append(w)
+    while fica and norm(fica[-1]) in LIGA_SUG:
+        fica.pop()
+    t = " ".join(fica).lower()
+    return (t[:1].upper() + t[1:]) if t else texto(nome, 80)
 
 
 def associadas(w):
@@ -7720,6 +7803,9 @@ class Painel(BaseHTTPRequestHandler):
         elif rota == "/api/corrigir":
             t = (urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("texto") or [""])[0][:120]
             self._json(200, {"texto": corrige_texto(t)})
+        elif rota == "/api/nome-item":
+            t = (urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("nome") or [""])[0][:120]
+            self._json(200, {"nome": nome_do_item(t)})
         elif rota == "/api/sugestoes":
             t = (urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("q") or [""])[0][:80]
             self._json(200, {"nomes": sugestoes_nomes(t)})

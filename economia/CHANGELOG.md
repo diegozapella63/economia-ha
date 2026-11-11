@@ -1,5 +1,11 @@
 # Mudanças
 
+## 1.32.0
+
+- As sugestões ao digitar o item acham também a palavra no meio do nome: só a marca ("Vanish" sugere *Tira manchas Vanish*) ou "leite" sugere também *Doce de leite* e *Creme de leite*.
+- Com palavras no meio: "Leite sem lac" sugere *Leite sem lactose*, mesmo que as lojas escrevam "Leite UHT Integral Zero Lactose".
+- Nos **Similares**, **Pôr na lista** e **Trocar por este** levam só o item, sem a marca, o tamanho e a embalagem ("Frango a Passarinho Congelado IQF Pratinho Pacote 1kg" entra como *Frango a passarinho congelado*): a busca continua comparando as lojas.
+
 ## 1.31.0
 
 - Quando a última busca tem mais de 3 dias, o alto da tela avisa: **Última busca há N dias**, na cor de alerta, com **Buscar agora** ao lado. No computador, a barra lateral também avisa.

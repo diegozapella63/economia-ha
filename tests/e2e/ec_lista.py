@@ -134,13 +134,13 @@ async def main():
             check(await sc.locator(".sim-acoes button").all_inner_texts() == ["Pôr na lista", "Trocar por este"], "as duas ações embaixo do similar")
             await sc.locator("[data-simpor]").click()
             await pg.wait_for_timeout(600)
-            check(any(i["produto"] == "Acém Moído Bovino Kg" for i in app.config_salva()["lista"]) and await pg.locator("#wish > li.item", has_text="Acém Moído Bovino Kg").count() >= 1,
-                  "Pôr na lista: o acém entrou como item novo")
+            check(any(i["produto"] == "Acém moído bovino" for i in app.config_salva()["lista"]) and await pg.locator("#wish > li.item", has_text="Acém moído bovino").count() >= 1,
+                  "Pôr na lista: o acém entrou como item novo, só o item (1.32.0: sem o Kg)")
             carne = await item(pg, "Carne moída")
             await carne.locator(".sim-list li", has_text="Acém Moído Bovino Kg").locator("[data-simtroca]").click()
             await pg.wait_for_timeout(500)
             check(any(i["produto"] == "Carne moída bovina de primeira" for i in app.config_salva()["lista"]), "já na lista: não troca")
-            await pg.locator("#wish > li.item", has_text="Acém Moído Bovino Kg").filter(has_not_text="Carne moída").locator("button.rm").click()
+            await pg.locator("#wish > li.item", has_text="Acém moído bovino").filter(has_not_text="Carne moída").locator("button.rm").click()
             await pg.wait_for_timeout(600)
             # Trocar por este: a coxinha (similares guardados, na hora) vira o frango inteiro, com as compras; a coxinha vai para o histórico
             await (await item(pg, "Coxinha da asa")).locator(".i-sim").click()
@@ -149,7 +149,7 @@ async def main():
             await cox.locator(".sim-list li", has_text="Frango Inteiro Congelado Kg").locator("[data-simtroca]").click()
             await pg.wait_for_timeout(800)
             c = app.config_salva()
-            novo = next((i for i in c["lista"] if i["produto"] == "Frango Inteiro Congelado Kg"), {})
+            novo = next((i for i in c["lista"] if i["produto"] == "Frango inteiro congelado"), {})
             check(not any(i["produto"] == "Coxinha da asa" for i in c["lista"]) and novo.get("compras") == ["2026-10-05", "2026-10-19"]
                   and "similares" not in novo and "escolha" not in novo, f"trocado, com as compras de antes ({novo})")
             check(any(h["produto"] == "Coxinha da asa" for h in c.get("historico") or []), "o nome de antes fica no histórico")

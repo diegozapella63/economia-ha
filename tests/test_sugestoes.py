@@ -19,6 +19,12 @@ NOMES = (
     + ["Café em Pó Pratinho 500g", "Café em Pó Tio Zeca 250g", "Café Solúvel Brilhux 100g", "Café Solúvel Pratinho 200g"]
     + ["Chá de Camomila Brilhux 10 sachês", "Chá de Camomila Vale Verde 15g"]
     + ["Pratinho Pipoca Doce 100g", "Pratinho Pipoca Salgada 100g"]  # nomes que começam pela marca
+    # 1.32.0: o "sem lactose" vem com outras palavras no meio, e às vezes como "zero"
+    + ["Leite UHT Integral Zero Lactose Pratinho 1L", "Leite Integral Sem Lactose Vale Verde 1L", "Leite Desnatado Zero Lactose Brilhux 1L",
+       "Leite UHT Integral Pratinho 1L", "Leite UHT Desnatado Brilhux 1L"]
+    # a marca no meio do nome (quem digita só a marca, como "Lysoform")
+    + ["Tira Manchas Brilhux Oxi 450g", "Tira Manchas Brilhux Rosa 1L", "Alvejante Brilhux 1L", "Doce de Leite Vale Verde 400g",
+       "Doce de Leite Pratinho 200g"]
 )
 
 
@@ -59,6 +65,35 @@ class Sugestoes(unittest.TestCase):
         self.assertEqual(self.S.sugestoes_nomes("5 kg"), [])
         self.assertEqual(self.S.sugestoes_nomes("arroz 5kg"), self.S.sugestoes_nomes("arroz"), "o tamanho não conta")
         self.assertEqual(self.S.sugestoes_nomes("feijao"), [], "nada visto")
+
+    def test_palavras_no_meio_e_sem_igual_a_zero(self):
+        self.assertEqual(self.S.sugestoes_nomes("leite sem lac"), ["Leite sem lactose"],
+                         "1.32.0: as lojas escrevem Leite UHT Integral Zero Lactose; a sugestão fica com o que foi digitado")
+        self.assertEqual(self.S.sugestoes_nomes("leite zero lac"), ["Leite zero lactose"])
+        self.assertEqual(self.S.sugestoes_nomes("leite uht"), ["Leite uht integral"], "do começo (o desnatado foi visto uma vez só)")
+        self.assertEqual(self.S.sugestoes_nomes("leite integral lac"), ["Leite integral lactose"], "com saltos também na ordem")
+        self.assertEqual(self.S.sugestoes_nomes("leite sem lactose"), [], "a palavra já completa não vira sugestão")
+        self.assertEqual(self.S.sugestoes_nomes("leite sem pra"), [], "completar com a marca, não")
+
+    def test_a_palavra_no_meio_do_nome(self):
+        """1.32.0: a marca (ou outra palavra) que as lojas escrevem no meio do nome."""
+        self.assertIn("Tira manchas Brilhux", self.S.sugestoes_nomes("brilhux"), "a marca sozinha acha o produto dela")
+        self.assertIn("Tira manchas Brilhux", self.S.sugestoes_nomes("brilh"), "e enquanto digita")
+        self.assertIn("Doce de leite", self.S.sugestoes_nomes("leite"), "leite também acha o doce de leite (depois dos do começo)")
+        self.assertEqual(self.S.sugestoes_nomes("leite")[0], "Leite uht", "os que começam pelo que foi digitado primeiro")
+        self.assertNotIn("Alvejante Brilhux", self.S.sugestoes_nomes("brilhux"), "visto uma vez só")
+
+    def test_o_nome_do_item_sem_marca_tamanho_e_embalagem(self):
+        """1.32.0: Similares › Pôr na lista e Trocar por este levam só o item, para ainda comparar as lojas."""
+        n = self.S.nome_do_item
+        self.assertEqual(n("Sabão em Pó Brilhux 1,6kg"), "Sabão em pó")
+        self.assertEqual(n("Arroz Integral Tio Zeca 1kg"), "Arroz integral", "a marca de duas palavras corta")
+        self.assertEqual(n("Frango a Passarinho Congelado IQF Pratinho Pacote 1kg"), "Frango a passarinho congelado")
+        self.assertEqual(n("Coxa e Sobrecoxa de Frango Resfriada Preço por quilo"), "Coxa e sobrecoxa de frango resfriada",
+                         "sem marca: tira o preço por quilo (e o por que sobra no fim)")
+        self.assertEqual(n("Acém Moído Bovino Kg"), "Acém moído bovino")
+        self.assertEqual(n("Pratinho Pipoca Doce 100g"), "Pratinho pipoca doce", "a marca no começo fica (senão não sobra o item)")
+        self.assertEqual(n("1kg"), "1kg", "sem nada que sobre, o nome de antes")
 
     def test_no_maximo_o_limite(self):
         self.assertEqual(len(self.S.sugestoes_nomes("sab", limite=3)), 3)
