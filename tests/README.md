@@ -92,6 +92,7 @@ esperar (espera-se a condição: `Cenario.espera`, `espera()` nas visuais), semp
 
 ## Visuais
 
+- `e2e/ec_busca_velha.py`: a última busca com mais de 3 dias em alerta no alto (há N dias, Buscar agora) e na barra lateral; até 3 dias, como antes.
 - `e2e/ec_lista.py`: a lista com preços (busca de verdade contra lojas falsas), similares, escolher, roteiro, adicionar,
   "Quis dizer…?", Comprei hoje, histórico, limpar.
 - `e2e/ec_codigo.py`: código de barras por foto (deitada, em pé, de ponta-cabeça, borrada, com ruído, pequena, EAN-8,

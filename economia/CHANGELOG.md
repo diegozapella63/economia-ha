@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.31.0
+
+- Quando a última busca tem mais de 3 dias, o alto da tela avisa: **Última busca há N dias**, na cor de alerta, com **Buscar agora** ao lado. No computador, a barra lateral também avisa.
+
 ## 1.30.0
 
 - No cartão do item, **tirar desta lista** (ou **remover**) fica no pé, ao lado de **Buscar similares**. No item ainda sem preço, continua junto dos botões.

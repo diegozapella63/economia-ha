@@ -603,3 +603,7 @@ em cada oferta) manda `POST api/comparar` com o `id` da oferta; o servidor acha 
   quando não é de hoje e as lojas como os chips da Minha lista (`.i-others`, a mais barata `.barato`, o link do produto).
   No fim, `recarrega(comp)` troca o "Ofertas atualizadas" pelo aviso do resultado. No exemplo, o botão só explica.
 - As ações da oferta (Comparar preço e Não mostrar, ou Mostrar de novo) ficam em `.d-acts`, uma linha na largura toda.
+
+## Busca velha (1.31.0)
+
+`diasDaBusca()` conta os dias desde `D.gerado_em` (a última busca completa; 0 no exemplo) e `buscaVelha()` passa de 3. `pintaSync` põe `velha` no `#sync` (a cor de `--warn`), troca o texto por "Última busca há N dias (dd/mm)" e mostra o `#syncBuscar` (o mesmo que o Buscar do menu; some com a busca rodando, `botaoBusca` repinta). A barra lateral do computador (`.side-sync.velha`) diz o mesmo.

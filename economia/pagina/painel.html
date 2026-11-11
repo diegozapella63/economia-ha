@@ -109,6 +109,11 @@ button{font:inherit;cursor:pointer}
 h1{font-family:var(--font-display);font-stretch:72%;font-weight:800;font-size:clamp(2.2rem,6vw,3rem);line-height:1;letter-spacing:.005em;margin-top:4px;text-wrap:balance}
 .sync{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:12px;color:var(--muted);font-size:13.5px}
 .sync .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);flex:none}
+/* 1.31.0: a última busca com mais de 3 dias: em alerta, com o Buscar agora */
+.sync.velha{color:var(--warn);font-weight:600}
+.sync.velha .dot{background:var(--warn);box-shadow:0 0 0 3px var(--warn-soft)}
+.sync .sync-buscar{font-size:13.5px;font-weight:600}
+.side-sync.velha{color:var(--warn);font-weight:600}
 
 /* menu fixo embaixo, com a busca no centro */
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--line);padding-top:6px;padding-bottom:calc(6px + env(safe-area-inset-bottom,0px));padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
@@ -1202,7 +1207,7 @@ input.field,select.field{min-height:var(--altura)}
     </div>
     <button type="button" class="uplink" id="maisVolta" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Mais</button>
     <h1 id="screenTitle">Minha lista</h1>
-    <p class="sync"><span class="dot" aria-hidden="true"></span><span id="syncText">Carregando…</span></p>
+    <p class="sync" id="sync"><span class="dot" aria-hidden="true"></span><span id="syncText">Carregando…</span><button type="button" class="link sync-buscar" id="syncBuscar" hidden>Buscar agora</button></p>
   </header>
 
   <p class="busca-msg" id="buscaMsg" aria-live="polite" hidden></p>
@@ -5615,12 +5620,20 @@ input.field,select.field{min-height:var(--altura)}
   $('lojasAcharMsg').addEventListener('click', function(e){ if (e.target.closest('[data-buscar-ja]')) $('buscar').click(); });
 
   $('ondeMsg').addEventListener('click', function(e){ if (e.target.closest('[data-buscar-ja]')) $('buscar').click(); });
+  $('syncBuscar').addEventListener('click', function(){ $('buscar').click(); });
 
   // ---------- início ----------
+  // 1.31.0: há quantos dias foi a última busca completa (0 no exemplo); com mais de 3, os preços podem ter mudado
+  function diasDaBusca(){ var d = String((D && D.gerado_em) || '').slice(0, 10); return exemplo || !/^\d{4}-\d{2}-\d{2}$/.test(d) ? 0 : -diasAte(d); }
+  function buscaVelha(){ return diasDaBusca() > 3; }
   function pintaSync(){
+    var velha = buscaVelha();
     $('syncText').textContent = exemplo
       ? (MODO === 'addon' ? 'Nenhuma busca ainda' : 'Exemplo com ofertas de farmácia de 18/10')
+      : velha ? 'Última busca há ' + diasDaBusca() + ' dias (' + dataBR(String(D.gerado_em).slice(0, 10)) + ')' + resumoBusca()
       : 'Última busca ' + quando(D.gerado_em) + resumoBusca();
+    $('sync').classList.toggle('velha', velha);
+    $('syncBuscar').hidden = !velha || BUSCANDO;
     $('banner').hidden = !exemplo;
     $('bannerTxt').textContent = MODO === 'addon'
       ? 'Salve o CEP em Mais › Casa e toque em Buscar, no menu de baixo, para trocar este exemplo pelas lojas e ofertas perto de você.'
@@ -5658,7 +5671,7 @@ input.field,select.field{min-height:var(--altura)}
       + link('lista', acab ? '<span class="side-badge" title="' + acab + (acab > 1 ? ' itens acabando' : ' item acabando') + '">' + acab + '</span>' : estado.lista.length ? '<span class="sl-num">' + estado.lista.length + '</span>' : '')
       + link('roteiro') + link('ofertas', total ? '<span class="sl-num">' + total + '</span>' : '') + link('mais') + '</nav>'
       + '<button type="button" class="side-busca" data-lado="buscar"' + (BUSCANDO ? ' disabled' : '') + '>' + svgL('busca') + '<span>' + (BUSCANDO ? 'Buscando…' : 'Buscar ofertas') + '</span></button>'
-      + '<p class="side-sync">' + (exemplo ? 'Exemplo: toque em Buscar no Home Assistant' : 'Última busca ' + esc(quandoCurto(D.gerado_em))) + '</p>';
+      + '<p class="side-sync' + (buscaVelha() ? ' velha' : '') + '">' + (exemplo ? 'Exemplo: toque em Buscar no Home Assistant' : buscaVelha() ? 'Última busca há ' + diasDaBusca() + ' dias' : 'Última busca ' + esc(quandoCurto(D.gerado_em))) + '</p>';
     if (cats.length) h += '<div class="side-h"><span>Ofertas</span><small>' + total + '</small></div><div class="side-lista">' + cats.map(function(c){
       var on = v === 'ofertas' && ui.aba === c.id;
       return '<button type="button" class="side-item" data-lado-cat="' + c.id + '"' + (on ? ' aria-current="page"' : '') + '><span class="side-tile">' + esc(c.nome.charAt(0)) + '</span><span class="sl-nome">' + esc(c.nome) + '</span><span class="sl-num">' + nOf(c) + '</span></button>';
@@ -5692,7 +5705,7 @@ input.field,select.field{min-height:var(--altura)}
     b.disabled = rodando; b.classList.toggle('girando', rodando);
     b.querySelector('.ic-busca').toggleAttribute('hidden', rodando); b.querySelector('.ic-gira').toggleAttribute('hidden', !rodando);  // svg: sem a propriedade hidden
     $('buscarTxt').textContent = txt;
-    if (BUSCANDO !== rodando){ BUSCANDO = rodando; pintaLado(); }
+    if (BUSCANDO !== rodando){ BUSCANDO = rodando; pintaLado(); if (D && estado) pintaSync(); }
   }
   function mostraBusca(st, inicial){
     var m = $('buscaMsg');
