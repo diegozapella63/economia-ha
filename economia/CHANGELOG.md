@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.20.0
+
+- **A leitura por IA mostra o texto todo**: o nome de cada item achado (Ler com IA) e o benefício de cada cupom crescem com o texto, sem ficar cortados, e aumentam puxando o canto.
+
 ## 1.19.0
 
 - **Buscar só com o ícone**: o botão do meio da barra de baixo fica só com a lupa, sem o texto embaixo, como em todos os apps da família (buscando, a lupa gira).

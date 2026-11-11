@@ -632,6 +632,8 @@ li.escolhida{border-color:var(--accent) !important}
 .foto-itens{display:flex;flex-direction:column;gap:6px}
 .foto-itens li{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .foto-itens .field{flex:1 1 160px}
+/* 1.20.0: o nome de cada item e o benefício de cada cupom mostram o texto todo (crescem com ele; o canto aumenta) */
+textarea.field.grow{field-sizing:content;min-height:var(--altura,50px);max-height:40vh;resize:vertical;line-height:1.4;padding-top:12px;padding-bottom:12px}
 .foto-itens input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent);flex:none;margin:0}
 .rot-op{width:100%;display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 12px;font:inherit;font-size:13.5px;color:var(--ink);text-align:left;cursor:pointer}
 .rot-op[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
@@ -1765,6 +1767,8 @@ input.field,select.field{min-height:var(--altura)}
   var TZ = 'America/Sao_Paulo';
   var brl = new Intl.NumberFormat('pt-BR', {style:'currency', currency:'BRL'});
   function $(id){ return document.getElementById(id); }
+  // um texto de uma linha numa caixa que mostra tudo (textarea.grow, 1.20.0): o Enter não quebra a linha
+  document.addEventListener('keydown', function(e){ if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.target.matches && e.target.matches('textarea.grow')) e.preventDefault(); });
   function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function arr(v){ return Array.isArray(v) ? v : []; }
   function tira(a, v){ var i = a.indexOf(v); if (i >= 0) a.splice(i, 1); }
@@ -3219,7 +3223,7 @@ input.field,select.field{min-height:var(--altura)}
     msg.className = 'hint ok'; msg.textContent = (itens.length > 1 ? 'Achei ' + itens.length + ' itens.' : 'Achei 1 item.') + ' Confira, ajuste o nome se precisar e adicione.';
     $('fotoItens').innerHTML = itens.map(function(i){
       return '<li><input type="checkbox"' + (i.ja ? ' disabled' : ' checked') + ' aria-label="Adicionar ' + esc(i.produto) + '">'
-        + '<input type="text" class="field" value="' + esc(i.produto) + '"' + (i.ja ? ' disabled' : '') + ' aria-label="Nome do item">'
+        + '<textarea class="field grow" rows="1"' + (i.ja ? ' disabled' : '') + ' aria-label="Nome do item">' + esc(i.produto) + '</textarea>'
         + (i.quantidade ? '<span class="chip">Qtd. ' + esc(i.quantidade) + '</span>' : '') + (i.ja ? '<span class="chip">Já na lista</span>' : '') + '</li>';
     }).join('');
     $('fotoAddRow').hidden = !itens.some(function(i){ return !i.ja; });
@@ -3766,7 +3770,7 @@ input.field,select.field{min-height:var(--altura)}
   $('fotoAdd').addEventListener('click', function(){
     var novos = 0;
     [].forEach.call($('fotoItens').querySelectorAll('li'), function(li){
-      var c = li.querySelector('input[type=checkbox]'), nome = li.querySelector('input[type=text]').value.trim().slice(0, 120);
+      var c = li.querySelector('input[type=checkbox]'), nome = li.querySelector('textarea').value.trim().slice(0, 120);
       if (!c.checked || c.disabled || nome.length < 2 || estado.lista.some(function(x){ return norm(x.produto) === norm(nome); })) return;
       entraNaLista(nome); novos++;
     });
@@ -4764,7 +4768,7 @@ input.field,select.field{min-height:var(--altura)}
     $('cupItens').innerHTML = cups.map(function(c, i){
       var rede = (c.rede && G[c.rede]) ? c.rede : redeDoNome(c.loja);
       return '<li data-k="' + i + '"><input type="checkbox"' + (rede ? ' checked' : '') + ' aria-label="Guardar cupom">'
-        + '<input type="text" class="field" value="' + esc(c.beneficio) + '" aria-label="Benefício">'
+        + '<textarea class="field grow" rows="1" aria-label="Benefício">' + esc(c.beneficio) + '</textarea>'
         + '<select class="field" aria-label="Loja"><option value="">Qual loja?' + (c.loja ? ' (' + esc(c.loja) + ')' : '') + '</option>' + lojas.map(function(id){ return '<option value="' + esc(id) + '"' + (id === rede ? ' selected' : '') + '>' + esc(G[id].nome) + '</option>'; }).join('') + '</select>'
         + (c.codigo ? '<span class="chip">' + esc(c.codigo) + '</span>' : '') + (c.valido_ate ? '<span class="chip warn">Até ' + dataBR(c.valido_ate) + '</span>' : '') + '</li>';
     }).join('');
@@ -4795,7 +4799,7 @@ input.field,select.field{min-height:var(--altura)}
   $('cupAdd').addEventListener('click', function(){
     var lidos = JSON.parse($('cupItens').dataset.lidos || '[]'), novos = 0;
     [].forEach.call($('cupItens').querySelectorAll('li'), function(li){
-      var c = lidos[Number(li.dataset.k)], rede = li.querySelector('select').value, ben = li.querySelector('input[type=text]').value.trim().slice(0, 60);
+      var c = lidos[Number(li.dataset.k)], rede = li.querySelector('select').value, ben = li.querySelector('textarea').value.trim().slice(0, 60);
       if (!c || !li.querySelector('input[type=checkbox]').checked || !rede || ben.length < 2) return;
       if (estado.cupons_meus.some(function(k){ return k.rede === rede && norm(k.beneficio) === norm(ben) && (k.codigo || null) === (c.codigo || null); })) return;
       estado.cupons_meus.push({id:'meu-' + Date.now().toString(36) + '-' + novos, rede:rede, beneficio:ben, codigo:c.codigo || null, condicao:c.condicao || '', valido_ate:c.valido_ate || null, produto:c.produto || '', criado:hojeSP()});
