@@ -452,7 +452,8 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .i-actions > .chip,.i-actions > .i-foot{grid-column:1/-1;justify-self:end;margin-left:0}
 .i-actions > .chip{justify-self:start}
 .i-foot{font-size:12px;color:var(--muted);margin-left:auto}
-.i-foot .i-rebusca,.i-foot .i-sim{font-size:12px;margin-left:2px;white-space:nowrap}
+.i-foot .i-rebusca,.i-foot .i-sim,.i-foot .rm{font-size:12px;margin-left:2px;white-space:nowrap}
+.i-foot .rm{padding:0;min-height:0}
 /* o − e o + do tamanho dos outros botões da linha (Comprei hoje) */
 .qtd{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:8px}
 .qtd .qtd-b{border:0;background:none;flex:1 1 0;min-width:36px;min-height:0;font-size:18px;line-height:1;padding:0;color:var(--accent)}
@@ -1914,7 +1915,7 @@ input.field,select.field{min-height:var(--altura)}
         listas:arr(i.listas).filter(function(id){ return idsListas[id]; }).length ? arr(i.listas).filter(function(id, k, a){ return idsListas[id] && a.indexOf(id) === k; }) : undefined,
         escolha:i.escolha && i.escolha.rede ? {rede:String(i.escolha.rede), q:Number(i.escolha.q) || null, obs:String(i.escolha.obs || '').slice(0, 120), sim:i.escolha.sim ? true : undefined} : undefined}; }).filter(function(i){ return i.produto; }),
       // itens que saíram da lista, com as compras, para voltar com um toque
-      historico: arr(c.historico).filter(function(i){ return i && i.produto; }).map(function(i){ return {produto:String(i.produto).slice(0, 120), compras:arr(i.compras).filter(function(d){ return /^\d{4}-\d{2}-\d{2}$/.test(d); }), saiu:String(i.saiu || ''), ean:/^\d{8,14}$/.test(String(i.ean || '')) ? String(i.ean) : undefined}; }).slice(-300),
+      historico: arr(c.historico).filter(function(i){ return i && i.produto; }).map(function(i){ return {produto:String(i.produto).slice(0, 120), compras:arr(i.compras).filter(function(d){ return /^\d{4}-\d{2}-\d{2}$/.test(d); }), saiu:String(i.saiu || ''), ean:/^\d{8,14}$/.test(String(i.ean || '')) ? String(i.ean) : undefined, similares:i.similares === true ? true : undefined}; }).slice(-300),
       perfil: {adultos:n0(p.adultos, 1), criancas:n0(p.criancas, 0), bebes:n0(p.bebes, 0), pets:petsDe(p.pets), restricoes:arr(p.restricoes), interesses:arr(p.interesses), nunca:arr(p.nunca),
         nunca_produtos:arr(p.nunca_produtos).map(function(t){ return String(t).trim().slice(0, 40); }).filter(function(t){ return norm(t); }).slice(0, 100)},
       cotidiano: {mercado:arr(r.mercado), farmacia:arr(r.farmacia), avisar:r.avisar || 'vespera', estoque:['pouco', 'normal', 'bastante'].indexOf(r.estoque) >= 0 ? r.estoque : 'normal'},
@@ -2772,8 +2773,9 @@ input.field,select.field{min-height:var(--altura)}
     var hoje = hojeSP();
     itens.forEach(function(it){
       var k = norm(it.produto), h = estado.historico.filter(function(x){ return norm(x.produto) === k; })[0];
-      if (h){ arr(it.compras).forEach(function(d){ if (h.compras.indexOf(d) < 0) h.compras.push(d); }); h.saiu = hoje; if (it.ean) h.ean = it.ean; }
-      else estado.historico.push({produto:it.produto, compras:arr(it.compras).slice(), saiu:hoje, ean:it.ean});
+      // 1.30.0: os similares ligados também (o item volta com eles, e os guardados aparecem sem outra busca)
+      if (h){ arr(it.compras).forEach(function(d){ if (h.compras.indexOf(d) < 0) h.compras.push(d); }); h.saiu = hoje; if (it.ean) h.ean = it.ean; h.similares = it.similares ? true : undefined; }
+      else estado.historico.push({produto:it.produto, compras:arr(it.compras).slice(), saiu:hoje, ean:it.ean, similares:it.similares ? true : undefined});
     });
     if (estado.historico.length > 300){  // fica o que foi mais comprado e saiu por último
       estado.historico.sort(function(a, b){ return (a.compras.length - b.compras.length) || String(a.saiu).localeCompare(String(b.saiu)); });
@@ -2784,7 +2786,7 @@ input.field,select.field{min-height:var(--altura)}
     if (!podePor()) return null;
     var k = norm(nome), h = estado.historico.filter(function(x){ return norm(x.produto) === k; })[0];
     estado.historico = estado.historico.filter(function(x){ return norm(x.produto) !== k; });
-    estado.lista.push({produto:h ? h.produto : nome, compras:h ? h.compras.slice().sort() : [], ean:h && h.ean ? h.ean : undefined, listas:listaAtual() ? [listaAtual()] : undefined});
+    estado.lista.push({produto:h ? h.produto : nome, compras:h ? h.compras.slice().sort() : [], ean:h && h.ean ? h.ean : undefined, listas:listaAtual() ? [listaAtual()] : undefined, similares:h && h.similares ? true : undefined});
     return !!h;
   }
   var HIST_ABERTO = false;
@@ -3016,7 +3018,9 @@ input.field,select.field{min-height:var(--altura)}
       var p = precosDe(x.it.produto), soon = x.r.dias != null && x.r.dias <= 3;
       if (resumida && !RES_ABERTO[norm(x.it.produto)]) return linhaResumida(x, p, soon);
       var N = qtdDe(x.it);
-      var acoes = '<div class="i-actions">' + seletorQtd(x) + '<button type="button" class="ghost ic-btn" data-comprei="' + x.i + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.3 14.2l2 2 3.6-3.7"/></svg>Comprei hoje</button><button type="button" class="rm" data-rm="' + x.i + '">' + (aberta ? 'tirar desta lista' : 'remover') + '</button>' + (x.it.origem === 'ha' ? '<span class="chip">Veio do Home Assistant</span>' : '');
+      var acoes = '<div class="i-actions">' + seletorQtd(x) + '<button type="button" class="ghost ic-btn" data-comprei="' + x.i + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.3 14.2l2 2 3.6-3.7"/></svg>Comprei hoje</button>' + (x.it.origem === 'ha' ? '<span class="chip">Veio do Home Assistant</span>' : '');
+      // 1.30.0: o tirar desta lista (ou remover) fica no pé, ao lado do Buscar similares; o item sem preço não tem pé: fica nos botões
+      var tirar = '<button type="button" class="rm" data-rm="' + x.i + '">' + (aberta ? 'tirar desta lista' : 'remover') + '</button>';
       if (!p.length){
         var procurou = arr((D.relatorio || {}).sem_preco).map(norm).indexOf(norm(x.it.produto)) >= 0;
         var buscando = buscaItem === x.it.produto;
@@ -3025,7 +3029,7 @@ input.field,select.field{min-height:var(--altura)}
           + '<div class="i-best"><span class="lbl">Sem preço ainda</span>'
           + (procurou ? '<span class="i-wait">A última busca não achou.' + (((D.relatorio || {}).sugestoes || {})[x.it.produto] ? ' Quis dizer <button type="button" class="link corr-btn" data-de="' + esc(x.it.produto) + '" data-para="' + esc(D.relatorio.sugestoes[x.it.produto]) + '">' + esc(D.relatorio.sugestoes[x.it.produto]) + '</button>?' : '') + '</span>' : '')
           + '<button type="button" class="ghost ic-btn i-busca" data-buscaitem="' + x.i + '"' + (buscando ? ' disabled' : '') + '><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>' + (buscando ? 'Buscando…' : 'Buscar este item') + '</button></div>'
-          + acoes + '</div></li>';
+          + acoes + tirar + '</div></li>';
       }
       var best = p[0], conta = {}, mt = melhorTamanho(x.it, x.r, p), dc = mt && mt.principal ? mt.dica : null;
       // economia: o que se deixa de pagar em relação à segunda opção mais barata (com o tamanho que compensa, em relação ao avulso mais barato)
@@ -3049,7 +3053,7 @@ input.field,select.field{min-height:var(--altura)}
         + (buscaItem === x.it.produto ? ' disabled>Buscando…' : '>Buscar de novo') + '</button>'
         // 1.28.0: os similares (a mesma seção da loja) só vêm da busca direta; ligados, o mesmo lugar os esconde
         + (estado.opcoes.lojas_diretas || x.it.similares ? ' · <button type="button" class="link i-sim" data-sim="' + x.i + '"' + (buscaItem === x.it.produto ? ' disabled' : '') + '>' + (x.it.similares ? 'Esconder similares' : 'Buscar similares') + '</button>' : '')
-        + '</span></div></li>';
+        + ' · ' + tirar + '</span></div></li>';
     }).join('');
   }
   // ----- a lista resumida: o item, o preço escolhido (a sua escolha, a melhor compra ou o mais barato) e onde comprar -----

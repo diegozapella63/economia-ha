@@ -166,6 +166,24 @@ async def main():
             await pg.wait_for_timeout(1000)
             carne = await item(pg, "Carne moída")
             check("MAIS BARATO" in (await carne.locator(".i-best").first.inner_text()).upper(), "Desfazer escolha volta ao mais barato")
+            # 1.30.0: o remover fica no pé, ao lado do Buscar similares; no item sem preço (sem pé), nos botões
+            pe = (await carne.locator(".i-foot").inner_text()).replace("\xa0", " ")
+            check(await carne.locator(".i-foot [data-rm]").count() == 1 and await carne.locator(".i-actions > [data-rm]").count() == 0
+                  and pe.rstrip().endswith("Buscar de novo · Esconder similares · remover"), f"remover no pé ({pe!r})")
+            check(await (await item(pg, "Detergemte Ypê")).locator(".i-actions > [data-rm]").count() == 1, "sem preço: remover nos botões")
+            # 1.30.0: o item com os similares ligados sai e volta do histórico com eles (os guardados, sem outra busca)
+            pedidos = len(app.lojas.pedidos_de("intelligent-search"))
+            await carne.locator(".i-foot [data-rm]").click()
+            await pg.wait_for_timeout(800)
+            check(any(h["produto"].startswith("Carne moída") and h.get("similares") is True for h in app.config_salva()["historico"]), "no histórico, com os similares ligados")
+            await pg.click("#histBtn")
+            await pg.wait_for_timeout(300)
+            await pg.locator("#histLista .hist-row", has_text="Carne moída").locator(".hist-add").click()
+            await pg.wait_for_timeout(900)
+            await pg.click("#histBtn")
+            carne = await item(pg, "Carne moída")
+            check(await carne.locator(".i-sim").inner_text() == "Esconder similares" and "Acém Moído Bovino Kg" in await carne.inner_text()
+                  and len(app.lojas.pedidos_de("intelligent-search")) == pedidos, "voltou com os similares, sem buscar")
 
             # ----- Quis dizer… no item sem preço -----
             det = await item(pg, "Detergemte Ypê")

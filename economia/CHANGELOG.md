@@ -1,5 +1,10 @@
 # Mudanças
 
+## 1.30.0
+
+- No cartão do item, **tirar desta lista** (ou **remover**) fica no pé, ao lado de **Buscar similares**. No item ainda sem preço, continua junto dos botões.
+- O item que sai da lista e volta do **Histórico** volta com os **similares** que você já tinha consultado, sem outra busca.
+
 ## 1.29.0
 
 - **Similares**: embaixo de cada um, **Pôr na lista** (entra como um item novo) e **Trocar por este** (o item passa a ser o similar, com as compras e as listas; o nome de antes fica no Histórico).

@@ -622,15 +622,22 @@ def vai_pro_historico(cfg, item, hoje):
     k = norm(nome_item(item))
     h = next((x for x in hist if isinstance(x, dict) and norm(x.get("produto")) == k), None)
     compras = [c for c in (item.get("compras") or []) if data_ok(c)] if isinstance(item, dict) else []
+    sim = isinstance(item, dict) and item.get("similares") is True  # 1.30.0: volta com os similares ligados
     if h:
         h["compras"] = (h.get("compras") or []) + [c for c in compras if c not in (h.get("compras") or [])]
         h["saiu"] = hoje
         if isinstance(item, dict) and item.get("ean"):
             h["ean"] = item["ean"]
+        if sim:
+            h["similares"] = True
+        else:
+            h.pop("similares", None)
     else:
         novo = {"produto": nome_item(item), "compras": list(compras), "saiu": hoje}
         if isinstance(item, dict) and item.get("ean"):
             novo["ean"] = item["ean"]
+        if sim:
+            novo["similares"] = True
         hist.append(novo)
     if len(hist) > 300:  # fica o que foi mais comprado e saiu por último
         hist.sort(key=lambda x: (len(x.get("compras") or []), str(x.get("saiu") or "")))
@@ -1830,10 +1837,11 @@ def guardar_similares(itens):
 
 
 def similares_salvos(cfg):
-    """{nome do item na lista: {em, itens}} dos itens da lista que têm similares guardados (vai para a página)."""
+    """{nome do item: {em, itens}} dos itens da lista e do histórico (1.30.0: o que volta à lista já vem com eles) que têm
+    similares guardados (vai para a página)."""
     reg = ler_json(SIMILARES_FILE, {}) or {}
     out = {}
-    for i in cfg.get("lista") or []:
+    for i in (cfg.get("lista") or []) + (cfg.get("historico") or []):
         nome = nome_item(i)
         g = reg.get(norm(nome)) if nome else None
         if isinstance(g, dict) and isinstance(g.get("itens"), list) and g["itens"] and data_ok(str(g.get("em") or "")):
@@ -7524,6 +7532,8 @@ def _ferr_por(a, cfg, of):
     item = {"produto": h["produto"] if h else prod, "compras": sorted(c for c in (h.get("compras") or []) if data_ok(c)) if h else []}
     if h and h.get("ean"):
         item["ean"] = h["ean"]
+    if h and h.get("similares") is True:
+        item["similares"] = True
     if alvo:
         item["listas"] = [alvo["id"]]
     cfg["historico"] = [x for x in hist if x is not h]

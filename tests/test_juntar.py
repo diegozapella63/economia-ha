@@ -199,6 +199,8 @@ class SimilaresGuardados(Base):
         self.assertEqual((reg["coxinha da asa"]["em"], len(reg["coxinha da asa"]["itens"])), ("2026-11-02", 6), "a data da busca e até 6")
         self.assertEqual(S.similares_salvos(self.cfg), {"Coxinha da asa": {"em": "2026-11-02", "itens": [sobre] * 6}})
         self.assertEqual(S.similares_salvos({"lista": [{"produto": "Leite integral"}, "Café"]}), {}, "só os itens da lista que têm")
+        self.assertEqual(list(S.similares_salvos({"lista": [], "historico": [{"produto": "Coxinha da asa", "compras": []}]})), ["Coxinha da asa"],
+                         "1.30.0: também os do histórico (o que volta à lista já vem com eles)")
         S.guardar_similares([{"produto": "Leite integral", "precos": {}}])
         self.assertEqual(list(S.ler_json(S.SIMILARES_FILE, {})), ["coxinha da asa"], "nada achado: não apaga o que estava guardado")
         S.gravar_json(S.SIMILARES_FILE, {"coxinha da asa": {"em": "ontem", "itens": [sobre]}})

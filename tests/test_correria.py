@@ -204,6 +204,22 @@ class Ferramentas(Cenario):
         self.usa("tirar_da_lista", produto="Café Pilão 500 g")
         h = [x for x in S.ler_config()["historico"] if x["produto"] == "Café Pilão 500 g"]
         self.assertEqual((len(h), h[0]["compras"]), (1, ["2026-10-05", "2026-10-19", HOJE]), "de novo no histórico: junta as compras")
+        # 1.30.0: os similares ligados vão e voltam com o item
+        cfg = S.ler_config()
+        cfg["lista"][0]["similares"] = True
+        S.gravar_config(cfg)
+        nome = cfg["lista"][0]["produto"]
+        self.usa("tirar_da_lista", produto=nome)
+        self.assertTrue(next(x for x in S.ler_config()["historico"] if x["produto"] == nome).get("similares"))
+        self.usa("por_na_lista", produto=nome)
+        self.assertIs(next(x for x in S.ler_config()["lista"] if x["produto"] == nome).get("similares"), True)
+        self.usa("tirar_da_lista", produto=nome)
+        cfg = S.ler_config()
+        next(x for x in cfg["historico"] if x["produto"] == nome)["similares"] = True
+        cfg["lista"].append({"produto": nome, "compras": []})
+        S.gravar_config(cfg)
+        self.usa("tirar_da_lista", produto=nome)
+        self.assertNotIn("similares", next(x for x in S.ler_config()["historico"] if x["produto"] == nome), "saiu sem similares: o histórico também")
 
     def test_comprei(self):
         S = self.S
