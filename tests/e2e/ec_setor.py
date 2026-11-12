@@ -43,21 +43,25 @@ async def main():
             best = limpo(await frango.locator(".i-best").inner_text())
             check("R$ 9,60 por quilo" in best and "Peito de frango 1,5 kg por R$ 14,40 · Atacado Sol" in best and "400 g" not in best, f"Melhor compra por quilo ({best})")
             av = limpo(await frango.locator(".i-avulso").first.inner_text())
-            check(av == "Avulso, o mais barato: R$ 45,00 por quilo · 400 g por R$ 18,00 (Mercado Azul)", f"o avulso também por quilo ({av})")
+            check(av == "O próximo mais barato: R$ 45,00 por quilo · 400 g por R$ 18,00 (Mercado Azul)", f"1.36.8: contra o próximo mais barato, por quilo ({av})")
             eco = limpo(await frango.locator(".i-save").inner_text())
             check(eco == "economia de R$ 35,40/kg", f"a economia por quilo ({eco})")
+            # 1.36.8: o porquê compara por quilo com o próximo mais barato, sem "Economia de R$ … em relação a comprar o de 400 g" nem "Rende N vezes"
+            await frango.locator("details.i-det").first.evaluate("d => { d.open = true; }")
+            nt = limpo(await frango.locator(".i-tam").first.inner_text())
+            check("Sai R$ 9,60/kg, contra R$ 45,00/kg no próximo mais barato (400 g, Mercado Azul)." in nt and "em relação a" not in nt and "Rende" not in nt, f"frango: o porquê ({nt})")
             await frango.screenshot(path=__import__("os").path.join(__import__("base_e2e").SHOTS, "setor-frango.png"))
             # ----- 1.36.0: o pacote de 400 g a R$ 46/kg não é a referência: o comum das 5 opções (R$ 17,98/kg) -----
             coxa = item("Coxa de frango")
             best = limpo(await coxa.locator(".i-best").inner_text())
             check("R$ 9,59 por quilo" in best and "Coxa congelada 1,5 kg por R$ 14,38 · Atacado Sol" in best, f"a mais barata por quilo ({best})")
             av = limpo(await coxa.locator(".i-avulso").first.inner_text())
-            check(av == "O comum é R$ 17,98 por quilo, em 5 opções.", f"comparada ao comum ({av})")
-            check(limpo(await coxa.locator(".i-save").inner_text()) == "economia de R$ 8,39/kg" and await coxa.locator(".i-others").count() == 0,
-                  "a economia contra o comum, sem os pacotes de 400 g soltos (estão no Comparar tamanhos)")
+            check(av == "O próximo mais barato: R$ 15,90 por quilo · Coxa 1 kg por R$ 15,90 (Mercado Azul)", f"1.36.8: contra o próximo mais barato, não o comum ({av})")
+            check(limpo(await coxa.locator(".i-save").inner_text()) == "economia de R$ 6,31/kg" and await coxa.locator(".i-others").count() == 0,
+                  "a economia contra o próximo mais barato, sem os pacotes de 400 g soltos (estão no Comparar tamanhos)")
             await coxa.locator("details.i-det").first.evaluate("d => { d.open = true; }")
             det = limpo(await coxa.locator("details.i-det").first.inner_text())
-            check("MAIS BARATO POR QUILO" in det.upper() and "Sai R$ 9,59/kg; o comum é R$ 17,98/kg." in det, f"o porquê ({det[:200]})")
+            check("MAIS BARATO POR QUILO" in det.upper() and "Sai R$ 9,59/kg, contra R$ 15,90/kg no próximo mais barato (Coxa 1 kg, Mercado Azul)." in det and "o de 400 g" not in det, f"o porquê ({det[:200]})")
             # ----- automático: o álcool fica nas farmácias (onde mais aparece); o galão do atacado não entra -----
             alc = item("Álcool 70")
             t = limpo(await alc.inner_text())

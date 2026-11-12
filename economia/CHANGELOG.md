@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.36.8
+
+- **Melhor compra** e **Comparar tamanhos**: a comparação é com o **próximo mais barato** por quilo ou litro, e não com o pacote de sempre. O cartão mostra *O próximo mais barato: R$ 15,90 por quilo · Coxa 1 kg por R$ 15,90 (loja)*, e a economia é a diferença por quilo para ele. Saíram *Economia de R$ 504,90 em relação a comprar o de 400 g* e *Rende 45 vezes o de 400 g*: comparar 18 kg com 400 g em reais não diz nada.
+
 ## 1.36.7
 
 - Minha lista:

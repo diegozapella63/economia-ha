@@ -60,12 +60,12 @@ async def main():
             best = await txt(lys.locator(".i-best"))
             check("MELHOR COMPRA" in best.upper() and "R$ 13,98 por litro" in " ".join(best.split()) and "Galão 5 L por R$ 69,90 · Fort Atacadista" in best,
                   f"Melhor compra: o galão, pelo preço do litro ({best})")
-            check("Avulso, o mais barato: R$ 19,90 por litro (Fort Atacadista)" in await txt(lys), "e o avulso mais barato, por litro")
+            check("O próximo mais barato: R$ 19,90 por litro · 1 L por R$ 19,90 (Fort Atacadista)" in await txt(lys), "1.36.8: e o próximo mais barato, por litro")
             check("economia de R$ 5,92/L" in await txt(lys.locator(".i-head")), "economia por litro em relação ao avulso")
             lys = await abre(pg, "Lysoform")
             det = await txt(lys.locator("details.i-det"))
             check(det.startswith("Comparar tamanhos (3)"), f"Comparar tamanhos ({det[:40]})")
-            check("COMPENSA O MAIOR" in det.upper() and "Economia de R$ 29,60 em relação a 5 de 1 L (R$ 99,50). No seu ritmo, dura uns 5 meses." in det, f"por que compensa ({det})")
+            check("COMPENSA O MAIOR" in det.upper() and "Sai R$ 13,98/L, contra R$ 19,90/L no próximo mais barato (1 L, Fort Atacadista). No seu ritmo, dura uns 5 meses." in det, f"por que compensa ({det})")
             linhas = [await txt(li) for li in await lys.locator(".tam-list li").all()]
             check(len(linhas) == 3 and "Galão 5 L" in linhas[0] and "R$ 13,98/L" in linhas[0] and "R$ 21,90/L" in linhas[2], "do mais barato por litro para o mais caro")
             await lys.screenshot(path=SHOTS + "/ect-lysoform.png")

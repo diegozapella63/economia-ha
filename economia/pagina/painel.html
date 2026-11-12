@@ -2970,6 +2970,15 @@ input.field,select.field{min-height:var(--altura)}
     // quilo ou litro (a mediana das opções), e não esse pacote
     var comum = mediana(ops.map(function(o){ return o.total / o.q; }));
     var palpite = !temTamanho(it.produto) && pu(ref) > comum * 1.3 && best !== ref && pu(best) < comum;
+    // 1.36.8: o que se mostra compara com o próximo mais barato por quilo ou litro, não com o tamanho de sempre (18 kg
+    // contra 45 pacotes de 400 g não diz nada); a economia em reais é a da quantidade comprada, a esse preço por quilo
+    var proxDe = function(j){
+      var o = ops.filter(function(x){ return x !== j.o; }).sort(function(x, y){ return x.total / x.q - y.total / y.q; })[0];
+      return o ? {o:o, pu:o.total / o.q, rot:o.emb || medidaTxt(o.q, b)} : null;
+    };
+    var contra = function(j){ var px = proxDe(j); return px ? ', contra ' + porUn(px.o.total, px.o.q, b) + ' no próximo mais barato (' + px.rot + ', ' + ondeTxt(px.o) + ')' : ''; };
+    var ecoProx = function(j){ var px = proxDe(j); return px ? Math.max(0, Math.round((px.pu - pu(j)) * j.Q * 100) / 100) : 0; };
+    var proxDica = function(j){ var px = proxDe(j); return px ? {porUn:Math.round(px.pu * 100) / 100, rot:px.rot, total:px.o.total, id:px.o.id, link:px.o.link, obs:px.o.obs || ''} : null; };
     var det = ops.slice().sort(function(x, y){ return x.total / x.q - y.total / y.q; }).slice(0, 8).map(function(o, i){
       var escolhida = ehEscolha(it, o.id, o.q, o.obs || o.emb);
       return '<li' + (i === 0 || escolhida ? ' class="' + (i === 0 ? 'top' : '') + (escolhida ? ' escolhida' : '') + '"' : '') + cmpAttr(it.produto, o.obs || o.emb || it.produto, G[o.id].nome, o.total, o.q, b) + '>' + abreLink(linkCompra(o.id, o.obs || (it.produto + (o.emb ? ' ' + o.emb : '')), o.link), 'tam-a', '<b>' + esc(o.emb || medidaTxt(o.q, b)) + '</b><span>' + esc(G[o.id].curto) + '</span><span>' + brl.format(o.total) + (o.online ? freteTxt(o, true) : '') + '</span><span class="pu">' + esc(porUn(o.total, o.q, b)) + '</span>')
@@ -2978,40 +2987,35 @@ input.field,select.field{min-height:var(--altura)}
     var chip, linha, nota = [], eco = 0, dica = null, principal = false;
     if (palpite){
       var dp = dura(best.Q);
-      eco = Math.max(0, Math.round((comum - pu(best)) * best.Q * 100) / 100);
-      dica = {id:best.o.id, link:best.o.link, txt:comoTxt(best, b) + ' por ' + brl.format(best.total), como:comoTxt(best, b), total:best.total, online:best.o.online, frete:best.o.frete,
+      eco = ecoProx(best);
+      dica = {prox:proxDica(best), id:best.o.id, link:best.o.link, txt:comoTxt(best, b) + ' por ' + brl.format(best.total), como:comoTxt(best, b), total:best.total, online:best.o.online, frete:best.o.frete,
               porBase:Math.round(best.total / (best.Q / q0) * 100) / 100, base:medidaTxt(q0, b),
               porUn:Math.round(best.total / best.Q * 100) / 100, un:nomeUn(b), q0:q0, b:b, Q:best.Q, comum:Math.round(comum * 100) / 100, n:ops.length};
       principal = !(best.o.online && best.o.prazo != null && r.dias != null && best.o.prazo > r.dias);
       chip = '<span class="dchip on">Mais barato por ' + esc(nomeUn(b)) + '</span>';
       linha = comoTxt(best, b) + ' por ' + brl.format(best.total) + ' (' + ondeTxt(best.o) + ') · ' + porUn(best.total, best.Q, b);
-      nota.push('Sai ' + porUn(best.total, best.Q, b) + '; o comum é ' + porUn(comum, 1, b) + '.');
+      nota.push('Sai ' + porUn(best.total, best.Q, b) + contra(best) + '.');
       if (dp != null) nota.push('No seu ritmo, dura uns ' + tempoTxt(dp) + '.');
       if (!principal) nota.push('Chega em ' + best.o.prazo + (best.o.prazo > 1 ? ' dias' : ' dia') + ', depois de acabar.');
     } else if (best !== ref && vale(best)){
-      var nr = noRef(best.Q), d = dura(best.Q);
-      eco = economia(best);
-      dica = {id:best.o.id, link:best.o.link, txt:comoTxt(best, b) + ' por ' + brl.format(best.total), como:comoTxt(best, b), total:best.total, online:best.o.online, frete:best.o.frete,
+      var d = dura(best.Q);
+      eco = ecoProx(best);
+      dica = {prox:proxDica(best), id:best.o.id, link:best.o.link, txt:comoTxt(best, b) + ' por ' + brl.format(best.total), como:comoTxt(best, b), total:best.total, online:best.o.online, frete:best.o.frete,
               porBase:Math.round(best.total / (best.Q / q0) * 100) / 100, base:medidaTxt(q0, b),
               porUn:Math.round(best.total / best.Q * 100) / 100, un:nomeUn(b), q0:q0, b:b, Q:best.Q};
       principal = !(best.o.online && best.o.prazo != null && r.dias != null && best.o.prazo > r.dias);
       var menor = best.Q < ref.Q;
       chip = '<span class="dchip on">' + (menor ? 'Compensa o menor' : 'Compensa o maior') + '</span>';
       linha = comoTxt(best, b) + ' por ' + brl.format(best.total) + ' (' + ondeTxt(best.o) + ') · ' + porUn(best.total, best.Q, b);
-      if (menor){
-        nota.push('Sai ' + porUn(best.total, best.Q, b) + ', contra ' + porUn(ref.total, ref.Q, b) + ' no de ' + medidaTxt(ref.Q, b) + ' mais barato (' + ondeTxt(ref.o) + ').');
-        if (d != null) nota.push('No seu ritmo, dura uns ' + tempoTxt(d) + '.');
-      } else {
-        nota.push('Economia de ' + brl.format(eco) + ' em relação a ' + (nr.n ? nr.n + ' de ' + medidaTxt(ref.Q, b) + ' (' + brl.format(nr.total) + ')' : 'comprar o de ' + medidaTxt(ref.Q, b)) + '.');
-        nota.push(d != null ? 'No seu ritmo, dura uns ' + tempoTxt(d) + '.' : 'Rende ' + fmtQ(best.Q / ref.Q) + ' vezes o de ' + medidaTxt(ref.Q, b) + '.');
-      }
+      nota.push('Sai ' + porUn(best.total, best.Q, b) + contra(best) + '.');
+      if (d != null) nota.push('No seu ritmo, dura uns ' + tempoTxt(d) + '.');
       if (best.o.online && best.o.prazo != null && r.dias != null && best.o.prazo > r.dias) nota.push('Chega em ' + best.o.prazo + (best.o.prazo > 1 ? ' dias' : ' dia') + ', depois de acabar: compre o de sempre agora e peça este para a próxima.');
       if (bestAll !== best && vale(bestAll) && dura(bestAll.Q) != null) nota.push(comoTxt(bestAll, b) + ' sai ainda mais barato, mas duraria uns ' + tempoTxt(dura(bestAll.Q)) + ', mais do que você costuma guardar.');
     } else if (bestAll !== ref && vale(bestAll)){
       chip = '<span class="dchip warn">' + (bestAll.Q < ref.Q ? 'Compensa o menor' : 'Compensa, mas dura muito') + '</span>';
       linha = comoTxt(bestAll, b) + ' por ' + brl.format(bestAll.total) + ' (' + ondeTxt(bestAll.o) + ') · ' + porUn(bestAll.total, bestAll.Q, b);
-      nota.push(bestAll.Q < ref.Q ? 'Sai ' + porUn(bestAll.total, bestAll.Q, b) + ', contra ' + porUn(ref.total, ref.Q, b) + ' no de ' + medidaTxt(ref.Q, b) + '.'
-        : 'Economiza ' + brl.format(economia(bestAll)) + ', mas no seu ritmo dura uns ' + tempoTxt(dura(bestAll.Q)) + ', mais do que você costuma guardar. Fique no de ' + medidaTxt(ref.Q, b) + ' ou mude o espaço para estoque em Mais › Casa.');
+      nota.push('Sai ' + porUn(bestAll.total, bestAll.Q, b) + contra(bestAll) + (bestAll.Q < ref.Q ? '.'
+        : ', mas no seu ritmo dura uns ' + tempoTxt(dura(bestAll.Q)) + ', mais do que você costuma guardar. Fique no de ' + medidaTxt(ref.Q, b) + ' ou mude o espaço para estoque em Mais › Casa.'));
     } else {
       chip = '<span class="dchip">Tamanho de sempre</span>';
       linha = medidaTxt(ref.Q, b) + ' sai ' + porUn(ref.total, ref.Q, b) + ' (' + ondeTxt(ref.o) + ')';
@@ -3318,18 +3322,20 @@ input.field,select.field{min-height:var(--altura)}
       var best = p[0], conta = {}, mt = melhorTamanho(x.it, x.r, p), dc = mt && mt.principal ? mt.dica : null;
       // economia: o que se deixa de pagar em relação à segunda opção mais barata; com o tamanho que compensa, por quilo ou
       // litro em relação ao avulso mais barato (1.35.0: antes era pelo tamanho de sempre, 400 g ou 30 ml)
-      var ecoUn = dc ? Math.round(((dc.comum || best.v / dc.q0) - dc.porUn) * 100) / 100 : 0;
+      var ecoUn = dc ? Math.round(((dc.prox ? dc.prox.porUn : dc.comum || best.v / dc.q0) - dc.porUn) * 100) / 100 : 0;  // 1.36.8: contra o próximo mais barato
       var eco = dc ? ecoUn : (p.length > 1 ? p[1].v - best.v : 0) * N;
       var ecoTxt = dc ? porUn(ecoUn, 1, dc.b) : brl.format(eco);
       var es = escolhaDe(x.it, p);
       p.forEach(function(y){ conta[G[y.id].cat] = (conta[G[y.id].cat] || 0) + 1; });
       var onde = D.categorias.filter(function(c){ return conta[c.id]; }).map(function(c){ return plural(conta[c.id], c.id); }).join(' e ');
-      return '<li class="item"><div class="i-head"' + fechaRes(x, resumida) + '>' + iconeItem(x.it.produto, G[best.id].cat) + '<p class="i-prod">' + esc(x.it.produto) + '</p>' + (eco > 0.004 ? '<span class="i-save num" title="' + (dc ? (dc.comum ? 'Comparado ao preço comum' : 'Comparado ao avulso mais barato') : 'Comparado à segunda loja mais barata') + '">economia de ' + ecoTxt + '</span>' : '') + '</div>'
+      return '<li class="item"><div class="i-head"' + fechaRes(x, resumida) + '>' + iconeItem(x.it.produto, G[best.id].cat) + '<p class="i-prod">' + esc(x.it.produto) + '</p>' + (eco > 0.004 ? '<span class="i-save num" title="' + (dc ? 'Comparado ao próximo mais barato por ' + esc(dc.un) : 'Comparado à segunda loja mais barata') + '">economia de ' + ecoTxt + '</span>' : '') + '</div>'
         + (x.r.txt ? '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>' : '')
         + (x.it.escolha && !es ? '<p class="i-esc-nota">Sua escolha (' + esc(G[x.it.escolha.rede] ? G[x.it.escolha.rede].nome : 'a loja') + ') não veio na última busca. <button type="button" class="link" data-desescolher="' + x.i + '">Desfazer escolha</button></p>' : '')
         + (es ? caixaEscolha(x, es, best, dc) : dc
           ? abreLink(linkCompra(dc.id, x.it.produto + ' ' + dc.como, dc.link), 'i-best i-link', '<span class="lbl">Melhor compra</span><span class="por num">' + brl.format(dc.porUn) + '<span class="un">por ' + esc(dc.un) + '</span></span><span class="i-store">' + esc(dc.como) + ' por ' + brl.format(dc.total) + ' · ' + esc(G[dc.id].nome) + ' <span class="chip">' + esc(G[dc.id].singular) + '</span></span>' + setaLink(linkCompra(dc.id, '', dc.link)), cmpAttr(x.it.produto, dc.como, G[dc.id].nome, dc.total, dc.Q, dc.b))
-            + (dc.comum ? '<p class="i-avulso num">O comum é <b>' + brl.format(dc.comum) + '</b> por ' + esc(dc.un) + ', em ' + dc.n + ' opções.</p>'
+            + (dc.prox ? '<p class="i-avulso num">O próximo mais barato: <b>' + brl.format(dc.prox.porUn) + '</b> por ' + esc(dc.un) + ' · ' + esc(dc.prox.rot) + ' por ' + brl.format(dc.prox.total)
+                + ' (' + abreLink(linkCompra(dc.prox.id, dc.prox.obs || x.it.produto, dc.prox.link), 'i-txtlink', esc(G[dc.prox.id].nome)) + ')</p>'
+              : dc.comum ? '<p class="i-avulso num">O comum é <b>' + brl.format(dc.comum) + '</b> por ' + esc(dc.un) + ', em ' + dc.n + ' opções.</p>'
               : '<p class="i-avulso num">Avulso, o mais barato: <b>' + brl.format(best.v / dc.q0) + '</b> por ' + esc(dc.un) + (igualQ(dc.q0, 1) ? '' : ' · ' + esc(medidaTxt(dc.q0, dc.b)) + ' por ' + brl.format(best.v))
                 + ' (' + abreLink(linkCompra(best.id, best.obs || x.it.produto, best.link), 'i-txtlink', esc(G[best.id].nome)) + ')</p>')
           : (best.obs && !best.online ? '<p class="i-avulso i-produto">Produto: ' + esc(best.obs) + '</p>' : '')  // 1.36.7: acima do preço

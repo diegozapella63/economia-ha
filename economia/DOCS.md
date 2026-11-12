@@ -93,14 +93,14 @@ Acima dos itens, escolha **Completa** (cada item com o cartão inteiro: os preç
 
 Pode escrever só o produto, como **Lysoform**. Na busca, o EconomIA traz também as outras embalagens (galão de 5 L, kits, fardos, leve 3 pague 2) e compara o **preço por litro, quilo ou unidade**:
 
-- **Compensa o maior**: diz qual embalagem levar, onde, quanto economiza em relação a comprar a mesma quantidade no tamanho de sempre e quanto tempo dura no seu ritmo.
+- **Compensa o maior**: diz qual embalagem levar, onde, quanto sai por quilo ou litro contra o próximo mais barato e quanto tempo dura no seu ritmo.
 - **Tamanho de sempre**: o maior não compensa. Quando é o caso, mostra que, por exemplo, 5 de 1 L saem mais baratos que 1 de 5 L.
 - **Compensa o menor**: uma embalagem menor sai mais barata por quilo ou litro (por exemplo, pote de 700 g contra o pacote de 1 kg).
 - **Compensa, mas dura muito**: o maior é mais barato, mas duraria mais do que você costuma guardar. Ajuste em **Mais › Casa › Rotina de compras › Espaço para estoque**.
 
-A **Melhor compra**, o avulso e a economia aparecem sempre por quilo, litro, metro ou unidade (*R$ 9,60 por quilo*), nunca pelo tamanho do pacote de sempre.
+A **Melhor compra** e a economia aparecem sempre por quilo, litro, metro ou unidade (*R$ 9,60 por quilo*), nunca pelo tamanho do pacote de sempre. A comparação é com o **próximo mais barato** por quilo ou litro (*O próximo mais barato: R$ 15,90 por quilo · Coxa 1 kg por R$ 15,90*), e não com o pacote de sempre: comparar 18 kg com 400 g em reais não diz nada.
 
-Sem tamanho no nome do item ("Peito de frango"), o tamanho de sempre é um palpite da busca. Quando ele sai bem acima do comum (um pacote de 400 g a R$ 46/kg, com o quilo em geral a R$ 17), a referência passa a ser o **preço comum** das opções (*O comum é R$ 16,99 por quilo, em 12 opções*), e a economia é contra ele.
+Sem tamanho no nome do item ("Peito de frango"), o tamanho de sempre é um palpite da busca. Quando ele sai bem acima do comum (um pacote de 400 g a R$ 46/kg, com o quilo em geral a R$ 17), a melhor compra passa a ser a mais barata por quilo, mesmo sem chegar ao pacote de sempre.
 
 ### Onde comprar (setor)
 
