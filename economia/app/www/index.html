@@ -741,8 +741,6 @@ textarea.field.grow{field-sizing:content;min-height:var(--altura,50px);max-heigh
 .loja-botoes{flex:1 1 100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:6px}
 .loja-botoes > .loja-btn{width:100%;min-width:0;justify-content:center;text-align:center;line-height:1.15;font-size:14px;padding:0 8px}
 .clube-ben > a{display:block;margin-top:6px}
-.clube-ben > .clube-de-novo{display:flex;width:100%;margin-top:10px;justify-content:center;font-size:14px}  /* 1.36.5: o Procurar de novo, no padrão */
-@media (min-width:1000px){.clube-ben > .clube-de-novo{width:250px}}
 .loja-botoes > :last-child:nth-child(odd){grid-column:1/-1}
 .loja-btn.clube[aria-pressed="true"],.loja-btn.marca[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
 @media (min-width:1000px){.loja-botoes{grid-template-columns:repeat(auto-fill,250px)}.loja-botoes > :last-child:nth-child(odd){grid-column:auto}}
@@ -2650,7 +2648,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.36.5';
+  var VERSAO = '1.36.6';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -5244,22 +5242,24 @@ dialog.ss-wrap::backdrop{background:transparent}
   var SIM_SALVOS = {};  // 1.28.0: {item: {em, itens}}, os similares que uma busca de antes achou (o servidor guarda)
   // 1.36.0: o nome da loja também das online que a busca ainda não trouxe (mkt:amazon), para os benefícios (Prime, Meli+)
   function nomeLoja(rid){ return G[rid] ? G[rid].nome : ((MKT.filter(function(m){ return 'mkt:' + m.id === rid; })[0]) || {}).nome || ''; }
+  // 1.36.6: o horário da loja só quando é um horário ("Aberta até 22h", "Seg-Sex 9h-19h", "24 horas"); "Online" não é
+  function horarioDe(l){ var h = String(l.horario || '').trim(); return /\d|fechad|abert/i.test(h) ? h : ''; }
   function beneficiosHtml(c, l){
     if (c && !/^(farmacias|mercados|petshops|online)$/.test(c.id)) return '';
     var k = c ? clubeDe(c, l) : '', nome = nomeLoja(l.rede), r = CLUBES_BEN[chaveLoja(nome)];
     if (CLUBE_BUSCA === l.rede) return '<span class="testando">Procurando os benefícios…</span>';
     if (k === null && !r) return '';
     if (!r) return '';  // 1.36.0: o Benefícios do clube fica nos botões da loja
-    // 1.36.5: um lugar só por loja. Já procurado, os benefícios (ou "Sem clube de vantagens") abrem aqui, com o Procurar de
-    // novo dentro; o botão Benefícios, nos botões da loja, só enquanto nunca foi procurado
+    // 1.36.6: o botão Benefícios fica sempre nos botões da loja (os benefícios mudam: procura de novo daqui a meses); aqui,
+    // só o que foi achado. Sem clube: um selo, na cor dele (o cinza é do endereço)
     var sem = !r.clube && !arr(r.beneficios).length;
+    if (sem) return '<span class="r-preco"><span class="chip">Sem clube de vantagens</span></span>';
     var linhas = arr(r.beneficios).map(function(b){ return '<li><b>' + esc(b.titulo) + '</b>' + (b.detalhe ? ' ' + esc(b.detalhe) : '') + '</li>'; }).join('');
     var extra = [r.custo ? 'Custo: ' + r.custo : '', r.como_entrar ? 'Como entrar: ' + r.como_entrar : ''].filter(Boolean).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('');
-    var tit = sem ? 'Sem clube de vantagens' : 'Benefícios ' + (r.clube ? 'do ' + r.clube : 'do clube');
-    var de_novo = iaOn() ? '<button type="button" class="ghost big ic-btn loja-btn clube-de-novo" data-clube-ben="' + esc(l.rede) + '"' + (CLUBE_BUSCA ? ' disabled' : '') + '>' + SVG_CLUBE + 'Procurar de novo</button>' : '';
-    return '<details class="fonte-det clube-ben' + (sem ? ' sem' : '') + '"' + (CLUBE_ABERTO[l.rede] ? ' open' : '') + ' data-clube-det="' + esc(l.rede) + '"><summary>' + esc(tit)
+    var tit = 'Benefícios ' + (r.clube ? 'do ' + r.clube : 'do clube');
+    return '<details class="fonte-det clube-ben"' + (CLUBE_ABERTO[l.rede] ? ' open' : '') + ' data-clube-det="' + esc(l.rede) + '"><summary>' + esc(tit)
       + (r.em ? ' · ' + esc(quandoCurto(r.em)) : '') + '</summary>' + (linhas + extra ? '<ul>' + linhas + extra + '</ul>' : '')
-      + (r.fonte ? '<a class="linkbtn" href="' + esc(r.fonte) + '" target="_blank" rel="noopener">Fonte: ' + esc(host(r.fonte)) + '</a>' : '') + de_novo + '</details>';
+      + (r.fonte ? '<a class="linkbtn" href="' + esc(r.fonte) + '" target="_blank" rel="noopener">Fonte: ' + esc(host(r.fonte)) + '</a>' : '') + '</details>';
   }
   function buscaBeneficios(rid){
     if (MODO !== 'addon'){ toast('No Home Assistant, a IA procura os benefícios do clube desta loja.'); return; }
@@ -5343,7 +5343,7 @@ dialog.ss-wrap::backdrop{background:transparent}
         var on = acompanha(l.rede), longe = l.distancia_km > raioDe(l.rede), mi = manualDe(G[l.rede].nome), web = c.id === 'online' && !regional(l.rede);
         if (mi >= 0) usadas[mi] = true;
         semF.push(semFonte(c, l, web)); nomeOk.push(!TERMO_LOJA || norm(G[l.rede].nome).indexOf(TERMO_LOJA) >= 0);
-        var txt = longe ? (on ? 'Mais longe, mas você acompanha' : 'Mais longe que ' + raioDe(l.rede) + ' km') : (on ? (l.horario || '') : 'Você não acompanha');
+        var txt = longe ? (on ? 'Mais longe, mas você acompanha' : 'Mais longe que ' + raioDe(l.rede) + ' km') : (on ? horarioDe(l) : 'Você não acompanha');
         return '<li class="row has-track' + (on ? '' : ' out') + '">'
           + '<label class="track"><input type="checkbox" data-rede="' + l.rede + '"' + (on ? ' checked' : '') + '><span class="r-name">' + esc(G[l.rede].nome) + '</span></label>'
           + '<span class="r-val num">' + (web ? '' : km(l.distancia_km)) + '</span>'
@@ -5421,9 +5421,8 @@ dialog.ss-wrap::backdrop{background:transparent}
   function botoesLoja(c, l, cid, mi){
     // os benefícios também nas online (Mercado Livre: Meli+; Amazon: Prime; iFood: Clube iFood)
     var f = l.preco_fonte;
-    // 1.36.5: só enquanto nunca foi procurado; depois, o Procurar de novo fica dentro dos benefícios (sem repetir)
+    // 1.36.3: sempre, também com os benefícios guardados (procura de novo: eles mudam) e na loja sem clube (pode ter criado um)
     var ben = (!c || /^(farmacias|mercados|petshops|online)$/.test(c.id)) && nomeLoja(l.rede) && iaOn() && CLUBE_BUSCA !== l.rede
-      && !CLUBES_BEN[chaveLoja(nomeLoja(l.rede))]
       ? '<button type="button" class="ghost big ic-btn loja-btn" data-clube-ben="' + esc(l.rede) + '"' + (CLUBE_BUSCA ? ' disabled' : '') + '>' + SVG_CLUBE + 'Benefícios</button>' : '';
     var semP = !f && c && c.id !== 'online' && G[l.rede] && !(l.nova && acompanha(l.rede)) && semPrecos(c).indexOf(l) >= 0 && !siteManual(G[l.rede].nome);
     var site = (f && (f.como === 'ia' || f.como === 'nenhum') && !(cid === 'online' && !regional(l.rede))) || semP ? botaoSite(l) : '';

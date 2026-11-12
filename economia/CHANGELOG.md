@@ -1,5 +1,10 @@
 # Mudanças
 
+## 1.36.6
+
+- **Mais › Lojas**: o botão **Benefícios** volta a ficar sempre, para procurar de novo quando os benefícios mudarem, daqui a meses. **Benefícios do …** mostra o que foi achado, e **Sem clube de vantagens** volta a ser um selo.
+- O horário da loja só aparece quando é um horário: "Online" no lugar do horário não aparece mais.
+
 ## 1.36.5
 
 - **Mais › Lojas**: o cartão **Compras online** saiu, porque repetia a lista.

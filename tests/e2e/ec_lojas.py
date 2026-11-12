@@ -9,7 +9,7 @@ from base_e2e import CEP, SHOTS, App, abrir_mais, check, pagina, resumo
 OFERTAS = {"versao": 2, "gerado_em": "2026-11-02T10:00:00-03:00", "categorias": [
     {"id": "farmacias", "nome": "Farmácias", "singular": "Farmácia",
      "redes": [{"id": "farm-raia", "nome": "Droga Raia"}, {"id": "farm-nissei", "nome": "Farmácias Nissei"}],
-     "lojas": [{"rede": "farm-raia", "distancia_km": 0.8, "endereco": "Rua A, 1", "fontes": ["Mapa"]},
+     "lojas": [{"rede": "farm-raia", "distancia_km": 0.8, "endereco": "Rua A, 1", "horario": "Online", "fontes": ["Mapa"]},
                {"rede": "farm-nissei", "distancia_km": 1.4, "endereco": "Rua B, 2", "fontes": ["Mapa"],
                 "preco_fonte": {"como": "site", "exemplo": "Dipirona 1g por R$ 9,90"}}], "cupons": [], "ofertas": []},
     {"id": "mercados", "nome": "Mercados", "singular": "Mercado",
@@ -146,22 +146,17 @@ async def main():
             # 1.24.0: os benefícios do clube, guardados, num toque; numa loja com clube ainda sem os benefícios, o botão para a IA procurar
             ben = pg.locator('#mp-lojas details[data-clube-det="farm-nissei"]')
             check(await ben.count() == 1 and "Benefícios do Club Nissei" in await ben.locator("summary").inner_text(), "os benefícios do Club Nissei")
-            # 1.36.5: um lugar só: já procurado, o Benefícios sai dos botões e o Procurar de novo fica dentro dos benefícios
+            # 1.36.6: o Benefícios fica sempre nos botões (os benefícios mudam: procura de novo daqui a meses); dentro, só o achado
             nissei = pg.locator("#mp-lojas li.row", has=pg.locator('input[data-rede="farm-nissei"]')).first
-            check(await nissei.locator('.loja-botoes [data-clube-ben]').count() == 0 and await ben.locator('[data-clube-ben="farm-nissei"]').count() == 1,
-                  "Nissei: sem o Benefícios nos botões; o Procurar de novo dentro")
-            # 1.36.5: Sem clube de vantagens também abre (na cor dos recolhidos, não no cinza do endereço), com o Procurar de novo
+            check(await nissei.locator('.loja-botoes [data-clube-ben="farm-nissei"]').count() == 1 and await ben.locator("[data-clube-ben]").count() == 0,
+                  "Nissei: o Benefícios nos botões também com os benefícios guardados")
+            # 1.36.3: Sem clube de vantagens num selo (o cinza do texto é do endereço), com o Benefícios para procurar de novo
             raia = pg.locator("#mp-lojas li.row", has=pg.locator('input[data-rede="farm-raia"]')).first
-            sc = raia.locator('details[data-clube-det="farm-raia"]')
-            check(await sc.count() == 1 and (await sc.locator("summary").inner_text()).startswith("Sem clube de vantagens")
-                  and await raia.locator('.loja-botoes [data-clube-ben]').count() == 0 and await sc.locator('[data-clube-ben="farm-raia"]').count() == 1,
-                  "Droga Raia: Sem clube de vantagens, com o Procurar de novo dentro")
+            check(await raia.locator(".chip", has_text="Sem clube de vantagens").count() == 1 and await raia.locator('.loja-botoes [data-clube-ben="farm-raia"]').count() == 1,
+                  "Droga Raia: Sem clube de vantagens num selo, com o Benefícios")
+            check(await raia.locator(".r-l", has_text="Online").count() == 0, "o horário Online (não é horário) não aparece")
             await ben.locator("summary").click()
             bt = (await ben.inner_text()).replace("\xa0", " ")
-            nv = ben.locator('[data-clube-ben="farm-nissei"]')
-            cx = [await nv.bounding_box(), await ben.bounding_box()]
-            check((await nv.inner_text()).strip() == "Procurar de novo" and cx[0]["height"] == 50 and abs(cx[0]["width"] - cx[1]["width"]) < 2,
-                  f"Procurar de novo no padrão: 50 px, na largura ({cx})")
             check("Desconto de clube Até 40% em remédios marcados." in bt and "Custo: Grátis" in bt and "Como entrar: CPF no caixa" in bt and "farmaciasnissei.com.br" in bt, f"o que o clube dá, com a fonte ({bt[:160]})")
             await pg.click('#lojasAbas [data-loja-aba="mercados"]')
             await pg.wait_for_timeout(300)
