@@ -1,4 +1,4 @@
-"""Comparar preço (1.5.0): uma oferta procurada nas outras lojas, como o Buscar este item (primeiro os sites, a IA só
+"""Comparar preço (1.5.0): uma oferta procurada nas outras lojas, como o Buscar item (primeiro os sites, a IA só
 quando faltam preços), sem entrar na lista. A loja da própria oferta fica de fora; outro tamanho vale pelo preço por
 quilo, litro ou unidade; o resultado fica em comparacoes.json e volta no api/estado."""
 from apoio import Cenario, categoria, prod

@@ -1,6 +1,6 @@
 # EconomIA 0.19.0: o botão Buscar com o Home Assistant falso: do exemplo para as ofertas do CEP, o andamento enquanto a IA
 # pensa ("Buscando mercados…", botão girando), a caixa some quando termina (1.25.2), os preços na lista (o do site vale
-# mais), a cota da IA acabando (mensagem de erro, o resultado anterior fica), "Buscar este item" e Buscar sem CEP.
+# mais), a cota da IA acabando (mensagem de erro, o resultado anterior fica), "Buscar item" e Buscar sem CEP.
 import asyncio
 import threading
 
@@ -61,7 +61,7 @@ async def main():
             erro = await pg.text_content("#buscaMsg")
             check(erro.startswith("A cota da IA acabou: ela recusou por excesso de pedidos (erro 429)."), f"erro de cota ({erro[:80]})")
             check("R$ 8,90" in await item(pg, "Abacaxi"), "o resultado anterior continua")
-            # Buscar este item
+            # Buscar item
             ha.regras_ia.clear()
             ha.responde_ia("itens sem preço", {"lista": [{"item": 1, "precos": [{"rede": "Bistek", "categoria": "mercados", "preco": 2.49}]}]})
             await pg.fill("#novoItem", "Detergente Ypê neutro")
@@ -69,6 +69,11 @@ async def main():
             await pg.wait_for_timeout(800)
             det = pg.locator("#wish > li.item", has_text="Detergente Ypê neutro")
             check("SEM PREÇO AINDA" in (await det.inner_text()).upper(), "item novo sem preço")
+            # 1.36.7: Buscar item, da largura e da altura do botão de baixo (o Comprei hoje)
+            bx = [await det.locator(".i-busca").bounding_box(), await det.locator("[data-comprei]").bounding_box()]
+            check((await det.locator(".i-busca").inner_text()).strip() == "Buscar item" and abs(bx[0]["width"] - bx[1]["width"]) < 1.5 and abs(bx[0]["height"] - bx[1]["height"]) < 1.5,
+                  f"Buscar item como o Comprei hoje ({bx})")
+            check(bx[1]["height"] == 50 and (await det.locator(".i-actions .qtd").bounding_box())["height"] == 50, "a quantidade e o Comprei hoje com os 50 px do app")
             # cada texto do aviso fica anotado: a busca de um item é rápida e o aviso seguinte pode chegar logo
             await pg.evaluate("""() => { window._avisos = []; const t = document.getElementById('toast');
                 new MutationObserver(() => window._avisos.push(t.textContent)).observe(t, {childList: true, characterData: true, subtree: true}); }""")

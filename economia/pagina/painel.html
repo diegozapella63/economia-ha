@@ -461,7 +461,8 @@ a.i-link:active{filter:brightness(.96)}
 a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .tam-list li{padding:0}
 .tam-list a.tam-a{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;width:100%;padding:5px 8px;color:inherit;text-decoration:none}
-.i-best .i-busca{margin-left:auto;align-self:center;min-height:34px;padding:0 12px;font-size:14px}
+/* 1.36.7: da largura do botão de baixo (a metade do cartão: a caixa tem 10 px de cada lado e a grade, 8 px no meio) e da altura do app */
+.i-best .i-busca{margin-left:auto;align-self:center;width:calc(50% + 6px);min-height:var(--altura,50px);padding:0 10px;font-size:14px;justify-content:center}
 .i-others{display:flex;flex-wrap:wrap;gap:6px}
 .i-others li{flex:1 1 auto;font-size:12.5px;padding:0;border:1px solid var(--line);border-radius:8px;color:var(--muted);min-width:0;max-width:100%;overflow:hidden;white-space:nowrap;text-align:center}
 .i-others b{color:var(--ink);font-weight:600}
@@ -469,6 +470,9 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .i-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:8px}
 .i-actions > .qtd,.i-actions > .ic-btn{width:100%;min-width:0;justify-content:center;align-self:stretch}
 .i-actions > .ic-btn{padding-top:7px;padding-bottom:7px}
+.i-actions > .qtd,.i-actions > .ic-btn{min-height:var(--altura,50px)}  /* 1.36.7: a altura do app, como os botões de baixo e o Buscar item */
+/* 1.36.7: o Comprei hoje é a ação principal do cartão: o botão cheio, como o Criar backup */
+.i-actions > .i-comprei{width:100%;min-width:0;min-height:var(--altura,50px);align-self:stretch;padding:0 10px;font-size:14.5px}
 .i-actions > .rm{justify-self:center}
 .i-actions > .chip,.i-actions > .i-foot{grid-column:1/-1;justify-self:end;margin-left:0}
 .i-actions > .chip{justify-self:start}
@@ -2484,7 +2488,7 @@ input.field,select.field{min-height:var(--altura)}
       + (o.preco_normal ? '<span class="off num">−' + pct(o) + '%</span>' : '')
       + '<div class="d-acts">' + acao + '</div>' + menu + (oc ? '' : blocoComparar(o, id)) + '</li>';
   }
-  // Comparar preço: o mesmo produto nas outras lojas (o servidor procura como no Buscar este item, sem pôr na lista).
+  // Comparar preço: o mesmo produto nas outras lojas (o servidor procura como no Buscar item, sem pôr na lista).
   // O preço de cada loja vale no tamanho da oferta ("equivale"); outro tamanho aparece com o tamanho dela.
   var COMP = {}, comparando = null;
   function precoDaOferta(o){ return Number(o.preco_oferta) + (typeof o.frete === 'number' ? o.frete : 0); }
@@ -3296,7 +3300,7 @@ input.field,select.field{min-height:var(--altura)}
       var p = precosDe(x.it.produto), soon = x.r.dias != null && x.r.dias <= 3;
       if (resumida && !RES_ABERTO[norm(x.it.produto)]) return linhaResumida(x, p, soon);
       var N = qtdDe(x.it);
-      var acoes = '<div class="i-actions">' + seletorQtd(x) + '<button type="button" class="ghost ic-btn" data-comprei="' + x.i + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.3 14.2l2 2 3.6-3.7"/></svg>Comprei hoje</button>' + (x.it.origem === 'ha' ? '<span class="chip">Veio do Home Assistant</span>' : '') + '</div>';
+      var acoes = '<div class="i-actions">' + seletorQtd(x) + '<button type="button" class="btn i-comprei" data-comprei="' + x.i + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.3 14.2l2 2 3.6-3.7"/></svg>Comprei hoje</button>' + (x.it.origem === 'ha' ? '<span class="chip">Veio do Home Assistant</span>' : '') + '</div>';
       // 1.36.0: Buscar de novo, os similares, o setor e o tirar desta lista (ou remover) são botões como os outros do app,
       // dois por linha na largura do cartão (antes, links no pé); o item sem preço tem só o setor e o tirar
       var tirar = '<button type="button" class="ghost big ic-btn rm" data-rm="' + x.i + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>' + (aberta ? 'Tirar desta lista' : 'Remover') + '</button>';
@@ -3308,7 +3312,7 @@ input.field,select.field{min-height:var(--altura)}
           + (x.r.txt ? '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>' : '')
           + '<div class="i-best"><span class="lbl">Sem preço ainda</span>'
           + (procurou ? '<span class="i-wait">A última busca não achou.' + (((D.relatorio || {}).sugestoes || {})[x.it.produto] ? ' Quis dizer <button type="button" class="link corr-btn" data-de="' + esc(x.it.produto) + '" data-para="' + esc(D.relatorio.sugestoes[x.it.produto]) + '">' + esc(D.relatorio.sugestoes[x.it.produto]) + '</button>?' : '') + '</span>' : '')
-          + '<button type="button" class="ghost ic-btn i-busca" data-buscaitem="' + x.i + '"' + (buscando ? ' disabled' : '') + '><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>' + (buscando ? 'Buscando…' : 'Buscar este item') + '</button></div>'
+          + '<button type="button" class="ghost ic-btn i-busca" data-buscaitem="' + x.i + '"' + (buscando ? ' disabled' : '') + '><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>' + (buscando ? 'Buscando…' : 'Buscar item') + '</button></div>'
           + acoes + botoes('') + '</li>';
       }
       var best = p[0], conta = {}, mt = melhorTamanho(x.it, x.r, p), dc = mt && mt.principal ? mt.dica : null;
@@ -3328,16 +3332,18 @@ input.field,select.field{min-height:var(--altura)}
             + (dc.comum ? '<p class="i-avulso num">O comum é <b>' + brl.format(dc.comum) + '</b> por ' + esc(dc.un) + ', em ' + dc.n + ' opções.</p>'
               : '<p class="i-avulso num">Avulso, o mais barato: <b>' + brl.format(best.v / dc.q0) + '</b> por ' + esc(dc.un) + (igualQ(dc.q0, 1) ? '' : ' · ' + esc(medidaTxt(dc.q0, dc.b)) + ' por ' + brl.format(best.v))
                 + ' (' + abreLink(linkCompra(best.id, best.obs || x.it.produto, best.link), 'i-txtlink', esc(G[best.id].nome)) + ')</p>')
-          : abreLink(linkCompra(best.id, best.obs || x.it.produto, best.link), 'i-best i-link', '<span class="lbl">Mais barato</span><span class="por num">' + brl.format(best.v * N) + (N > 1 ? '<span class="un">' + N + ' × ' + brl.format(best.v) + '</span>' : '') + '</span><span class="i-store">' + esc(G[best.id].nome) + ' <span class="chip">' + esc(G[best.id].singular) + '</span>' + (best.clube ? ' <span class="chip selo">Clube</span>' : '') + '</span>' + setaLink(linkCompra(best.id, '', best.link)), cmpAttr(x.it.produto, best.obs || x.it.produto, G[best.id].nome, best.v, q0De(x.it.produto), baseDe(x.it.produto)))
-            + (best.obs && !best.online ? '<p class="i-avulso">Produto: ' + esc(best.obs) + '</p>' : ''))
+          : (best.obs && !best.online ? '<p class="i-avulso i-produto">Produto: ' + esc(best.obs) + '</p>' : '')  // 1.36.7: acima do preço
+            + abreLink(linkCompra(best.id, best.obs || x.it.produto, best.link), 'i-best i-link', '<span class="lbl">Mais barato</span><span class="por num">' + brl.format(best.v * N) + (N > 1 ? '<span class="un">' + N + ' × ' + brl.format(best.v) + '</span>' : '') + '</span><span class="i-store">' + esc(G[best.id].nome) + ' <span class="chip">' + esc(G[best.id].singular) + '</span>' + (best.clube ? ' <span class="chip selo">Clube</span>' : '') + '</span>' + setaLink(linkCompra(best.id, '', best.link)), cmpAttr(x.it.produto, best.obs || x.it.produto, G[best.id].nome, best.v, q0De(x.it.produto), baseDe(x.it.produto)))
+            )
         + (p.length > 1 && !(dc && dc.comum && !es) ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li' + (ehEscolha(x.it, y.id, null, y.obs) ? ' class="escolhida"' : '') + cmpAttr(x.it.produto, y.obs || x.it.produto, G[y.id].nome, y.v, q0De(x.it.produto), baseDe(x.it.produto)) + '>' + abreLink(linkCompra(y.id, y.obs || x.it.produto, y.link), 'i-chip', '<span class="ic-n">' + esc(G[y.id].curto) + '</span><b>' + brl.format(y.v) + '</b>' + (y.online && y.carrinho ? '<small>+ frete</small>' : y.online && y.frete ? '<small>c/ frete</small>' : '') + (y.clube ? '<small>clube</small>' : '')) + '' + botaoEscolher(x.it, y.id, null, y.obs, G[y.id].nome + ' por ' + brl.format(y.v)) + '</li>'; }).join('') + '</ul>' : '')
         + dicaClube(p, best)
         + detalhesCompra(x, p, dc, mt)
         + blocoSimilares(x, p)
-        + acoes + '<p class="i-foot">Em ' + onde + quandoPrecos(p) + '</p>'
+        + acoes
         + botoes('<button type="button" class="ghost big ic-btn i-rebusca" data-buscaitem="' + x.i + '"' + (buscaItem === x.it.produto ? ' disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>Buscando…' : '><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>Buscar de novo') + '</button>'
           // 1.28.0: os similares (a mesma seção da loja) só vêm da busca direta; ligados, o mesmo lugar os esconde
           + (estado.opcoes.lojas_diretas || x.it.similares ? '<button type="button" class="ghost big ic-btn i-sim" data-sim="' + x.i + '" aria-pressed="' + !!x.it.similares + '" aria-label="' + (x.it.similares ? 'Esconder os similares' : 'Buscar similares') + '"' + (buscaItem === x.it.produto ? ' disabled' : '') + '>' + (x.it.similares ? '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8 12.5l3 3 5.5-6"/></svg>' : '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/></svg>') + 'Similares</button>' : ''))
+        + '<p class="i-foot">Em ' + onde + quandoPrecos(p) + '</p>'  // 1.36.7: no fim, embaixo dos botões
         + '</li>';
     }).join('');
     pintaCmp();
@@ -3397,8 +3403,8 @@ input.field,select.field{min-height:var(--altura)}
     if (es.sim) barato = 'Similar no lugar do item. O item pedido sai ' + brl.format(best.v) + ' no ' + G[best.id].nome + '.';
     var N = vezesDe(x.it, es);
     var cmp = cmpAttr(x.it.produto, y.obs || es.emb || x.it.produto, G[y.id].nome, es.total, es.q || q0De(x.it.produto), es.sim ? {unidade:(similaresDe(x.it).filter(function(z){ return ehSim(x.it, z); })[0] || {}).unidade} : baseDe(x.it.produto));
-    return abreLink(l, 'i-best i-link', '<span class="lbl">' + (es.sim ? 'Sua escolha · similar' : 'Sua escolha') + '</span><span class="por num">' + brl.format(es.total * N) + (N > 1 ? '<span class="un">' + N + ' × ' + brl.format(es.total) + '</span>' : '') + '</span><span class="i-store">' + (es.emb ? esc(es.emb) + ' · ' : '') + esc(G[y.id].nome) + ' <span class="chip">' + esc(G[y.id].singular) + '</span>' + (y.online ? '<small>' + esc(freteTxt(y, true)) + '</small>' : '') + '</span>' + setaLink(l), cmp)
-      + (y.obs && !y.online && !es.emb ? '<p class="i-avulso">Produto: ' + esc(y.obs) + '</p>' : '')
+    return (y.obs && !y.online && !es.emb ? '<p class="i-avulso i-produto">Produto: ' + esc(y.obs) + '</p>' : '')  // 1.36.7: acima do preço
+      + abreLink(l, 'i-best i-link', '<span class="lbl">' + (es.sim ? 'Sua escolha · similar' : 'Sua escolha') + '</span><span class="por num">' + brl.format(es.total * N) + (N > 1 ? '<span class="un">' + N + ' × ' + brl.format(es.total) + '</span>' : '') + '</span><span class="i-store">' + (es.emb ? esc(es.emb) + ' · ' : '') + esc(G[y.id].nome) + ' <span class="chip">' + esc(G[y.id].singular) + '</span>' + (y.online ? '<small>' + esc(freteTxt(y, true)) + '</small>' : '') + '</span>' + setaLink(l), cmp)
       + '<p class="i-esc-nota num">' + esc(barato) + ' <button type="button" class="link" data-desescolher="' + x.i + '">Desfazer escolha</button></p>';
   }
   function quandoPrecos(p){

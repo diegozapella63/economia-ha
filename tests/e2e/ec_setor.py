@@ -15,7 +15,7 @@ OFERTAS = {"versao": 2, "gerado_em": "2026-11-02T10:00:00-03:00", "categorias": 
          "tamanhos": [{"rede": "merc-sol", "embalagem": "Peito de frango 1,5 kg", "quantidade": 1.5, "preco": 14.4}]},
         {"produto": "Álcool 70", "precos": {"farm-lua": 6.26, "farm-mar": 6.28}, "base": {"quantidade": 0.03, "unidade": "L"},
          "tamanhos": [{"rede": "merc-sol", "embalagem": "Galão 5 L", "quantidade": 5, "preco": 42.98}]},
-        {"produto": "Leite sem lactose", "precos": {"merc-azul": 4.98, "merc-sol": 5.59, "farm-lua": 23.88}, "base": {"quantidade": 1, "unidade": "L"}},
+        {"produto": "Leite sem lactose", "precos": {"merc-azul": {"preco": 4.98, "obs": "Leite Vale Bom zero lactose 1 L"}, "merc-sol": 5.59, "farm-lua": 23.88}, "base": {"quantidade": 1, "unidade": "L"}},
         # 1.36.0: o tamanho de sempre achado pela busca (400 g) bem acima do comum: a referência é o preço comum do quilo
         {"produto": "Coxa de frango", "precos": {"merc-azul": 18.48, "merc-sol": 19.9}, "base": {"quantidade": 0.4, "unidade": "kg"},
          "tamanhos": [{"rede": "merc-azul", "embalagem": "Coxa 1 kg", "quantidade": 1, "preco": 15.9},
@@ -67,6 +67,15 @@ async def main():
             leite = item("Leite sem lactose")
             t = limpo(await leite.inner_text())
             check("Farmácia Lua" not in t and "Em 2 mercados" in t and "economia de R$ 0,61" in t, f"leite: só os mercados ({t[:200]})")
+            # 1.36.7: o produto achado acima do cartão do preço; "Em 2 mercados · preços de…" no fim, embaixo dos botões;
+            # o Comprei hoje é o botão cheio (a ação principal), como o Criar backup
+            ordem = await leite.evaluate("""li => { const q = s => li.querySelector(s), segue = (a, b) => !!(a && b && (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING));
+                return [q('.i-produto') && q('.i-produto').textContent, segue(q('.i-produto'), q('.i-best')), segue(q('.i-botoes'), q('.i-foot')), li.lastElementChild.classList.contains('i-foot')]; }""")
+            check(ordem == ["Produto: Leite Vale Bom zero lactose 1 L", True, True, True], f"o produto antes do preço e o Em 2 mercados no fim ({ordem})")
+            cor = await leite.evaluate("""li => { const b = li.querySelector('[data-comprei]'), c = getComputedStyle(b);
+                return [b.classList.contains('btn'), c.backgroundColor === getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || c.backgroundColor !== 'rgba(0, 0, 0, 0)', Math.round(b.getBoundingClientRect().height)]; }""")
+            check(cor == [True, True, 50], f"Comprei hoje: o botão cheio, com 50 px ({cor})")
+            await leite.screenshot(path=__import__("os").path.join(__import__("base_e2e").SHOTS, "setor-leite.png"))
             sel = alc.locator("select[data-setor]")
             ops = [limpo(x) for x in await sel.locator("option").all_inner_texts()]
             check(ops == ["Qualquer", "Mercado", "Farmácia"], f"o setor no pé do cartão, como ao adicionar ({ops})")

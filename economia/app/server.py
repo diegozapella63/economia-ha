@@ -6828,7 +6828,7 @@ def buscar_itens(itens):
 
 # ---------- comparar uma oferta com as outras lojas ----------
 # A oferta pode ser "−49%" numa loja e ainda assim mais cara que o preço normal de outra. O Comparar preço procura o
-# mesmo produto nas outras lojas, como o Buscar este item (primeiro os sites, a IA só se faltar), sem pôr na lista.
+# mesmo produto nas outras lojas, como o Buscar item (primeiro os sites, a IA só se faltar), sem pôr na lista.
 COMPARACOES = os.path.join(DATA, "comparacoes.json")
 MAX_COMPARACOES = 60
 OFERTA_SUMIU = "Essa oferta não está mais nas ofertas. Toque em Buscar para atualizar."

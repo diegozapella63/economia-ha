@@ -1,5 +1,12 @@
 # Mudanças
 
+## 1.36.7
+
+- Minha lista:
+  - **Comprei hoje** virou o botão cheio, na cor do app, como o Criar backup: é a ação principal do cartão. Ele e a quantidade ficam com a altura dos outros botões.
+  - O produto achado (**Produto: …**) aparece acima do cartão do preço, e **Em 3 mercados · preços de …** fica no fim do cartão, embaixo dos botões.
+  - O item sem preço tem **Buscar item** (antes, Buscar este item), da largura dos botões de baixo.
+
 ## 1.36.6
 
 - **Mais › Lojas**: o botão **Benefícios** volta a ficar sempre, para procurar de novo quando os benefícios mudarem, daqui a meses. **Benefícios do …** mostra o que foi achado, e **Sem clube de vantagens** volta a ser um selo.
