@@ -1,5 +1,11 @@
 # Mudanças
 
+## 1.36.9
+
+- **Mais › Casa › Espaço para estoque** ganha **Só o do mês: até 1 mês**, para quem faz a compra do mês.
+- Melhor tamanho: antes de aprender o seu ritmo de compra do item, o app calcula quanto cada tamanho dura por **Quem mora** (por semana, o tamanho de sempre por pessoa). Com o espaço para estoque, isso deixa de fora o que dura demais, como uma caixa de 18 kg de frango para 2 pessoas, e o Comparar tamanhos diz *Para 2 pessoas, dura uns 18 dias*. Quando o ritmo já é conhecido, ele continua valendo.
+- **O próximo mais barato** é sempre o seguinte depois da melhor compra: um tamanho que ficou de fora por durar demais não entra na comparação.
+
 ## 1.36.8
 
 - **Melhor compra** e **Comparar tamanhos**: a comparação é com o **próximo mais barato** por quilo ou litro, e não com o pacote de sempre. O cartão mostra *O próximo mais barato: R$ 15,90 por quilo · Coxa 1 kg por R$ 15,90 (loja)*, e a economia é a diferença por quilo para ele. Saíram *Economia de R$ 504,90 em relação a comprar o de 400 g* e *Rende 45 vezes o de 400 g*: comparar 18 kg com 400 g em reais não diz nada.

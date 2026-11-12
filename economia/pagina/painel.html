@@ -1477,7 +1477,8 @@ input.field,select.field{min-height:var(--altura)}
           <div class="group">
             <h3><label for="estoque">Espaço para estoque</label></h3>
             <select class="field" id="estoque">
-              <option value="pouco">Pouco: até 2 meses de estoque</option>
+              <option value="mes">Só o do mês: até 1 mês de estoque</option>
+              <option value="pouco">Pouco: até 2 meses</option>
               <option value="normal">Normal: até 6 meses</option>
               <option value="bastante">Bastante: até 1 ano</option>
             </select>
@@ -2018,7 +2019,7 @@ input.field,select.field{min-height:var(--altura)}
       historico: arr(c.historico).filter(function(i){ return i && i.produto; }).map(function(i){ return {produto:String(i.produto).slice(0, 120), compras:arr(i.compras).filter(function(d){ return /^\d{4}-\d{2}-\d{2}$/.test(d); }), saiu:String(i.saiu || ''), ean:/^\d{8,14}$/.test(String(i.ean || '')) ? String(i.ean) : undefined, similares:i.similares === true ? true : undefined, setor:SETORES[i.setor] ? i.setor : undefined}; }).slice(-300),
       perfil: {adultos:n0(p.adultos, 1), criancas:n0(p.criancas, 0), bebes:n0(p.bebes, 0), pets:petsDe(p.pets), restricoes:arr(p.restricoes), interesses:arr(p.interesses), nunca:arr(p.nunca),
         nunca_produtos:arr(p.nunca_produtos).map(function(t){ return String(t).trim().slice(0, 40); }).filter(function(t){ return norm(t); }).slice(0, 100)},
-      cotidiano: {mercado:arr(r.mercado), farmacia:arr(r.farmacia), avisar:r.avisar || 'vespera', estoque:['pouco', 'normal', 'bastante'].indexOf(r.estoque) >= 0 ? r.estoque : 'normal'},
+      cotidiano: {mercado:arr(r.mercado), farmacia:arr(r.farmacia), avisar:r.avisar || 'vespera', estoque:['mes', 'pouco', 'normal', 'bastante'].indexOf(r.estoque) >= 0 ? r.estoque : 'normal'},
       ia: {busca:String((c.ia || {}).busca || ''), fotos:String((c.ia || {}).fotos || ''), voz:String((c.ia || {}).voz || '')},
       clubes: arr(c.clubes),
       cupons_meus: arr(c.cupons_meus).filter(function(k){ return k && k.beneficio && k.rede; }),
@@ -2746,7 +2747,7 @@ input.field,select.field{min-height:var(--altura)}
     return '<div class="i-online">' + chip + '<p>' + esc(linha) + '</p>' + (nota ? '<p class="i-nota">' + esc(nota) + '</p>' : '') + '</div>';
   }
   // ===== Melhor tamanho: 1 L, 5 L ou 5 × 1 L? =====
-  var ESTOQUE = {pouco:60, normal:180, bastante:365};
+  var ESTOQUE = {mes:30, pouco:60, normal:180, bastante:365};  // 1.36.9: mes, para quem compra só para o mês
   function fmtQ(q){ return String(Math.round(q * 1000) / 1000).replace('.', ','); }
   function medidaTxt(q, b){
     if (b.unidade === 'L' && q < 1) return fmtQ(q * 1000) + ' ml';
@@ -2758,6 +2759,14 @@ input.field,select.field{min-height:var(--altura)}
   // 1.35.0: a medida de comparar é sempre a de costume (quilo, litro, metro ou unidade), nunca o tamanho de sempre do item (400 g, 30 ml)
   function nomeUn(b){ return b.unidade === 'un' ? (b.rotulo || 'unidade') : b.unidade === 'L' ? 'litro' : b.unidade === 'kg' ? 'quilo' : 'metro'; }
   function tempoTxt(d){ return d < 45 ? d + ' dias' : Math.round(d / 30) + ' meses'; }
+  // 1.36.9: quem consome o item, de Mais › Casa: as pessoas (bebê conta meia) ou, num item de pet shop, os pets
+  function quemConsome(it){
+    var p = estado.perfil, pet = setorDe(it.produto) === 'petshops';
+    var n = pet ? petsTotal() : (Number(p.adultos) || 0) + (Number(p.criancas) || 0) + (Number(p.bebes) || 0) * 0.5;
+    n = Math.max(1, n);
+    var k = Math.round(n);
+    return {n:n, txt:pet ? (k > 1 ? k + ' pets' : '1 pet') : (k > 1 ? k + ' pessoas' : '1 pessoa')};
+  }
   function igualQ(a, b){ return Math.abs(a - b) <= b * 0.01; }
   // "Escolher esse": a pessoa fixa uma loja (e um tamanho) para o item, mesmo que não seja o mais barato
   var SVG_ESC = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
@@ -2953,7 +2962,12 @@ input.field,select.field{min-height:var(--altura)}
     // referência: o tamanho de sempre (a base); sem preço nele, o menor acima dela
     var ref = js.filter(function(j){ return igualQ(j.Q, q0); })[0] || js.filter(function(j){ return j.Q >= q0 * 0.99; })[0] || js[0];
     var limite = ESTOQUE[estado.cotidiano.estoque] || 180;
-    var N = qtdDe(it), dura = function(Q){ return r.media ? Math.round(Q / (q0 * N) * r.media) : null; };  // cada compra leva N do de sempre
+    // cada compra leva N do de sempre. 1.36.9: sem o ritmo de compra do item (ainda não aprendido), quanto dura vem do
+    // tamanho da casa: por semana, o de sempre por pessoa (bebê conta meia; num item de pet shop, por pet). Basta para não
+    // sugerir 18 kg de frango a 2 pessoas que compram para o mês; o ritmo, quando há, continua valendo
+    var N = qtdDe(it), quem = quemConsome(it), estimado = !r.media;
+    var dura = function(Q){ return r.media ? Math.round(Q / (q0 * N) * r.media) : Math.round(Q / (q0 * Math.max(N, quem.n)) * 7); };
+    var duraTxt = function(Q){ return (estimado ? 'Para ' + quem.txt + ', dura' : 'No seu ritmo, dura') + ' uns ' + tempoTxt(dura(Q)); };
     var pu = function(j){ return j.total / j.Q; };
     var porPu = function(x, y){ return pu(x) - pu(y); };
     var best = js.filter(function(j){ var d = dura(j.Q); return j === ref || d == null || d <= limite; }).sort(porPu)[0];
@@ -2973,7 +2987,8 @@ input.field,select.field{min-height:var(--altura)}
     // 1.36.8: o que se mostra compara com o próximo mais barato por quilo ou litro, não com o tamanho de sempre (18 kg
     // contra 45 pacotes de 400 g não diz nada); a economia em reais é a da quantidade comprada, a esse preço por quilo
     var proxDe = function(j){
-      var o = ops.filter(function(x){ return x !== j.o; }).sort(function(x, y){ return x.total / x.q - y.total / y.q; })[0];
+      // o próximo depois dele: um mais barato que ficou de fora (dura demais) não conta
+      var o = ops.filter(function(x){ return x !== j.o && x.total / x.q >= pu(j) - 0.0001; }).sort(function(x, y){ return x.total / x.q - y.total / y.q; })[0];
       return o ? {o:o, pu:o.total / o.q, rot:o.emb || medidaTxt(o.q, b)} : null;
     };
     var contra = function(j){ var px = proxDe(j); return px ? ', contra ' + porUn(px.o.total, px.o.q, b) + ' no próximo mais barato (' + px.rot + ', ' + ondeTxt(px.o) + ')' : ''; };
@@ -2986,7 +3001,6 @@ input.field,select.field{min-height:var(--altura)}
     }).join('');
     var chip, linha, nota = [], eco = 0, dica = null, principal = false;
     if (palpite){
-      var dp = dura(best.Q);
       eco = ecoProx(best);
       dica = {prox:proxDica(best), id:best.o.id, link:best.o.link, txt:comoTxt(best, b) + ' por ' + brl.format(best.total), como:comoTxt(best, b), total:best.total, online:best.o.online, frete:best.o.frete,
               porBase:Math.round(best.total / (best.Q / q0) * 100) / 100, base:medidaTxt(q0, b),
@@ -2995,10 +3009,10 @@ input.field,select.field{min-height:var(--altura)}
       chip = '<span class="dchip on">Mais barato por ' + esc(nomeUn(b)) + '</span>';
       linha = comoTxt(best, b) + ' por ' + brl.format(best.total) + ' (' + ondeTxt(best.o) + ') · ' + porUn(best.total, best.Q, b);
       nota.push('Sai ' + porUn(best.total, best.Q, b) + contra(best) + '.');
-      if (dp != null) nota.push('No seu ritmo, dura uns ' + tempoTxt(dp) + '.');
+      nota.push(duraTxt(best.Q) + '.');
+      if (bestAll !== best && pu(bestAll) < pu(best)) nota.push(comoTxt(bestAll, b) + ' sai ainda mais barato, mas duraria uns ' + tempoTxt(dura(bestAll.Q)) + (estimado ? ' para ' + quem.txt : '') + ', mais do que você costuma guardar.');
       if (!principal) nota.push('Chega em ' + best.o.prazo + (best.o.prazo > 1 ? ' dias' : ' dia') + ', depois de acabar.');
     } else if (best !== ref && vale(best)){
-      var d = dura(best.Q);
       eco = ecoProx(best);
       dica = {prox:proxDica(best), id:best.o.id, link:best.o.link, txt:comoTxt(best, b) + ' por ' + brl.format(best.total), como:comoTxt(best, b), total:best.total, online:best.o.online, frete:best.o.frete,
               porBase:Math.round(best.total / (best.Q / q0) * 100) / 100, base:medidaTxt(q0, b),
@@ -3008,14 +3022,14 @@ input.field,select.field{min-height:var(--altura)}
       chip = '<span class="dchip on">' + (menor ? 'Compensa o menor' : 'Compensa o maior') + '</span>';
       linha = comoTxt(best, b) + ' por ' + brl.format(best.total) + ' (' + ondeTxt(best.o) + ') · ' + porUn(best.total, best.Q, b);
       nota.push('Sai ' + porUn(best.total, best.Q, b) + contra(best) + '.');
-      if (d != null) nota.push('No seu ritmo, dura uns ' + tempoTxt(d) + '.');
+      nota.push(duraTxt(best.Q) + '.');
       if (best.o.online && best.o.prazo != null && r.dias != null && best.o.prazo > r.dias) nota.push('Chega em ' + best.o.prazo + (best.o.prazo > 1 ? ' dias' : ' dia') + ', depois de acabar: compre o de sempre agora e peça este para a próxima.');
-      if (bestAll !== best && vale(bestAll) && dura(bestAll.Q) != null) nota.push(comoTxt(bestAll, b) + ' sai ainda mais barato, mas duraria uns ' + tempoTxt(dura(bestAll.Q)) + ', mais do que você costuma guardar.');
+      if (bestAll !== best && vale(bestAll)) nota.push(comoTxt(bestAll, b) + ' sai ainda mais barato, mas duraria uns ' + tempoTxt(dura(bestAll.Q)) + (estimado ? ' para ' + quem.txt : '') + ', mais do que você costuma guardar.');
     } else if (bestAll !== ref && vale(bestAll)){
       chip = '<span class="dchip warn">' + (bestAll.Q < ref.Q ? 'Compensa o menor' : 'Compensa, mas dura muito') + '</span>';
       linha = comoTxt(bestAll, b) + ' por ' + brl.format(bestAll.total) + ' (' + ondeTxt(bestAll.o) + ') · ' + porUn(bestAll.total, bestAll.Q, b);
       nota.push('Sai ' + porUn(bestAll.total, bestAll.Q, b) + contra(bestAll) + (bestAll.Q < ref.Q ? '.'
-        : ', mas no seu ritmo dura uns ' + tempoTxt(dura(bestAll.Q)) + ', mais do que você costuma guardar. Fique no de ' + medidaTxt(ref.Q, b) + ' ou mude o espaço para estoque em Mais › Casa.'));
+        : ', mas ' + duraTxt(bestAll.Q).replace(/^P/, 'p').replace(/^N/, 'n') + ', mais do que você costuma guardar. Fique no de ' + medidaTxt(ref.Q, b) + ' ou mude o espaço para estoque em Mais › Casa.'));
     } else {
       chip = '<span class="dchip">Tamanho de sempre</span>';
       linha = medidaTxt(ref.Q, b) + ' sai ' + porUn(ref.total, ref.Q, b) + ' (' + ondeTxt(ref.o) + ')';

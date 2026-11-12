@@ -96,7 +96,9 @@ Pode escrever só o produto, como **Lysoform**. Na busca, o EconomIA traz també
 - **Compensa o maior**: diz qual embalagem levar, onde, quanto sai por quilo ou litro contra o próximo mais barato e quanto tempo dura no seu ritmo.
 - **Tamanho de sempre**: o maior não compensa. Quando é o caso, mostra que, por exemplo, 5 de 1 L saem mais baratos que 1 de 5 L.
 - **Compensa o menor**: uma embalagem menor sai mais barata por quilo ou litro (por exemplo, pote de 700 g contra o pacote de 1 kg).
-- **Compensa, mas dura muito**: o maior é mais barato, mas duraria mais do que você costuma guardar. Ajuste em **Mais › Casa › Rotina de compras › Espaço para estoque**.
+- **Compensa, mas dura muito**: o maior é mais barato, mas duraria mais do que você costuma guardar. Ajuste em **Mais › Casa › Rotina de compras › Espaço para estoque** (de **Só o do mês: até 1 mês** a **Bastante: até 1 ano**).
+
+Quanto cada tamanho dura vem do seu ritmo de compra do item, quando o app já aprendeu (pelo **Comprei hoje**). Antes disso, vem de **Quem mora**: por semana, o tamanho de sempre por pessoa (bebê conta meia; num item de pet shop, por pet). Assim uma caixa de 18 kg de frango não é sugerida a 2 pessoas que compram para o mês (*Para 2 pessoas, dura uns 18 dias*).
 
 A **Melhor compra** e a economia aparecem sempre por quilo, litro, metro ou unidade (*R$ 9,60 por quilo*), nunca pelo tamanho do pacote de sempre. A comparação é com o **próximo mais barato** por quilo ou litro (*O próximo mais barato: R$ 15,90 por quilo · Coxa 1 kg por R$ 15,90*), e não com o pacote de sempre: comparar 18 kg com 400 g em reais não diz nada.
 
