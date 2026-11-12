@@ -152,9 +152,24 @@ class Busca(Cenario):
         ha.responde_ia("EconomIA: farmacias", {"lojas": [{"rede": "Farmácia Bem Estar", "distancia_km": 0.6}], "cupons": [], "ofertas": [], "lista": []})
         S.buscar()
         self.assertIsNone(S.BUSCA["erro"])
+        # 1.36.4: com a busca funcionando, pergunta de novo uma vez; sem resposta outra vez, fica o resultado anterior
         self.assertEqual([c["task_name"] for c in ha.chamadas_ia if c["task_name"] != "EconomIA: itens sem preço"],
-                         ["EconomIA: mercados", "EconomIA: teste", "EconomIA: farmacias"])
+                         ["EconomIA: mercados", "EconomIA: teste", "EconomIA: mercados", "EconomIA: farmacias"])
         self.assertIn("Mercados: a IA não trouxe nada da busca na web desta vez", " ".join(S.BUSCA["avisos"]))
+
+    def test_ia_diz_que_nao_buscou_e_na_segunda_traz(self):
+        """1.36.4: a segunda pergunta trouxe as ofertas: a categoria entra normalmente, sem aviso."""
+        S, ha = self.S, self.ha
+        self.config(categorias=["mercados"], lista=LISTA[:1])
+        ha.responde_ia("EconomIA: mercados", {"erro": "sem_busca"}, vezes=1)
+        ha.responde_ia("EconomIA: teste", {"busca": True, "exemplo": "Giassi, café por R$ 19,90", "fonte": "https://www.giassi.com.br/cafe"})
+        ha.responde_ia("EconomIA: mercados", pagina_mercados)
+        S.buscar()
+        self.assertIsNone(S.BUSCA["erro"])
+        self.assertFalse(S.BUSCA["avisos"])
+        self.assertEqual([c["task_name"] for c in ha.chamadas_ia if c["task_name"] != "EconomIA: itens sem preço"],
+                         ["EconomIA: mercados", "EconomIA: teste", "EconomIA: mercados"])
+        self.assertIn("Bistek", [r["nome"] for r in S.ler_json(S.OFERTAS)["categorias"][0]["redes"]])
 
     def test_sem_cep(self):
         S = self.S

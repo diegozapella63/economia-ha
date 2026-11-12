@@ -1540,12 +1540,11 @@ input.field,select.field{min-height:var(--altura)}
         <section class="panel so-ia" aria-labelledby="h-online" id="onlineSec">
           <div class="sec-head"><h2 id="h-online"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 6h11v10H2zM13 9h4l4 4v3h-8z"/><circle cx="6.5" cy="17.5" r="2"/><circle cx="17.5" cy="17.5" r="2"/></svg></span>Compras online</h2></div>
           <div class="group"><h3>Onde procurar</h3><div class="picks" id="pMkt"></div></div>
-          <div class="group"><h3>Assinaturas com frete grátis</h3><div class="picks" id="pAss"></div></div>
           <label class="set-line"><input type="checkbox" class="switch" id="onEntrega"><span>Mercados da região que entregam no seu CEP</span></label>
           <p class="hint">Como o Bistek. Aparecem em Online.</p>
           <div class="group" id="entregaKmG" hidden><h3><label for="entregaKm">Distância dos mercados que entregam</label></h3>
             <select class="field" id="entregaKm"></select><p class="hint" id="entregaMsg" aria-live="polite"></p></div>
-          <p class="hint">Prime e Meli+ valem só para os produtos elegíveis; o frete de cada item já conta isso.</p>
+          <p class="hint">Prime, Meli+ e Clube iFood (o Sou do clube de cada um) valem só nos produtos elegíveis; o frete de cada item já conta isso.</p>
         </section>
       </div></div>
       <section class="panel" aria-labelledby="h-como">
@@ -4793,12 +4792,24 @@ input.field,select.field{min-height:var(--altura)}
   function clubeHtml(c, l){
     if (!/^(farmacias|mercados|petshops)$/.test(c.id)) return '';
     var k = clubeDe(c, l), socio = estado.clubes.indexOf(l.rede) >= 0, rb = CLUBES_BEN[chaveLoja(G[l.rede].nome)];
-    if ((k === null || rb && !rb.clube && !arr(rb.beneficios).length) && !socio) return '';
+    // 1.36.4: os benefícios que a IA achou valem sobre a lista do app (o Clube Angeloni, de pontos, ganha o botão depois deles)
+    var tem = rb ? !!(rb.clube || arr(rb.beneficios).length) : k !== null;
+    if (!tem && !socio) return '';
     // 1.36.0: um botão do app com a caixinha de marcar, para ficar claro que o toque diz que você é do clube (o preço
     // de sócio passa a valer); com o nome do clube quando a busca sabe
-    var rot = 'Sou do ' + (k && k !== 'tem' ? k : 'clube');
+    var rot = 'Sou do ' + (rb && rb.clube ? rb.clube : k && k !== 'tem' ? k : 'clube');
     return '<button type="button" class="ghost big ic-btn loja-btn clube" data-clube="' + esc(l.rede) + '" aria-pressed="' + socio + '" aria-label="' + esc(rot + ': ' + G[l.rede].nome) + '" title="' + esc(rot) + '">'
-      + (socio ? '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8 12.5l3 3 5.5-6"/></svg>' : '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/></svg>') + 'Sou do clube</button>';
+      + caixinha(socio) + 'Sou do clube</button>';
+  }
+  function caixinha(on){ return '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/>' + (on ? '<path d="M8 12.5l3 3 5.5-6"/>' : '') + '</svg>'; }
+  // 1.36.4: nas lojas online, a assinatura com frete grátis (Prime, Meli+, Clube iFood) é o Sou do clube da linha, como nas outras
+  var ASS_DE = {amazon:'prime', mercadolivre:'melimais', ifood:'clubeifood'};
+  function assinaturaHtml(nome){
+    var n = norm(nome || ''), m = MKT.filter(function(x){ return n.indexOf(norm(x.nome)) === 0; })[0], id = m && ASS_DE[m.id];
+    if (!id) return '';
+    var a = ASS.filter(function(x){ return x.id === id; })[0], on = estado.online.assinaturas.indexOf(id) >= 0;
+    return '<button type="button" class="ghost big ic-btn loja-btn clube" data-assin="' + id + '" aria-pressed="' + on + '" aria-label="' + esc('Sou do ' + a.nome + ': ' + nome) + '" title="' + esc('Sou do ' + a.nome) + '">'
+      + caixinha(on) + 'Sou do clube</button>';
   }
   // 1.24.0: Benefícios do clube: a IA procura o que o clube da loja dá (guardado no servidor, por loja); com a IA ligada
   var CLUBES_BEN = {}, CLUBE_BUSCA = null, CLUBE_ABERTO = {};
@@ -4981,7 +4992,7 @@ input.field,select.field{min-height:var(--altura)}
     var semP = !f && c && c.id !== 'online' && G[l.rede] && !(l.nova && acompanha(l.rede)) && semPrecos(c).indexOf(l) >= 0 && !siteManual(G[l.rede].nome);
     var site = (f && (f.como === 'ia' || f.como === 'nenhum') && !(cid === 'online' && !regional(l.rede))) || semP ? botaoSite(l) : '';
     var rm = mi >= 0 ? '<button type="button" class="ghost big ic-btn loja-btn rm" data-loja="' + mi + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>Remover</button>' : '';
-    var bs = [c ? clubeHtml(c, l) : '', ben, c && c.id === 'online' && regional(l.rede) ? botaoEntrega(l) : '', botaoTestar(l, cid), site, rm].filter(Boolean);
+    var bs = [c && c.id !== 'online' ? clubeHtml(c, l) : assinaturaHtml(nomeLoja(l.rede)), ben, c && c.id === 'online' && regional(l.rede) ? botaoEntrega(l) : '', botaoTestar(l, cid), site, rm].filter(Boolean);
     return bs.length ? '<span class="loja-botoes">' + bs.join('') + '</span>' : '';
   }
   function testaLoja(cid, rid){
@@ -5071,6 +5082,13 @@ input.field,select.field{min-height:var(--altura)}
     return true;
   }
   $('lojasCats').addEventListener('click', function(e){
+    var sa = e.target.closest('[data-assin]');
+    if (sa){
+      var aid = sa.dataset.assin, a = ASS.filter(function(x){ return x.id === aid; })[0], liga = estado.online.assinaturas.indexOf(aid) < 0;
+      alterna(estado.online.assinaturas, aid);
+      salvar(a.nome + (liga ? ': frete grátis nos produtos elegíveis' : ' desligado'));
+      tudo(); return;
+    }
     var cb = e.target.closest('[data-clube]');
     if (cb){
       var id = cb.dataset.clube, on = estado.clubes.indexOf(id) < 0;
@@ -5268,7 +5286,6 @@ input.field,select.field{min-height:var(--altura)}
     picks('pNunca', NUNCA.map(function(t){ return {id:t, nome:cap(ROTULO_TAG[t])}; }), p.nunca);
     $('pNuncaProd').innerHTML = p.nunca_produtos.map(function(t){ return '<button type="button" class="nunca-t" data-termo="' + esc(t) + '" aria-label="Voltar a mostrar ' + esc(t) + '"><span>' + esc(t) + '</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>'; }).join('');
     picks('pMkt', MKT, estado.online.marketplaces);
-    picks('pAss', ASS, estado.online.assinaturas);
     picks('dMercado', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.mercado);
     picks('dFarmacia', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.farmacia);
     $('estoque').value = r.estoque;
@@ -5911,7 +5928,7 @@ input.field,select.field{min-height:var(--altura)}
       salvar('Lista importada'); pintaLista(); pintaOfertasTela();
     }
   }
-  var ALVO = {pMkt:function(){ return estado.online.marketplaces; }, pAss:function(){ return estado.online.assinaturas; }, pRestr:function(){ return estado.perfil.restricoes; }, pInt:function(){ return estado.perfil.interesses; },
+  var ALVO = {pMkt:function(){ return estado.online.marketplaces; }, pRestr:function(){ return estado.perfil.restricoes; }, pInt:function(){ return estado.perfil.interesses; },
     pNunca:function(){ return estado.perfil.nunca; }, dMercado:function(){ return estado.cotidiano.mercado; }, dFarmacia:function(){ return estado.cotidiano.farmacia; }};
   $('pNuncaProd').addEventListener('click', function(e){
     var b = e.target.closest('[data-termo]'); if (!b) return;

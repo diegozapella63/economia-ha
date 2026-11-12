@@ -4046,6 +4046,13 @@ GENERICAS = {"supermercado", "supermercados", "mercado", "mercados", "hipermerca
 MAX_FOLHETOS_NOVOS = 3  # lojas com folheto novo lido pela IA em cada busca (as outras ficam para a próxima)
 
 
+def loja_ignorada(nome, cat, ignorar):
+    """1.36.4: a loja que o morador desmarcou em Mais › Lojas, pelo nome (o id é a categoria e o nome): vale também para
+    as que ele cadastrou e as da lista antiga de folhetos, que não passam pelo resultado da busca."""
+    n = (texto(nome, 60) or "").split(",")[0].strip()
+    return bool(n) and bool(cat) and f"{str(cat)[:4]}-{slug(nome_direta(n), 30)}" in ignorar
+
+
 def lojas_folheto(cfg, cats=None, categorias=None, ja=None):
     """As lojas físicas que o morador acompanha (e as que cadastrou) e que não têm preço pelo site: o folheto delas
     é procurado sozinho. Lojas com site de encarte próprio já têm o encarte lido por outro caminho."""
@@ -4063,7 +4070,8 @@ def lojas_folheto(cfg, cats=None, categorias=None, ja=None):
     def add(nome, cat):
         nome = (texto(nome, 60) or "").split(",")[0].strip()
         k = norm(nome)
-        if k and k not in vistos and k not in pular and cat in ("mercados", "farmacias", "petshops") and (cats is None or cat in cats):
+        if k and k not in vistos and k not in pular and cat in ("mercados", "farmacias", "petshops") and (cats is None or cat in cats) \
+                and not loja_ignorada(nome, cat, ignorar):
             vistos.add(k)
             out.append({"nome": nome, "categoria": cat})
     for l in lojas_cfg.get("folhetos") or []:  # versões antigas guardavam a lista à mão
@@ -6568,22 +6576,30 @@ def buscar():
             except ErroBusca as e:
                 if isinstance(e, ErroCota):
                     raise
-                if "não usou a busca na web" in str(e):
-                    # a IA disse que não tem busca: o teste rápido confirma. Com a busca funcionando, ela só não achou nada
-                    # desta categoria (fica o resultado anterior); sem, a busca para com o aviso
+                erro, de_novo = str(e), None
+                if "não usou a busca na web" in erro:
+                    # a IA disse que não tem busca: o teste rápido confirma. Com a busca funcionando, pergunta de novo uma
+                    # vez; sem resposta outra vez, fica o resultado anterior desta categoria. Sem a busca, para com o aviso
                     if not teste_web:
                         teste_web.append(testar_ia("busca").get("ok") is True)
                     if not teste_web[0]:
                         raise
-                    log(f"{cat_id}: a IA respondeu que não buscou, mas o teste da busca na web passou")
-                    e = ErroBusca("a IA não trouxe nada da busca na web desta vez")
-                elif any(t in str(e) for t in ("Falta uma IA", "não tem acesso", "não tem permissão", "assistente de conversa")):
+                    log(f"{cat_id}: a IA respondeu que não buscou, mas o teste da busca na web passou; pergunto de novo")
+                    try:
+                        de_novo = normalizar(cat_id, chamar_ai_task(f"EconomIA: {cat_id}", instrucoes_para(cat_id, cfg_ia)), cfg)
+                    except ErroCota:
+                        raise
+                    except ErroBusca:
+                        erro = "a IA não trouxe nada da busca na web desta vez"
+                elif any(t in erro for t in ("Falta uma IA", "não tem acesso", "não tem permissão", "assistente de conversa")):
                     raise
-                falhas.append(f"{CATEGORIAS[cat_id]['nome']}: {e}")
-                relatorio["categorias"][cat_id] = {"ok": False, "erro": str(e)[:200]}
-                if cat_id in antigas:
-                    novas.append(antigas[cat_id])
-                continue
+                if de_novo is None:
+                    falhas.append(f"{CATEGORIAS[cat_id]['nome']}: {erro}")
+                    relatorio["categorias"][cat_id] = {"ok": False, "erro": erro[:200]}
+                    if cat_id in antigas:
+                        novas.append(antigas[cat_id])
+                    continue
+                cat, parcial = de_novo
             novas.append(cat)
             parciais.append(parcial)
             relatorio["categorias"][cat_id] = {"ok": True, "ofertas": len(cat["ofertas"]), "lojas": len(cat["lojas"]),
@@ -6608,9 +6624,10 @@ def buscar():
                 falhou_tudo = False
             juntar_folheto_status(relatorio, st2)
         folheto = {norm(x["loja"]) for x in relatorio.get("folhetos") or [] if x.get("ofertas")} | {norm(n) for v in ja.values() for n in v}
+        ignorar_ids = set((cfg.get("lojas") or {}).get("ignorar") or [])
         sites = [a for a in ((cfg.get("lojas") or {}).get("adicionar") or [])
                  if isinstance(a, dict) and url_ok(a.get("site")) and a.get("categoria") in cats and texto(a.get("nome"), 60)
-                 and norm(texto(a["nome"], 60).split(",")[0]) not in folheto]
+                 and norm(texto(a["nome"], 60).split(",")[0]) not in folheto and not loja_ignorada(a["nome"], a["categoria"], ignorar_ids)]
         BUSCA["total"] = len(cats) + len(sites)
         for j, loja in enumerate(sites, 1):
             loja = {"nome": texto(loja["nome"], 60).split(",")[0].strip(), "site": loja["site"], "categoria": loja["categoria"]}

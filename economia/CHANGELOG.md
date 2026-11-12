@@ -1,5 +1,13 @@
 # Mudanças
 
+## 1.36.4
+
+- **Mais › Lojas › Online**:
+  - o Prime, o Meli+ e o Clube iFood viraram o **Sou do clube** da linha da Amazon, do Mercado Livre e do iFood, como nas outras lojas. Saíram de Compras online.
+  - Depois que o **Benefícios** acha o clube de uma loja que não tinha o botão (como o Clube Angeloni, de pontos), ela ganha o **Sou do clube**.
+- A busca não procura mais o folheto nem o encarte das lojas desmarcadas que você cadastrou à mão.
+- Busca com IA: quando a IA diz que não buscou, mas a busca na web funciona, ela pergunta de novo uma vez antes de deixar aquele grupo com o resultado anterior.
+
 ## 1.36.3
 
 - **Abrir na loja** nas Ofertas abre a página do produto: o app guarda o link de cada produto lido na página de ofertas do site da loja (e pede à IA o link do produto, não o da página de ofertas). Sem ele, procura na busca do próprio site da loja, quando ela funcionou no teste; o Google, só no site da loja, fica por último.

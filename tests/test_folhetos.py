@@ -304,6 +304,12 @@ class LerFolhetos(Base):
         self.assertEqual(nomes, [("Velha", "farmacias"), ("Mercado Cadastrado", "mercados"), ("Mercado Perto", "mercados"), ("Mercado Mantido", "mercados")],
                          "sem a longe, a ignorada, a que tem site e a que já tem preço pelo site")
         self.assertEqual([l["nome"] for l in S.lojas_folheto(cfg, ["farmacias"], categorias=cats)], ["Velha"])
+        # 1.36.4: desmarcada em Mais › Lojas, a cadastrada e a da lista antiga também ficam de fora (pelo nome)
+        cfg["lojas"]["ignorar"] += [S.slug(S.nome_direta("Mercado Cadastrado"), 30).join(["merc-", ""]), "farm-" + S.slug("Velha", 30)]
+        nomes = [l["nome"] for l in S.lojas_folheto(cfg, categorias=cats, ja={"mercados": ["Giassi"]})]
+        self.assertEqual(nomes, ["Mercado Perto", "Mercado Mantido"])
+        self.assertFalse(S.loja_ignorada("", "mercados", {"merc-"}))
+        self.assertFalse(S.loja_ignorada("Mercado Perto", None, {"merc-mercado-perto"}))
         rel = {"folhetos": [{"loja": "A", "ofertas": 1}]}
         S.juntar_folheto_status(rel, {"b": {"loja": "B"}, "a": {"loja": "A", "ofertas": 3}})
         self.assertEqual(rel["folhetos"], [{"loja": "A", "ofertas": 3}, {"loja": "B"}])

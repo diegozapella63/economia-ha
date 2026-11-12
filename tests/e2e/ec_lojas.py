@@ -33,7 +33,10 @@ def antes(S):
                                   "como_entrar": "CPF no caixa", "beneficios": [{"titulo": "Desconto de clube", "detalhe": "Até 40% em remédios marcados."}],
                                   "fonte": "https://www.farmaciasnissei.com.br/club", "em": "2026-11-09T10:00:00+00:00"},
                                   # 1.36.3: a IA já procurou e não achou clube na Droga Raia
-                                  S.chave_loja("Droga Raia"): {"loja": "Droga Raia", "clube": "", "beneficios": [], "em": "2026-11-09T10:00:00+00:00"}})
+                                  S.chave_loja("Droga Raia"): {"loja": "Droga Raia", "clube": "", "beneficios": [], "em": "2026-11-09T10:00:00+00:00"},
+                                  # 1.36.4: o clube de pontos do Angeloni (sem o botão na lista do app), achado pela IA
+                                  S.chave_loja("Angeloni"): {"loja": "Angeloni", "clube": "Clube Angeloni", "beneficios": [{"titulo": "Pontos", "detalhe": "Troca por produtos."}],
+                                                             "em": "2026-11-09T10:00:00+00:00"}})
 
 
 async def abre_lojas(pg):
@@ -72,6 +75,21 @@ async def main():
             # 1.36.1: o Benefícios também nas lojas online (o Meli+ do Mercado Livre)
             ml = pg.locator("#mp-lojas li.row", has=pg.locator(".r-name", has_text="Mercado Livre")).first
             check(await ml.locator('[data-clube-ben="mkt:mercadolivre"]').count() == 1, "Mercado Livre com o botão Benefícios")
+            # 1.36.4: a assinatura com frete grátis é o Sou do clube da linha (saiu de Compras online)
+            sa = ml.locator('[data-assin="melimais"]')
+            check(await sa.count() == 1 and (await sa.inner_text()).strip() == "Sou do clube" and await sa.get_attribute("aria-pressed") == "false"
+                  and "Meli+" in await sa.get_attribute("aria-label"), "Mercado Livre: Sou do clube (o Meli+)")
+            amz = pg.locator("#mp-lojas li.row", has=pg.locator(".r-name", has_text="Amazon")).first
+            check(await amz.locator('[data-assin="prime"]').count() == 1, "Amazon: Sou do clube (o Prime)")
+            check(await pg.locator("#pAss").count() == 0, "sem as Assinaturas com frete grátis em Compras online")
+            await sa.click()
+            await pg.wait_for_timeout(900)
+            check("melimais" in (app.config_salva().get("online") or {}).get("assinaturas", []), "marcar grava o Meli+")
+            sa = pg.locator('#mp-lojas [data-assin="melimais"]').first
+            check(await sa.get_attribute("aria-pressed") == "true", "a caixinha marcada")
+            await sa.click()
+            await pg.wait_for_timeout(900)
+            check("melimais" not in (app.config_salva().get("online") or {}).get("assinaturas", []), "e desmarcar tira")
             # 1.36.1: as inativas da aba (de todos os grupos: online, mercados e pet shops sem localização) numa só, no fim
             inat = pg.locator("#mp-lojas details.inativas")
             n0 = await inat.locator("li.row").count()  # os marketplaces não escolhidos
@@ -141,6 +159,9 @@ async def main():
             await pg.click('#lojasAbas [data-loja-aba="mercados"]')
             await pg.wait_for_timeout(300)
             check(await pg.locator('#mp-lojas [data-clube-ben]').count() >= 1, "loja com clube sem os benefícios: Benefícios do clube")
+            # 1.36.4: o Angeloni (clube de pontos, sem o botão de início) ganha o Sou do clube depois que a IA achou os benefícios
+            ang = pg.locator('#mp-lojas [data-clube="merc-angeloni"]')
+            check(await ang.count() == 1 and "Sou do Clube Angeloni" in await ang.get_attribute("aria-label"), "Angeloni: Sou do clube, pelos benefícios achados")
             await pg.click('#lojasAbas [data-loja-aba="farmacias"]')
             await pg.wait_for_timeout(300)
             # clube na linha da loja (Nissei: Club Nissei)
