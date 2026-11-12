@@ -81,7 +81,8 @@ async def main():
             await pg.wait_for_timeout(800)
             check("Rede Comum" in (app.config_salva().get("online") or {}).get("entrega_sim", []), "confirmada: gravado em online.entrega_sim")
             com = await linha(pg, "Rede Comum")
-            check("entrega no seu cep" in com and await bt.get_attribute("aria-pressed") == "true" and await bt.locator("svg path").count() == 1, f"confirmada: a caixinha marcada ({com[:160]})")
+            check("entrega no seu cep" not in com and await bt.get_attribute("aria-pressed") == "true" and await bt.locator("svg path").count() == 1,
+                  f"confirmada: a caixinha marcada, sem o selo repetido (1.36.3) ({com[:160]})")
             await pg.locator("#mp-lojas li.row", has=pg.locator(".r-name", has_text="Rede Comum")).first.locator("[data-entrega]").click()
             await pg.wait_for_timeout(800)
             check("Rede Comum" not in (app.config_salva().get("online") or {}).get("entrega_sim", []) and await bt.get_attribute("aria-pressed") == "false", "e desfaz")

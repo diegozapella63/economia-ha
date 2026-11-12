@@ -22,7 +22,7 @@ OFERTAS = {"versao": 2, "gerado_em": "2026-11-02T10:00:00-03:00", "lista": [], "
     categoria("farmacias", [("farm-panvel", "Panvel", 0.8), ("farm-nissei", "Farmácias Nissei", 1.4), ("farm-vida", "Farmácia Vida", 1.0)], ofertas=[
         oferta("o-cerveja", "farm-panvel", "Cerveja Heineken 350 ml", 4.49, 5.99, tags=["alcool"]),
         oferta("o-protetor", "farm-panvel", "Protetor solar Nivea FPS 50 · 200 ml", 59.9, 79.9, tags=["skincare"], fonte="https://www.panvel.com/panvel/protetor-solar-nivea-fps-50/p-12345"),
-        oferta("o-dipirona", "farm-nissei", "Dipirona 1 g · 10 comprimidos", 8.9, 12.9, receita="mip"),
+        oferta("o-dipirona", "farm-nissei", "Dipirona 1 g · 10 comprimidos", 8.9, 12.9, receita="mip", fonte="https://www.farmaciasnissei.com.br/"),
         oferta("o-fralda", "farm-nissei", "Fralda Pampers Confort Sec G", 79.9, 99.9, tags=["bebe"]),
         oferta("o-shampoo", "farm-panvel", "Shampoo Seda 325 ml", 11.9, 15.9, tipo="clube", fonte="https://www.panvel.com/ofertas/"),
         oferta("o-rivotril", "farm-nissei", "Rivotril 2 mg", 9.9, receita="tarja")],
@@ -41,6 +41,8 @@ OFERTAS = {"versao": 2, "gerado_em": "2026-11-02T10:00:00-03:00", "lista": [], "
 
 def antes(S):
     S.gravar_json(S.OFERTAS, OFERTAS)
+    # 1.36.3: a busca do site da Panvel funcionou no teste da loja
+    S.gravar_json(S.LOJAS_SITE, {"https://www.panvel.com": {"nome": "Panvel", "busca": "/busca?q={}"}})
 
 
 async def deals(pg):
@@ -92,9 +94,12 @@ async def main():
             sh = (await pg.locator("#deals .deal", has_text="Shampoo").inner_text()).replace("\xa0", " ")
             check("SEU CLUBE" in sh.upper() and "Sem clube R$ 15,90" in sh, f"oferta de clube de quem é do clube ({sh[:80]})")
             check(await pg.locator('#deals .deal', has_text="Protetor").locator('a[href="https://www.panvel.com/panvel/protetor-solar-nivea-fps-50/p-12345"]').count() == 1, "link da fonte")
-            # 1.36.1: a fonte é a página das ofertas (não a do produto): o Abrir na loja procura o produto no site da loja
+            # 1.36.1: a fonte é a página das ofertas (não a do produto): o Abrir na loja procura o produto no site da loja,
+            # 1.36.3: pela busca do próprio site, quando ela funcionou no teste da loja; só sem ela, no Google
             href = await pg.locator('#deals .deal', has_text="Shampoo").locator(".d-acts a").get_attribute("href")
-            check(href == "https://www.google.com/search?q=site%3Apanvel.com%20Shampoo%20Seda%20325%20ml", f"procura o produto no site da loja ({href})")
+            check(href == "https://www.panvel.com/busca?q=Shampoo%20Seda%20325%20ml", f"procura o produto na busca do site da loja ({href})")
+            href = await pg.locator('#deals .deal', has_text="Dipirona").locator(".d-acts a").get_attribute("href")
+            check(href == "https://www.google.com/search?q=site%3Afarmaciasnissei.com.br%20Dipirona%201%20g", f"sem a busca do site: no Google ({href})")
             await pg.locator("#v-ofertas").screenshot(path=SHOTS + "/eco-farmacias.png")
             # sem preços: a loja do raio sem nada
             sp = await pg.text_content("#semPrecos")

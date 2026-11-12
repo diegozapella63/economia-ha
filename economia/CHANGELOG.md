@@ -1,5 +1,14 @@
 # Mudanças
 
+## 1.36.3
+
+- **Abrir na loja** nas Ofertas abre a página do produto: o app guarda o link de cada produto lido na página de ofertas do site da loja (e pede à IA o link do produto, não o da página de ofertas). Sem ele, procura na busca do próprio site da loja, quando ela funcionou no teste; o Google, só no site da loja, fica por último.
+- Busca com IA: quando a IA responde que não usou a busca na web, o app faz o teste rápido do **Verificar de novo** antes de parar. Com a busca funcionando, segue com as outras lojas e avisa qual grupo ficou com o resultado anterior.
+- **Mais › Lojas**:
+  - **Benefícios** aparece em todas as lojas, como nas online, e procura de novo quando já tem os benefícios (para atualizar). O **Procurar de novo** de dentro saiu.
+  - **Sem clube de vantagens** virou um selo, para não se confundir com o endereço.
+  - O mercado que entrega, com o **Entrega aqui** marcado, não repete o selo **Entrega no seu CEP**.
+
 ## 1.36.2
 
 - Busca com IA: quando o limite de buscas na web por resposta acaba no meio (5 de começo na Anthropic), a IA traz o que já achou, em vez de responder que não usou a busca na web e perder tudo.

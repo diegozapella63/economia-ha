@@ -228,3 +228,53 @@ class PaginasDeOfertas(Cenario):
         self.assertEqual([o["produto"] for o in ofs], ["Arroz Tio João 5 kg"], "ainda vale")
         self.assertIsNone(S.le_pagina_ofertas(b + "/promo/?x=1", S.robots_regras("User-agent: *\nDisallow: /promo/?x\n")))
         self.ofertas({"categorias": [categoria("farmacias", [("farm-a", "A", 1.0)])]})
+
+
+class LinkDoProduto(Cenario):
+    """1.36.3: o link de cada produto da página (o Abrir na loja vai direto nele, não na página de ofertas)."""
+
+    def test_json_ld_dados_embutidos_e_vtex(self):
+        S = self.S
+        base = "https://www.loja.exemplo/ofertas/"
+        ld = LD.format(json.dumps({"@type": "Product", "name": "Shampoo Seda Ceramidas 325 ml", "url": "/shampoo-seda-ceramidas-325ml/p",
+                                   "offers": {"price": "12.90", "availability": "InStock"}}))
+        self.assertEqual(S.ofertas_da_pagina(ld, base)[0]["link"], "https://www.loja.exemplo/shampoo-seda-ceramidas-325ml/p")
+        h = ('<script>window.__D__ = {"itens":[{"name":"Dipirona Sódica 500 mg 10 comprimidos","price":7.49,"url":"\\/dipirona-500\\/p"},'
+             '{"name":"Protetor Solar Nivea FPS 50","price":39.9,"url":"https:\\/\\/outro.exemplo\\/protetor"},'
+             '{"productName":"Leite Integral Tirol 1L","sellingPrice":479,"linkText":"leite-integral-tirol-1l"},'
+             '{"name":"Fralda Pampers Confort Sec G","price":79.9,"url":"fralda-pampers"}]}</script>')
+        ofs = {o["produto"]: o.get("link") for o in S.ofertas_da_pagina(h, base)}
+        self.assertEqual(ofs, {"Dipirona Sódica 500 mg 10 comprimidos": "https://www.loja.exemplo/dipirona-500/p",
+                               "Protetor Solar Nivea FPS 50": None,  # de outro site
+                               "Leite Integral Tirol 1L": "https://www.loja.exemplo/leite-integral-tirol-1l/p",  # VTEX
+                               "Fralda Pampers Confort Sec G": None})  # um nome solto, fora do linkText
+        self.assertNotIn("link", S.ofertas_da_pagina(h)[0], "sem o endereço da página, sem link")
+
+    def test_link_do_produto(self):
+        S = self.S
+        b = "https://loja.exemplo/ofertas"
+        self.assertEqual(S.link_do_produto("https://www.loja.exemplo/cafe/p", b), "https://www.loja.exemplo/cafe/p", "com ou sem www")
+        for ruim in (None, "/", "/ofertas/", "mailto:a@b.c", "https://outra.exemplo/cafe"):
+            self.assertIsNone(S.link_do_produto(ruim, b), ruim)
+        self.assertIsNone(S.link_do_produto("/cafe", None))
+        self.assertIsNone(S.link_do_produto("http://[::1", b), "endereço quebrado")
+
+    def test_a_oferta_e_o_preco_da_lista_abrem_o_produto(self):
+        S, b = self.S, self.lojas.base
+        self.lojas.paginas["/promo/"] = (200, '<script>{"name":"Arroz Tio João Tipo 1 5 kg","price":24.9,"url":"/arroz-tio-joao-5kg/p"}'
+                                              ' {"name":"Feijão Carioca Camil 1 kg","price":7.9}</script>', "text/html")
+        S.gravar_json(S.SONDA_FILE, {"mercados": {"loja": {"como": "ofertas_site", "url": b + "/promo/", "nome": "Mercado P"}}})
+        cfg = self.config(lista=[{"produto": "Arroz 5 kg"}])
+        [(cat, parcial)] = S.busca_paginas_ofertas(cfg, ["mercados"], {})
+        fontes = {o["produto"]: o.get("fonte") for o in cat["ofertas"]}
+        self.assertEqual(fontes["Arroz Tio João Tipo 1 5 kg"], b + "/arroz-tio-joao-5kg/p")
+        self.assertEqual(fontes["Feijão Carioca Camil 1 kg"], b + "/promo/", "sem o link do produto: a página de ofertas")
+        self.assertEqual(parcial["Arroz 5 kg"]["links"], {"merc-mercado-p": b + "/arroz-tio-joao-5kg/p"}, "o preço do item da lista também")
+
+    def test_buscas_dos_sites(self):
+        S = self.S
+        S.gravar_json(S.LOJAS_SITE, {"https://www.panvel.com": {"nome": "Panvel Farmácias", "busca": "/busca?q={}"},
+                                     "https://www.giassi.com.br": {"nome": "Giassi", "vtex": True},
+                                     "não é url": {"nome": "X", "busca": "/b?q={}"},
+                                     "https://sem.exemplo": {"nome": "Sem", "busca": "/b"}})
+        self.assertEqual(S.buscas_dos_sites(), {S.chave_loja("Panvel Farmácias"): "https://www.panvel.com/busca?q={}"})

@@ -135,11 +135,26 @@ class Busca(Cenario):
         ha.responde_ia("mercados", {"erro": "sem_busca"})
         S.buscar()
         self.assertEqual(S.BUSCA["erro"], S.SEM_BUSCA)
-        self.assertEqual(len(ha.chamadas_ia), 1)
+        # 1.36.3: o teste rápido da busca na web confirma antes de parar (aqui ele também falha)
+        self.assertEqual([c["task_name"] for c in ha.chamadas_ia], ["EconomIA: mercados", "EconomIA: teste"])
         # 1.36.2: o limite de buscas por resposta acabando no meio não é "sem busca": a IA responde com o que achou
         ins = ha.chamadas_ia[0]["instructions"]
         self.assertIn('Se nenhuma busca na web funcionar (a ferramenta não existe), responda apenas {"erro": "sem_busca"}.', ins)
         self.assertIn("Se o limite de buscas acabar no meio, responda com o que já achou.", ins)
+
+    def test_ia_diz_que_nao_buscou_mas_a_busca_funciona(self):
+        """1.36.3: a IA respondeu "sem_busca" numa categoria, mas o teste rápido achou um preço na web: a busca segue com as
+        outras, e a dessa fica com o resultado anterior, com o aviso."""
+        S, ha = self.S, self.ha
+        self.config(categorias=["mercados", "farmacias"], lista=LISTA[:1])
+        ha.responde_ia("EconomIA: mercados", {"erro": "sem_busca"})
+        ha.responde_ia("EconomIA: teste", {"busca": True, "exemplo": "Giassi, café por R$ 19,90", "fonte": "https://www.giassi.com.br/cafe"})
+        ha.responde_ia("EconomIA: farmacias", {"lojas": [{"rede": "Farmácia Bem Estar", "distancia_km": 0.6}], "cupons": [], "ofertas": [], "lista": []})
+        S.buscar()
+        self.assertIsNone(S.BUSCA["erro"])
+        self.assertEqual([c["task_name"] for c in ha.chamadas_ia if c["task_name"] != "EconomIA: itens sem preço"],
+                         ["EconomIA: mercados", "EconomIA: teste", "EconomIA: farmacias"])
+        self.assertIn("Mercados: a IA não trouxe nada da busca na web desta vez", " ".join(S.BUSCA["avisos"]))
 
     def test_sem_cep(self):
         S = self.S

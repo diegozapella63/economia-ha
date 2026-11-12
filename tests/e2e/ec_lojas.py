@@ -31,7 +31,9 @@ def antes(S):
     # 1.24.0: os benefícios do clube que a IA já achou para a Nissei
     S.gravar_json(S.CLUBES_FILE, {S.chave_loja("Farmácias Nissei"): {"loja": "Farmácias Nissei", "clube": "Club Nissei", "custo": "Grátis",
                                   "como_entrar": "CPF no caixa", "beneficios": [{"titulo": "Desconto de clube", "detalhe": "Até 40% em remédios marcados."}],
-                                  "fonte": "https://www.farmaciasnissei.com.br/club", "em": "2026-11-09T10:00:00+00:00"}})
+                                  "fonte": "https://www.farmaciasnissei.com.br/club", "em": "2026-11-09T10:00:00+00:00"},
+                                  # 1.36.3: a IA já procurou e não achou clube na Droga Raia
+                                  S.chave_loja("Droga Raia"): {"loja": "Droga Raia", "clube": "", "beneficios": [], "em": "2026-11-09T10:00:00+00:00"}})
 
 
 async def abre_lojas(pg):
@@ -126,6 +128,13 @@ async def main():
             # 1.24.0: os benefícios do clube, guardados, num toque; numa loja com clube ainda sem os benefícios, o botão para a IA procurar
             ben = pg.locator('#mp-lojas details[data-clube-det="farm-nissei"]')
             check(await ben.count() == 1 and "Benefícios do Club Nissei" in await ben.locator("summary").inner_text(), "os benefícios do Club Nissei")
+            # 1.36.3: com os benefícios guardados, o botão Benefícios continua (procura de novo), sem o Procurar de novo dentro
+            check(await pg.locator('#mp-lojas [data-clube-ben="farm-nissei"]').count() == 1 and await ben.locator("[data-clube-ben]").count() == 0,
+                  "Benefícios nos botões da Nissei também com os benefícios guardados")
+            # 1.36.3: Sem clube de vantagens num selo (o cinza do texto é do endereço); e o botão para procurar de novo
+            raia = pg.locator("#mp-lojas li.row", has=pg.locator('input[data-rede="farm-raia"]')).first
+            sc = raia.locator(".chip", has_text="Sem clube de vantagens")
+            check(await sc.count() == 1 and await raia.locator('[data-clube-ben="farm-raia"]').count() == 1, "Droga Raia: Sem clube de vantagens num selo, com o Benefícios")
             await ben.locator("summary").click()
             bt = (await ben.inner_text()).replace("\xa0", " ")
             check("Desconto de clube Até 40% em remédios marcados." in bt and "Custo: Grátis" in bt and "Como entrar: CPF no caixa" in bt and "farmaciasnissei.com.br" in bt, f"o que o clube dá, com a fonte ({bt[:160]})")

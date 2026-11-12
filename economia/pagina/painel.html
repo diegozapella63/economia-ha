@@ -1872,6 +1872,9 @@ input.field,select.field{min-height:var(--altura)}
     if (u && /mercado ?livre/.test(norm((G[o.rede] || {}).nome || '')) && !/MLB-?\d{6,}/i.test(u)) u = '';
     if (u && paginaGeral(u)){
       // 1.36.1: a página onde a oferta foi vista (o início, o encarte), não a do produto: procura o produto no site da loja
+      // 1.36.3: na busca do próprio site, quando ela funcionou no teste da loja; só sem ela, no Google
+      var q = String(o.produto || '').split(' · ')[0].trim(), tpl = BUSCAS_SITE[chaveLoja((G[o.rede] || {}).nome || '')];
+      if (tpl) return {url:tpl.split('{}').join(encodeURIComponent(q)), achado:false};
       var l = linkCompra(o.rede, o.produto, '');
       var host = ''; try { host = new URL(u).hostname.replace(/^www\./, ''); } catch(e){}
       if (host && /^https:\/\/www\.google\.com\//.test(l.url)) l.url = 'https://www.google.com/search?q=' + encodeURIComponent('site:' + host + ' ' + String(o.produto || '').split(' · ')[0].trim());
@@ -4799,22 +4802,22 @@ input.field,select.field{min-height:var(--altura)}
   }
   // 1.24.0: Benefícios do clube: a IA procura o que o clube da loja dá (guardado no servidor, por loja); com a IA ligada
   var CLUBES_BEN = {}, CLUBE_BUSCA = null, CLUBE_ABERTO = {};
+  var BUSCAS_SITE = {};  // 1.36.3: {loja: a busca do site, com {} no lugar das palavras}, das lojas em que ela funcionou no teste
   var SIM_SALVOS = {};  // 1.28.0: {item: {em, itens}}, os similares que uma busca de antes achou (o servidor guarda)
   // 1.36.0: o nome da loja também das online que a busca ainda não trouxe (mkt:amazon), para os benefícios (Prime, Meli+)
   function nomeLoja(rid){ return G[rid] ? G[rid].nome : ((MKT.filter(function(m){ return 'mkt:' + m.id === rid; })[0]) || {}).nome || ''; }
   function beneficiosHtml(c, l){
     if (c && !/^(farmacias|mercados|petshops|online)$/.test(c.id)) return '';
     var k = c ? clubeDe(c, l) : '', nome = nomeLoja(l.rede), r = CLUBES_BEN[chaveLoja(nome)];
-    if (k === null && !r) return '';
     if (CLUBE_BUSCA === l.rede) return '<span class="testando">Procurando os benefícios…</span>';
-    var btn = function(t){ return iaOn() ? '<button type="button" class="linkbtn" data-clube-ben="' + esc(l.rede) + '"' + (CLUBE_BUSCA ? ' disabled' : '') + '>' + t + '</button>' : ''; };
+    if (k === null && !r) return '';
     if (!r) return '';  // 1.36.0: o Benefícios do clube fica nos botões da loja
-    if (!r.clube && !arr(r.beneficios).length) return '<span class="r-l">Sem clube de vantagens</span>';  // 1.36.0
+    if (!r.clube && !arr(r.beneficios).length) return '<span class="r-preco"><span class="chip">Sem clube de vantagens</span></span>';  // 1.36.3: um selo (o cinza é do endereço)
     var linhas = arr(r.beneficios).map(function(b){ return '<li><b>' + esc(b.titulo) + '</b>' + (b.detalhe ? ' ' + esc(b.detalhe) : '') + '</li>'; }).join('');
     var extra = [r.custo ? 'Custo: ' + r.custo : '', r.como_entrar ? 'Como entrar: ' + r.como_entrar : ''].filter(Boolean).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('');
     return '<details class="fonte-det clube-ben"' + (CLUBE_ABERTO[l.rede] ? ' open' : '') + ' data-clube-det="' + esc(l.rede) + '"><summary>Benefícios ' + esc(r.clube ? 'do ' + r.clube : 'do clube')
       + (r.em ? ' · ' + esc(quandoCurto(r.em)) : '') + '</summary><ul>' + linhas + extra + '</ul>'
-      + (r.fonte ? '<a class="linkbtn" href="' + esc(r.fonte) + '" target="_blank" rel="noopener">Fonte: ' + esc(host(r.fonte)) + '</a>' : '') + btn('Procurar de novo') + '</details>';
+      + (r.fonte ? '<a class="linkbtn" href="' + esc(r.fonte) + '" target="_blank" rel="noopener">Fonte: ' + esc(host(r.fonte)) + '</a>' : '') + '</details>';
   }
   function buscaBeneficios(rid){
     if (MODO !== 'addon'){ toast('No Home Assistant, a IA procura os benefícios do clube desta loja.'); return; }
@@ -4971,8 +4974,9 @@ input.field,select.field{min-height:var(--altura)}
   // Benefícios do clube, Testar agora e o site de ofertas
   function botoesLoja(c, l, cid, mi){
     // os benefícios também nas online (Mercado Livre: Meli+; Amazon: Prime; iFood: Clube iFood)
-    var f = l.preco_fonte, k = c ? clubeDe(c, l) : '', r = CLUBES_BEN[chaveLoja(nomeLoja(l.rede))];
-    var ben = (!c || /^(farmacias|mercados|petshops|online)$/.test(c.id)) && nomeLoja(l.rede) && k !== null && !r && iaOn() && CLUBE_BUSCA !== l.rede
+    var f = l.preco_fonte;
+    // 1.36.3: também com os benefícios já guardados (procura de novo) e na loja sem clube (pode ter criado um)
+    var ben = (!c || /^(farmacias|mercados|petshops|online)$/.test(c.id)) && nomeLoja(l.rede) && iaOn() && CLUBE_BUSCA !== l.rede
       ? '<button type="button" class="ghost big ic-btn loja-btn" data-clube-ben="' + esc(l.rede) + '"' + (CLUBE_BUSCA ? ' disabled' : '') + '>' + SVG_CLUBE + 'Benefícios</button>' : '';
     var semP = !f && c && c.id !== 'online' && G[l.rede] && !(l.nova && acompanha(l.rede)) && semPrecos(c).indexOf(l) >= 0 && !siteManual(G[l.rede].nome);
     var site = (f && (f.como === 'ia' || f.como === 'nenhum') && !(cid === 'online' && !regional(l.rede))) || semP ? botaoSite(l) : '';
@@ -5035,12 +5039,12 @@ input.field,select.field{min-height:var(--altura)}
     var e = l.entrega; if (!e) return '';
     var sim = entregaSim(l.rede), k = 'e:' + l.rede;
     var chip = e.atende ? '<span class="chip selo">Entrega no seu CEP</span>'
-      : sim ? '<span class="chip selo">Entrega no seu CEP</span>'
+      : sim ? ''  // 1.36.3: o Entrega aqui marcado já diz
       : e.atende === false ? '<span class="chip warn">Não entrega no seu CEP</span>'
       : '<span class="chip warn">Sem preços</span><span>Não sei se entrega no seu CEP</span>';
     var det = arr(e.passos).length ? '<details class="fonte-det"' + (FONTE_ABERTA[k] ? ' open' : '') + ' data-fonte="' + esc(k) + '"><summary>Como foi testada a entrega' + (e.em ? ' · ' + esc(quandoCurto(e.em)) : '') + '</summary><ul>'
       + arr(e.passos).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></details>' : '';
-    return '<span class="r-preco">' + chip + '</span>' + det;  // 1.36.1: o Entrega aqui (marcar ou desmarcar) fica nos botões da loja
+    return (chip ? '<span class="r-preco">' + chip + '</span>' : '') + det;  // 1.36.1: o Entrega aqui (marcar ou desmarcar) fica nos botões da loja
   }
   // 1.36.1: como o Sou do clube: um botão com a caixinha, marcado quando você confirmou que entrega no seu CEP
   function botaoEntrega(l){
@@ -6107,7 +6111,7 @@ input.field,select.field{min-height:var(--altura)}
   function recarrega(comp){
     fetch('api/estado', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(api){
       if (api.uso_ia){ USO = api.uso_ia; pintaUso(); }
-      COMP = api.comparacoes || {}; CLUBES_BEN = api.clubes || {}; SIM_SALVOS = api.similares || {};
+      COMP = api.comparacoes || {}; CLUBES_BEN = api.clubes || {}; BUSCAS_SITE = api.buscas || {}; SIM_SALVOS = api.similares || {};
       if (api.ofertas && api.ofertas.categorias){ D = api.ofertas; exemplo = false; indexa(); pintaSync(); tudo(); if (!comp) toast('Ofertas atualizadas'); }
       else if (comp) pintaDeals();
       if (comp && ui.view === 'ofertas' && api.busca && arr(api.busca.avisos).length) toast(api.busca.avisos[0]);
@@ -6145,7 +6149,7 @@ input.field,select.field{min-height:var(--altura)}
     .then(function(r){ var ct = r.headers.get('content-type') || ''; if (!r.ok || ct.indexOf('json') < 0) throw new Error('sem add-on'); return r.json(); })
     .then(function(api){
       clearTimeout(limite);
-      MODO = 'addon'; usuario = api.usuario || null; COMP = api.comparacoes || {}; CLUBES_BEN = api.clubes || {}; SIM_SALVOS = api.similares || {}; CORRERIA_ST = api.correria || null;
+      MODO = 'addon'; usuario = api.usuario || null; COMP = api.comparacoes || {}; CLUBES_BEN = api.clubes || {}; BUSCAS_SITE = api.buscas || {}; SIM_SALVOS = api.similares || {}; CORRERIA_ST = api.correria || null;
       pintaAtalho(api.atalho);
       D = api.ofertas && api.ofertas.categorias ? api.ofertas : EX; exemplo = D === EX; indexa();
       estado = normaliza(api.config || (exemplo ? EX.config_exemplo : null)); iniciar();

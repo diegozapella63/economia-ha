@@ -1456,7 +1456,7 @@ Responda somente com um objeto JSON, sem texto antes ou depois, neste formato:
   "lista": [{{"item": 1, "produto": "texto exato do item da lista", "base": {{"quantidade": 1, "unidade": "L", "rotulo": null}}, "precos": [{{"rede": "...", "preco": 9.9, "preco_clube": 8.9, "fonte": "URL"}}], "tamanhos": [{{"rede": "...", "embalagem": "Galão 5 L", "quantidade": 5, "unidade": "L", "preco": 39.9, "fonte": "URL"}}]}}]
 }}
 
-Regras: em "lojas", inclua também mercadinhos e lojas independentes do raio, mesmo sem preços encontrados, com o site ou a página de ofertas quando houver. Até 15 ofertas, priorizando os interesses e os maiores descontos. Nos preços da lista, "preco" é o preço para todo mundo; se a loja tiver preço de clube (cadastro por CPF ou app), informe também "preco_clube", senão null. "tipo" é "promo", "clube" (preço para membros) ou "atacado" (preço por quantidade). "oficial" é true só se o cupom estiver no site ou app da própria loja. Etiquetas permitidas em "tags": {', '.join(sorted(TAGS))}.{extra}"""
+Regras: em "lojas", inclua também mercadinhos e lojas independentes do raio, mesmo sem preços encontrados, com o site ou a página de ofertas quando houver. Em "fonte" das ofertas e dos preços, o link da página do produto na loja; só sem ela, a página onde viu o preço. Até 15 ofertas, priorizando os interesses e os maiores descontos. Nos preços da lista, "preco" é o preço para todo mundo; se a loja tiver preço de clube (cadastro por CPF ou app), informe também "preco_clube", senão null. "tipo" é "promo", "clube" (preço para membros) ou "atacado" (preço por quantidade). "oficial" é true só se o cupom estiver no site ou app da própria loja. Etiquetas permitidas em "tags": {', '.join(sorted(TAGS))}.{extra}"""
 
 
 def e_marketplace(nome):
@@ -3991,7 +3991,7 @@ def precos_por_oferta(ofertas, nomes, ja):
             tam = medida(t.get("quantidade"), t.get("unidade")) or tamanho_nome(o.get("produto") or "")
             if str(o.get("unidade") or "").lower() == "kg":
                 tam = (1.0, "kg")
-            cands.append({"nome": str(o.get("produto"))[:80], "preco": numero(o["preco"]), "de": None, "tam": tam, "link": None})
+            cands.append({"nome": str(o.get("produto"))[:80], "preco": numero(o["preco"]), "de": None, "tam": tam, "link": o.get("link") if url_ok(o.get("link")) else None})
         if cands:
             ent, _ = montar_item(nome, {"_": cands})
             out.append({"produto": nome, "base": ent.get("base"), "precos": [{k: v for k, v in x.items() if k != "rede"} for x in ent["precos"]],
@@ -4595,7 +4595,11 @@ def produto_ld(x):
         return None
     marca = x.get("brand")
     marca = marca.get("name") if isinstance(marca, dict) else marca
-    return {"nome": texto(x.get("name"), 100), "marca": texto(marca, 30), "preco": min(precos), "disponivel": disp}
+    r = {"nome": texto(x.get("name"), 100), "marca": texto(marca, 30), "preco": min(precos), "disponivel": disp}
+    url = x.get("url") or next((o.get("url") for o in ofs if isinstance(o, dict) and isinstance(o.get("url"), str)), None)
+    if isinstance(url, str) and url:
+        r["url"] = url  # 1.36.3: o link do produto, para o Abrir na loja
+    return r
 
 
 def meta_tag(html_txt, nome):
@@ -4753,7 +4757,7 @@ def _ld_produtos(d, out, fundo=0):
     elif isinstance(d, dict):
         r = produto_ld(d)
         if r and r.get("nome") and r.get("disponivel"):
-            out.append({"produto": r["nome"], "preco": r["preco"]})
+            out.append(dict({"produto": r["nome"], "preco": r["preco"]}, **({"link": r["url"]} if r.get("url") else {})))
             return
         for k in ("@graph", "itemListElement", "item", "mainEntity"):
             if k in d:
@@ -4793,8 +4797,35 @@ def ofertas_json_embutido(html_txt):
                 if 0.5 <= v <= 20000:
                     precos.append(round(v, 2))
             if precos:
-                out.append({"produto": n, "preco": min(precos)})
+                lk = LINK_JSON.search(janela)
+                link = None
+                if lk:
+                    link = lk.group(2).replace("\\/", "/")
+                    if lk.group(1) == "linkText":
+                        link = "/" + link.strip("/") + "/p"  # VTEX
+                    elif not link.startswith(("http", "/")):
+                        link = None  # um nome solto ("cafe-pilao") só vale no linkText da VTEX
+                out.append(dict({"produto": n, "preco": min(precos)}, **({"link": link} if link else {})))
     return out
+
+
+# 1.36.3: o link do produto nos dados da página (o Abrir na loja vai direto nele, não na página de ofertas)
+LINK_JSON = re.compile(r'"(url|link|href|productUrl|linkText)"\s*:\s*"((?:https?:|\\?/)[^"\s]{2,300}|[a-z0-9][a-z0-9-]{3,200})"')
+
+
+def link_do_produto(link, base):
+    """O link do produto, completo, só no mesmo site da página e que não seja a própria página nem o início."""
+    if not link or not base:
+        return None
+    try:
+        u = urllib.parse.urljoin(base, link)
+        su, sb = urllib.parse.urlsplit(u), urllib.parse.urlsplit(base)
+    except ValueError:
+        return None
+    mesmo = su.netloc.lower().removeprefix("www.") == sb.netloc.lower().removeprefix("www.")
+    if su.scheme not in ("http", "https") or not mesmo or su.path.strip("/") in ("", sb.path.strip("/")):
+        return None
+    return u
 
 
 def blocos_da_pagina(html_txt):
@@ -4843,8 +4874,8 @@ def ofertas_texto(html_txt):
     return out
 
 
-def ofertas_da_pagina(html_txt):
-    """Produtos e preços que a página mostra, sem IA."""
+def ofertas_da_pagina(html_txt, base=None):
+    """Produtos e preços que a página mostra, sem IA (com o link de cada um quando a página traz, a partir de base)."""
     out = []
     for bloco in LD_JSON.findall(html_txt):
         try:
@@ -4860,7 +4891,11 @@ def ofertas_da_pagina(html_txt):
         k = norm(o["produto"])
         if k and k not in vistos and o.get("preco") and 0.5 <= o["preco"] <= 20000:
             vistos.add(k)
-            final.append({"produto": texto(o["produto"], 120), "preco": o["preco"], "preco_normal": o.get("preco_normal")})
+            item = {"produto": texto(o["produto"], 120), "preco": o["preco"], "preco_normal": o.get("preco_normal")}
+            lk = link_do_produto(o.get("link"), base)
+            if lk:
+                item["link"] = lk
+            final.append(item)
     return final[:300]
 
 
@@ -4875,7 +4910,7 @@ def le_pagina_ofertas(url, regras, forcar=False):
     if g and g.get("em", "") >= meio_dia and not forcar:
         return g.get("ofertas") or [], g.get("links") or []
     html_txt = pagina_txt(url)
-    ofs = ofertas_da_pagina(html_txt)
+    ofs = ofertas_da_pagina(html_txt, url)
     datas = [data_iso(m.group(1)) for m in re.finditer(r"(?i)v[aá]lid[oa]s?\b[^0-9<]{0,40}?(\d{1,2}/\d{1,2}/\d{2,4})", sem_tags(html_txt))]
     datas = [d for d in datas if d]
     if ofs and datas and max(datas) < hoje_br():
@@ -4938,13 +4973,13 @@ def busca_do_site(origem, info, termo, forcar=False):
             html_txt = pagina_txt(origem + caminho)
         except Exception:  # noqa: BLE001
             continue
-        todos = ofertas_da_pagina(html_txt)
+        todos = ofertas_da_pagina(html_txt, origem + caminho)
         aprende_nomes([o["produto"] for o in todos])
         ofs = [o for o, ok in zip(todos, casa_lista(termo, [o["produto"] for o in todos])) if ok]
         if not ofs and q2 and robots_permite(regras, t.replace("{}", urllib.parse.quote(q2))):  # "álcool perfumado" → "álcool"
             try:
                 html2 = pagina_txt(origem + t.replace("{}", urllib.parse.quote(q2)))
-                todos2 = ofertas_da_pagina(html2)
+                todos2 = ofertas_da_pagina(html2, origem + t.replace("{}", urllib.parse.quote(q2)))
                 aprende_nomes([o["produto"] for o in todos2])
                 ofs = [o for o, ok in zip(todos2, casa_lista(termo, [o["produto"] for o in todos2])) if ok]
             except Exception:  # noqa: BLE001
@@ -4956,6 +4991,14 @@ def busca_do_site(origem, info, termo, forcar=False):
     if not tpl:
         info["sem_busca"] = agora()
     return []
+
+
+def buscas_dos_sites():
+    """1.36.3: {loja: endereço da busca do site, com {} no lugar das palavras}, das lojas em que a busca do site funcionou
+    no teste. O Abrir na loja de uma oferta sem o link do produto procura nela, em vez de no Google."""
+    memo = ler_json(LOJAS_SITE, {}) or {}
+    return {chave_loja(m["nome"]): o + m["busca"] for o, m in memo.items()
+            if isinstance(m, dict) and m.get("nome") and isinstance(m.get("busca"), str) and "{}" in m["busca"] and url_ok(o)}
 
 
 def busca_sites(cfg, itens=None, cats=None):
@@ -4980,7 +5023,7 @@ def busca_sites(cfg, itens=None, cats=None):
                 break
             time.sleep(0.4)  # devagar, para não pesar no site da loja
             cands = [{"nome": o["produto"], "preco": o["preco"], "de": o.get("preco_normal"), "tam": tamanho_nome(o["produto"]),
-                      "link": origem + (m.get("busca") or "").replace("{}", urllib.parse.quote(o["_q"]))} for o in ofs[:8]]
+                      "link": o.get("link") or origem + (m.get("busca") or "").replace("{}", urllib.parse.quote(o["_q"]))} for o in ofs[:8]]
             if cands:
                 ent, _ = montar_item(nome, {m["nome"]: cands}, frete="carrinho" if cat_id == "online" else None)
                 lista_bruta.append(ent)
@@ -5016,10 +5059,10 @@ def busca_paginas_ofertas(cfg, cats, ja, itens=None):
             if not ofs:
                 continue
             lista = precos_por_oferta(ofs, nomes, set())
-            marca = lambda x: dict(x, rede=nome, fonte=url)  # noqa: E731
+            marca = lambda x: dict(x, rede=nome, fonte=x.get("fonte") or url)  # noqa: E731
             bruto = {"_via": "site", "cupons": [],
                      "lojas": [{"rede": nome, "endereco": None, "distancia_km": None, "fontes": ["Site"]}],
-                     "ofertas": [dict(o, rede=nome, preco_oferta=o["preco"], fonte=url, encarte=True) for o in ofs[:20]],
+                     "ofertas": [dict(o, rede=nome, preco_oferta=o["preco"], fonte=o.get("link") or url, encarte=True) for o in ofs[:20]],
                      "lista": [dict(it, precos=[marca(x) for x in it["precos"]], tamanhos=[marca(x) for x in it["tamanhos"]]) for it in lista]}
             out.append(normalizar(cat_id, bruto, dict(cfg, lista=[{"produto": x} for x in nomes])))
             log(f"ofertas do site de {nome}: {len(ofs)} produto(s) na página, {len(lista)} item(ns) da lista")
@@ -6507,6 +6550,7 @@ def buscar():
             return
         cfg_ia = dict(cfg, _ja_tenho=ja, _mapa=mapa)
         BUSCA["total"] = len(cats)
+        teste_web = []  # 1.36.3: o teste rápido da busca na web, uma vez só, quando a IA diz que não buscou
         for i, cat_id in enumerate(cats, 1):
             BUSCA.update({"atual": i, "etapa": CATEGORIAS[cat_id]["nome"].lower()})
             if cat_id == "online" and not mkts_online(cfg) and not entrega_ligada(cfg):
@@ -6524,7 +6568,16 @@ def buscar():
             except ErroBusca as e:
                 if isinstance(e, ErroCota):
                     raise
-                if any(t in str(e) for t in ("Falta uma IA", "não usou a busca na web", "não tem acesso", "não tem permissão", "assistente de conversa")):
+                if "não usou a busca na web" in str(e):
+                    # a IA disse que não tem busca: o teste rápido confirma. Com a busca funcionando, ela só não achou nada
+                    # desta categoria (fica o resultado anterior); sem, a busca para com o aviso
+                    if not teste_web:
+                        teste_web.append(testar_ia("busca").get("ok") is True)
+                    if not teste_web[0]:
+                        raise
+                    log(f"{cat_id}: a IA respondeu que não buscou, mas o teste da busca na web passou")
+                    e = ErroBusca("a IA não trouxe nada da busca na web desta vez")
+                elif any(t in str(e) for t in ("Falta uma IA", "não tem acesso", "não tem permissão", "assistente de conversa")):
                     raise
                 falhas.append(f"{CATEGORIAS[cat_id]['nome']}: {e}")
                 relatorio["categorias"][cat_id] = {"ok": False, "erro": str(e)[:200]}
@@ -7953,6 +8006,7 @@ class Painel(BaseHTTPRequestHandler):
                 "sync": SYNC,
                 "uso_ia": uso_resumo(),
                 "clubes": ler_json(CLUBES_FILE, {}) or {},
+                "buscas": buscas_dos_sites(),
                 "similares": similares_salvos(ler_json(CONFIG, {}) or {}),
                 "correria": {"ligada": correria_ligada(), "ultimo": CORRERIA_USO["ultimo"]},
                 "atalho": atalho(),

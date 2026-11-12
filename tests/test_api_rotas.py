@@ -99,7 +99,7 @@ class Estado(Rotas):
     def test_estado_com_o_usuario_do_ingress(self):
         st, d = self.pede("GET", "/api/estado", cab={"X-Remote-User-Display-Name": "Davi"})
         self.assertEqual(d["usuario"], "Davi")
-        self.assertEqual(set(d), {"config", "ofertas", "comparacoes", "usuario", "busca", "sync", "uso_ia", "clubes", "similares", "correria", "atalho"})
+        self.assertEqual(set(d), {"config", "ofertas", "comparacoes", "usuario", "busca", "sync", "uso_ia", "clubes", "buscas", "similares", "correria", "atalho"})
         self.assertIsNone(self.pede("GET", "/api/estado")[1]["usuario"])
 
     def test_o_caminho_do_atalho_no_celular(self):
