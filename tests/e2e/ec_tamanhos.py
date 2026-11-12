@@ -38,7 +38,7 @@ async def txt(loc):
 
 async def abre(pg, nome):
     it = await item(pg, nome)
-    await it.locator("details.i-det").first.evaluate("d => { d.open = true; }")  # o aberto fica lembrado entre um desenho e outro
+    await it.locator("details.i-det:not(.i-fora)").first.evaluate("d => { d.open = true; }")  # o aberto fica lembrado entre um desenho e outro
     await pg.wait_for_timeout(100)
     return it
 
@@ -63,7 +63,7 @@ async def main():
             check("O próximo mais barato: R$ 19,90 por litro · 1 L por R$ 19,90 (Fort Atacadista)" in await txt(lys), "1.36.8: e o próximo mais barato, por litro")
             check("economia de R$ 5,92/L" in await txt(lys.locator(".i-head")), "economia por litro em relação ao avulso")
             lys = await abre(pg, "Lysoform")
-            det = await txt(lys.locator("details.i-det"))
+            det = await txt(lys.locator("details.i-det:not(.i-fora)"))
             check(det.startswith("Comparar tamanhos (3)"), f"Comparar tamanhos ({det[:40]})")
             check("COMPENSA O MAIOR" in det.upper() and "Sai R$ 13,98/L, contra R$ 19,90/L no próximo mais barato (1 L, Fort Atacadista). No seu ritmo, dura uns 5 meses." in det, f"por que compensa ({det})")
             linhas = [await txt(li) for li in await lys.locator(".tam-list li").all()]
@@ -93,8 +93,12 @@ async def main():
             lys = await item(pg, "Lysoform")
             check("MAIS BARATO" in (await txt(lys.locator(".i-best"))).upper(), "com pouco espaço, o de sempre volta a ser a compra")
             lys = await abre(pg, "Lysoform")
-            det = await txt(lys.locator("details.i-det"))
+            det = await txt(lys.locator("details.i-det:not(.i-fora)"))
             check("COMPENSA, MAS DURA MUITO" in det.upper() and "mais do que você costuma guardar. Fique no de 1 L ou mude o espaço para estoque em Mais › Casa." in det, f"avisa que dura demais ({det[-160:]})")
+            fora = lys.locator("details.i-fora")
+            check(await fora.count() == 1 and "Desconsiderados (1)" in await fora.locator("summary").inner_text()
+                  and "Galão 5 L" in await fora.locator(".tam-list").text_content() and "Galão 5 L" not in await lys.locator("details.i-det:not(.i-fora) .tam-list").text_content(),
+                  "1.36.11: o galão em Desconsiderados, fora do Comparar tamanhos")
             # ----- online ou na loja -----
             casos = [("Café Pilão", "Online ou na loja", "COMPENSA PEDIR", "Economiza R$ 3,00 pedindo online."),
                      ("Arroz 5 kg", "Online ou na loja", "CONFIRA O FRETE", "Online sai R$ 2,00 mais barato antes do frete, que só aparece no carrinho."),
@@ -102,13 +106,13 @@ async def main():
                      ("Leite em pó", "Online ou na loja", "COMPRA NA LOJA AGORA", "Online sai R$ 5,00 mais barato, mas chega depois de acabar. Na próxima, peça até ")]
             for nome, resumo_, chip, nota in casos:
                 it = await abre(pg, nome)
-                det = await txt(it.locator("details.i-det"))
+                det = await txt(it.locator("details.i-det:not(.i-fora)"))
                 check(det.startswith(resumo_) and chip in det.upper() and nota in det, f"{nome}: {chip.lower()} ({det[:200]})")
             await (await item(pg, "Arroz 5 kg")).screenshot(path=SHOTS + "/ect-arroz.png")
             rac = await txt(await item(pg, "Ração Golden"))
             check("Amazon" in rac and "R$ 129,90" in rac, "só online: o preço da Amazon")
             it = await abre(pg, "Ração Golden")
-            check("SÓ ONLINE" in (await txt(it.locator("details.i-det"))).upper(), "Só online")
+            check("SÓ ONLINE" in (await txt(it.locator("details.i-det:not(.i-fora)"))).upper(), "Só online")
             # ----- preço de clube -----
             dip = await item(pg, "Dipirona")
             check("Panvel tem preço de clube: R$ 6,90. Se você for do clube, marque em Mais › Lojas." in await txt(dip), "a dica do clube para quem não marcou")

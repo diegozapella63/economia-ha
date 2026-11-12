@@ -567,6 +567,7 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .i-det > summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);list-style:none;padding:2px 0;-webkit-tap-highlight-color:transparent}
 .i-det > summary::-webkit-details-marker{display:none}
 .i-det > summary::before{content:"▸ "}
+.i-fora > summary{color:var(--muted)}  /* 1.36.11: Desconsiderados, sem evidência */
 .i-det > summary .det-ic{width:15px;height:15px;vertical-align:-3px;margin-right:4px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .i-others li,.tam-list li{display:flex;align-items:center}
 .i-others a.i-chip,.tam-list a.tam-a{flex:1 1 auto;min-width:0;width:auto}
@@ -2653,7 +2654,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.36.10';
+  var VERSAO = '1.36.11';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -3175,6 +3176,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   }
   // ===== Melhor tamanho: 1 L, 5 L ou 5 × 1 L? =====
   var ESTOQUE = {mes:30, pouco:60, normal:180, bastante:365};  // 1.36.9: mes, para quem compra só para o mês
+  var ESTOQUE_TXT = {mes:'1 mês', pouco:'2 meses', normal:'6 meses', bastante:'1 ano'};
   function fmtQ(q){ return String(Math.round(q * 1000) / 1000).replace('.', ','); }
   function medidaTxt(q, b){
     if (b.unidade === 'L' && q < 1) return fmtQ(q * 1000) + ' ml';
@@ -3421,11 +3423,18 @@ dialog.ss-wrap::backdrop{background:transparent}
     var contra = function(j){ var px = proxDe(j); return px ? ', contra ' + porUn(px.o.total, px.o.q, b) + ' no próximo mais barato (' + px.rot + ', ' + ondeTxt(px.o) + ')' : ''; };
     var ecoProx = function(j){ var px = proxDe(j); return px ? Math.max(0, Math.round((px.pu - pu(j)) * j.Q * 100) / 100) : 0; };
     var proxDica = function(j){ var px = proxDe(j); return px ? {porUn:Math.round(px.pu * 100) / 100, rot:px.rot, total:px.o.total, id:px.o.id, link:px.o.link, obs:px.o.obs || ''} : null; };
-    var det = ops.slice().sort(function(x, y){ return x.total / x.q - y.total / y.q; }).slice(0, 8).map(function(o, i){
+    // 1.36.11: o que duraria mais que o estoque sai do Comparar tamanhos e fica em Desconsiderados (n), recolhido logo
+    // abaixo: dá para ver e até escolher (deu vontade de levar a caixa), sem estar em evidência
+    var foraDe = function(o){ return !igualQ(o.q, q0) && dura(o.q) > limite && !ehEscolha(it, o.id, o.q, o.obs || o.emb); };
+    var ordem = ops.slice().sort(function(x, y){ return x.total / x.q - y.total / y.q; });
+    var cabem = ordem.filter(function(o){ return !foraDe(o); }), fora = ordem.filter(foraDe);
+    var linhaTam = function(o, i){
       var escolhida = ehEscolha(it, o.id, o.q, o.obs || o.emb);
       return '<li' + (i === 0 || escolhida ? ' class="' + (i === 0 ? 'top' : '') + (escolhida ? ' escolhida' : '') + '"' : '') + cmpAttr(it.produto, o.obs || o.emb || it.produto, G[o.id].nome, o.total, o.q, b) + '>' + abreLink(linkCompra(o.id, o.obs || (it.produto + (o.emb ? ' ' + o.emb : '')), o.link), 'tam-a', '<b>' + esc(o.emb || medidaTxt(o.q, b)) + '</b><span>' + esc(G[o.id].curto) + '</span><span>' + brl.format(o.total) + (o.online ? freteTxt(o, true) : '') + '</span><span class="pu">' + esc(porUn(o.total, o.q, b)) + '</span>')
         + botaoEscolher(it, o.id, o.q, o.obs || o.emb, (o.emb || medidaTxt(o.q, b)) + ' no ' + G[o.id].nome + ' por ' + brl.format(o.total)) + '</li>';
-    }).join('');
+    };
+    var det = cabem.slice(0, 8).map(linhaTam).join('');
+    var detFora = fora.slice(0, 8).map(function(o){ return linhaTam(o, -1); }).join('');
     var chip, linha, nota = [], eco = 0, dica = null, principal = false;
     if (palpite){
       eco = ecoProx(best);
@@ -3470,7 +3479,8 @@ dialog.ss-wrap::backdrop{background:transparent}
         else nota.push(rotulo + ' sai ' + porUn(unico.total, unico.q, b) + ', mais caro que o de ' + medidaTxt(ref.Q, b) + '.');
       }
     }
-    return {economia:eco, dica:dica, principal:principal, n:ops.length, lista:det, un:nomeUn(b),
+    return {economia:eco, dica:dica, principal:principal, n:cabem.length, lista:det, un:nomeUn(b), fora:detFora, nFora:fora.length,
+      foraTxt:'Duram mais que o seu estoque (até ' + ESTOQUE_TXT[estado.cotidiano.estoque || 'normal'] + (estimado ? ', para ' + quem.txt : ', no seu ritmo') + ').',
       html:'<div class="i-tam">' + chip + (principal ? '' : '<p>' + esc(linha) + '</p>') + (nota.length ? '<p class="i-nota">' + esc(nota.join(' ')) + '</p>' : '') + '</div>'};
   }
   function mediana(xs){
@@ -3869,7 +3879,9 @@ dialog.ss-wrap::backdrop{background:transparent}
       : '<svg class="det-ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="12" width="7" height="8" rx="1.2"/><rect x="13" y="5" width="8" height="15" rx="1.2"/><path d="M5.5 15h2M15.5 9h3"/></svg>';
     return '<details class="i-det" data-det="' + esc(k) + '"' + (DET_ABERTO[k] ? ' open' : '') + '><summary>' + ic + rot + '</summary>' + on
       + (mt ? mt.html + '<div class="i-tam"><p class="i-sub">' + (on ? 'Tamanhos (' + mt.n + '), ' : '') + 'do mais barato por ' + esc(mt.un) + ' para o mais caro</p><ul class="tam-list num">' + mt.lista + '</ul></div>' : '')
-      + '</details>';
+      + '</details>'
+      + (mt && mt.nFora ? '<details class="i-det i-fora" data-det="' + esc(k + '|fora') + '"' + (DET_ABERTO[k + '|fora'] ? ' open' : '') + '><summary>Desconsiderados (' + mt.nFora + ')</summary>'
+        + '<div class="i-tam"><p class="i-sub">' + esc(mt.foraTxt) + '</p><ul class="tam-list num">' + mt.fora + '</ul></div></details>' : '');
   }
   $('wish').addEventListener('toggle', function(e){
     var d = e.target; if (d && d.classList && d.classList.contains('i-det')) DET_ABERTO[d.dataset.det] = d.open;

@@ -39,7 +39,28 @@ async def main():
             check("Sai R$ 14,90/kg, contra R$ 16,90/kg no próximo mais barato (Peito de frango bandeja 1 kg, Mercado Azul)." in nt, f"o próximo depois dele, não a caixa que ficou de fora ({nt})")
             check("Para 2 pessoas, dura uns 18 dias." in nt and "Peito de frango caixa 18 kg sai ainda mais barato, mas duraria uns 5 meses para 2 pessoas, mais do que você costuma guardar." in nt,
                   f"quanto dura, pelo tamanho da casa ({nt})")
+            # 1.36.11: a caixa sai do Comparar tamanhos e fica em Desconsiderados (n), recolhido logo abaixo
+            tam = frango.locator("details.i-det:not(.i-fora)").first
+            check((await tam.locator("summary").inner_text()).strip().endswith("Comparar tamanhos (4)") and await tam.locator(".tam-list li", has_text="18 kg").count() == 0,
+                  "o Comparar tamanhos sem a caixa de 18 kg")
+            fora = frango.locator("details.i-fora")
+            check(await fora.count() == 1 and limpo(await fora.locator("summary").inner_text()) == "Desconsiderados (1)" and not await fora.evaluate("d => d.open"),
+                  "Desconsiderados (1), recolhido")
+            check(await fora.evaluate("d => d.previousElementSibling && d.previousElementSibling.matches('details.i-det')"), "logo abaixo do Comparar tamanhos")
+            await fora.locator("summary").click()
+            await pg.wait_for_timeout(200)
+            check(limpo(await fora.locator(".i-sub").inner_text()) == "Duram mais que o seu estoque (até 2 meses, para 2 pessoas)."
+                  and await fora.locator(".tam-list li", has_text="caixa 18 kg").count() == 1, "dentro, a caixa e o porquê")
             await frango.screenshot(path=__import__("os").path.join(__import__("base_e2e").SHOTS, "estoque-frango.png"))
+            # dá para escolher a caixa mesmo assim (deu vontade): vira Sua escolha e volta para o Comparar tamanhos
+            await fora.locator(".tam-list li", has_text="caixa 18 kg").locator(".esc-btn").click()
+            await pg.wait_for_timeout(800)
+            e = next(i for i in app.config_salva()["lista"] if i["produto"] == "Peito de frango").get("escolha")
+            check(e and e.get("q") == 18, f"escolher a caixa fica salvo ({e})")
+            frango = pg.locator("#wish > li.item", has_text="Peito de frango").first
+            check("SUA ESCOLHA" in limpo(await frango.locator(".i-best").inner_text()).upper() and await frango.locator("details.i-fora").count() == 0, "vira Sua escolha")
+            await frango.locator("[data-desescolher]").click()
+            await pg.wait_for_timeout(700)
             # ----- Só o do mês -----
             await abrir_mais(pg, "casa")
             ops = [limpo(x) for x in await pg.locator("#estoque option").all_inner_texts()]

@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.36.11
+
+- **Desconsiderados (n)**, recolhido logo abaixo do **Comparar tamanhos**: os tamanhos que durariam mais que o seu estoque (como a caixa de 18 kg de frango) saem da lista e ficam ali, para consultar ou escolher mesmo assim.
+
 ## 1.36.10
 
 - **Buscar item** e **Buscar de novo** procuram também o online. Os sites das lojas físicas costumam trazer preços suficientes, e aí a IA não era chamada, mas o online (Mercado Livre, Amazon, iFood…) só ela alcança. Agora, com a aba **Online** ligada, ela procura o item no online, uma pergunta só, mesmo quando as lojas físicas já têm preço.
