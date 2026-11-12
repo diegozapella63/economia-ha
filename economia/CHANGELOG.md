@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.36.10
+
+- **Buscar item** e **Buscar de novo** procuram também o online. Os sites das lojas físicas costumam trazer preços suficientes, e aí a IA não era chamada, mas o online (Mercado Livre, Amazon, iFood…) só ela alcança. Agora, com a aba **Online** ligada, ela procura o item no online, uma pergunta só, mesmo quando as lojas físicas já têm preço.
+
 ## 1.36.9
 
 - **Mais › Casa › Espaço para estoque** ganha **Só o do mês: até 1 mês**, para quem faz a compra do mês.

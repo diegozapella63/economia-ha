@@ -6793,10 +6793,15 @@ def buscar_itens(itens):
         resultado, rel, _ = busca_scripts(cfg, cats, itens, ler_folhetos=False)
         conta = {n: sum(len(p[n]["precos"]) for _, p in resultado if n in p) for n in itens}
         faltam = [n for n in itens if conta[n] < 2]
+        # 1.36.10: os sites das lojas físicas costumam bastar (2 preços), mas o online (Mercado Livre, Amazon, iFood…) só a IA
+        # procura: com a aba Online ligada, o item sem preço online também vai para ela, só no online quando o resto já tem
+        sem_online = [n for n in itens if "online" in cats and n not in faltam
+                      and not any(n in p for c, p in resultado if c.get("id") == "online")]
         erro_ia = None
-        if faltam and ia_ligada(cfg):
+        if (faltam or sem_online) and ia_ligada(cfg):
             try:
-                resultado = busca_focada(cfg, faltam, cats) + resultado  # o site da loja por último: vale mais
+                pedir = faltam + sem_online
+                resultado = busca_focada(cfg, pedir, cats if faltam else ["online"]) + resultado  # o site da loja por último: vale mais
             except ErroBusca as e:
                 if not resultado:
                     raise
@@ -6809,7 +6814,8 @@ def buscar_itens(itens):
             BUSCA["avisos"] = [f"Não achei preço para {', '.join(itens)} nos sites das lojas, e a IA falhou: {erro_ia}" if erro_ia else
                                "Não achei preço para " + ", ".join(itens) + ". Tente com marca e tamanho, por exemplo \"Detergente Ypê 500 ml\"."]
         elif erro_ia:
-            BUSCA["avisos"] = [f"A IA falhou, e {', '.join(faltam)} {'ficou' if len(faltam) == 1 else 'ficaram'} só com os preços dos sites das lojas: {erro_ia}"]
+            sem = faltam + sem_online
+            BUSCA["avisos"] = [f"A IA falhou, e {', '.join(sem)} {'ficou' if len(sem) == 1 else 'ficaram'} só com os preços dos sites das lojas: {erro_ia}"]
         BUSCA["chamadas_ia"] = _uso_local.chamadas
         log(f"busca de itens: {len(achados)} de {len(itens)} com preço, {_uso_local.chamadas} chamada(s) de IA")
     except ErroBusca as e:

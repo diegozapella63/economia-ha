@@ -357,6 +357,34 @@ class BuscarItens(Cenario):
         self.assertEqual(lista["Dipirona 500 mg"]["precos"], {"farm-x": 5.0}, "o resto do resultado anterior fica")
         self.assertEqual((S.BUSCA["chamadas_ia"], S.BUSCA["rodando"], S.BUSCA["avisos"]), (1, False, []))
 
+    def test_o_online_sempre_pela_ia(self):
+        """1.36.10: os sites das lojas físicas já trazem 2 preços da coxinha, mas o online só a IA procura: com a aba Online,
+        a IA é chamada só para o online desse item."""
+        S, ha = self.S, self.ha
+        self.config(categorias=["mercados", "online"], lista=LISTA)
+        ha.responde_ia("itens sem preço", {"lista": [{"item": 1, "produto": "Coxinha da asa", "precos": [
+            {"rede": "Mercado Livre", "categoria": "online", "preco": 24.9, "frete": 0, "prazo_dias": 2, "fonte": "https://www.mercadolivre.com.br/coxinha/p/MLB123456789"}]}]})
+        S.buscar_itens(["Coxinha da asa"])
+        self.assertIsNone(S.BUSCA["erro"])
+        self.assertEqual(len(ha.chamadas_ia), 1)
+        ins = ha.chamadas_ia[0]["instructions"]
+        self.assertIn("1) Coxinha da asa", ins)
+        self.assertIn("Onde procurar: nenhuma loja física; e online em", ins, "só o online: as lojas físicas já têm preço")
+        self.assertIn('"categoria" é "online"', ins)
+        lista = {i["produto"]: i for i in S.ler_json(S.OFERTAS)["lista"]}
+        self.assertEqual({k: S.valor_total(v) for k, v in lista["Coxinha da asa"]["precos"].items()},
+                         {"merc-giassi": 21.9, "merc-angeloni": 21.9, "onli-mercado-livre": 24.9})
+        # sem a aba Online: a IA não é chamada (os sites bastam)
+        self.config(categorias=["mercados"], lista=LISTA)
+        S.buscar_itens(["Coxinha da asa"])
+        self.assertEqual(len(ha.chamadas_ia), 1)
+        # a IA falha: o aviso diz que o item ficou só com os sites
+        self.config(categorias=["mercados", "online"], lista=LISTA)
+        ha.responde_ia("itens sem preço", Erro(500, "boom"))
+        ha.regras_ia.insert(0, ha.regras_ia.pop())
+        S.buscar_itens(["Coxinha da asa"])
+        self.assertTrue(S.BUSCA["avisos"][0].startswith("A IA falhou, e Coxinha da asa ficou só com os preços dos sites das lojas"), S.BUSCA["avisos"])
+
     def test_sem_categoria_valida(self):
         S = self.S
         self.config(categorias=["nada"], lista=[{"produto": "Pilha AA"}])
