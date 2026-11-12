@@ -87,15 +87,17 @@ async def main():
             check(await pg.text_content("#lojaMsg") == '"Mercado da Esquina" adicionada.', "adicionada (com a IA desligada, não promete o encarte)")
             add = app.config_salva()["lojas"]["adicionar"]
             check({"categoria": "mercados", "nome": "Mercado da Esquina", "site": "https://mercadoesquina.com.br/ofertas"} in add, "com https://")
-            check(await pg.locator('#lojasAbas [data-loja-aba="online"]').count() == 0, "a busca ainda não trouxe nada online: sem a aba Online")
-            await pg.click('#lojasAbas [data-loja-aba="mercados"]')
+            # 1.36.5: a aba Online aparece antes da primeira busca com ela; a loja sem localização fica nela, como as outras
+            check(await pg.locator('#lojasAbas [data-loja-aba="online"]').count() == 1, "a busca ainda não trouxe nada online: a aba Online já aparece")
+            await pg.click('#lojasAbas [data-loja-aba="online"]')
             esq = pg.locator("#lojasCats li.row", has_text="Mercado da Esquina")
             check(await esq.count() == 1 and "Adicionada por você" in await esq.inner_text() and "encarte" not in await esq.inner_text(),
-                  "a loja adicionada, ainda sem localização, aparece na aba dela")
+                  "a loja adicionada, ainda sem localização, aparece em Online")
             check("MERCADOS SEM LOCALIZAÇÃO" in (await pg.text_content("#lojasCats")).upper(), "no grupo sem localização")
             await pg.locator("#mp-lojas").screenshot(path=SHOTS + "/ecla-adicionada.png")
             await esq.locator("button.rm").click()
             await pg.wait_for_timeout(700)
+            await pg.click('#lojasAbas [data-loja-aba="mercados"]')
             check(not any(a["nome"] == "Mercado da Esquina" for a in app.config_salva()["lojas"]["adicionar"]), "remover")
             # ----- Buscar preços agora -----
             await pg.click("#lojasAcharMsg [data-buscar-ja]")

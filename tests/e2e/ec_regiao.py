@@ -1,4 +1,4 @@
-# EconomIA 1.22.0: Mercados da região que entregam. Em Mais › Lojas › Compras online, a distância (só as maiores que a da
+# EconomIA 1.22.0: Mercados da região que entregam. Em Mais › Lojas, no alto da aba Online (Compras online até a 1.36.4), a distância (só as maiores que a da
 # casa, e só com o interruptor ligado); em Online, cada mercado da região com a distância e a entrega (pelo site, sem
 # resposta ou não entrega), o Como foi testado e o Entrega no meu CEP, que confirma à mão (e desfaz).
 import asyncio
@@ -38,17 +38,25 @@ async def main():
             await pg.wait_for_timeout(1500)
             await abrir_mais(pg, "lojas")
             await pg.wait_for_timeout(500)
+            # 1.36.5: as opções de Online ficam no alto da aba Online (sem o cartão Compras online e o Onde procurar)
+            await pg.click('#lojasAbas [data-loja-aba="mercados"]')
+            await pg.wait_for_timeout(300)
+            check(await pg.locator("#onlineOpcoes").is_hidden() and await pg.locator("#onlineSec, #pMkt").count() == 0, "na aba Mercados, sem as opções de Online")
+            await pg.click('#lojasAbas [data-loja-aba="online"]')
+            await pg.wait_for_timeout(300)
+            cx = await pg.evaluate("() => [document.getElementById('lojasAbas').getBoundingClientRect().bottom, document.getElementById('onlineOpcoes').getBoundingClientRect().top, document.getElementById('lojasCats').getBoundingClientRect().top]")
+            check(await pg.locator("#onlineOpcoes").is_visible() and cx[0] <= cx[1] < cx[2], f"na aba Online: as opções no alto, antes das lojas ({cx})")
             opts = [t.strip() for t in await pg.locator("#entregaKm option").all_inner_texts()]
             check(opts == ["até 10 km", "até 15 km", "até 20 km", "até 30 km", "até 50 km"], f"a distância: só maiores que os 5 km da casa ({opts})")
             check(await pg.locator("#entregaKm").input_value() == "10", "a escolhida")
             w = await pg.evaluate("() => { const e = document.getElementById('entregaKm'); return [Math.round(e.getBoundingClientRect().width), Math.round(e.parentElement.getBoundingClientRect().width), e.offsetHeight]; }")
             check(abs(w[0] - w[1]) <= 1 and w[2] == 50, f"na largura do cartão, com 50 px ({w})")
-            await pg.locator("#onlineSec").screenshot(path=SHOTS + "/ecr-online.png")
-            await pg.click('#onlineSec label.set-line:has(#onEntrega)')
+            await pg.locator("#lojasSec .panel").first.screenshot(path=SHOTS + "/ecr-online.png")
+            await pg.click('#onlineOpcoes label.set-line:has(#onEntrega)')
             await pg.wait_for_timeout(600)
             check(await pg.locator("#entregaKmG").is_hidden(), "desligado: sem a distância")
             check((app.config_salva().get("online") or {}).get("mercados_entrega") is False, "desligado fica gravado")
-            await pg.click('#onlineSec label.set-line:has(#onEntrega)')
+            await pg.click('#onlineOpcoes label.set-line:has(#onEntrega)')
             await pg.wait_for_timeout(600)
             await pg.select_option("#entregaKm", "15")
             await pg.wait_for_timeout(800)

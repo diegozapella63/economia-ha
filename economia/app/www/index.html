@@ -634,6 +634,7 @@ li.escolhida{border-color:var(--accent) !important}
 .rot-ctrl #rotListas{grid-auto-flow:row;grid-template-columns:repeat(auto-fit,minmax(96px,1fr))}
 .rot-ctrl #rotListas button{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .set-line{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer}
+.online-opcoes{display:flex;flex-direction:column;gap:10px;margin:14px 0 6px;padding-bottom:12px;border-bottom:1px solid var(--line)}  /* 1.36.5: no alto da aba Online */
 #rotRes{display:flex;flex-direction:column;gap:12px}
 .rot-total{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;background:var(--accent-soft);border-radius:10px;padding:10px 12px}
 .rot-total .lbl{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
@@ -739,7 +740,9 @@ textarea.field.grow{field-sizing:content;min-height:var(--altura,50px);max-heigh
    1.36.1: sempre dois por linha no celular; num celular estreito, um texto longo vai para a segunda linha (nunca cortado) */
 .loja-botoes{flex:1 1 100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:6px}
 .loja-botoes > .loja-btn{width:100%;min-width:0;justify-content:center;text-align:center;line-height:1.15;font-size:14px;padding:0 8px}
-.clube-ben > a,.clube-ben > button{display:block;margin-top:6px}
+.clube-ben > a{display:block;margin-top:6px}
+.clube-ben > .clube-de-novo{display:flex;width:100%;margin-top:10px;justify-content:center;font-size:14px}  /* 1.36.5: o Procurar de novo, no padrão */
+@media (min-width:1000px){.clube-ben > .clube-de-novo{width:250px}}
 .loja-botoes > :last-child:nth-child(odd){grid-column:1/-1}
 .loja-btn.clube[aria-pressed="true"],.loja-btn.marca[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
 @media (min-width:1000px){.loja-botoes{grid-template-columns:repeat(auto-fill,250px)}.loja-botoes > :last-child:nth-child(odd){grid-column:auto}}
@@ -1522,6 +1525,12 @@ input.field,select.field{min-height:var(--altura)}
         <input class="field" type="search" id="lojaBusca" placeholder="Procurar loja na lista" aria-label="Procurar loja na lista" autocomplete="off" enterkeyhint="search">
         <div class="lojas-filtro"><label for="soSemFonte">Só sem fonte de preço <span class="n" id="nSemFonte"></span></label><input type="checkbox" class="switch" id="soSemFonte"></div>
         <div class="seg lojas-abas" id="lojasAbas" role="group" aria-label="Tipo de loja"></div>
+        <!-- 1.36.5: as opções de Online ficam na própria aba (os marketplaces se ligam e desligam na lista, como as lojas) -->
+        <div class="so-ia online-opcoes" id="onlineOpcoes" hidden>
+          <label class="set-line"><input type="checkbox" class="switch" id="onEntrega"><span>Mercados da região que entregam no seu CEP</span></label>
+          <div class="group" id="entregaKmG" hidden><h3><label for="entregaKm">Distância dos mercados que entregam</label></h3>
+            <select class="field" id="entregaKm"></select><p class="hint" id="entregaMsg" aria-live="polite"></p></div>
+        </div>
         <div id="lojasCats" class="group"></div>
         <form class="row-form" id="addLoja" novalidate>
           <input class="field" id="novaLoja" name="novaLoja" placeholder="Loja que não apareceu, ex.: Mercado da esquina" aria-label="Nome da loja">
@@ -1548,15 +1557,6 @@ input.field,select.field{min-height:var(--altura)}
           <ul class="rows" id="cupLista"></ul>
         </div>
       </section>
-        <section class="panel so-ia" aria-labelledby="h-online" id="onlineSec">
-          <div class="sec-head"><h2 id="h-online"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 6h11v10H2zM13 9h4l4 4v3h-8z"/><circle cx="6.5" cy="17.5" r="2"/><circle cx="17.5" cy="17.5" r="2"/></svg></span>Compras online</h2></div>
-          <div class="group"><h3>Onde procurar</h3><div class="picks" id="pMkt"></div></div>
-          <label class="set-line"><input type="checkbox" class="switch" id="onEntrega"><span>Mercados da região que entregam no seu CEP</span></label>
-          <p class="hint">Como o Bistek. Aparecem em Online.</p>
-          <div class="group" id="entregaKmG" hidden><h3><label for="entregaKm">Distância dos mercados que entregam</label></h3>
-            <select class="field" id="entregaKm"></select><p class="hint" id="entregaMsg" aria-live="polite"></p></div>
-          <p class="hint">Prime, Meli+ e Clube iFood (o Sou do clube de cada um) valem só nos produtos elegíveis; o frete de cada item já conta isso.</p>
-        </section>
       </div></div>
       <section class="panel" aria-labelledby="h-como">
         <div class="sec-head"><h2 id="h-como"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 5v2M3.5 11h1.2L3.5 13h1.5M3.5 17h1.5v2H3.5"/></svg></span>Como o EconomIA busca os preços</h2></div>
@@ -2650,7 +2650,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.36.4';
+  var VERSAO = '1.36.5';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -5250,12 +5250,16 @@ dialog.ss-wrap::backdrop{background:transparent}
     if (CLUBE_BUSCA === l.rede) return '<span class="testando">Procurando os benefícios…</span>';
     if (k === null && !r) return '';
     if (!r) return '';  // 1.36.0: o Benefícios do clube fica nos botões da loja
-    if (!r.clube && !arr(r.beneficios).length) return '<span class="r-preco"><span class="chip">Sem clube de vantagens</span></span>';  // 1.36.3: um selo (o cinza é do endereço)
+    // 1.36.5: um lugar só por loja. Já procurado, os benefícios (ou "Sem clube de vantagens") abrem aqui, com o Procurar de
+    // novo dentro; o botão Benefícios, nos botões da loja, só enquanto nunca foi procurado
+    var sem = !r.clube && !arr(r.beneficios).length;
     var linhas = arr(r.beneficios).map(function(b){ return '<li><b>' + esc(b.titulo) + '</b>' + (b.detalhe ? ' ' + esc(b.detalhe) : '') + '</li>'; }).join('');
     var extra = [r.custo ? 'Custo: ' + r.custo : '', r.como_entrar ? 'Como entrar: ' + r.como_entrar : ''].filter(Boolean).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('');
-    return '<details class="fonte-det clube-ben"' + (CLUBE_ABERTO[l.rede] ? ' open' : '') + ' data-clube-det="' + esc(l.rede) + '"><summary>Benefícios ' + esc(r.clube ? 'do ' + r.clube : 'do clube')
-      + (r.em ? ' · ' + esc(quandoCurto(r.em)) : '') + '</summary><ul>' + linhas + extra + '</ul>'
-      + (r.fonte ? '<a class="linkbtn" href="' + esc(r.fonte) + '" target="_blank" rel="noopener">Fonte: ' + esc(host(r.fonte)) + '</a>' : '') + '</details>';
+    var tit = sem ? 'Sem clube de vantagens' : 'Benefícios ' + (r.clube ? 'do ' + r.clube : 'do clube');
+    var de_novo = iaOn() ? '<button type="button" class="ghost big ic-btn loja-btn clube-de-novo" data-clube-ben="' + esc(l.rede) + '"' + (CLUBE_BUSCA ? ' disabled' : '') + '>' + SVG_CLUBE + 'Procurar de novo</button>' : '';
+    return '<details class="fonte-det clube-ben' + (sem ? ' sem' : '') + '"' + (CLUBE_ABERTO[l.rede] ? ' open' : '') + ' data-clube-det="' + esc(l.rede) + '"><summary>' + esc(tit)
+      + (r.em ? ' · ' + esc(quandoCurto(r.em)) : '') + '</summary>' + (linhas + extra ? '<ul>' + linhas + extra + '</ul>' : '')
+      + (r.fonte ? '<a class="linkbtn" href="' + esc(r.fonte) + '" target="_blank" rel="noopener">Fonte: ' + esc(host(r.fonte)) + '</a>' : '') + de_novo + '</details>';
   }
   function buscaBeneficios(rid){
     if (MODO !== 'addon'){ toast('No Home Assistant, a IA procura os benefícios do clube desta loja.'); return; }
@@ -5300,6 +5304,9 @@ dialog.ss-wrap::backdrop{background:transparent}
   }
   function pintaLojas(){
     var ativas = D.categorias.filter(function(c){ return estado.categorias.indexOf(c.id) >= 0; });
+    // 1.36.5: a aba Online antes da primeira busca com ela (os marketplaces se escolhem na lista dela)
+    if (estado.categorias.indexOf('online') >= 0 && !ativas.some(function(c){ return c.id === 'online'; }))
+      ativas.push({id:'online', nome:'Online', redes:[], lojas:[], ofertas:[], cupons:[], lista:[]});
     // abas por tipo de loja; procurando pelo nome, vale a lista inteira
     var aba = ativas.some(function(c){ return c.id === ui.lojasAba; }) ? ui.lojasAba : (ativas[0] || {}).id;
     $('lojasAbas').innerHTML = ativas.map(function(c){ return '<button type="button" data-loja-aba="' + c.id + '" aria-pressed="' + (c.id === aba && !TERMO_LOJA) + '">' + esc(c.nome) + '</button>'; }).join('');
@@ -5307,6 +5314,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     var todasAtivas = ativas;
     if (!TERMO_LOJA) ativas = ativas.filter(function(c){ return c.id === aba; });
     $('lojasCats').classList.toggle('com-abas', !TERMO_LOJA && todasAtivas.length > 1);  // a aba já diz o tipo
+    $('onlineOpcoes').hidden = !!TERMO_LOJA || aba !== 'online';
     // loja sem localização conta como online: sai da aba dela e aparece em Online
     var semLocal = function(l){ return l.distancia_km == null && !mapaUrl(l, G[l.rede] ? G[l.rede].nome : ''); };
     var todasInat = [];  // 1.36.1: as inativas de todos os grupos da aba, juntas numa só, no fim
@@ -5413,8 +5421,9 @@ dialog.ss-wrap::backdrop{background:transparent}
   function botoesLoja(c, l, cid, mi){
     // os benefícios também nas online (Mercado Livre: Meli+; Amazon: Prime; iFood: Clube iFood)
     var f = l.preco_fonte;
-    // 1.36.3: também com os benefícios já guardados (procura de novo) e na loja sem clube (pode ter criado um)
+    // 1.36.5: só enquanto nunca foi procurado; depois, o Procurar de novo fica dentro dos benefícios (sem repetir)
     var ben = (!c || /^(farmacias|mercados|petshops|online)$/.test(c.id)) && nomeLoja(l.rede) && iaOn() && CLUBE_BUSCA !== l.rede
+      && !CLUBES_BEN[chaveLoja(nomeLoja(l.rede))]
       ? '<button type="button" class="ghost big ic-btn loja-btn" data-clube-ben="' + esc(l.rede) + '"' + (CLUBE_BUSCA ? ' disabled' : '') + '>' + SVG_CLUBE + 'Benefícios</button>' : '';
     var semP = !f && c && c.id !== 'online' && G[l.rede] && !(l.nova && acompanha(l.rede)) && semPrecos(c).indexOf(l) >= 0 && !siteManual(G[l.rede].nome);
     var site = (f && (f.como === 'ia' || f.como === 'nenhum') && !(cid === 'online' && !regional(l.rede))) || semP ? botaoSite(l) : '';
@@ -5712,11 +5721,9 @@ dialog.ss-wrap::backdrop{background:transparent}
     picks('pInt', INTERESSES.map(function(t){ return {id:t, nome:cap(ROTULO_TAG[t])}; }), p.interesses);
     picks('pNunca', NUNCA.map(function(t){ return {id:t, nome:cap(ROTULO_TAG[t])}; }), p.nunca);
     $('pNuncaProd').innerHTML = p.nunca_produtos.map(function(t){ return '<button type="button" class="nunca-t" data-termo="' + esc(t) + '" aria-label="Voltar a mostrar ' + esc(t) + '"><span>' + esc(t) + '</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>'; }).join('');
-    picks('pMkt', MKT, estado.online.marketplaces);
     picks('dMercado', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.mercado);
     picks('dFarmacia', DIAS.map(function(d){ return {id:d.id, nome:d.n}; }), r.farmacia);
     $('estoque').value = r.estoque;
-    $('onlineSec').hidden = estado.categorias.indexOf('online') < 0;  // sem a aba Online, as opções dela não valem
     pintaTema(); pintaCores(); pintaSyncUI(); pintaIA(); pintaAjustes();
   }
   var TAG_SW = 'M8 0h20a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8L0 13V7z', FURO_SW = 'M9.7 10a2.7 2.7 0 1 0-5.4 0a2.7 2.7 0 1 0 5.4 0z';
@@ -5884,7 +5891,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     }).catch(function(){ shSt('Não consegui ler agora.'); });
   }
   // o que o Instagram e a Shopee trazem, só quando acontece: o Instagram precisa da IA e dos folhetos (Mais › Configurações › Opções);
-  // a Shopee precisa da aba Online e, sem a API, da IA com a Shopee marcada em Compras online
+  // a Shopee precisa da aba Online e, sem a API, da IA com a Shopee marcada na aba Online de Mais › Lojas
   var INTEG = null;
   function pintaIntegSt(){
     if (!INTEG) return;
@@ -6355,7 +6362,7 @@ dialog.ss-wrap::backdrop{background:transparent}
       salvar('Lista importada'); pintaLista(); pintaOfertasTela();
     }
   }
-  var ALVO = {pMkt:function(){ return estado.online.marketplaces; }, pRestr:function(){ return estado.perfil.restricoes; }, pInt:function(){ return estado.perfil.interesses; },
+  var ALVO = {pRestr:function(){ return estado.perfil.restricoes; }, pInt:function(){ return estado.perfil.interesses; },
     pNunca:function(){ return estado.perfil.nunca; }, dMercado:function(){ return estado.cotidiano.mercado; }, dFarmacia:function(){ return estado.cotidiano.farmacia; }};
   $('pNuncaProd').addEventListener('click', function(e){
     var b = e.target.closest('[data-termo]'); if (!b) return;

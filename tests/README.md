@@ -131,7 +131,7 @@ esperar (espera-se a condição: `Cenario.espera`, `espera()` nas visuais), semp
   Voltar, X e tocar fora fecham só ela; no computador, no meio e pelo teclado; fechada, igual aos outros campos (altura,
   cantos, borda) e com a seta do app.
 - `e2e/ec_desligado.py`: com a opção ou a integração desligada, nada promete o que não acontece: Rotina de compras sem
-  Avisar no celular, Compras online só com a aba Online, a ordem da busca sem as etapas desligadas, Similares e código de
+  Avisar no celular, as opções de Online só com a aba Online, a ordem da busca sem as etapas desligadas, Similares e código de
   barras sem a busca direta, Lista do Home Assistant sem sincronizar, Instagram e Shopee, loja adicionada sem IA.
 - `e2e/ec_desktop.py`: no computador (1280 px): barra lateral, ações no alto e colunas lado a lado.
 

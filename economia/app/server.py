@@ -5407,7 +5407,7 @@ def lojas_do_mapa(cfg, cats, forcar=False):
 
 
 # ---------- Mercados da região que entregam (1.22.0): os mercados do mapa entre o raio da casa e o raio de entrega
-# (Mais › Lojas › Compras online, maior que o da casa). O site de cada um diz se entrega no CEP (a consulta de entrega
+# (no alto da aba Online de Mais › Lojas, maior que o da casa). O site de cada um diz se entrega no CEP (a consulta de entrega
 # da VTEX); sem resposta, a loja aparece em Online sem preço, com o porquê em Como foi testado, e a pessoa confirma
 # (online.entrega_sim, pelo nome). Os que entregam, pelo site ou confirmados, entram na busca como mercados que entregam.
 ENTREGA_KM = (10, 15, 20, 30, 50)
@@ -5698,7 +5698,7 @@ def atualizar_lojas_mapa(dado):
 
 
 def atualizar_regiao(dado):
-    """Mais › Lojas › Compras online: ligar os mercados que entregam ou mudar a distância lê os mercados da região agora."""
+    """Mais › Lojas, aba Online: ligar os mercados que entregam ou mudar a distância lê os mercados da região agora."""
     cfg = ler_config()
     on = dict(cfg.get("online") or {})
     if dado.get("entrega_km") in ENTREGA_KM:

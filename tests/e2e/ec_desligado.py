@@ -54,9 +54,9 @@ async def main():
             check(await pg.locator("#avisar").count() == 0 and await pg.locator("#proxAviso").count() == 0, "sem Avisar no celular")
             check("AVIS" not in txt.upper() and "ESPAÇO PARA ESTOQUE" in txt.upper() and "DIAS DE MERCADO" in txt.upper(), f"Rotina de compras não promete aviso ({txt!r})")
             await rotina.screenshot(path=SHOTS + "/ecdl-rotina.png")
-            # ----- Compras online: só com a aba Online -----
+            # ----- as opções de Online: só com a aba Online -----
             await mais(pg, "lojas")
-            check(await pg.locator("#onlineSec").is_hidden(), "sem a aba Online: Compras online some (não manda para uma aba que não existe)")
+            check(await pg.locator("#onlineOpcoes").is_hidden(), "sem a aba Online: as opções de Online somem")
             check(await etapas(pg) == TODAS, f"a ordem da busca com tudo ligado ({await etapas(pg)})")
             # ----- Integrações: Instagram e Shopee -----
             await mais(pg, "integracoes")
@@ -125,15 +125,19 @@ async def main():
             await pg.wait_for_timeout(400)
             await pg.click('.tabbar [data-view="lista"]')
             check(await pg.locator("#wish > li.item", has_text="Carne moída").first.locator(".i-sim").get_attribute("aria-pressed") == "false", "com busca direta: o Similares, desligado")
-            # ----- aba Online ligada: Compras online volta, e a Shopee pela IA quando marcada -----
+            # ----- aba Online ligada: as opções dela voltam, e a Shopee pela IA quando marcada -----
             c = app.config_salva()  # a busca ainda não trouxe nada online: liga a aba pela config, como o Salvar de Mais › Casa
             c["categorias"] = ["mercados", "online"]
             app.api("PUT", "api/config", c)
             await pg.reload()
             await pg.wait_for_timeout(1200)
             await mais(pg, "lojas")
-            check(await pg.locator("#onlineSec").is_visible(), "com a aba Online: Compras online aparece")
-            await pg.click('#pMkt [data-v="shopee"]')
+            await pg.click('#lojasAbas [data-loja-aba="online"]')
+            await pg.wait_for_timeout(300)
+            check(await pg.locator("#onlineOpcoes").is_visible(), "com a aba Online: as opções no alto dela")
+            # 1.36.5: a Shopee se liga na lista da aba Online (sem o Onde procurar de Compras online)
+            await pg.locator("#mp-lojas details.inativas > summary").click()  # os marketplaces desmarcados ficam nas Inativas
+            await pg.locator('#mp-lojas input[data-mkt="shopee"]').check()
             await pg.wait_for_timeout(500)
             await mais(pg, "integracoes")
             await espera(pg, "() => /Desligada:/.test(document.getElementById('shSt').textContent)")

@@ -96,7 +96,7 @@ async def main():
             for rede in ("merc-lua", "pets-cobasi"):
                 await pg.locator(f'#mp-lojas input[data-rede="{rede}"]').uncheck()
                 await pg.wait_for_timeout(800)
-            check(await inat.count() == 1 and f"Inativas ({n0 + 2})" in await inat.locator("summary").inner_text()
+            check(await inat.count() == 1 and f"Inativas ({n0 + 2})" in await inat.locator(":scope > summary").inner_text()
                   and await inat.locator('input[data-rede="merc-lua"]').count() == 1 and await inat.locator('input[data-rede="pets-cobasi"]').count() == 1,
                   f"uma só Inativas na aba, com as dos outros grupos ({await inat.count()}, {n0})")
             check(not await inat.evaluate("d => d.open"), "recolhida")
@@ -105,7 +105,7 @@ async def main():
                   "no fim, depois de todas as lojas ativas")
             txt = (await pg.locator("#mp-lojas").inner_text()).upper()
             check("MERCADOS SEM LOCALIZAÇÃO" not in txt and "PET SHOPS SEM LOCALIZAÇÃO" not in txt, "os grupos sem nenhuma loja ativa somem")
-            await inat.locator("summary").click()
+            await inat.locator(":scope > summary").click()
             for rede in ("merc-lua", "pets-cobasi"):
                 await pg.locator(f'#mp-lojas input[data-rede="{rede}"]').check()
                 await pg.wait_for_timeout(800)
@@ -137,24 +137,31 @@ async def main():
             await pg.locator('#mp-lojas input[data-rede="farm-raia"]').uncheck()
             await pg.wait_for_timeout(1000)
             inat = pg.locator("#mp-lojas details.inativas")
-            check(await inat.count() == 1 and "Inativas (1)" in await inat.locator("summary").inner_text(), "Droga Raia em Inativas")
+            check(await inat.count() == 1 and "Inativas (1)" in await inat.locator(":scope > summary").inner_text(), "Droga Raia em Inativas")
             check("farm-raia" in (app.config_salva().get("lojas") or {}).get("ignorar", []), "gravado em lojas.ignorar")
-            await inat.locator("summary").click()
+            await inat.locator(":scope > summary").click()
             await pg.locator('#mp-lojas input[data-rede="farm-raia"]').check()
             await pg.wait_for_timeout(1000)
             check("farm-raia" not in (app.config_salva().get("lojas") or {}).get("ignorar", []), "marcar de novo volta a acompanhar")
             # 1.24.0: os benefícios do clube, guardados, num toque; numa loja com clube ainda sem os benefícios, o botão para a IA procurar
             ben = pg.locator('#mp-lojas details[data-clube-det="farm-nissei"]')
             check(await ben.count() == 1 and "Benefícios do Club Nissei" in await ben.locator("summary").inner_text(), "os benefícios do Club Nissei")
-            # 1.36.3: com os benefícios guardados, o botão Benefícios continua (procura de novo), sem o Procurar de novo dentro
-            check(await pg.locator('#mp-lojas [data-clube-ben="farm-nissei"]').count() == 1 and await ben.locator("[data-clube-ben]").count() == 0,
-                  "Benefícios nos botões da Nissei também com os benefícios guardados")
-            # 1.36.3: Sem clube de vantagens num selo (o cinza do texto é do endereço); e o botão para procurar de novo
+            # 1.36.5: um lugar só: já procurado, o Benefícios sai dos botões e o Procurar de novo fica dentro dos benefícios
+            nissei = pg.locator("#mp-lojas li.row", has=pg.locator('input[data-rede="farm-nissei"]')).first
+            check(await nissei.locator('.loja-botoes [data-clube-ben]').count() == 0 and await ben.locator('[data-clube-ben="farm-nissei"]').count() == 1,
+                  "Nissei: sem o Benefícios nos botões; o Procurar de novo dentro")
+            # 1.36.5: Sem clube de vantagens também abre (na cor dos recolhidos, não no cinza do endereço), com o Procurar de novo
             raia = pg.locator("#mp-lojas li.row", has=pg.locator('input[data-rede="farm-raia"]')).first
-            sc = raia.locator(".chip", has_text="Sem clube de vantagens")
-            check(await sc.count() == 1 and await raia.locator('[data-clube-ben="farm-raia"]').count() == 1, "Droga Raia: Sem clube de vantagens num selo, com o Benefícios")
+            sc = raia.locator('details[data-clube-det="farm-raia"]')
+            check(await sc.count() == 1 and (await sc.locator("summary").inner_text()).startswith("Sem clube de vantagens")
+                  and await raia.locator('.loja-botoes [data-clube-ben]').count() == 0 and await sc.locator('[data-clube-ben="farm-raia"]').count() == 1,
+                  "Droga Raia: Sem clube de vantagens, com o Procurar de novo dentro")
             await ben.locator("summary").click()
             bt = (await ben.inner_text()).replace("\xa0", " ")
+            nv = ben.locator('[data-clube-ben="farm-nissei"]')
+            cx = [await nv.bounding_box(), await ben.bounding_box()]
+            check((await nv.inner_text()).strip() == "Procurar de novo" and cx[0]["height"] == 50 and abs(cx[0]["width"] - cx[1]["width"]) < 2,
+                  f"Procurar de novo no padrão: 50 px, na largura ({cx})")
             check("Desconto de clube Até 40% em remédios marcados." in bt and "Custo: Grátis" in bt and "Como entrar: CPF no caixa" in bt and "farmaciasnissei.com.br" in bt, f"o que o clube dá, com a fonte ({bt[:160]})")
             await pg.click('#lojasAbas [data-loja-aba="mercados"]')
             await pg.wait_for_timeout(300)

@@ -1,5 +1,12 @@
 # Mudanças
 
+## 1.36.5
+
+- **Mais › Lojas**: o cartão **Compras online** saiu, porque repetia a lista.
+  - Os marketplaces (iFood, Mercado Livre, Amazon…) se ligam e desligam na própria lista da aba **Online**, como as outras lojas: o desmarcado vai para **Inativas**, no fim.
+  - **Mercados da região que entregam no seu CEP** e a distância ficam no alto da aba **Online**. A aba já aparece antes da primeira busca com ela.
+  - Benefícios do clube num lugar só: o botão **Benefícios** aparece só enquanto a loja nunca foi procurada. Depois, **Benefícios do …** (ou **Sem clube de vantagens**) abre com o que foi achado e o **Procurar de novo** dentro.
+
 ## 1.36.4
 
 - **Mais › Lojas › Online**:
