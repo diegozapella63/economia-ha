@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.36.12
+
+- O **Abrir** de um preço ou de uma oferta que a IA achou num marketplace (Americanas, Amazon, Magalu, Casas Bahia, iFood…) vira **Procurar**, na busca do próprio marketplace com o nome do produto. O link que a IA dava muitas vezes não abria o produto ("nenhum resultado encontrado"). O anúncio do Mercado Livre e o da Shopee, e o link de um preço que veio do site da loja, continuam abrindo direto.
+
 ## 1.36.11
 
 - **Desconsiderados (n)**, recolhido logo abaixo do **Comparar tamanhos**: os tamanhos que durariam mais que o seu estoque (como a caixa de 18 kg de frango) saem da lista e ficam ali, para consultar ou escolher mesmo assim.

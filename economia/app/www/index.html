@@ -2299,7 +2299,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // 1.36.0: o Abrir na loja da oferta: o link dela; do Mercado Livre, só o de um anúncio (MLB...), senão a busca do produto lá
   function linkOferta(o){
     var u = /^https?:\/\//.test(o.fonte || '') ? o.fonte : '';
-    if (u && /mercado ?livre/.test(norm((G[o.rede] || {}).nome || '')) && !/MLB-?\d{6,}/i.test(u)) u = '';
+    if (u && !linkDoMkt(o.rede, u)) u = '';  // 1.36.12: o link da IA para um marketplace: a busca dele
     if (u && paginaGeral(u)){
       // 1.36.1: a página onde a oferta foi vista (o início, o encarte), não a do produto: procura o produto no site da loja
       // 1.36.3: na busca do próprio site, quando ela funcionou no teste da loja; só sem ela, no Google
@@ -2654,7 +2654,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.36.11';
+  var VERSAO = '1.36.12';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -3091,6 +3091,13 @@ dialog.ss-wrap::backdrop{background:transparent}
     return Object.assign(out, {base:Object.assign({}, cru.base, {quantidade:q}), precos:novosP, tamanhos:novosT, links:links});
   }
   // onde comprar: o link que a busca trouxe ou, sem ele, a busca do produto na própria loja
+  // 1.36.12: o link que a IA dá para um marketplace (Americanas, Amazon, Magalu…) muitas vezes não abre o produto (um
+  // anúncio inventado ou fora do ar: "nenhum resultado encontrado"). Nele, só o de um anúncio do Mercado Livre (MLB…) ou
+  // da Shopee vale; o resto vira Procurar, na busca do próprio marketplace
+  function linkDoMkt(id, u){
+    var m = mktDe((G[id] || {}).nome || '');  // o id do marketplace pelo nome da loja ('' numa loja que não é marketplace)
+    return !m || (m === 'mercadolivre' && /MLB-?\d{6,}/i.test(u)) || (m === 'shopee' && /-i\.\d+\.\d+/.test(u));
+  }
   function linkCompra(id, produto, link){
     if (/^https?:\/\//.test(link || '')) return {url:link, achado:true};
     var nome = (G[id] || {}).nome || '', n = norm(nome), q = String(produto || '').split(' · ')[0].trim();
@@ -3098,6 +3105,8 @@ dialog.ss-wrap::backdrop{background:transparent}
       : n.indexOf('amazon') >= 0 ? 'https://www.amazon.com.br/s?k=' + encodeURIComponent(q)
       : n.indexOf('shopee') >= 0 ? 'https://shopee.com.br/search?keyword=' + encodeURIComponent(q)
       : n.indexOf('magalu') >= 0 || n.indexOf('magazine') >= 0 ? 'https://www.magazineluiza.com.br/busca/' + encodeURIComponent(q) + '/'
+      : n.indexOf('americanas') === 0 ? 'https://www.americanas.com.br/busca/' + norm(q).replace(/ /g, '-')
+      : n.indexOf('casas bahia') === 0 ? 'https://www.casasbahia.com.br/' + norm(q).replace(/ /g, '-') + '/b'
       : 'https://www.google.com/search?q=' + encodeURIComponent(nome.replace(/^(iFood|Rappi) · /, '') + ' ' + q);
     return {url:base, achado:false};
   }
@@ -3114,6 +3123,7 @@ dialog.ss-wrap::backdrop{background:transparent}
         var x = precoDe(id, item.precos[id]);
         x.link = links[id] || '';
         if (vistos[id]){ x.via = vistos[id].via; x.em = vistos[id].em; }
+        if (x.link && x.via === 'web' && !linkDoMkt(id, x.link)) x.link = '';  // 1.36.12: preço da IA num marketplace: Procurar nele
         return x;
       }).filter(function(x){ return x.v > 0; }).sort(function(a, b){ return a.v - b.v; });
   }
