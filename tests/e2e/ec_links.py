@@ -49,6 +49,12 @@ async def main():
             check(hrefs.get("Casas Bahia") == "https://www.casasbahia.com.br/alcool/b", "Casas Bahia pela IA: a busca da Casas Bahia")
             check(hrefs.get("Mercado Livre") == "https://produto.mercadolivre.com.br/MLB-1234567890-alcool", "Mercado Livre pela API: o anúncio")
             check(hrefs.get("Mercado Azul") == "https://www.mercadoazul.exemplo/alcool-70/p", "o site da loja: o produto")
+            # 1.36.13: o Online ou na loja sem "preço visto … pela busca na web" (o pé do cartão já diz de quando são os preços)
+            det = alc.locator("details.i-det").first
+            await det.evaluate("d => { d.open = true; }")
+            t = await det.inner_text()
+            check("Online:" in t and "busca na web" not in t and "preço visto" not in t, f"sem o de quando no Online ou na loja ({t[:200]})")
+            check("preços de" in await alc.locator(".i-foot").inner_text(), "o pé diz de quando são os preços")
             await shot(pg, "links-lista")
             # ----- as ofertas -----
             await pg.click('.tabbar [data-view="ofertas"]')

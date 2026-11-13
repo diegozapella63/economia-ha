@@ -2654,7 +2654,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.36.12';
+  var VERSAO = '1.36.13';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -3143,10 +3143,6 @@ dialog.ss-wrap::backdrop{background:transparent}
     if (o.carrinho) return curto ? ' + frete' : ' (frete no carrinho)';
     return o.frete ? (curto ? ' com frete' : ' (frete ' + brl.format(o.frete) + ')') : (curto ? ' frete grátis' : ' (frete grátis)');
   }
-  function vistoTxt(o){
-    if (!o.em) return '';
-    return o.via === 'web' ? ' · preço visto ' + quandoCurto(o.em) + ' pela busca na web, confira no link' : ' · preço do site ' + quandoCurto(o.em);
-  }
   // compensa pedir online ou comprar na loja?
   function decisaoOnline(r, p, dc){
     var avulso = !!dc;
@@ -3158,7 +3154,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     }
     var dia = function(n){ return n + (n > 1 ? ' dias' : ' dia'); };
     var linha = (avulso ? 'Avulso online: ' : 'Online: ') + brl.format(net.v) + ' na ' + G[net.id].nome + freteTxt(net)
-      + (net.prazo != null ? (net.prazo === 0 ? ', chega hoje' : ', chega em ' + dia(net.prazo)) : '') + (net.obs ? ' · ' + net.obs : '') + vistoTxt(net);
+      + (net.prazo != null ? (net.prazo === 0 ? ', chega hoje' : ', chega em ' + dia(net.prazo)) : '') + (net.obs ? ' · ' + net.obs : '');  // 1.36.13: sem "preço visto … pela busca na web": o pé do cartão já diz de quando são os preços
     var chip, nota = '';
     // data limite para o pedido chegar antes de acabar (um dia de folga)
     var pedirAte = r.dias != null && net.prazo != null ? soma(hojeSP(), r.dias - net.prazo - 1) : null;

@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.36.13
+
+- **Online ou na loja** não repete mais "preço visto … pela busca na web, confira no link": o pé do cartão já diz de quando são os preços.
+
 ## 1.36.12
 
 - O **Abrir** de um preço ou de uma oferta que a IA achou num marketplace (Americanas, Amazon, Magalu, Casas Bahia, iFood…) vira **Procurar**, na busca do próprio marketplace com o nome do produto. O link que a IA dava muitas vezes não abria o produto ("nenhum resultado encontrado"). O anúncio do Mercado Livre e o da Shopee, e o link de um preço que veio do site da loja, continuam abrindo direto.
