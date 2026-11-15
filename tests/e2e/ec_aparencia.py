@@ -141,7 +141,7 @@ async def main():
             # ----- Sensores no Home Assistant -----
             await pg.click("#sensores")
             await espera(pg, "() => /Ligado/.test(document.getElementById('sensoresTxt').textContent)")
-            check(await pg.text_content("#sensoresTxt") == "Ligado: sensor.economia_ia_hoje, sensor.economia_melhor_loja e binary_sensor.economia_oferta.", "sensores ligados")
+            check(await pg.text_content("#sensoresTxt") == "Ligado." and await pg.locator("#sensLista .sensor-row code").all_inner_texts() == ["sensor.economia_ia_hoje", "sensor.economia_melhor_loja", "binary_sensor.economia_oferta"], "sensores ligados, a lista embaixo")
             for _ in range(100):
                 if "sensor.economia_ia_hoje" in ha.estados:
                     break

@@ -1,5 +1,14 @@
 # Mudanças
 
+## 1.37.0
+
+- Mais e as janelas no padrão dos outros apps: cada título de opção e de campo tem o ícone na frente, e todo botão com texto também.
+- Toda seção fecha e abre num toque no cabeçalho, com a seta no canto; as que você fechou continuam fechadas ao abrir o app de novo.
+- O que só vale com uma chave ligada fica num quadro logo abaixo dela: a escolha da IA embaixo de **Usar IA**.
+- **Sensores**: a chave virou **Criar sensores** e, ligada, mostra embaixo a lista dos três sensores com o nome de cada um no Home Assistant.
+- Sem linha entre as opções de uma seção; quando as abas de Configurações não cabem, a ponta some aos poucos, com uma seta.
+- **Últimas chamadas** (Uso da IA) com o ícone e a contagem.
+
 ## 1.36.13
 
 - **Online ou na loja** não repete mais "preço visto … pela busca na web, confira no link": o pé do cartão já diz de quando são os preços.

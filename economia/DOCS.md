@@ -276,7 +276,7 @@ Também dá para usar uma lista do **Google Tasks** conectada ao Home Assistant 
 
 Em **Mais › Configurações › Integrações › Uso da IA**: as chamadas de hoje, dos últimos 7 dias e do mês, o gráfico por dia, o tipo de uso (busca, itens sem preço, encartes, fotos, cupons, Falar, Conversa e testes), erros e cota excedida, e as últimas chamadas. Para economizar a cota, desligue em **Mais › Configurações › Opções** a busca extra dos itens sem preço e a leitura automática de encartes.
 
-**Sensores no Home Assistant** vem desligado. Ligado, o app cria no Home Assistant (desligado, apaga os três):
+**Sensores › Criar sensores** vem desligado. Ligado, o app cria no Home Assistant os três abaixo, que aparecem listados embaixo da chave (desligado, apaga os três):
 
 - `sensor.economia_ia_hoje`: as chamadas de IA de hoje, com os detalhes nos atributos;
 - `sensor.economia_melhor_loja`: a loja onde a lista toda sai mais barata (entre as lojas acompanhadas, a que tem preço de mais itens e, entre elas, a de menor total, com a quantidade de cada item e o clube das lojas de que você é sócio), com `total`, `itens` (com preço lá), `faltam` (sem preço lá), `economia` (contra a média das lojas), `distancia_km`, `segunda` (a outra loja mais barata) e `atualizado` (a última busca); as lojas online ficam de fora;
