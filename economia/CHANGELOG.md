@@ -1,5 +1,10 @@
 # Mudanças
 
+## 1.37.1
+
+- **Minha lista** no celular: o nome do item novo fica na linha toda, com **Adicionar** e os outros botões embaixo; com o ícone no botão, a caixa tinha ficado estreita demais.
+- **Salvar e testar** e **Testar** das integrações lado a lado no celular, com a altura dos outros botões.
+
 ## 1.37.0
 
 - Mais e as janelas no padrão dos outros apps: cada título de opção e de campo tem o ícone na frente, e todo botão com texto também.

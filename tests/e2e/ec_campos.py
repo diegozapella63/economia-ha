@@ -13,7 +13,7 @@ from base_e2e import CEP, SHOTS, App, HAFalso, abrir_mais, check, pagina, resumo
 CFG = {"cep": CEP, "raio_km": 5, "categorias": ["mercados"], "ia": {"fotos": "ai_task.claude"}, "lista": [{"produto": "Leite integral"}]}
 
 
-LARG = """(s) => [...document.querySelectorAll(s)].filter((b) => b.checkVisibility()).map((b) => { const p = b.closest('.panel, section'), cs = getComputedStyle(p);
+LARG = """(s) => [...document.querySelectorAll(s)].filter((b) => b.checkVisibility()).map((b) => { const p = b.closest('.sub-box, .panel, section'), cs = getComputedStyle(p);
   return [Math.round(b.getBoundingClientRect().width), Math.round(p.getBoundingClientRect().width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight))]; })"""
 
 
@@ -56,7 +56,7 @@ async def main():
             await abrir_mais(pg, "integracoes")
             await pg.wait_for_timeout(500)
             w = await pg.evaluate(LARG, "#iaTestar")
-            check(w and abs(w[0][0] - w[0][1]) <= 2, f"Verificar de novo na largura do cartão ({w})")
+            check(w and abs(w[0][0] - w[0][1]) <= 2, f"Verificar de novo na largura do cartão (no quadro da IA, 1.37.0) ({w})")
             par = await pg.evaluate(LARG, "#shSalvar, #shTestar")
             check(len(par) == 2 and par[0][0] == par[1][0] and abs(par[0][0] * 2 + 8 - par[0][1]) <= 3, f"Salvar e testar e Testar dividem a linha ({par})")
             await pg.locator("#iaTestar").scroll_into_view_if_needed()

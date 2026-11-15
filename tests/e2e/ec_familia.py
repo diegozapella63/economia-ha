@@ -1,6 +1,7 @@
 # EconomIA 1.37.0, o padrão da família: o ícone antes do título de cada opção e campo de Mais e em cada botão; sem linha
 # entre as opções; o que depende de uma chave num quadro embaixo dela (a IA embaixo de Usar IA, os sensores embaixo de
-# Criar sensores); a seta nas abas que não cabem; toda seção fecha e abre pelo cabeçalho e o aparelho lembra.
+# Criar sensores); a seta nas abas que não cabem; toda seção fecha e abre pelo cabeçalho e o aparelho lembra. No celular,
+# o nome do item novo fica na linha toda (com o ícone, o Adicionar deixava a caixa com 24 px em 320 px).
 import asyncio
 
 from playwright.async_api import async_playwright
@@ -15,9 +16,14 @@ async def main():
                 b, pg = await pagina(p, largura=largura)
                 await pg.goto(app.url)
                 await pg.wait_for_timeout(1200)
+                tag = f"{largura}px"
+                # Minha lista: o nome do item na linha toda no celular, os botões (Adicionar com o ícone) embaixo
+                await pg.click('.tabbar [data-view="lista"]')
+                await pg.wait_for_timeout(300)
+                cx = await pg.evaluate("() => { const i = document.getElementById('novoItem'), a = document.querySelector('#addForm button[type=submit]'), f = document.getElementById('addForm'); return [Math.round(i.getBoundingClientRect().width), Math.round(f.clientWidth), a.getBoundingClientRect().top > i.getBoundingClientRect().bottom - 1, Math.round(a.getBoundingClientRect().height)] }")
+                check(cx[0] == cx[1] and cx[2] and cx[3] == 50, f"{tag}: Minha lista, o nome na linha toda e os botões embaixo ({cx})")
                 await abrir_mais(pg, "integracoes")
                 await pg.wait_for_timeout(500)
-                tag = f"{largura}px"
                 sem = await pg.evaluate("() => [...document.querySelectorAll('#mp-integracoes .set-t, #mp-integracoes .sh-row > label')].filter(e => e.offsetParent && !e.querySelector('.t-ic')).map(e => e.textContent.trim())")
                 check(not sem, f"{tag}: cada título de opção e de campo com o ícone {sem[:4]}")
                 botoes = await pg.evaluate("() => [...document.querySelectorAll('#mp-integracoes button')].filter(b => b.offsetParent && b.textContent.trim().length > 1 && !b.querySelector('svg')).map(b => b.textContent.trim())")
