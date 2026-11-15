@@ -45,6 +45,10 @@ A IA não muda nada sozinha. Quando ajuda, ela sugere ações em botões: **Pôr
 
 A conversa usa a tarefa de IA de "Para ler fotos" (ou a de buscar ofertas, ou a preferida do Home Assistant), nunca um assistente de conversa, que poderia mexer na casa. Em cada oferta, **Vale a pena?** abre a conversa e pede uma avaliação do produto: a IA de buscar ofertas procura na web a nota, as avaliações de quem comprou, as reclamações e o preço de costume, e começa pelo veredito (Vale a pena, Depende ou Não vale).
 
+O **clipe**, à esquerda da caixa, manda junto uma foto ou um PDF: **Tirar foto**, **Escolher fotos** (a galeria, até 4) ou **Escolher arquivo** (uma foto ou um PDF, como um encarte ou uma nota fiscal). A IA olha o arquivo para responder e, se ajudar, sugere ações; na conversa fica só o nome do arquivo. O botão redondo da direita é o microfone com a caixa vazia e vira o Enviar quando você escreve ou escolhe um arquivo.
+
+**Perguntas prontas**: na conversa vazia aparecem algumas perguntas da tela aberta; depois, o botão ✨ ao lado da caixa abre as mesmas a qualquer momento. Em **Editar perguntas**, o ✕ tira uma pergunta e **Adicionar** põe outra (aí valem em todas as telas); **Padrão** volta às de cada tela. Ficam guardadas neste aparelho.
+
 A conversa fica guardada neste aparelho até você tocar em **Nova conversa**. No celular ela sobe de baixo; no computador, abre numa janela no canto. Com **Usar IA** desligado, o balão some.
 
 ## No celular

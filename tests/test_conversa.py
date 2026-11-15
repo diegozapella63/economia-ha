@@ -138,6 +138,37 @@ class Conversa(Cenario):
         self.assertNotIn("Ofertas das lojas", vazio)
         self.assertNotIn("Preços da última busca", vazio)
 
+    def test_clipe_foto_ou_pdf_vai_junto(self):
+        """1.38.0: Tirar foto, Escolher fotos ou Escolher arquivo: o arquivo vai junto para a IA (a de fotos), e só o nome
+        fica na conversa; a pasta de mídia fica vazia depois."""
+        import base64, os
+        S, ha = self.S, self.ha
+        ha.tarefa_ia("ai_task.fotos", "Fotos")
+        ha.tarefa_ia("ai_task.busca", "Busca")
+        ha.responde_ia("conversa", {"resposta": "É uma nota de R$ 45,00.", "acoes": [{"tipo": "por_na_lista", "produto": "Detergente 500 ml"}]})
+        self.prepara(ia={"fotos": "ai_task.fotos", "busca": "ai_task.busca"})
+        jpg = "data:image/jpeg;base64," + base64.b64encode(b"\xff\xd8\xff\xe0" + b"\1" * 60).decode()
+        r = S.conversar({"mensagens": [{"de": "eu", "texto": "quanto deu?"}], "tela": "lista", "anexos": [{"nome": "nota.jpg", "b64": jpg}]})
+        self.assertEqual(r["resposta"], "É uma nota de R$ 45,00.")
+        c = ha.chamadas_ia[-1]
+        self.assertEqual((c.get("entity_id"), len(c.get("attachments") or []), c["attachments"][0]["media_content_type"]), ("ai_task.fotos", 1, "image/jpeg"))
+        self.assertIn("a pessoa mandou 1 arquivo (foto ou PDF)", c["instructions"])
+        self.assertTrue(c["instructions"].endswith("Pessoa: [mandou nota.jpg] quanto deu?"))
+        self.assertEqual(os.listdir(os.path.join(S.MEDIA, "economia")), [], "o arquivo sai da pasta de mídia")
+        # só o PDF, sem texto; a próxima pergunta vai sem o arquivo, com o nome na conversa
+        pdf = "data:application/pdf;base64," + base64.b64encode(b"%PDF-1.4 encarte").decode()
+        S.conversar({"mensagens": [{"de": "eu", "texto": "", "anexos": ["encarte.pdf"]}], "anexos": [{"nome": "encarte.pdf", "b64": pdf}]})
+        self.assertEqual(ha.chamadas_ia[-1]["attachments"][0]["media_content_type"], "application/pdf")
+        self.assertTrue(ha.chamadas_ia[-1]["instructions"].endswith("Pessoa: [mandou encarte.pdf]"))
+        S.conversar({"mensagens": [{"de": "eu", "texto": "o que é isto?", "anexos": ["nota.jpg"]}, {"de": "ia", "texto": "Uma nota."}, {"de": "eu", "texto": "e agora?"}]})
+        self.assertNotIn("attachments", ha.chamadas_ia[-1])
+        self.assertIn("Pessoa: [mandou nota.jpg] o que é isto?\nEconomIA: Uma nota.\nPessoa: e agora?", ha.chamadas_ia[-1]["instructions"])
+        # o que não serve
+        for anexos, msg in (([{"b64": "data:text/plain;base64,eA=="}], "não abriu"), ([{"b64": jpg}] * 5, "No máximo 4"),
+                            ([{"b64": jpg}, {"b64": pdf}], "um PDF por vez")):
+            with self.subTest(msg=msg), self.assertRaisesRegex(Exception, msg):
+                S.conversar({"mensagens": [{"de": "eu", "texto": "oi"}], "anexos": anexos})
+
     def test_as_instrucoes_e_a_conversa(self):
         S, ha = self.S, self.ha
         ha.responde_ia("conversa", {"resposta": "Certo.", "acoes": []})
@@ -276,7 +307,7 @@ class ConversaPelaAPI(Servidor):
         self.assertEqual((st, d["erro"]), (400, "Escreva a sua pergunta."))
         st, d = self.pede("POST", "/api/chat", bruto=b"[1, 2]")
         self.assertEqual((st, d["erro"]), (400, "Conteúdo inválido."))
-        self.assertEqual(self.so_tamanho("POST", "/api/chat", self.S.MAX_BODY + 1), (413, {"erro": "Conteúdo vazio ou grande demais."}),
+        self.assertEqual(self.so_tamanho("POST", "/api/chat", self.S.MAX_CHAT_BODY + 1), (413, {"erro": "Conteúdo vazio ou grande demais."}),
                          "grande demais: recusa sem ler")
         st, d = self.pede("GET", "/api/uso-ia")
         self.assertEqual(d["hoje"]["tipos"].get("conversa"), 1)

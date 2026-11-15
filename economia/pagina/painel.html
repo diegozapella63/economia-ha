@@ -947,14 +947,45 @@ html:not(.sem-ia) .so-semia{display:none!important}
 .cm.pensando i:nth-child(3){animation-delay:.3s}
 @keyframes pisca{0%,80%,100%{opacity:.25}40%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.cm.pensando i{animation:none;opacity:.6}}
-.chat-sug{display:flex;gap:8px;overflow-x:auto;padding:2px 14px 10px;scrollbar-width:none}
-.chat-sug button{flex:none;min-height:38px;padding:6px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font-size:14.5px;white-space:nowrap}
+.chat-sug{padding:2px 14px 10px}
+.chat-sug-l{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.chat-sug-l button{flex:none;min-height:38px;padding:6px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font-size:14.5px;white-space:nowrap}
+/* 1.38.0: as perguntas prontas (Editar perguntas; com a conversa andando, pelo ✨), o clipe e os arquivos escolhidos */
+.chat-sug.aberta{margin:0 12px 8px;padding:10px;border:1px solid var(--line);border-radius:16px;max-height:42vh;overflow-y:auto}
+.chat-ed-abrir{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:6px 4px;border:0;background:none;color:var(--accent);font-size:14px;font-weight:600}
+.chat-ed-abrir svg,.chat-ed-h svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chat-ed{display:grid;gap:8px}
+.chat-ed-h{display:flex;align-items:center;gap:8px;margin:0;font-weight:700;color:var(--ink)}
+.chat-ed-h svg{color:var(--accent)}
+.chat-ed-lin{display:flex;align-items:center;gap:8px;padding:2px 2px 2px 12px;border:1px solid var(--line);border-radius:12px;font-size:14.5px}
+.chat-ed-lin span{flex:1;min-width:0;overflow-wrap:anywhere}
+.chat-ed-lin button,.chat-arq button{flex:none;width:40px;height:40px;border:0;border-radius:50%;display:grid;place-items:center;background:none;color:var(--muted)}
+.chat-ed-lin button svg,.chat-arq button svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.chat-ed-nova{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.chat-ed-nova input{min-width:0;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit;font-size:15px}
+.chat-ed-bts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chat-ed .btn,.chat-ed .ghost.big{min-height:44px;justify-content:center;border-radius:12px}
+.chat-menu{margin:0 12px 8px;padding:6px;border:1px solid var(--line);border-radius:16px;display:grid;gap:2px}
+.chat-op{display:flex;align-items:center;gap:12px;min-height:50px;padding:0 12px;border:0;border-radius:12px;background:none;color:var(--ink);font:inherit;font-size:16px;text-align:left}
+.chat-op:active{background:var(--bg)}
+.chat-op svg{width:20px;height:20px;flex:none;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chat-arqs{margin:0 12px 8px;display:grid;gap:6px}
+.chat-arq{display:flex;align-items:center;gap:10px;padding:4px 4px 4px 6px;border:1px solid var(--line);border-radius:12px;font-size:14px}
+.chat-arq img,.chat-arq .chat-pdf{width:36px;height:36px;border-radius:8px;object-fit:cover;flex:none;display:grid;place-items:center;color:var(--accent)}
+.chat-arq .chat-pdf svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chat-arq-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cm-arq{display:flex;align-items:center;gap:6px;font-weight:600;font-size:14px;margin:0 0 4px}
+.cm-arq svg{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .chat-ouvindo{margin:0;padding:0 18px 6px;font-size:13.5px;color:var(--muted)}
 .chat-ouvindo.err{color:var(--deal)}
 .chat-form{display:flex;align-items:flex-end;gap:8px;padding:10px 12px 12px;border-top:1px solid var(--line)}
 .chat-form textarea{flex:1;min-width:0;resize:none;height:44px;max-height:132px;padding:10px 15px;border:1px solid var(--line);border-radius:22px;background:var(--bg);color:var(--ink);font:inherit;font-size:16px;line-height:1.4}
 .chat-form textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
-.chat-mic,.chat-env{flex:none;width:44px;height:44px;border:0;border-radius:50%;display:grid;place-items:center}
+.chat-mic,.chat-env,.chat-clip,.chat-q{flex:none;width:44px;height:44px;border:0;border-radius:50%;display:grid;place-items:center}
+.chat-clip,.chat-q{background:none;color:var(--ink)}
+.chat-clip.on,.chat-q.on{background:var(--accent-soft);color:var(--accent)}
+.chat-q svg,.chat-clip svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chat-form textarea::placeholder{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chat-mic{background:var(--accent-soft);color:var(--accent)}
 .chat-mic.on{background:var(--deal);color:var(--surface)}
 .chat-mic:disabled{opacity:.6;cursor:progress}
@@ -1863,10 +1894,18 @@ input.field,select.field{min-height:var(--altura)}
   </header>
   <div class="chat-msgs" id="chatMsgs" aria-live="polite"></div>
   <div class="chat-sug" id="chatSug"></div>
+  <div class="chat-menu" id="chatMenu" role="menu" hidden>
+    <button type="button" class="chat-op" role="menuitem" data-chat-op="camera"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Tirar foto</button>
+    <button type="button" class="chat-op" role="menuitem" data-chat-op="fotos"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>Escolher fotos</button>
+    <button type="button" class="chat-op" role="menuitem" data-chat-op="arquivo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M10 9H8M16 13H8M16 17H8"/></svg>Escolher arquivo</button>
+  </div>
+  <div class="chat-arqs" id="chatArqs" hidden></div>
   <p class="chat-ouvindo" id="chatOuvindo" aria-live="polite" hidden></p>
   <form class="chat-form" id="chatForm" novalidate>
+    <button type="button" class="chat-clip" id="chatClip" aria-label="Anexar" title="Anexar" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.4 11.1-9.2 9.2a6 6 0 0 1-8.5-8.5l8.6-8.6a4 4 0 1 1 5.7 5.7l-8.6 8.6a2 2 0 0 1-2.8-2.8l8-8"/></svg></button>
     <textarea id="chatTxt" rows="1" data-size="off" maxlength="2000" placeholder="Pergunte o que quiser" aria-label="Mensagem para a IA" enterkeyhint="send"></textarea>
-    <button type="button" class="chat-mic so-voz" id="chatMic" aria-label="Falar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+    <button type="button" class="chat-q" id="chatQ" aria-label="Perguntas prontas" title="Perguntas prontas" aria-expanded="false" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.9 15.5a2 2 0 0 0-1.4-1.4L2.4 12.5a.5.5 0 0 1 0-1l6.1-1.6a2 2 0 0 0 1.4-1.4l1.6-6.1a.5.5 0 0 1 1 0l1.6 6.1a2 2 0 0 0 1.4 1.4l6.1 1.6a.5.5 0 0 1 0 1l-6.1 1.6a2 2 0 0 0-1.4 1.4l-1.6 6.1a.5.5 0 0 1-1 0z"/><path d="M20 3v4M22 5h-4"/></svg></button>
+    <button type="button" class="chat-mic" id="chatMic" aria-label="Falar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
     <button type="submit" class="chat-env" id="chatEnv" aria-label="Enviar" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
   </form>
 </section>
@@ -3946,6 +3985,7 @@ input.field,select.field{min-height:var(--altura)}
   function pintaVoz(){
     var ok = vozPronta();
     [].forEach.call(document.querySelectorAll('.so-voz'), function(el){ el.hidden = !ok; });
+    if (CHAT) pintaEnvio();  // na Conversa, o microfone divide o botão com o Enviar
     var el = $('vozSt'), v = VOZ_ST, sel = $('iaVoz'), ops = arr(v && v.opcoes);
     // a escolha como o servidor entende (uma de antes, de um assistente, vira o motor dele: voz.py, igual ao do GerencIA)
     var escolhida = (v && v.selecionada) || estado.ia.voz || '';
@@ -4050,7 +4090,12 @@ input.field,select.field{min-height:var(--altura)}
 
   // ===== Conversa com a IA: sobre a tela aberta ou qualquer assunto. A IA só sugere; cada ação acontece com um toque =====
   var KEY_CHAT = 'ofertas-bairro:chat', CHAT_MAX = 40, CHAT_TURNOS = 12, CHAT_VOZ_MAX_S = 60;
-  var CHAT = {aberto:false, esperando:false, msgs:[], grav:null, gravT:null, voz:'off'};
+  var CHAT = {aberto:false, esperando:false, msgs:[], grav:null, gravT:null, voz:'off', arqs:[], envArqs:[], menu:false, rapidas:false, ed:null};
+  // 1.38.0: Perguntas prontas: as da tela até a pessoa editar (Editar perguntas, guardadas no aparelho); o ✨ abre a qualquer momento
+  var KEY_PERG = 'ofertas-bairro:perguntas', CHAT_MAX_ARQ = 4;
+  var SVG_LAPIS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.4 3.6a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+  var SVG_CLIPE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.4 11.1-9.2 9.2a6 6 0 0 1-8.5-8.5l8.6-8.6a4 4 0 1 1 5.7 5.7l-8.6 8.6a2 2 0 0 1-2.8-2.8l8-8"/></svg>';
+  var SVG_PDF = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M10 9H8M16 13H8M16 17H8"/></svg>';
   var SUG_CHAT = {
     lista:['Onde a compra fica mais barata?', 'O que está acabando?', 'Monte uma lista para um churrasco'],
     roteiro:['Vale a pena ir em duas lojas?', 'Onde compro tudo de uma vez?'],
@@ -4065,11 +4110,16 @@ input.field,select.field{min-height:var(--altura)}
     abrir:{ic:'<path d="M5 12h14M13 6l6 6-6 6"/>', faz:'Abrir ', feito:'Abrir '}
   };
   var SVG_FEITO = '<path d="M5 12.5l4.5 4.5L19 7.5"/>';
+  var SVG_X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  var SVG_MAIS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+  var SVG_DESFAZ = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>';
+  var SVG_FEITO_BTN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   function acaoOk(a){ return !!(a && ACAO_CHAT[a.tipo] && (a.tipo === 'abrir' ? TITULOS[a.tela] : typeof a.produto === 'string' && a.produto.trim().length > 1)); }
   (function(){
     var c = lerLocal(KEY_CHAT);
     CHAT.msgs = arr(c && c.msgs).filter(function(m){ return m && (m.de === 'eu' || m.de === 'ia') && typeof m.texto === 'string'; })
-      .map(function(m){ return {de:m.de, texto:m.texto.slice(0, 6000), acoes:m.de === 'ia' ? arr(m.acoes).filter(acaoOk).slice(0, 6) : undefined, web:m.web === true || undefined}; }).slice(-CHAT_MAX);
+      .map(function(m){ var an = m.de === 'eu' ? arr(m.anexos).filter(function(x){ return typeof x === 'string' && x; }).slice(0, CHAT_MAX_ARQ) : [];
+        return {de:m.de, texto:m.texto.slice(0, 6000), acoes:m.de === 'ia' ? arr(m.acoes).filter(acaoOk).slice(0, 6) : undefined, web:m.web === true || undefined, anexos:an.length ? an : undefined}; }).slice(-CHAT_MAX);
   })();
   function guardaChat(){ gravarLocal(KEY_CHAT, {msgs:CHAT.msgs.filter(function(m){ return m.de !== 'erro'; }).slice(-CHAT_MAX)}); }
   function textoAcao(a, feito){ return ACAO_CHAT[a.tipo][feito ? 'feito' : 'faz'] + (a.tipo === 'abrir' ? TITULOS[a.tela] : a.produto); }
@@ -4077,7 +4127,7 @@ input.field,select.field{min-height:var(--altura)}
   function pintaChat(){
     var h = !CHAT.msgs.length && !CHAT.esperando ? '<p class="chat-vazio">Pergunte sobre a lista, as ofertas ou o que quiser. A IA sugere; você confirma.</p>' : '';
     CHAT.msgs.forEach(function(m, i){
-      if (m.de === 'eu'){ h += '<div class="cm eu"><p>' + esc(m.texto) + '</p></div>'; return; }
+      if (m.de === 'eu'){ h += '<div class="cm eu">' + arr(m.anexos).map(function(n){ return '<p class="cm-arq">' + SVG_CLIPE + esc(n) + '</p>'; }).join('') + (m.texto ? '<p>' + esc(m.texto) + '</p>' : '') + '</div>'; return; }
       if (m.de === 'erro'){ h += '<div class="cm erro" role="alert">' + esc(m.texto) + ' <button type="button" class="link" data-chat-repete="1">Tentar de novo</button></div>'; return; }
       var acoes = arr(m.acoes);
       h += '<div class="cm ia">' + (m.texto ? '<p>' + fmtChat(m.texto) + '</p>' : '') + (acoes.length ? '<div class="cm-acoes">' + acoes.map(function(a, j){
@@ -4088,13 +4138,52 @@ input.field,select.field{min-height:var(--altura)}
     });
     if (CHAT.esperando) h += '<div class="cm ia pensando" role="status" aria-label="A IA está respondendo"><i></i><i></i><i></i></div>';
     var box = $('chatMsgs'); box.innerHTML = h; box.scrollTop = box.scrollHeight;
-    var sug = CHAT.msgs.length || CHAT.esperando ? [] : (SUG_CHAT[ui.view] || SUG_CHAT.lista);
-    $('chatSug').hidden = !sug.length;
-    $('chatSug').innerHTML = sug.map(function(s){ return '<button type="button" data-chat-sug="' + esc(s) + '">' + esc(s) + '</button>'; }).join('');
+    pintaSug(); pintaArqs();
     $('chatNova').disabled = !CHAT.msgs.length || CHAT.esperando;
     pintaEnvio();
   }
-  function pintaEnvio(){ $('chatEnv').disabled = CHAT.esperando || !$('chatTxt').value.trim(); }
+  function perguntasPadrao(){ return SUG_CHAT[ui.view] || SUG_CHAT.lista; }
+  function perguntas(){
+    var v = lerLocal(KEY_PERG);
+    return Array.isArray(v) ? v.filter(function(x){ return typeof x === 'string' && x.trim(); }) : perguntasPadrao();
+  }
+  function guardaPerguntas(l){ if (l === null){ try { localStorage.removeItem(KEY_PERG); } catch(e){ /* modo privado */ } } else gravarLocal(KEY_PERG, l); }
+  // as perguntas: na conversa vazia, à vista; com a conversa andando, pelo ✨; Editar perguntas vira uma lista para mudar
+  function pintaSug(){
+    var box = $('chatSug'), andando = CHAT.msgs.length > 0, mostra = !CHAT.esperando && (!andando || CHAT.rapidas || !!CHAT.ed);
+    box.hidden = !mostra; box.classList.toggle('aberta', mostra && andando);
+    var q = $('chatQ'), aberto = andando && (CHAT.rapidas || !!CHAT.ed);
+    q.hidden = !andando; q.classList.toggle('on', aberto); q.setAttribute('aria-expanded', String(aberto));
+    if (!mostra){ box.innerHTML = ''; return; }
+    var ed = CHAT.ed;
+    if (ed){
+      box.innerHTML = '<div class="chat-ed"><p class="chat-ed-h">' + SVG_LAPIS + 'Perguntas prontas</p>'
+        + ed.lista.map(function(t, i){ return '<div class="chat-ed-lin"><span>' + esc(t) + '</span><button type="button" data-chat-ed="tirar" data-i="' + i + '" aria-label="Tirar “' + esc(t) + '”" title="Tirar">' + SVG_X + '</button></div>'; }).join('')
+        + '<div class="chat-ed-nova"><input id="chatEdTxt" maxlength="120" placeholder="Nova pergunta" aria-label="Nova pergunta" enterkeyhint="done" value="' + esc(ed.rascunho || '') + '">'
+        + '<button type="button" class="ghost big" data-chat-ed="add">' + SVG_MAIS + 'Adicionar</button></div>'
+        + '<div class="chat-ed-bts"><button type="button" class="ghost big" data-chat-ed="padrao">' + SVG_DESFAZ + 'Padrão</button><button type="button" class="btn" data-chat-ed="pronto">' + SVG_FEITO_BTN + 'Pronto</button></div></div>';
+      return;
+    }
+    var l = perguntas();
+    box.innerHTML = (l.length ? '<div class="chat-sug-l">' + l.map(function(t){ return '<button type="button" data-chat-sug="' + esc(t) + '">' + esc(t) + '</button>'; }).join('') + '</div>' : '')
+      + '<button type="button" class="chat-ed-abrir" data-chat-ed="abrir">' + SVG_LAPIS + 'Editar perguntas</button>';
+  }
+  function pintaArqs(){
+    var box = $('chatArqs');
+    $('chatMenu').hidden = !CHAT.menu;
+    var c = $('chatClip'); c.classList.toggle('on', CHAT.menu); c.setAttribute('aria-expanded', String(CHAT.menu)); c.disabled = CHAT.esperando;
+    box.hidden = !CHAT.arqs.length;
+    box.innerHTML = CHAT.arqs.map(function(a, i){
+      return '<div class="chat-arq">' + (a.pdf ? '<span class="chat-pdf">' + SVG_PDF + '</span>' : '<img src="' + a.b64 + '" alt="">') + '<span class="chat-arq-n">' + esc(a.nome) + '</span>'
+        + '<button type="button" data-chat-arq-rm="' + i + '" aria-label="Tirar ' + esc(a.nome) + '">' + SVG_X + '</button></div>';
+    }).join('');
+  }
+  // o botão redondo da direita: com a caixa vazia, o microfone (gravando, o Pronto); com texto ou arquivo, o Enviar
+  function pintaEnvio(){
+    var vazio = !$('chatTxt').value.trim() && !CHAT.arqs.length, mic = vozPronta() && (vazio || CHAT.voz !== 'off');
+    $('chatMic').hidden = !mic; $('chatEnv').hidden = mic;
+    $('chatEnv').disabled = CHAT.esperando || vazio;
+  }
   function ajustaTxt(){ var t = $('chatTxt'); t.style.height = '44px'; t.style.height = Math.min(132, Math.max(44, t.scrollHeight + 2)) + 'px'; }
   function marcaBalao(on){ [].forEach.call(document.querySelectorAll('[data-acao="chat"]'), function(b){ b.setAttribute('aria-expanded', String(on)); }); }
   function noComputador(){ return window.matchMedia('(min-width: 1000px)').matches; }
@@ -4129,7 +4218,7 @@ input.field,select.field{min-height:var(--altura)}
   $('chatFechar').addEventListener('click', function(){ fechaChat(); });
   $('chatFundo').addEventListener('click', function(){ fechaChat(); });
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && CHAT.aberto) fechaChat(); });
-  $('chatNova').addEventListener('click', function(){ if (CHAT.esperando) return; CHAT.msgs = []; guardaChat(); pintaChat(); });
+  $('chatNova').addEventListener('click', function(){ if (CHAT.esperando) return; CHAT.msgs = []; CHAT.rapidas = false; CHAT.menu = false; guardaChat(); pintaChat(); });
   // "Vale a pena?" numa oferta: a conversa abre e a IA avalia o produto com a busca na web (avaliações, reclamações, preço de costume)
   function avaliaOferta(o){
     if (!iaOn()) return;
@@ -4142,15 +4231,20 @@ input.field,select.field{min-height:var(--altura)}
     var ult = CHAT.msgs[CHAT.msgs.length - 1];
     if (ult && ult.web && /^Compare/.test(ult.texto)) return {resposta:'No Home Assistant, a sua IA compara as opções: se a marca é boa e confiável, o rendimento de verdade (como o osso do frango) e o preço do que se aproveita, e diz qual levar.', acoes:[]};
     if (ult && ult.web) return {resposta:'Depende. No Home Assistant, a sua IA procura na web a nota e as avaliações de quem comprou, as reclamações e o preço de costume deste produto, e diz se vale a pena.', acoes:[]};
+    if (CHAT.envArqs.length) return {resposta:'No Home Assistant, a sua IA olha ' + (CHAT.envArqs.length > 1 ? 'os ' + CHAT.envArqs.length + ' arquivos' : 'o arquivo') + ' (uma nota, um encarte, uma lista) e responde.', acoes:[]};
     var novo = ['Detergente 500 ml', 'Papel toalha', 'Sabonete'].filter(function(n){ return itemDaLista(n) < 0; })[0];
     return {resposta:'No Home Assistant, a sua IA responde aqui, com a sua lista, os preços e as ofertas. Quando ela sugerir uma mudança, só acontece com o seu toque:',
       acoes:(novo ? [{tipo:'por_na_lista', produto:novo}] : []).concat([{tipo:'abrir', tela:'ofertas'}])};
   }
   function enviaChat(texto, web){
     texto = String(texto || '').trim().slice(0, 2000);
-    if (!texto || CHAT.esperando) return;
+    var arqs = web ? [] : CHAT.arqs;
+    if ((!texto && !arqs.length) || CHAT.esperando) return;
     CHAT.msgs = CHAT.msgs.filter(function(m){ return m.de !== 'erro'; });
-    CHAT.msgs.push(web ? {de:'eu', texto:texto, web:true} : {de:'eu', texto:texto});
+    var m = web ? {de:'eu', texto:texto, web:true} : {de:'eu', texto:texto};
+    if (arqs.length) m.anexos = arqs.map(function(a){ return a.nome; });
+    CHAT.msgs.push(m);
+    CHAT.envArqs = arqs; CHAT.arqs = []; CHAT.menu = false; CHAT.rapidas = false; CHAT.ed = null;
     $('chatTxt').value = ''; ajustaTxt();
     pedeChat();
   }
@@ -4161,15 +4255,19 @@ input.field,select.field{min-height:var(--altura)}
     CHAT.esperando = true; guardaChat(); pintaChat();
     // o que a IA sugeriu e o que a pessoa fez vão junto, para a IA saber do que se fala
     var hist = CHAT.msgs.slice(-CHAT_TURNOS).map(function(m){
-      var ac = arr(m.acoes);
-      return {de:m.de, texto:m.texto + (ac.length ? '\n(Sugeri: ' + ac.map(function(a){ return textoAcao(a, false) + (a.feito ? ', feito' : ''); }).join('; ') + ')' : '')};
+      var ac = arr(m.acoes), h = {de:m.de, texto:m.texto + (ac.length ? '\n(Sugeri: ' + ac.map(function(a){ return textoAcao(a, false) + (a.feito ? ', feito' : ''); }).join('; ') + ')' : '')};
+      if (m.anexos) h.anexos = m.anexos;
+      return h;
     });
+    // os arquivos vão só com a mensagem em que foram escolhidos (e de novo no Tentar de novo)
+    var corpo = {mensagens:hist, tela:ui.view, web:!!ultimaMinha().web};
+    if (CHAT.envArqs.length) corpo.anexos = CHAT.envArqs.map(function(a){ return {nome:a.nome, b64:a.b64}; });
     var resp = MODO !== 'addon' ? new Promise(function(ok){ setTimeout(function(){ ok(exemploChat()); }, 700); })
-      : fetch('api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({mensagens:hist, tela:ui.view, web:!!ultimaMinha().web})})
+      : fetch('api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(corpo)})
         .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if (!r.ok) throw new Error(j.erro || 'A IA não respondeu. Tente de novo.'); return j; }); },
           function(){ throw new Error('Sem conexão com o Home Assistant. Tente de novo.'); });
     resp.then(function(j){
-      CHAT.esperando = false;
+      CHAT.esperando = false; CHAT.envArqs = [];
       CHAT.msgs.push({de:'ia', texto:String(j.resposta || ''), acoes:arr(j.acoes).filter(acaoOk).slice(0, 6)});
       CHAT.msgs = CHAT.msgs.slice(-CHAT_MAX); guardaChat(); pintaChat();
     }).catch(function(err){
@@ -4179,8 +4277,57 @@ input.field,select.field{min-height:var(--altura)}
   }
   $('chatForm').addEventListener('submit', function(e){ e.preventDefault(); enviaChat($('chatTxt').value); });
   $('chatTxt').addEventListener('input', function(){ ajustaTxt(); pintaEnvio(); });
+  // o clipe: Tirar foto (a câmera do celular), Escolher fotos (a galeria) e Escolher arquivo (uma foto ou um PDF)
+  $('chatClip').addEventListener('click', function(){ CHAT.menu = !CHAT.menu; if (CHAT.menu){ CHAT.rapidas = false; CHAT.ed = null; } pintaSug(); pintaArqs(); });
+  $('chatMenu').addEventListener('click', function(e){
+    var b = e.target.closest('[data-chat-op]'); if (!b) return;
+    var op = b.dataset.chatOp, inp = document.createElement('input');
+    CHAT.menu = false; pintaArqs();
+    inp.type = 'file'; inp.accept = op === 'arquivo' ? 'image/*,application/pdf' : 'image/*'; inp.style.display = 'none';
+    if (op === 'camera') inp.setAttribute('capture', 'environment');
+    if (op === 'fotos') inp.multiple = true;
+    inp.addEventListener('change', function(){ var l = [].slice.call(inp.files || []); inp.remove(); if (l.length) poeArqs(l); });
+    document.body.appendChild(inp); inp.click();
+  });
+  function poeArqs(l){
+    var f = l.shift(); if (!f){ pintaArqs(); pintaEnvio(); return; }
+    var pdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name || '');
+    if (!pdf && f.type && !/^image\//.test(f.type)){ toast('Escolha uma foto ou um PDF.'); return poeArqs(l); }
+    if (pdf && f.size > 15 * 1024 * 1024){ toast('Arquivo grande demais (até 15 MB).'); return poeArqs(l); }
+    if (!pdf && CHAT.arqs.length >= CHAT_MAX_ARQ && !CHAT.arqs.some(function(a){ return a.pdf; })){ toast('Até ' + CHAT_MAX_ARQ + ' arquivos por mensagem.'); pintaArqs(); pintaEnvio(); return; }
+    var feito = function(b64){
+      if (pdf || CHAT.arqs.some(function(a){ return a.pdf; })) CHAT.arqs = [];  // um PDF vai sozinho
+      CHAT.arqs.push({nome:f.name || (pdf ? 'arquivo.pdf' : 'Foto ' + (CHAT.arqs.length + 1) + '.jpg'), pdf:pdf, b64:b64});
+      poeArqs(l);
+    };
+    if (pdf){ var r = new FileReader(); r.onload = function(){ feito(String(r.result).replace(/^data:[^;,]*/, 'data:application/pdf')); }; r.onerror = function(){ toast('Não deu para abrir o arquivo.'); poeArqs(l); }; r.readAsDataURL(f); }
+    else reduz(f).then(feito, function(){ toast('Não deu para abrir esta foto. Use JPG ou PNG.'); poeArqs(l); });
+  }
+  $('chatArqs').addEventListener('click', function(e){ var b = e.target.closest('[data-chat-arq-rm]'); if (!b) return; CHAT.arqs.splice(Number(b.dataset.chatArqRm), 1); pintaArqs(); pintaEnvio(); });
+  $('chatQ').addEventListener('click', function(){ CHAT.rapidas = !(CHAT.rapidas || CHAT.ed); CHAT.ed = null; CHAT.menu = false; pintaSug(); pintaArqs(); });
+  function perguntaNova(){
+    var ed = CHAT.ed, t = ed && String(ed.rascunho || '').trim(); if (!t) return;
+    ed.lista.push(t.slice(0, 120)); ed.rascunho = ''; pintaSug();
+    var i = $('chatEdTxt'); if (i) i.focus();
+  }
+  $('chatSug').addEventListener('input', function(e){ if (e.target.id === 'chatEdTxt' && CHAT.ed) CHAT.ed.rascunho = e.target.value; });
+  $('chatSug').addEventListener('keydown', function(e){ if (e.target.id === 'chatEdTxt' && e.key === 'Enter' && !e.isComposing){ e.preventDefault(); perguntaNova(); } });
   $('chatTxt').addEventListener('keydown', function(e){ if (e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); enviaChat(this.value); } });
-  $('chatSug').addEventListener('click', function(e){ var b = e.target.closest('[data-chat-sug]'); if (b) enviaChat(b.dataset.chatSug); });
+  $('chatSug').addEventListener('click', function(e){
+    var b = e.target.closest('[data-chat-sug]'); if (b){ CHAT.rapidas = false; enviaChat(b.dataset.chatSug); return; }
+    var ed = e.target.closest('[data-chat-ed]'); if (!ed) return;
+    var o = ed.dataset.chatEd;
+    if (o === 'abrir') CHAT.ed = {lista:perguntas().slice(), rascunho:''};
+    else if (o === 'tirar') CHAT.ed.lista.splice(Number(ed.dataset.i), 1);
+    else if (o === 'add') return perguntaNova();
+    else if (o === 'padrao'){ guardaPerguntas(null); CHAT.ed = {lista:perguntasPadrao().slice(), rascunho:''}; }
+    else if (o === 'pronto'){
+      var t = String(CHAT.ed.rascunho || '').trim(), l = CHAT.ed.lista.concat(t ? [t.slice(0, 120)] : []);
+      guardaPerguntas(l.join('\n') === perguntasPadrao().join('\n') ? null : l);  // as da tela: seguem a tela
+      CHAT.ed = null;
+    }
+    pintaSug();
+  });
   function itemDaLista(nome){ var k = norm(nome); for (var i = 0; i < estado.lista.length; i++) if (norm(estado.lista[i].produto) === k) return i; return -1; }
   function fazAcaoChat(a){
     if (a.tipo === 'abrir'){
@@ -4224,6 +4371,7 @@ input.field,select.field{min-height:var(--altura)}
   // microfone da conversa: o que você falar vira texto na caixa, para conferir antes de enviar
   function vozChatMsg(t, err){ var o = $('chatOuvindo'); o.hidden = !t; o.textContent = t || ''; o.className = 'chat-ouvindo' + (err ? ' err' : ''); }
   function pintaMicChat(){
+    pintaEnvio();
     var b = $('chatMic'), on = CHAT.voz === 'on';
     b.classList.toggle('on', on); b.disabled = CHAT.voz === 'starting' || CHAT.voz === 'enviando';
     b.setAttribute('aria-label', on ? 'Pronto: transcrever o que falei' : 'Falar');

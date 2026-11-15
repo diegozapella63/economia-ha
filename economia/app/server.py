@@ -117,6 +117,7 @@ VOZ_SIMULADA = os.environ.get("OFERTAS_VOZ_SIMULADA") == "1"  # só para testes 
 INGRESS_IPS = {"172.30.32.2", "127.0.0.1", "::1"}
 ALLOW_ALL = os.environ.get("OFERTAS_ALLOW_ALL") == "1"  # só para testes fora do HA
 MAX_BODY = 2 * 1024 * 1024
+MAX_CHAT_BODY = 24 * 1024 * 1024
 MAX_FOTOS_BODY = 16 * 1024 * 1024
 # fotos ficam um instante na pasta de mídia do HA, para a IA ler, e são apagadas em seguida
 MEDIA = os.environ.get("OFERTAS_MEDIA", "/media")
@@ -7463,8 +7464,11 @@ def contexto_chat(tela, cfg=None, of=None):
     return "\n".join(linhas)
 
 
-def instrucoes_chat(contexto, mensagens):
+def instrucoes_chat(contexto, mensagens, arquivos=0):
     conversa = "\n".join(("Pessoa: " if de == "eu" else "EconomIA: ") + t for de, t in mensagens)
+    nota = (f"Com a última mensagem, a pessoa mandou {'1 arquivo' if arquivos == 1 else f'{arquivos} arquivos'} (foto ou PDF), que vão "
+            "junto: olhe o que está neles (uma nota fiscal, um encarte, uma lista, um produto) para responder e, se ajudar, sugerir ações.\n\n"
+            if arquivos else "")
     return (
         "Você é a IA do EconomIA, um app do Home Assistant que compara os preços de mercados, farmácias e pet shops do bairro "
         "e cuida da lista de compras da casa. Converse em português do Brasil, com respostas curtas e diretas (poucas frases ou "
@@ -7490,7 +7494,7 @@ def instrucoes_chat(contexto, mensagens):
         "Responda só com um objeto JSON, sem texto fora dele:\n"
         '{"resposta": "o texto para a pessoa", "acoes": [{"tipo": "por_na_lista", "produto": "Café 500 g"}, {"tipo": "abrir", "tela": "ofertas"}]}\n'
         'Sem ações: "acoes": [].\n\n'
-        f"Dados do app:\n{contexto}\n\nConversa (responda à última mensagem da pessoa):\n{conversa}"
+        f"Dados do app:\n{contexto}\n\n{nota}Conversa (responda à última mensagem da pessoa):\n{conversa}"
     )
 
 
@@ -7535,22 +7539,62 @@ def acoes_validas(acoes, cfg):
     return out[:MAX_ACOES_CHAT]
 
 
+MAX_ARQ_CHAT = 4  # 1.38.0: o clipe da Conversa (Tirar foto, Escolher fotos, Escolher arquivo)
+TIPOS_ARQ_CHAT = {"image/jpeg", "image/png", "image/webp", "application/pdf"}
+
+
+def arquivos_chat(dado):
+    """As fotos ou o PDF da última mensagem: [(bytes, tipo, nome)]; até 4 fotos ou um PDF, até 15 MB cada."""
+    lista = dado.get("anexos") if isinstance(dado.get("anexos"), list) else []
+    if len(lista) > MAX_ARQ_CHAT:
+        raise ErroBusca(f"No máximo {MAX_ARQ_CHAT} arquivos de cada vez.")
+    out = []
+    for a in lista:
+        m = re.match(r"^data:([\w/+.-]+);base64,(.+)$", str((a or {}).get("b64") or "") if isinstance(a, dict) else "", re.S)
+        bruto = b""
+        if m and m.group(1) in TIPOS_ARQ_CHAT:
+            try:
+                bruto = base64.b64decode(m.group(2), validate=False)
+            except ValueError:
+                bruto = b""
+        if not bruto or len(bruto) > 15 * 1024 * 1024:
+            raise ErroBusca("Um dos arquivos não abriu. Use uma foto (JPG ou PNG) ou um PDF, até 15 MB.")
+        tipo = m.group(1)
+        nome = " ".join(str(a.get("nome") or "").split())[:80] or ("arquivo.pdf" if tipo == "application/pdf" else "foto.jpg")
+        out.append((bruto, tipo, nome))
+    if len(out) > 1 and any(t == "application/pdf" for _, t, _ in out):
+        raise ErroBusca("Envie um PDF por vez.")
+    return out
+
+
 def conversar(dado):
-    """Uma resposta da IA para a conversa: {resposta, acoes}. As mensagens vêm da página (as últimas 12)."""
+    """Uma resposta da IA para a conversa: {resposta, acoes}. As mensagens vêm da página (as últimas 12); com o clipe,
+    as fotos ou o PDF vão junto com a última (só o nome fica na conversa)."""
     if not ia_ligada():
         raise ErroBusca(IA_DESLIGADA)
+    arquivos = arquivos_chat(dado)
     mensagens = []
     for m in (dado.get("mensagens") if isinstance(dado.get("mensagens"), list) else [])[-MAX_TURNOS_CHAT:]:
         if isinstance(m, dict):
             t = "\n".join(" ".join(linha.split()) for linha in str(m.get("texto") or "").strip().splitlines()).strip()[:MAX_TEXTO_CHAT]
+            nomes = [" ".join(str(x).split())[:80] for x in (m.get("anexos") if isinstance(m.get("anexos"), list) else []) if str(x).strip()][:MAX_ARQ_CHAT]
+            if nomes and m.get("de") != "ia":
+                t = ("[mandou " + ", ".join(nomes) + "] " + t).strip()
             if t:
                 mensagens.append(("ia" if m.get("de") == "ia" else "eu", t))
+    if arquivos and mensagens and mensagens[-1][0] == "eu" and not mensagens[-1][1].startswith("[mandou"):
+        mensagens[-1] = ("eu", ("[mandou " + ", ".join(n for _, _, n in arquivos) + "] " + mensagens[-1][1]).strip())
+    elif arquivos and (not mensagens or mensagens[-1][0] != "eu"):
+        mensagens.append(("eu", "[mandou " + ", ".join(n for _, _, n in arquivos) + "]"))
     if not mensagens or mensagens[-1][0] != "eu":
         raise ErroBusca("Escreva a sua pergunta.")
     cfg = ler_config()
     tela = str(dado.get("tela") or "")
-    r = chamar_ai_task("EconomIA: conversa", instrucoes_chat(contexto_chat(tela if tela in TELAS_CHAT else "lista", cfg), mensagens),
-                       uso="avaliar" if dado.get("web") is True else "conversa")
+    instr = instrucoes_chat(contexto_chat(tela if tela in TELAS_CHAT else "lista", cfg), mensagens, len(arquivos))
+    if arquivos:
+        r = ia_com_arquivos("EconomIA: conversa", instr, [(b, t) for b, t, _ in arquivos], uso="conversa")
+    else:
+        r = chamar_ai_task("EconomIA: conversa", instr, uso="avaliar" if dado.get("web") is True else "conversa")
     resposta = next((r[k] for k in ("resposta", "texto", "mensagem", "answer", "response") if isinstance(r.get(k), str) and r[k].strip()), "")
     acoes = acoes_validas(r.get("acoes") if "acoes" in r else r.get("actions"), cfg)
     if not resposta.strip() and not acoes:
@@ -8358,7 +8402,7 @@ class Painel(BaseHTTPRequestHandler):
             except ErroBusca as e:
                 return self._json(200, {"ok": False, "msg": str(e)})
         if urllib.parse.urlsplit(self.path).path == "/api/chat":
-            dado = self._corpo()
+            dado = self._corpo(MAX_CHAT_BODY)  # 1.38.0: com o clipe, as fotos ou o PDF vêm junto
             if dado is None:
                 return
             try:

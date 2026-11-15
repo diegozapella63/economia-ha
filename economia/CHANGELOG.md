@@ -1,5 +1,11 @@
 # Mudanças
 
+## 1.38.0
+
+- **Conversa › Clipe**: manda junto uma foto ou um PDF: **Tirar foto**, **Escolher fotos** (a galeria) ou **Escolher arquivo**. A IA olha o arquivo (um encarte, uma nota fiscal) para responder e sugerir ações.
+- **Conversa › Perguntas prontas**: as sugestões viram suas. **Editar perguntas** tira (✕) e acrescenta as que você quiser; **Padrão** volta às de cada tela. Ficam guardadas no aparelho.
+- **Conversa**: o botão ✨ ao lado da caixa abre as perguntas prontas a qualquer momento; o microfone e o Enviar dividem o mesmo botão (com a caixa vazia, o microfone; escrevendo, o Enviar).
+
 ## 1.37.1
 
 - **Minha lista** no celular: o nome do item novo fica na linha toda, com **Adicionar** e os outros botões embaixo; com o ícone no botão, a caixa tinha ficado estreita demais.
