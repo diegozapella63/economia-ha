@@ -104,6 +104,7 @@ esperar (espera-se a condição: `Cenario.espera`, `espera()` nas visuais), semp
   testar, apagar, chave que nunca volta para a página), Usar IA e a escolha das IAs.
 - `e2e/ec_lojas.py`: Mais › Lojas: abas, procurar, só sem fonte, inativas, clube, loja sem localização.
 - `e2e/ec_lojas_acoes.py`: Encontrar lojas, Testar agora, Como foi testado, adicionar e ignorar loja.
+- `e2e/ec_beneficios_todas.py`: Mais › Lojas › Benefícios de todas: uma loja por rede, também as online, o andamento, o Parar e as procuradas há pouco de fora.
 - `e2e/ec_ofertas.py`: Ofertas e cupons por categoria, filtros, cupom que vence, online com frete; as escondidas no fim, em
   Escondidas (N), e os cupons vencidos em Vencidos (N), recolhidos até um toque.
 - `e2e/ec_comparar.py`: Comparar preço numa oferta (busca de verdade contra as lojas falsas): mais barato em outra loja,

@@ -120,7 +120,7 @@ Com `config.usar_ia` em `false`, nenhuma chamada de IA sai: `/api/buscar`, `/api
 
 ### Benefícios do clube (1.24.0)
 
-`POST /api/clube/beneficios {nome, clube}` (409 com a IA desligada): `beneficios_clube` chama `chamar_ai_task("EconomIA: clube <nome>", instrucoes_clube(...), uso="busca")` (tipo `clube` no Uso da IA), confere com `limpa_clube` (o nome do clube, custo, como entrar, até 8 benefícios com título, a fonte só se `url_ok`; sem clube, `{clube: null, beneficios: []}`) e guarda em `clubes.json` por `chave_loja(nome)`. `/api/estado` manda `clubes`; na página, `beneficiosHtml(c, l)` (ao lado do `clubeHtml`, nas lojas com clube ou já procuradas) e `buscaBeneficios(rid)`; o aberto fica em `CLUBE_ABERTO`.
+`POST /api/clube/beneficios {nome, clube}` (409 com a IA desligada): `beneficios_clube` chama `chamar_ai_task("EconomIA: clube <nome>", instrucoes_clube(...), uso="busca")` (tipo `clube` no Uso da IA), confere com `limpa_clube` (o nome do clube, custo, como entrar, até 8 benefícios com título, a fonte só se `url_ok`; sem clube, `{clube: null, beneficios: []}`) e guarda em `clubes.json` por `chave_loja(nome)`. `/api/estado` manda `clubes`; na página, `beneficiosHtml(c, l)` (ao lado do `clubeHtml`, nas lojas com clube ou já procuradas) e `buscaBeneficios(rid, lote)`; o aberto fica em `CLUBE_ABERTO`. **Benefícios de todas** (`#benTodas`, `beneficiosTodas`): `lojasBeneficios()` junta as lojas acompanhadas das abas com clube e os marketplaces de `online.marketplaces`, uma por `chaveLoja`, menos as procuradas há menos de `BEN_DIAS` (60, o `DIAS_CLUBE` do servidor), e chama `buscaBeneficios(rid, true)` uma de cada vez (sem o aviso nem abrir os benefícios de cada uma; um erro para o lote); `BEN_LOTE.parar` é o **Parar**, e o andamento vai em `#benTodasMsg`.
 
 ### Mercados da região que entregam (1.22.0)
 
@@ -160,7 +160,7 @@ de IA (`ia_da_conversa`: a de fotos, a de busca ou a opção do add-on, só `ai_
 nunca `conversation.*`. A resposta pedida é `{"resposta", "acoes"}`; texto solto também vale como resposta. As ações
 (`por_na_lista`, `tirar_da_lista`, `comprei`, `buscar`, `abrir`) passam por `acoes_validas`: item da lista pelo nome
 normalizado (ou o único que contém o nome), produto novo só se não estiver na lista, tela que existe, sem repetidas, até 6.
-Uso contado como `conversa`. **Vale a pena?** (cada oferta, 1.6.0) manda `web: true`: o uso vira `avaliar`, e `ia_da_conversa(web=True)` prefere a IA de busca (a de fotos depois), sempre só `ai_task.*`; as instruções pedem o veredito (Vale a pena, Depende ou Não vale) com a nota, as avaliações, as reclamações e o preço de costume pela busca na web. A página guarda a conversa no `localStorage` do aparelho (`ofertas-bairro:chat`, 40 mensagens).
+Uso contado como `conversa`. **Vale a pena?** (cada oferta, 1.6.0) manda `web: true`: o uso vira `avaliar`, e `ia_da_conversa(web=True)` prefere a IA de busca (a de fotos depois), sempre só `ai_task.*`; as instruções pedem o veredito (Vale a pena, Depende ou Não vale) com a nota, as avaliações, as reclamações e o preço de costume pela busca na web. A página guarda a conversa no `localStorage` do aparelho (`ofertas-bairro:chat`, 40 mensagens). As perguntas prontas (`pintaSug`) são botões em linhas (`.chat-sug-l`, um embaixo do outro, com o ✨ `SVG_BRILHO` na frente), como nos outros apps.
 
 ### Leitura de fotos
 

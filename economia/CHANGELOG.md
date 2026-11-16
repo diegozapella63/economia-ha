@@ -1,5 +1,10 @@
 # Mudanças
 
+## 1.39.0
+
+- **Mais › Lojas › Benefícios de todas**: a IA procura os benefícios do clube de todas as lojas que você acompanha de uma vez, inclusive as online, uma de cada vez, mostrando qual está procurando. **Parar** termina a loja da vez e para. As já procuradas nos últimos 60 dias ficam de fora; o **Benefícios** de cada loja continua procurando de novo.
+- **Conversa**: as perguntas prontas ficam em linhas com o ✨ na frente, como nos outros apps, em vez de uma lista corrida.
+
 ## 1.38.0
 
 - **Conversa › Clipe**: manda junto uma foto ou um PDF: **Tirar foto**, **Escolher fotos** (a galeria) ou **Escolher arquivo**. A IA olha o arquivo (um encarte, uma nota fiscal) para responder e sugerir ações.

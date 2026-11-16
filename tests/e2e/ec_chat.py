@@ -68,6 +68,11 @@ async def main():
             check(await pg.text_content(".chat-vazio") == "Pergunte sobre a lista, as ofertas ou o que quiser. A IA sugere; você confirma.", "o texto da conversa vazia")
             sug = await pg.locator("#chatSug [data-chat-sug]").all_text_contents()
             check(sug == ["Onde a compra fica mais barata?", "O que está acabando?", "Monte uma lista para um churrasco"], f"as sugestões da Minha lista ({sug})")
+            # 1.38.1: em linhas, quebrando (nada de rolar de lado), cada uma com o ✨, dentro da largura
+            caixas = [await b.bounding_box() for b in await pg.locator("#chatSug [data-chat-sug]").all()]
+            check(len({round(c["y"]) for c in caixas}) >= 2 and all(c["x"] >= 0 and c["x"] + c["width"] <= 391 for c in caixas), f"as perguntas em linhas, na largura ({caixas})")
+            check(await pg.locator("#chatSug [data-chat-sug] svg").count() == 3, "cada uma com o ✨")
+            check(await pg.evaluate("() => { const l = document.querySelector('#chatSug .chat-sug-l'); return l.scrollWidth <= l.clientWidth + 1; }"), "sem rolar de lado")
             check(await pg.is_disabled("#chatNova"), "sem conversa: Nova conversa inativa")
             check(await pg.locator("#chatMic").is_visible() and await pg.locator("#chatEnv").is_hidden(), "1.38.0: com a caixa vazia, o microfone no lugar do Enviar")
             await pg.fill("#chatTxt", "oi")

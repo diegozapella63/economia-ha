@@ -235,6 +235,7 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:34px;text-ove
 .row-form:not(:has(.field)):not(#mp-dados .row-form) > :is(.btn, .ghost.big){flex:1 1 calc(50% - 4px);min-width:fit-content;white-space:nowrap;min-height:50px;
   justify-content:center;border-radius:12px;padding:12px 18px;font-size:15px;box-sizing:border-box;text-align:center} /* sem caber os dois, um embaixo do outro */
 @media (min-width:1000px){.row-form:not(:has(.field)):not(#mp-dados .row-form) > :is(.btn, .ghost.big){flex:none;width:250px}}
+@media (max-width:999px){#mp-lojas .row-form > #benTodas{flex-basis:100%}} /* 1.39.0: no celular, embaixo do Encontrar lojas (o Parar não pula para o lado) */
 #mp-dados .confirma .row-form > .btn,#mp-dados .confirma .row-form > .ghost.big{flex:1 1 0;width:auto;min-width:0} /* Apagar tudo e Cancelar lado a lado, do mesmo tamanho */
 #mp-dados .confirma .btn.perigo{background:var(--deal);border-color:transparent;color:var(--surface)} /* na confirmação, o Apagar tudo é o cheio */
 .hint{font-size:12.5px;color:var(--muted)}
@@ -948,8 +949,10 @@ html:not(.sem-ia) .so-semia{display:none!important}
 @keyframes pisca{0%,80%,100%{opacity:.25}40%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.cm.pensando i{animation:none;opacity:.6}}
 .chat-sug{padding:2px 14px 10px}
-.chat-sug-l{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
-.chat-sug-l button{flex:none;min-height:38px;padding:6px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font-size:14.5px;white-space:nowrap}
+/* 1.38.1: as perguntas em linhas, quebrando, como nos outros apps (nada de rolar de lado), cada uma com o ✨ */
+.chat-sug-l{display:flex;flex-wrap:wrap;gap:8px}
+.chat-sug-l button{display:inline-flex;align-items:center;gap:6px;max-width:100%;min-height:38px;padding:6px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font-size:14.5px;white-space:normal;text-align:left;overflow-wrap:anywhere}
+.chat-sug-l button svg{width:16px;height:16px;flex:none;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 /* 1.38.0: as perguntas prontas (Editar perguntas; com a conversa andando, pelo ✨), o clipe e os arquivos escolhidos */
 .chat-sug.aberta{margin:0 12px 8px;padding:10px;border:1px solid var(--line);border-radius:16px;max-height:42vh;overflow-y:auto}
 .chat-ed-abrir{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:6px 4px;border:0;background:none;color:var(--accent);font-size:14px;font-weight:600}
@@ -1577,8 +1580,9 @@ input.field,select.field{min-height:var(--altura)}
         <section class="panel" aria-labelledby="h-lojas">
         <div class="sec-head"><h2 id="h-lojas"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 11v9h14v-9"/><path d="M10 20v-5h4v5"/></svg></span>Lojas perto de casa</h2></div>
         <p class="sec-meta">Desmarque as lojas que não quer ver.</p>
-        <div class="row-form"><button type="button" class="ghost big" id="acharLojas2"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Encontrar lojas</button></div>
+        <div class="row-form"><button type="button" class="ghost big" id="acharLojas2"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Encontrar lojas</button><button type="button" class="ghost big so-ia" id="benTodas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/></svg><span>Benefícios de todas</span></button></div>
         <p class="hint" id="lojasAcharMsg" aria-live="polite" hidden></p>
+        <p class="hint so-ia" id="benTodasMsg" aria-live="polite" hidden></p>
         <p class="hint" id="clubeSemIA" hidden>IA desligada: o preço de clube só chega pela IA (busca, encarte ou print dos cupons).</p>
         <input class="field" type="search" id="lojaBusca" placeholder="Procurar loja na lista" aria-label="Procurar loja na lista" autocomplete="off" enterkeyhint="search">
         <div class="lojas-filtro"><label for="soSemFonte">Só sem fonte de preço <span class="n" id="nSemFonte"></span></label><input type="checkbox" class="switch" id="soSemFonte"></div>
@@ -4093,6 +4097,7 @@ input.field,select.field{min-height:var(--altura)}
   var CHAT = {aberto:false, esperando:false, msgs:[], grav:null, gravT:null, voz:'off', arqs:[], envArqs:[], menu:false, rapidas:false, ed:null};
   // 1.38.0: Perguntas prontas: as da tela até a pessoa editar (Editar perguntas, guardadas no aparelho); o ✨ abre a qualquer momento
   var KEY_PERG = 'ofertas-bairro:perguntas', CHAT_MAX_ARQ = 4;
+  var SVG_BRILHO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.9 15.5a2 2 0 0 0-1.4-1.4L2.4 12.5a.5.5 0 0 1 0-1l6.1-1.6a2 2 0 0 0 1.4-1.4l1.6-6.1a.5.5 0 0 1 1 0l1.6 6.1a2 2 0 0 0 1.4 1.4l6.1 1.6a.5.5 0 0 1 0 1l-6.1 1.6a2 2 0 0 0-1.4 1.4l-1.6 6.1a.5.5 0 0 1-1 0z"/><path d="M20 3v4M22 5h-4"/></svg>';
   var SVG_LAPIS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.4 3.6a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
   var SVG_CLIPE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.4 11.1-9.2 9.2a6 6 0 0 1-8.5-8.5l8.6-8.6a4 4 0 1 1 5.7 5.7l-8.6 8.6a2 2 0 0 1-2.8-2.8l8-8"/></svg>';
   var SVG_PDF = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M10 9H8M16 13H8M16 17H8"/></svg>';
@@ -4165,7 +4170,7 @@ input.field,select.field{min-height:var(--altura)}
       return;
     }
     var l = perguntas();
-    box.innerHTML = (l.length ? '<div class="chat-sug-l">' + l.map(function(t){ return '<button type="button" data-chat-sug="' + esc(t) + '">' + esc(t) + '</button>'; }).join('') + '</div>' : '')
+    box.innerHTML = (l.length ? '<div class="chat-sug-l">' + l.map(function(t){ return '<button type="button" data-chat-sug="' + esc(t) + '">' + SVG_BRILHO + '<span>' + esc(t) + '</span></button>'; }).join('') + '</div>' : '')
       + '<button type="button" class="chat-ed-abrir" data-chat-ed="abrir">' + SVG_LAPIS + 'Editar perguntas</button>';
   }
   function pintaArqs(){
@@ -5067,19 +5072,70 @@ input.field,select.field{min-height:var(--altura)}
       + (r.em ? ' · ' + esc(quandoCurto(r.em)) : '') + '</summary>' + (linhas + extra ? '<ul>' + linhas + extra + '</ul>' : '')
       + (r.fonte ? '<a class="linkbtn" href="' + esc(r.fonte) + '" target="_blank" rel="noopener">Fonte: ' + esc(host(r.fonte)) + '</a>' : '') + '</details>';
   }
-  function buscaBeneficios(rid){
-    if (MODO !== 'addon'){ toast('No Home Assistant, a IA procura os benefícios do clube desta loja.'); return; }
+  // lote (o Benefícios de todas): sem o aviso de cada loja e sem abrir os benefícios dela; devolve o erro, ou '' quando deu certo
+  function buscaBeneficios(rid, lote){
+    if (MODO !== 'addon'){ toast('No Home Assistant, a IA procura os benefícios do clube desta loja.'); return Promise.resolve('fora'); }
     var nome = nomeLoja(rid), cat = G[rid] ? (D.categorias.filter(function(c){ return c.id === G[rid].cat; })[0]) || {} : null, k = cat ? clubeDe(cat, LOJA[rid] || {rede:rid}) : '';
-    CLUBE_BUSCA = rid; CLUBE_ABERTO[rid] = true; pintaLojas();
-    fetch('api/clube/beneficios', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({nome:nome, clube:k && k !== 'tem' ? k : ''})})
+    CLUBE_BUSCA = rid; if (!lote) CLUBE_ABERTO[rid] = true; pintaLojas();
+    return fetch('api/clube/beneficios', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({nome:nome, clube:k && k !== 'tem' ? k : ''})})
       .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
       .then(function(x){
         CLUBE_BUSCA = null;
-        if (!x.ok){ toast(x.j.erro || 'Não deu para procurar agora.'); pintaLojas(); return; }
+        if (!x.ok){ if (!lote) toast(x.j.erro || 'Não deu para procurar agora.'); pintaLojas(); return x.j.erro || 'Não deu para procurar agora.'; }
         CLUBES_BEN[chaveLoja(nome)] = x.j; pintaLojas();
-        toast(x.j.clube || arr(x.j.beneficios).length ? 'Benefícios ' + (x.j.clube ? 'do ' + x.j.clube : 'do clube') + ' guardados' : 'Não achei clube de vantagens em ' + nome);
+        if (!lote) toast(x.j.clube || arr(x.j.beneficios).length ? 'Benefícios ' + (x.j.clube ? 'do ' + x.j.clube : 'do clube') + ' guardados' : 'Não achei clube de vantagens em ' + nome);
+        return '';
       })
-      .catch(function(){ CLUBE_BUSCA = null; toast('Sem conexão com o Home Assistant. Tente de novo.'); pintaLojas(); });
+      .catch(function(){ CLUBE_BUSCA = null; if (!lote) toast('Sem conexão com o Home Assistant. Tente de novo.'); pintaLojas(); return 'Sem conexão com o Home Assistant. Tente de novo.'; });
+  }
+  // 1.39.0: Benefícios de todas: as lojas que você acompanha nas abas com clube (uma por rede, pelo nome), menos as
+  // procuradas nos últimos 60 dias (o DIAS_CLUBE do servidor; o Benefícios de cada loja procura de novo); uma de cada vez, com Parar
+  var BEN_LOTE = null, BEN_DIAS = 60;
+  function lojasBeneficios(){
+    var vistas = {}, ids = [], velho = Date.now() - BEN_DIAS * 864e5;
+    var poe = function(rid){
+      var n = nomeLoja(rid), k = n && chaveLoja(n), r = k && CLUBES_BEN[k];
+      if (!k || vistas[k]) return; vistas[k] = 1;
+      if (r && r.em && Date.parse(r.em) > velho) return;
+      ids.push(rid);
+    };
+    D.categorias.forEach(function(c){
+      if (!/^(farmacias|mercados|petshops|online)$/.test(c.id) || estado.categorias.indexOf(c.id) < 0) return;
+      arr(c.lojas).slice().sort(function(a, b){ return (a.distancia_km == null ? 99 : a.distancia_km) - (b.distancia_km == null ? 99 : b.distancia_km); })
+        .forEach(function(l){ if (G[l.rede] && acompanha(l.rede)) poe(l.rede); });
+    });
+    if (estado.categorias.indexOf('online') >= 0) estado.online.marketplaces.forEach(function(id){ poe('mkt:' + id); });
+    return ids;
+  }
+  function pintaBenTodas(msg){
+    var b = $('benTodas'), m = $('benTodasMsg');
+    b.querySelector('span').textContent = BEN_LOTE ? 'Parar' : 'Benefícios de todas';
+    b.setAttribute('aria-pressed', BEN_LOTE ? 'true' : 'false');
+    if (msg != null){ m.textContent = msg; m.hidden = !msg; }
+  }
+  function beneficiosTodas(){
+    if (BEN_LOTE){ BEN_LOTE.parar = true; pintaBenTodas('Parando depois desta loja…'); return; }
+    if (MODO !== 'addon'){ toast('No Home Assistant, a IA procura os benefícios do clube de todas as lojas.'); return; }
+    if (CLUBE_BUSCA) return;
+    var ids = lojasBeneficios();
+    if (!ids.length){ toast('Os benefícios de todas as lojas já foram procurados nos últimos ' + BEN_DIAS + ' dias.'); return; }
+    var lote = BEN_LOTE = {parar:false}, i = 0, com = 0;
+    var fim = function(msg){ BEN_LOTE = null; pintaBenTodas(msg); pintaLojas(); };
+    var proxima = function(){
+      if (lote.parar || i >= ids.length){
+        var feitas = i;
+        return fim(feitas ? 'Benefícios procurados em ' + feitas + (feitas === 1 ? ' loja' : ' lojas') + (com ? ': ' + com + ' com clube.' : '. Nenhuma com clube.') : '');
+      }
+      var rid = ids[i];
+      pintaBenTodas('Procurando os benefícios: ' + (i + 1) + ' de ' + ids.length + ' · ' + nomeLoja(rid));
+      buscaBeneficios(rid, true).then(function(erro){
+        if (erro){ return fim(erro); }
+        var r = CLUBES_BEN[chaveLoja(nomeLoja(rid))];
+        if (r && (r.clube || arr(r.beneficios).length)) com++;
+        i++; proxima();
+      });
+    };
+    proxima();
   }
   // mesma regra do selo: "Sem fonte de preço" (teste sem fonte, ou só com IA e a IA desligada) e "Sem preços"
   var SO_SEM_FONTE = !!ui.soSemFonte, TERMO_LOJA = '';
@@ -5229,7 +5285,7 @@ input.field,select.field{min-height:var(--altura)}
     var f = l.preco_fonte;
     // 1.36.3: sempre, também com os benefícios guardados (procura de novo: eles mudam) e na loja sem clube (pode ter criado um)
     var ben = (!c || /^(farmacias|mercados|petshops|online)$/.test(c.id)) && nomeLoja(l.rede) && iaOn() && CLUBE_BUSCA !== l.rede
-      ? '<button type="button" class="ghost big ic-btn loja-btn" data-clube-ben="' + esc(l.rede) + '"' + (CLUBE_BUSCA ? ' disabled' : '') + '>' + SVG_CLUBE + 'Benefícios</button>' : '';
+      ? '<button type="button" class="ghost big ic-btn loja-btn" data-clube-ben="' + esc(l.rede) + '"' + (CLUBE_BUSCA || BEN_LOTE ? ' disabled' : '') + '>' + SVG_CLUBE + 'Benefícios</button>' : '';
     var semP = !f && c && c.id !== 'online' && G[l.rede] && !(l.nova && acompanha(l.rede)) && semPrecos(c).indexOf(l) >= 0 && !siteManual(G[l.rede].nome);
     var site = (f && (f.como === 'ia' || f.como === 'nenhum') && !(cid === 'online' && !regional(l.rede))) || semP ? botaoSite(l) : '';
     var rm = mi >= 0 ? '<button type="button" class="ghost big ic-btn loja-btn rm" data-loja="' + mi + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>Remover</button>' : '';
@@ -5338,7 +5394,7 @@ input.field,select.field{min-height:var(--altura)}
       tudo(); return;
     }
     var cb2 = e.target.closest('[data-clube-ben]');
-    if (cb2){ if (!CLUBE_BUSCA) buscaBeneficios(cb2.dataset.clubeBen); return; }
+    if (cb2){ if (!CLUBE_BUSCA && !BEN_LOTE) buscaBeneficios(cb2.dataset.clubeBen); return; }
     var en = e.target.closest('[data-entrega]');
     if (en){
       var rid = en.dataset.entrega, nome = G[rid].nome, sim = entregaSim(rid);
@@ -6244,6 +6300,7 @@ input.field,select.field{min-height:var(--altura)}
       .catch(function(){ b.disabled = false; msg.className = 'hint err'; msg.textContent = 'Sem conexão com o Home Assistant. Tente de novo.'; });
   }
   $('acharLojas').addEventListener('click', function(){ encontrarLojas(this, $('ondeMsg'), false); });
+  $('benTodas').addEventListener('click', beneficiosTodas);
   $('acharLojas2').addEventListener('click', function(){ $('lojasAcharMsg').hidden = false; encontrarLojas(this, $('lojasAcharMsg'), true); });
   $('lojasAcharMsg').addEventListener('click', function(e){ if (e.target.closest('[data-buscar-ja]')) $('buscar').click(); });
 
