@@ -1,5 +1,10 @@
 # Mudanças
 
+## 1.40.0
+
+- **AliExpress Afiliados**, em Mais › Configurações › Integrações, logo depois da Shopee: com o App Key e o App Secret da API de afiliados do AliExpress, os preços do AliExpress vêm direto de lá, sem IA, com o link do produto. **Salvar e testar** mostra um exemplo. O App Secret fica só no Home Assistant e não aparece de novo.
+- O **AliExpress** entrou nos marketplaces da aba Online de Mais › Lojas. Ligar a integração já o marca; desmarcado, ele não é procurado. Com a integração, a linha dele mostra **Preço pela API**, e o **Testar agora** testa a API. Sem ela, entra pela busca com IA, como os outros.
+
 ## 1.39.0
 
 - **Mais › Lojas › Benefícios de todas**: a IA procura os benefícios do clube de todas as lojas que você acompanha de uma vez, inclusive as online, uma de cada vez, mostrando qual está procurando. **Parar** termina a loja da vez e para. As já procuradas nos últimos 60 dias ficam de fora; o **Benefícios** de cada loja continua procurando de novo.

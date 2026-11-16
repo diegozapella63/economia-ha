@@ -1697,6 +1697,15 @@ input.field,select.field{min-height:var(--altura)}
       <div class="row-form"><button type="button" class="btn" id="shSalvar">Salvar e testar</button><button type="button" class="ghost big" id="shTestar">Testar</button><button type="button" class="ghost big" id="shApagar" hidden>Apagar</button></div>
       <p class="ia-st" id="shSt"></p>
     </section>
+    <section class="panel settings" aria-labelledby="h-ali">
+      <div class="set-head"><h2 id="h-ali"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.3 3.6 5.1 3.6 8.5s-1.2 6.2-3.6 8.5c-2.4-2.3-3.6-5.1-3.6-8.5s1.2-6.2 3.6-8.5z"/></svg></span>AliExpress Afiliados</h2><p class="sec-meta">Preços direto do AliExpress, sem IA. App Key e App Secret em openservice.aliexpress.com, com a conta de afiliado de portals.aliexpress.com.</p></div>
+      <div class="sh-row">
+        <label for="alApp">App Key<input class="field" id="alApp" inputmode="numeric" autocomplete="off" spellcheck="false"></label>
+        <label for="alSenha"><span>App Secret <span class="chip selo" id="alSenhaOk" hidden>Guardada</span></span><input class="field" id="alSenha" type="password" autocomplete="new-password" spellcheck="false"></label>
+      </div>
+      <div class="row-form"><button type="button" class="btn" id="alSalvar">Salvar e testar</button><button type="button" class="ghost big" id="alTestar">Testar</button><button type="button" class="ghost big" id="alApagar" hidden>Apagar</button></div>
+      <p class="ia-st" id="alSt"></p>
+    </section>
     <section class="panel settings" aria-labelledby="h-google">
       <div class="set-head"><h2 id="h-google"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg></span>Google Places (opcional)</h2><p class="sec-meta">Acha as lojas pequenas que o OpenStreetMap não tem. Chave da Places API (New) em console.cloud.google.com; a cota gratuita cobre o uso.</p></div>
       <div class="sh-row"><label for="gKey"><span>Chave <span class="chip selo" id="gKeyOk" hidden>Guardada</span></span><input class="field" id="gKey" type="password" autocomplete="off" spellcheck="false"></label></div>
@@ -1993,7 +2002,7 @@ input.field,select.field{min-height:var(--altura)}
   function descrevePets(p){
     return PETS.filter(function(x){ return p[x.id] > 0; }).map(function(x){ return p[x.id] + ' ' + (p[x.id] > 1 ? x.varios : x.um); }).join(' e ');
   }
-  var MKT = [{id:'ifood', nome:'iFood'}, {id:'rappi', nome:'Rappi'}, {id:'mercadolivre', nome:'Mercado Livre'}, {id:'amazon', nome:'Amazon'}, {id:'shopee', nome:'Shopee'}, {id:'magalu', nome:'Magalu'}, {id:'americanas', nome:'Americanas'}, {id:'casasbahia', nome:'Casas Bahia'}];
+  var MKT = [{id:'ifood', nome:'iFood'}, {id:'rappi', nome:'Rappi'}, {id:'mercadolivre', nome:'Mercado Livre'}, {id:'amazon', nome:'Amazon'}, {id:'shopee', nome:'Shopee'}, {id:'magalu', nome:'Magalu'}, {id:'americanas', nome:'Americanas'}, {id:'casasbahia', nome:'Casas Bahia'}, {id:'aliexpress', nome:'AliExpress'}];
   var ASS = [{id:'prime', nome:'Amazon Prime'}, {id:'melimais', nome:'Meli+'}, {id:'clubeifood', nome:'Clube iFood'}];
   var DIAS = [{id:'dom', n:'Dom'}, {id:'seg', n:'Seg'}, {id:'ter', n:'Ter'}, {id:'qua', n:'Qua'}, {id:'qui', n:'Qui'}, {id:'sex', n:'Sex'}, {id:'sab', n:'Sáb'}];
   function cap(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
@@ -2753,7 +2762,7 @@ input.field,select.field{min-height:var(--altura)}
   // da Shopee vale; o resto vira Procurar, na busca do próprio marketplace
   function linkDoMkt(id, u){
     var m = mktDe((G[id] || {}).nome || '');  // o id do marketplace pelo nome da loja ('' numa loja que não é marketplace)
-    return !m || (m === 'mercadolivre' && /MLB-?\d{6,}/i.test(u)) || (m === 'shopee' && /-i\.\d+\.\d+/.test(u));
+    return !m || (m === 'mercadolivre' && /MLB-?\d{6,}/i.test(u)) || (m === 'shopee' && /-i\.\d+\.\d+/.test(u)) || (m === 'aliexpress' && /\/item\/\d{6,}\.html/.test(u));
   }
   function linkCompra(id, produto, link){
     if (/^https?:\/\//.test(link || '')) return {url:link, achado:true};
@@ -2761,6 +2770,7 @@ input.field,select.field{min-height:var(--altura)}
     var base = n.indexOf('mercado livre') >= 0 ? 'https://lista.mercadolivre.com.br/' + norm(q).replace(/ /g, '-')
       : n.indexOf('amazon') >= 0 ? 'https://www.amazon.com.br/s?k=' + encodeURIComponent(q)
       : n.indexOf('shopee') >= 0 ? 'https://shopee.com.br/search?keyword=' + encodeURIComponent(q)
+      : n.indexOf('aliexpress') >= 0 ? 'https://pt.aliexpress.com/wholesale?SearchText=' + encodeURIComponent(q)
       : n.indexOf('magalu') >= 0 || n.indexOf('magazine') >= 0 ? 'https://www.magazineluiza.com.br/busca/' + encodeURIComponent(q) + '/'
       : n.indexOf('americanas') === 0 ? 'https://www.americanas.com.br/busca/' + norm(q).replace(/ /g, '-')
       : n.indexOf('casas bahia') === 0 ? 'https://www.casasbahia.com.br/' + norm(q).replace(/ /g, '-') + '/b'
@@ -4959,7 +4969,7 @@ input.field,select.field{min-height:var(--altura)}
   }
   // site dos marketplaces (o mesmo que o teste de preço usa)
   var MKT_SITE = {ifood:'https://www.ifood.com.br', rappi:'https://www.rappi.com.br', mercadolivre:'https://www.mercadolivre.com.br', amazon:'https://www.amazon.com.br',
-    shopee:'https://shopee.com.br', magalu:'https://www.magazineluiza.com.br', americanas:'https://www.americanas.com.br', casasbahia:'https://www.casasbahia.com.br'};
+    shopee:'https://shopee.com.br', magalu:'https://www.magazineluiza.com.br', americanas:'https://www.americanas.com.br', casasbahia:'https://www.casasbahia.com.br', aliexpress:'https://pt.aliexpress.com'};
   function mktDe(nome){
     var n = norm(nome);
     if (/magazine luiza/.test(n)) return 'magalu';
@@ -5002,8 +5012,10 @@ input.field,select.field{min-height:var(--altura)}
     var w = norm(base).split(' ').filter(function(x){ return x && !GENERICAS_LOJA.test(x); });
     return w.join(' ') || norm(base);
   }
+  // 1.40.0: a Shopee e o AliExpress com a API de afiliados ligada e preços achados por ela
+  function pelaApi(nome){ var n = norm(nome), r = D.relatorio || {}; return (n === 'shopee' && !!r.shopee) || (n === 'aliexpress' && !!r.aliexpress); }
   function fonteOnline(nome){
-    if (norm(nome) === 'shopee' && (D.relatorio || {}).shopee) return '<span class="chip selo">Preço pela API</span>';
+    if (pelaApi(nome)) return '<span class="chip selo">Preço pela API</span>';
     return iaOn() ? '<span class="chip">Preço pela busca da IA</span>' : '<span class="chip warn">Sem fonte de preço</span><span>Ligue a IA para ter o preço</span>';
   }
   // clubes conferidos: preço de membro na loja, com CPF. Os outros vêm marcados pela busca com IA ("Clube" nas fontes).
@@ -5143,7 +5155,7 @@ input.field,select.field{min-height:var(--altura)}
     // 1.24.1: o mercado da região que entrega sem a entrega confirmada (pelo site ou por você) ainda não tem de onde tirar o preço
     if (c.id === 'online' && regional(l.rede) && l.entrega && !l.entrega.atende && !entregaSim(l.rede) && !l.preco_fonte) return true;
     if (l.preco_fonte) return l.preco_fonte.como === 'nenhum' || (l.preco_fonte.como === 'ia' && !iaOn());
-    if (web) return !iaOn() && !(norm(G[l.rede].nome) === 'shopee' && (D.relatorio || {}).shopee);
+    if (web) return !iaOn() && !pelaApi(G[l.rede].nome);
     return semPrecos(c).indexOf(l) >= 0;
   }
   function contaSemFonte(cats){
@@ -5159,7 +5171,7 @@ input.field,select.field{min-height:var(--altura)}
       if (c.id === 'online') estado.online.marketplaces.forEach(function(id){
         var m = MKT.filter(function(x){ return x.id === id; })[0], f = m && (c.fontes_mkt || {})[id];
         if (!m || nomes.some(function(x){ return x.indexOf(norm(m.nome)) === 0; })) return;
-        if (f ? (f.como === 'nenhum' || (f.como === 'ia' && !iaOn())) : !iaOn() && !(id === 'shopee' && (D.relatorio || {}).shopee)) n++;
+        if (f ? (f.como === 'nenhum' || (f.como === 'ia' && !iaOn())) : !iaOn() && !pelaApi(m.nome)) n++;
       });
     });
     return n;
@@ -5235,7 +5247,7 @@ input.field,select.field{min-height:var(--altura)}
         MKT.forEach(function(m){
           if (tem.some(function(n){ return n.indexOf(norm(m.nome)) === 0; })) return;
           var on = estado.online.marketplaces.indexOf(m.id) >= 0, f = (c.fontes_mkt || {})[m.id], l = {rede:'mkt:' + m.id, preco_fonte:f};
-          var sf = f ? (f.como === 'nenhum' || (f.como === 'ia' && !iaOn())) : !iaOn() && !(m.id === 'shopee' && (D.relatorio || {}).shopee);
+          var sf = f ? (f.como === 'nenhum' || (f.como === 'ia' && !iaOn())) : !iaOn() && !pelaApi(m.nome);
           if ((SO_SEM_FONTE && !sf) || (TERMO_LOJA && norm(m.nome).indexOf(TERMO_LOJA) < 0)) return;
           (on ? mktOn : mktOff).push('<li class="row has-track' + (on ? '' : ' out') + '"><label class="track"><input type="checkbox" data-mkt="' + m.id + '"' + (on ? ' checked' : '') + '><span class="r-name">' + esc(m.nome) + '</span></label><span class="r-val num"></span>'
             + '<span class="r-sub"><span>' + (on ? 'Entrega no seu CEP' : 'Você não acompanha') + '</span>' + chipSite(MKT_SITE[m.id], m.nome) + '<span class="src">App</span>'
@@ -5720,7 +5732,7 @@ input.field,select.field{min-height:var(--altura)}
     var el = $(id); el.value = sim ? OCULTO : ''; el.placeholder = sim ? '' : 'Cole aqui';
     $(id + 'Ok').hidden = !sim;
   }
-  ['shSenha', 'gKey', 'iKey', 'bKey', 'mlSenha'].forEach(function(id){
+  ['shSenha', 'alSenha', 'gKey', 'iKey', 'bKey', 'mlSenha'].forEach(function(id){
     $(id).addEventListener('focus', function(){ if (this.value === OCULTO) this.value = ''; });
     $(id).addEventListener('blur', function(){ if (!this.value && !$(id + 'Ok').hidden) this.value = OCULTO; });
   });
@@ -5731,7 +5743,7 @@ input.field,select.field{min-height:var(--altura)}
   function carregaShopee(forcar){
     if (MODO === 'addon' && !forcar && Date.now() - INTEG_EM < 3000){ pintaIntegSt(); return; }
     INTEG_EM = Date.now();
-    if (MODO !== 'addon'){ shSt('No Home Assistant, aqui você liga a Shopee com o App ID e a senha.'); gSt('No Home Assistant, aqui você liga o Google Maps com a chave.'); iSt('No Home Assistant, aqui você liga o Instagram com a chave da Meta.'); bSt('No Home Assistant, aqui você liga o Brave com a chave.'); mlSt('No Home Assistant, aqui você liga o Mercado Livre com o seu app.'); return; }
+    if (MODO !== 'addon'){ shSt('No Home Assistant, aqui você liga a Shopee com o App ID e a senha.'); alSt('No Home Assistant, aqui você liga o AliExpress com o App Key e o App Secret.'); gSt('No Home Assistant, aqui você liga o Google Maps com a chave.'); iSt('No Home Assistant, aqui você liga o Instagram com a chave da Meta.'); bSt('No Home Assistant, aqui você liga o Brave com a chave.'); mlSt('No Home Assistant, aqui você liga o Mercado Livre com o seu app.'); return; }
     fetch('api/integracoes', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
       var sh = j.shopee || {}, g = j.google || {}, ig = j.instagram || {}, br = j.brave || {};
       INTEG = j;
@@ -5747,6 +5759,10 @@ input.field,select.field{min-height:var(--altura)}
       $('shApp').value = sh.app_id || '';
       guardado('shSenha', sh.tem_senha);
       $('shApagar').hidden = !sh.app_id;
+      var al = j.aliexpress || {};
+      $('alApp').value = al.app_key || '';
+      guardado('alSenha', al.tem_senha);
+      $('alApagar').hidden = !al.app_key;
       pintaIntegSt();
     }).catch(function(){ shSt('Não consegui ler agora.'); });
   }
@@ -5759,6 +5775,9 @@ input.field,select.field{min-height:var(--altura)}
     iSt(ig.tem_chave ? 'Ligado' + (ig.usuario ? ' com a conta @' + ig.usuario : '') + (iaOn() && estado.opcoes.folhetos ? ': os encartes postados pelas lojas entram na busca.' : '.') : 'Desligado.', ig.tem_chave ? true : null);
     shSt(sh.app_id && sh.tem_senha ? 'Ligada' + (online ? '. Os preços da Shopee vêm direto da Shopee.' : '.')
       : online && iaOn() && estado.online.marketplaces.indexOf('shopee') >= 0 ? 'Desligada: a Shopee entra pela busca com IA.' : 'Desligada.', sh.app_id && sh.tem_senha ? true : null);
+    var al = INTEG.aliexpress || {}, alOn = estado.online.marketplaces.indexOf('aliexpress') >= 0;
+    alSt(al.app_key && al.tem_senha ? (!online ? 'Ligado. Para os preços, marque Online em Mais › Casa.' : alOn ? 'Ligado. Os preços do AliExpress vêm direto do AliExpress.' : 'Ligado, mas o AliExpress está desmarcado em Mais › Lojas › Online.')
+      : online && iaOn() && alOn ? 'Desligado: o AliExpress entra pela busca com IA.' : 'Desligado.', al.app_key && al.tem_senha ? (online && alOn ? true : null) : null);
   }
   function testaShopee(){
     shSt('Testando com a Shopee…');
@@ -5779,6 +5798,35 @@ input.field,select.field{min-height:var(--altura)}
       }).catch(function(){ shSt('Sem conexão com o Home Assistant.', false); });
   });
   $('shTestar').addEventListener('click', function(){ if (MODO === 'addon') testaShopee(); else toast('Só no Home Assistant'); });
+  // ----- AliExpress Afiliados (1.40.0): como a Shopee; o App Secret fica só no Home Assistant -----
+  function alSt(msg, ok){ var el = $('alSt'); el.className = 'ia-st' + (ok === true ? ' ok' : ok === false ? ' erro' : ''); el.textContent = msg; }
+  function testaAli(){
+    alSt('Testando com o AliExpress…');
+    fetch('api/integracoes/testar', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({servico:'aliexpress'})})
+      .then(function(r){ return r.json(); }).then(function(j){ alSt(j.msg || 'Sem resposta.', !!j.ok); }).catch(function(){ alSt('Sem conexão com o Home Assistant.', false); });
+  }
+  $('alSalvar').addEventListener('click', function(){
+    if (MODO !== 'addon'){ toast('Só no Home Assistant'); return; }
+    var app = $('alApp').value.replace(/\s/g, ''), senha = $('alSenha').value === OCULTO ? '' : $('alSenha').value.replace(/\s/g, '');
+    if (!app){ alSt('Escreva o App Key.', false); return; }
+    fetch('api/integracoes', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({aliexpress:{app_key:app, secret:senha}})})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+      .then(function(x){
+        if (!x.ok){ alSt(x.j.erro || 'Não deu para salvar.', false); return; }
+        guardado('alSenha', x.j.aliexpress.tem_senha);
+        $('alApagar').hidden = false;
+        INTEG = Object.assign({}, INTEG, {aliexpress:x.j.aliexpress});
+        if (!x.j.aliexpress.tem_senha){ alSt('Falta o App Secret.', false); return; }
+        // ligou: o AliExpress entra marcado em Mais › Lojas › Online (desmarcar lá deixa de buscar)
+        if (estado.online.marketplaces.indexOf('aliexpress') < 0){ estado.online.marketplaces.push('aliexpress'); salvar(false); tudo(); }
+        testaAli();
+      }).catch(function(){ alSt('Sem conexão com o Home Assistant.', false); });
+  });
+  $('alTestar').addEventListener('click', function(){ if (MODO === 'addon') testaAli(); else toast('Só no Home Assistant'); });
+  $('alApagar').addEventListener('click', function(){
+    fetch('api/integracoes', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({aliexpress:null})})
+      .then(function(){ toast('Chaves do AliExpress apagadas'); carregaShopee(true); }).catch(function(){ toast('Sem conexão com o Home Assistant.'); });
+  });
   // ----- Brave Search: acha o site das lojas sem site, sem IA -----
   function bSt(msg, ok){ var el = $('bSt'); el.className = 'ia-st' + (ok === true ? ' ok' : ok === false ? ' erro' : ''); el.textContent = msg; }
   function testaBrave(){
@@ -6458,7 +6506,7 @@ input.field,select.field{min-height:var(--altura)}
   function svgT(n){ return '<svg class="t-ic" viewBox="0 0 24 24" aria-hidden="true">' + (T_IC[n] || T_IC.toggle) + '</svg>'; }
   var T_PAL = [[/CorrerIA/, 'zap'], [/^Usar IA/, 'spark'], [/buscar ofertas/i, 'search'], [/ler fotos/i, 'image'], [/falar/i, 'mic'],
     [/^Sincronizar/, 'list'], [/novos/i, 'plus'], [/acabando/i, 'clock'], [/sensores/i, 'activity'], [/Cor do dia/, 'calendar'],
-    [/lojas|Lojas|loja/, 'store'], [/folhetos|encartes|Encartes/i, 'file'], [/listas|Listas/, 'list'], [/itens|Itens/, 'tag'], [/App ID|ID|Chave|Senha|Token|Secret/i, 'key'],
+    [/lojas|Lojas|loja/, 'store'], [/folhetos|encartes|Encartes/i, 'file'], [/listas|Listas/, 'list'], [/itens|Itens/, 'tag'], [/App ID|App Key|ID|Chave|Senha|Token|Secret/i, 'key'],
     [/CEP|endereço|Onde|km/i, 'pin'], [/entrega|frete|online/i, 'truck'], [/Nome|nome/, 'edit'], [/Telefone|WhatsApp/i, 'phone'], [/Quem|pessoa/i, 'user']];
   function iconesTitulos(){
     var els = document.querySelectorAll('.panel.settings .set-t, .panel.settings .sh-row > label');

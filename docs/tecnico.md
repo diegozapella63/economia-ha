@@ -57,9 +57,9 @@ O botão **Buscar** chama `ai_task.generate_data` pela API do Home Assistant (`h
 | POST | `/api/versoes/restaurar` | `{nome}`: guarda uma cópia do atual e volta para essa versão. Devolve `{config}`. |
 | POST | `/api/ler-encarte` | `{imagens: ["data:image/jpeg;base64,..."], loja, categoria}` (até 8 imagens). A IA de fotos lê o encarte ou o print com o mesmo pedido do encarte do site; o resultado é juntado ao `ofertas.json` (loja com `fontes: ["Encarte"]`). Devolve `{id}`; o andamento sai em `GET /api/ler-lista?id=` com `{status, ofertas, precos, loja, itens}`. |
 | GET | `/api/lojas-diretas` | `{lojas: [{id, nome, atende, loja, fixa}]}`: as lojas com busca direta e se atendem o CEP; as lidas pelas páginas de produto vêm com `paginas: true`. |
-| GET | `/api/integracoes` | `{shopee: {app_id, tem_senha}}`. A senha nunca sai do add-on. |
-| PUT | `/api/integracoes` | `{shopee: {app_id, secret}}` grava em `segredos.json` (modo 600); `secret` vazio mantém a senha guardada; `{shopee: null}` apaga. |
-| POST | `/api/integracoes/testar` | `{servico: "shopee"}` → `{ok, msg}`: uma consulta de teste na Open API. |
+| GET | `/api/integracoes` | `{shopee: {app_id, tem_senha}, aliexpress: {app_key, tem_senha}, …}`. A senha nunca sai do add-on. |
+| PUT | `/api/integracoes` | `{shopee: {app_id, secret}}` ou `{aliexpress: {app_key, secret}}` grava em `segredos.json` (modo 600); `secret` vazio mantém a senha guardada (do mesmo App ID/App Key); `null` apaga. |
+| POST | `/api/integracoes/testar` | `{servico: "shopee" \| "aliexpress" \| …}` → `{ok, msg}`: uma consulta de teste na API. |
 | POST | `/api/lojas-mapa/atualizar` | `{raio_km, categorias}`: lê o mapa agora (`forcar`) e junta as lojas ao `ofertas.json` (`mesclar_resultado` com `mapa`), sem buscar preços. Devolve `{ok, msg, lojas: {categoria: n}}`. |
 | GET | `/api/lojas-mapa/teste` | `{rodando, atual, total, loja, terminou_em, resumo}`: andamento do teste de preço. |
 | GET | `/api/lojas-mapa` | `{fontes, em, lojas: {categoria: [{nome, endereco, distancia_km, fonte}]}}`: as lojas do raio pelo mapa. |
@@ -101,6 +101,10 @@ Candidatas (`lojas_folheto`): as lojas físicas acompanhadas (fora de `lojas.ign
 ### Shopee Afiliados
 
 `POST https://open-api.affiliate.shopee.com.br/graphql`, corpo `{"query": "{productOfferV2(keyword: \"…\", sortType: 1, page: 1, limit: 20) {nodes {…}}}"}`, cabeçalho `Authorization: SHA256 Credential={AppId}, Timestamp={ts}, Signature={sha256_hex(AppId + ts + corpo + Secret)}`. Entram produtos com nota ≥ 4,5 cujo nome tem as palavras do item; preço `priceMin`, link `productLink` (não o de afiliado). Erros 10020/10030/10035 param as consultas seguintes. `OFERTAS_SHOPEE_API` troca o endereço nos testes.
+
+### AliExpress Afiliados (1.40.0)
+
+A chamada do SDK oficial (IOP): `POST https://api-sg.aliexpress.com/sync?app_key=…&method=aliexpress.affiliate.product.query&format=json&v=2.0&sign_method=md5&timestamp={ms}&sign=…`, com a consulta no corpo (`keywords`, `page_no`, `page_size`, `target_currency=BRL`, `target_language=PT`, `ship_to_country=BR`). `sign` = MD5 em maiúsculas de `Secret + nome1valor1nome2valor2… (todos os parâmetros, do endereço e do corpo, em ordem) + Secret` (`aliexpress_assina`). Erro do portão: `{"error_response": {code, msg, sub_msg}}` (`ALIEXPRESS_ERROS`: App Key, assinatura, limite, sem acesso); da consulta: `aliexpress_affiliate_product_query_response.resp_result.resp_code` (405 = nada achado; outro que não 200 = recusou). Produtos em `result.products.product[]`: preço `target_sale_price` só em `BRL` (`aliexpress_preco`), avaliação `evaluate_rate` ≥ 90%, o nome com as palavras do item (`combina`), link `product_detail_url` (não o de afiliado). `busca_aliexpress` roda depois da Shopee, com `online` nas categorias e `aliexpress` em `online.marketplaces` (`aliexpress_ligado`); com as chaves, `mkts_online` tira o AliExpress da IA. `relatorio.aliexpress` conta os preços achados; na página, `pelaApi(nome)` põe o **Preço pela API** (Shopee e AliExpress). Salvar as chaves põe `aliexpress` em `online.marketplaces`. `OFERTAS_ALIEXPRESS_API` troca o endereço nos testes.
 
 ### Preços online e de quando são
 

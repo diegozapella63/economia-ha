@@ -9,7 +9,8 @@ import os
 from apoio import Cenario, categoria
 
 EMAIL = "davi.souza@exemplo.com.br"
-CHAVES = {"brave": "chave-brave-secreta", "google": "chave-google-secreta", "shopee": "senha-shopee-secreta", "instagram": "token-instagram-secreto"}
+CHAVES = {"brave": "chave-brave-secreta", "google": "chave-google-secreta", "shopee": "senha-shopee-secreta", "instagram": "token-instagram-secreto",
+          "aliexpress": "segredo-aliexpress-secreto"}
 
 
 class Privacidade(Cenario):
@@ -17,13 +18,14 @@ class Privacidade(Cenario):
         super().setUp()
         S, lj = self.S, self.lojas
         S.grava_segredos({"brave": {"key": CHAVES["brave"]}, "google": {"key": CHAVES["google"]},
-                          "shopee": {"app_id": "18300000001", "secret": CHAVES["shopee"]},
+                          "shopee": {"app_id": "18300000001", "secret": CHAVES["shopee"]}, "aliexpress": {"app_key": "512345", "secret": CHAVES["aliexpress"]},
                           "instagram": {"token": CHAVES["instagram"], "ig_id": "99", "usuario": "casa"}})
         lj.rotas["/brave"] = lambda p: {"web": {"results": [{"url": "https://www.giassi.com.br", "title": "Giassi"}]}}
         lj.rotas["/google/nearby"] = lambda p: {"places": []}
         lj.rotas["/google/texto"] = lambda p: {"places": []}
         lj.rotas["/overpass"] = lambda p: {"elements": [{"type": "node", "lat": -26.304, "lon": -48.85, "tags": {"name": "Mercado Kuntze", "shop": "supermarket"}}]}
         lj.rotas["/shopee"] = lambda p: {"data": {"productOfferV2": {"nodes": []}}}
+        lj.rotas["/aliexpress"] = lambda p: {"aliexpress_affiliate_product_query_response": {"resp_result": {"resp_code": 405}}}
         lj.rotas["/graph/99"] = lambda p: {"business_discovery": {"username": "instagram", "media": {"data": []}}, "id": "99"}
         lj.rotas["/graph/debug_token"] = lambda p: {"data": {"expires_at": 0}}
         self.ha.responde_ia("", {"lojas": [{"rede": "Mercado Kuntze", "distancia_km": 1.0}], "lista": [], "ofertas": [], "cupons": []})
@@ -40,7 +42,7 @@ class Privacidade(Cenario):
         S.lojas_do_mapa(S.ler_config(), ["mercados"], forcar=True)
         S.sonda_lojas(S.ler_config())
         S.produto_por_ean("7896004000855", S.ler_config())
-        for f in (S.testar_brave, S.testar_google, S.testar_shopee, S.testar_instagram, lambda: S.testar_ia("busca")):
+        for f in (S.testar_brave, S.testar_google, S.testar_shopee, S.testar_aliexpress, S.testar_instagram, lambda: S.testar_ia("busca")):
             f()
 
     def test_o_email_do_dono_nunca_sai(self):
@@ -60,6 +62,7 @@ class Privacidade(Cenario):
                 fora = [p[1] for p in self.lojas.pedidos if chave in json.dumps(p, ensure_ascii=False, default=str) and not p[1].startswith(donos.get(nome, "/nunca"))]
                 self.assertEqual(fora, [], f"a chave {nome} só vai para o serviço dela")
         self.assertTrue(self.lojas.pedidos_de("/shopee"), "a Shopee foi consultada (só com a assinatura)")
+        self.assertTrue(self.lojas.pedidos_de("/aliexpress"), "o AliExpress foi consultado (só com a assinatura)")
 
     def test_chaves_fora_do_config_e_da_pagina(self):
         S = self.S

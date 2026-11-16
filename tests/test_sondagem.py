@@ -243,6 +243,26 @@ class Marketplace(Base):
         self.assertEqual(st["passos"][0], "✗ A API de afiliados da Shopee não trouxe produtos no teste.")
         self.assertEqual(st["como"], "ia")
 
+    def test_aliexpress_pela_api(self):
+        """1.40.0: o Testar agora do AliExpress em Online: a API de afiliados, com o exemplo; sem as chaves, diz onde ligar."""
+        S = self.S
+        S.MKT_SITES["aliexpress"] = self.b + "/aliexpress-site"
+        self.sem_api("aliexpress-site")
+        st = S.testa_marketplace(self.config(), "aliexpress", "AliExpress", {})
+        self.assertEqual(st["passos"][0], "O AliExpress tem API de afiliados, que dá preço sem IA: ligue em Mais › Configurações › Integrações.")
+        S.grava_segredos({"aliexpress": {"app_key": "1", "secret": "s"}})
+        self.lojas.rotas["/aliexpress"] = lambda p: {"aliexpress_affiliate_product_query_response": {"resp_result": {"resp_code": 200, "result": {"products": {"product": [
+            {"product_title": "Garrafa Térmica Inox 1 L", "target_sale_price": "39.90", "target_sale_price_currency": "BRL"}]}}}}}
+        st = S.testa_marketplace(self.config(), "aliexpress", "AliExpress", {})
+        self.assertEqual((st["como"], st["exemplo"]), ("api", "Garrafa Térmica Inox 1 L por R$ 39,90"))
+        self.assertEqual(st["passos"], ['✓ API de afiliados do AliExpress: "garrafa térmica", Garrafa Térmica Inox 1 L por R$ 39,90.'])
+        self.lojas.rotas["/aliexpress"] = lambda p: {"error_response": {"code": "ApiCallLimit"}}
+        st = S.testa_marketplace(self.config(usar_ia=False), "aliexpress", "AliExpress", {})
+        self.assertEqual(st["passos"][0], "✗ API de afiliados do AliExpress: " + S.ALIEXPRESS_ERROS["ApiCallLimit"])
+        self.lojas.rotas["/aliexpress"] = lambda p: {"aliexpress_affiliate_product_query_response": {"resp_result": {"resp_code": 405}}}
+        st = S.testa_marketplace(self.config(), "aliexpress", "AliExpress", {})
+        self.assertEqual(st["passos"][0], "✗ A API de afiliados do AliExpress não trouxe produtos no teste.")
+
     def test_busca_do_site_do_marketplace(self):
         S = self.S
         S.MKT_SITES["magalu"] = self.b + "/magalu"

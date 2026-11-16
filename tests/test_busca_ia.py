@@ -523,6 +523,22 @@ class BuscaBordas(Cenario):
         cafe = S.ler_json(S.OFERTAS)["lista"][0]
         self.assertEqual(list(cafe["precos"]), ["onli-shopee"])
 
+    def test_online_so_pelo_aliexpress(self):
+        """1.40.0: o AliExpress marcado e pela API: a IA não procura nele; o relatório conta os preços achados pela API."""
+        S, ha = self.S, self.ha
+        S.grava_segredos({"aliexpress": {"app_key": "1", "secret": "s"}})
+        self.lojas.rotas["/aliexpress"] = lambda p: {"aliexpress_affiliate_product_query_response": {"resp_result": {"resp_code": 200, "result": {"products": {"product": [
+            {"product_title": "Café Pilão Tradicional 500g", "target_sale_price": "21.90", "target_sale_price_currency": "BRL", "evaluate_rate": "95%",
+             "product_detail_url": "https://pt.aliexpress.com/item/1005001.html"}]}}}}}
+        self.config(categorias=["online"], lista=LISTA[1:2], opcoes={"itens_sem_preco": False},
+                    online={"marketplaces": ["aliexpress"], "mercados_entrega": False})
+        S.buscar()
+        self.assertIsNone(S.BUSCA["erro"])
+        self.assertEqual(ha.chamadas_ia, [], "só o AliExpress, que já veio pela API")
+        of = S.ler_json(S.OFERTAS)
+        self.assertEqual(list(of["lista"][0]["precos"]), ["onli-aliexpress"])
+        self.assertEqual(of["relatorio"]["aliexpress"], 1)
+
     def test_erro_inesperado(self):
         S, ha = self.S, self.ha
         ha.responde_ia("EconomIA: mercados", pagina_mercados)

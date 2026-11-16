@@ -3,6 +3,7 @@ direta nas lojas VTEX achadas, a lista de produtos do sitemap e o preço na pág
 de ofertas, a Shopee pela Open API, o site das lojas pelo Brave e pela IA, o Testar agora (testa_preco_loja,
 testa_marketplace, sonda_loja, sonda_lojas) e a ordem de busca_scripts."""
 import gzip
+import hashlib
 import types
 
 from apoio import FECHA, Cenario, categoria, prod
@@ -269,6 +270,113 @@ class Shopee(Base):
         cfg = self.config(categorias=["online"], lista=[{"produto": "Vela aromática"}])
         self.assertEqual(S.busca_shopee(cfg), [])
         self.assertTrue(any("shopee: 0 de 1 item(ns) com preço" in str(m) for m in self.log))
+
+
+def produto_ali(titulo, preco, nota="96.5%", moeda="BRL", link="https://pt.aliexpress.com/item/1005001234567.html"):
+    return {"product_title": titulo, "target_sale_price": preco, "target_sale_price_currency": moeda, "evaluate_rate": nota,
+            "product_detail_url": link, "promotion_link": "https://s.click.aliexpress.com/e/afiliado"}
+
+
+def resposta_ali(produtos, codigo=200, msg="Call succeeds"):
+    return {"aliexpress_affiliate_product_query_response": {"resp_result": {"resp_code": codigo, "resp_msg": msg,
+            "result": {"current_record_count": len(produtos), "products": {"product": produtos}}}}}
+
+
+class AliExpress(Base):
+    """1.40.0: a API de afiliados do AliExpress (a assinatura do SDK oficial: MD5 de secret + nome e valor em ordem + secret)."""
+
+    def setUp(self):
+        super().setUp()
+        self.lojas.rotas["/aliexpress"] = self.ali
+
+    def ali(self, p):
+        sis = {k: v[0] for k, v in p.query.items()}
+        tudo = dict(sis, **p.form())
+        assina = tudo.pop("sign")
+        base = "segredo-ali" + "".join(k + tudo[k] for k in sorted(tudo)) + "segredo-ali"
+        if assina != hashlib.md5(base.encode()).hexdigest().upper():
+            return {"error_response": {"type": "ISV", "code": "IncompleteSignature", "msg": "The request signature does not conform to platform standards"}}
+        self.assertEqual((sis["app_key"], sis["method"], sis["sign_method"], sis["v"], sis["format"]), ("512345", "aliexpress.affiliate.product.query", "md5", "2.0", "json"))
+        self.assertTrue(sis["timestamp"].isdigit() and len(sis["timestamp"]) == 13, "o horário em milissegundos")
+        f = p.form()
+        self.assertEqual((f["target_currency"], f["target_language"], f["ship_to_country"]), ("BRL", "PT", "BR"))
+        q = f["keywords"]
+        if "Garrafa" in q or "garrafa" in q:
+            return resposta_ali([produto_ali("Garrafa Térmica Inox 1 L", "39.90", link="https://pt.aliexpress.com/item/1005009876543.html"),
+                                 produto_ali("Garrafa Térmica Inox 1 L Barata", "19.90", nota="81.0%"),
+                                 produto_ali("Garrafa Térmica Inox 1 L Dólar", "7.50", moeda="USD"),
+                                 produto_ali("Tampa de garrafa", "3.90")])
+        if "Recusado" in q:
+            return resposta_ali([], 402, "Invalid input parameters")
+        if "Fone" in q:
+            return {"error_response": {"type": "ISV", "code": "ApiCallLimit", "msg": "This ban will last for 1 more seconds"}}
+        return resposta_ali([], 405, "The result is empty")
+
+    def chaves(self):
+        self.S.grava_segredos({"aliexpress": {"app_key": "512345", "secret": "segredo-ali"}})
+
+    def test_testar(self):
+        S = self.S
+        self.assertEqual(S.testar_aliexpress(), {"ok": False, "msg": "Falta o App Key e o App Secret do AliExpress em Mais › Configurações › Integrações."})
+        self.chaves()
+        self.assertEqual(S.testar_aliexpress(), {"ok": True, "msg": "Pronto. Exemplo: Garrafa Térmica Inox 1 L por R$ 39,90."})
+        S.grava_segredos({"aliexpress": {"app_key": "512345", "secret": "outro"}})
+        self.assertEqual(S.testar_aliexpress(), {"ok": False, "msg": S.ALIEXPRESS_ERROS["IncompleteSignature"]})
+        self.chaves()
+        self.lojas.rotas["/aliexpress"] = lambda p: resposta_ali([], 405, "The result is empty")
+        self.assertEqual(S.testar_aliexpress()["msg"], "O AliExpress aceitou o App Key e o App Secret, mas não devolveu produtos no teste.")
+        self.lojas.rotas["/aliexpress"] = lambda p: (500, "<html>erro</html>", "text/html")
+        self.assertEqual(S.testar_aliexpress()["msg"], "O AliExpress respondeu com erro 500.")
+
+    def test_busca(self):
+        S = self.S
+        cfg = self.config(categorias=["online"], lista=[{"produto": "Garrafa térmica 1 L"}], online={"marketplaces": ["mercadolivre", "aliexpress"]})
+        self.assertEqual(S.busca_aliexpress(cfg), [], "sem a chave: nada")
+        self.chaves()
+        self.assertEqual(S.busca_aliexpress(self.config(categorias=["online"], lista=[{"produto": "Garrafa térmica 1 L"}])), [],
+                         "com a chave, mas o AliExpress desmarcado em Mais › Lojas › Online")
+        self.assertTrue(S.aliexpress_ligado(cfg))
+        nomes = ["Garrafa térmica 1 L", "Item Recusado", "Fone de ouvido", "Depois do limite"]
+        cat, parcial = S.busca_aliexpress(cfg, nomes)[0]
+        self.assertEqual(cat["id"], "online")
+        self.assertEqual(parcial["Garrafa térmica 1 L"]["precos"], {"onli-aliexpress": {"preco": 39.9, "frete": None, "carrinho": True, "obs": "Garrafa Térmica Inox 1 L"}},
+                         "a avaliação abaixo de 90% e o preço em dólar ficam de fora")
+        self.assertEqual(parcial["Garrafa térmica 1 L"]["links"]["onli-aliexpress"], "https://pt.aliexpress.com/item/1005009876543.html", "o link do produto, não o de afiliado")
+        self.assertEqual(parcial["Garrafa térmica 1 L"]["vistos"]["onli-aliexpress"]["via"], "api")
+        consultas = [p[3] for p in self.lojas.pedidos_de("/aliexpress")]
+        self.assertTrue(any("Fone" in c for c in consultas))
+        self.assertFalse(any("Depois+do+limite" in c or "Depois do limite" in c for c in consultas), "limite: para as consultas seguintes")
+        self.assertFalse(any("segredo-ali" in str(p) for p in self.lojas.pedidos), "o App Secret não sai, só a assinatura")
+
+    def test_erros_e_respostas_estranhas(self):
+        S = self.S
+        self.chaves()
+        S.ALIEXPRESS_API = "http://127.0.0.1:9/sync"
+        with self.assertRaisesRegex(S.ErroAliExpress, r"^Não consegui falar com o AliExpress \("):
+            S.aliexpress_produtos("x")
+        S.ALIEXPRESS_API = self.lojas.base + "/aliexpress"
+        self.lojas.rotas["/aliexpress"] = lambda p: {"error_response": {"code": "Desconhecido", "sub_msg": "Algo deu errado"}}
+        with self.assertRaisesRegex(S.ErroAliExpress, "^O AliExpress recusou a consulta: Algo deu errado$"):
+            S.aliexpress_produtos("x")
+        self.lojas.rotas["/aliexpress"] = lambda p: ["solto"]
+        self.assertEqual(S.aliexpress_produtos("x"), [])
+        self.lojas.rotas["/aliexpress"] = lambda p: {"aliexpress_affiliate_product_query_response": {"resp_result": {"resp_code": 200, "result": None}}}
+        self.assertEqual(S.aliexpress_produtos("x"), [])
+        self.lojas.rotas["/aliexpress"] = lambda p: {"aliexpress_affiliate_product_query_response": {"resp_result": {"resp_code": 200,
+                                                     "result": {"products": [produto_ali("Lista solta", "5.00"), "x"]}}}}
+        self.assertEqual([x["product_title"] for x in S.aliexpress_produtos("x")], ["Lista solta"], "products como lista também vale")
+        self.assertEqual(S.aliexpress_preco({"sale_price": "12,90", "sale_price_currency": "BRL"}), 12.9, "sem o target, o preço em reais")
+        self.assertIsNone(S.aliexpress_nota({"evaluate_rate": ""}))
+
+    def test_nada_achado_e_chaves_incompletas(self):
+        S = self.S
+        S.grava_segredos({"aliexpress": {"app_key": " 1 ", "secret": "  "}})
+        self.assertFalse(S.aliexpress_pronta(), "segredo em branco")
+        self.chaves()
+        cfg = self.config(categorias=["online"], lista=[{"produto": "Vela aromática"}], online={"marketplaces": ["aliexpress"]})
+        self.assertEqual(S.busca_aliexpress(cfg), [])
+        self.assertTrue(any("aliexpress: 0 de 1 item(ns) com preço" in str(m) for m in self.log))
+        self.assertEqual(S.mkts_online(cfg), [], "pela API, a IA não procura no AliExpress")
 
 
 class SitesDasLojas(Base):

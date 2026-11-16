@@ -226,6 +226,23 @@ class Integracoes(Rotas):
         self.pede("PUT", "/api/integracoes", {"shopee": None})
         self.assertNotIn("shopee", S.segredos())
 
+    def test_aliexpress_guarda_mantem_e_apaga(self):
+        """1.40.0: App Key e App Secret, como a Shopee; o App Secret nunca volta."""
+        S = self.S
+        st, d = self.pede("PUT", "/api/integracoes", {"aliexpress": {"app_key": " 512 345 ", "secret": " seg redo "}})
+        self.assertEqual(d["aliexpress"], {"app_key": "512345", "tem_senha": True})
+        self.assertEqual(S.segredos()["aliexpress"], {"app_key": "512345", "secret": "segredo"})
+        self.pede("PUT", "/api/integracoes", {"aliexpress": {"app_key": "512345", "secret": ""}})
+        self.assertEqual(S.segredos()["aliexpress"]["secret"], "segredo", "App Secret em branco mantém o guardado")
+        st, d = self.pede("GET", "/api/integracoes")
+        self.assertEqual(d["aliexpress"], {"app_key": "512345", "tem_senha": True})
+        self.assertNotIn("segredo", json.dumps(d))
+        self.pede("PUT", "/api/integracoes", {"aliexpress": {"app_key": "999", "secret": ""}})
+        self.assertEqual(S.segredos()["aliexpress"]["secret"], "", "outro App Key: o App Secret antigo não vale")
+        self.assertEqual(self.pede("PUT", "/api/integracoes", {"aliexpress": {"app_key": "", "secret": "x"}}), (400, {"erro": "Falta o App Key do AliExpress."}))
+        self.pede("PUT", "/api/integracoes", {"aliexpress": None})
+        self.assertNotIn("aliexpress", S.segredos())
+
     def test_google_brave_e_instagram(self):
         S = self.S
         S.gravar_json(S.LOJAS_MAPA, {"lojas": {}})
@@ -270,7 +287,8 @@ class Integracoes(Rotas):
 
     def test_testar_cada_servico(self):
         S = self.S
-        for s, f in (("google", "testar_google"), ("instagram", "testar_instagram"), ("brave", "testar_brave"), ("ml", "testar_ml"), ("shopee", "testar_shopee")):
+        for s, f in (("google", "testar_google"), ("instagram", "testar_instagram"), ("brave", "testar_brave"), ("ml", "testar_ml"), ("shopee", "testar_shopee"),
+                     ("aliexpress", "testar_aliexpress")):
             setattr(S, f, (lambda n: lambda: {"ok": True, "msg": n})(s))
             self.assertEqual(self.pede("POST", "/api/integracoes/testar", {"servico": s})[1], {"ok": True, "msg": s})
         self.assertEqual(self.pede("POST", "/api/integracoes/testar", bruto=b"{quebrado")[1]["msg"], "shopee", "sem serviço: a Shopee")

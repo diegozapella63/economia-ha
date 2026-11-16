@@ -26,7 +26,7 @@ Como nos outros apps (InventarIA, GerencIA, ResolvIA e CronologIA), **Mais** é 
 
 - **Casa**: CEP e distância, o que acompanhar, quem mora, a rotina de compras, restrições, interesses e o que nunca mostrar.
 - **Lojas**: as lojas perto de casa, com o clube de cada uma, Encontrar lojas e Testar agora; cupons do app; compras online; e como o EconomIA busca os preços.
-- **Configurações**, em abas: **Integrações** (na ordem dos outros apps: CorrerIA; IA do Home Assistant, com Usar IA e Para falar; Uso da IA; Shopee Afiliados, Google Places, Brave Search, Mercado Livre, Instagram e Lista do Home Assistant; e Sensores no Home Assistant), **Dados** (Exportar, Backup na pasta share, Importar, Versões anteriores, Onde ficam os dados e Começar do zero), **Aparência** (tema, cor do app e Cor do dia) e **Opções** (as **Listas** e as etapas da busca que dá para desligar). A aba escolhida fica guardada.
+- **Configurações**, em abas: **Integrações** (na ordem dos outros apps: CorrerIA; IA do Home Assistant, com Usar IA e Para falar; Uso da IA; Shopee Afiliados, AliExpress Afiliados, Google Places, Brave Search, Mercado Livre, Instagram e Lista do Home Assistant; e Sensores no Home Assistant), **Dados** (Exportar, Backup na pasta share, Importar, Versões anteriores, Onde ficam os dados e Começar do zero), **Aparência** (tema, cor do app e Cor do dia) e **Opções** (as **Listas** e as etapas da busca que dá para desligar). A aba escolhida fica guardada.
 - **Sobre**, a última linha: CorrerIA Code, quem faz os apps, os apps da família, cada um com o link para o GitHub dele (o EconomIA marcado como **Este app**, com a versão), e **Meu GitHub**.
 
 Numa tela de Mais, o **‹ Mais** no alto, o Voltar do celular e arrastar para a direita voltam para o menu. Aberta por um atalho de outra tela (como **Preencher o perfil**, na Minha lista), o Voltar do celular volta para onde você estava.
@@ -192,7 +192,7 @@ A busca começa pelo que não gasta IA e só chama a IA para o que faltar (o pas
 4. **Busca do site.** A página de resultados da busca da própria loja, como a da Cobasi.
 5. **Páginas de produto.** Se o site não deixa programas usarem a busca, mas libera as páginas de produto (como o Bistek), o EconomIA baixa uma vez por dia a lista de produtos que a loja publica, acha os itens da sua lista pelo nome e lê o preço na página de cada produto. Esse é o preço padrão do site, que pode variar de loja para loja.
 6. **Página de ofertas do site.** Loja pequena que mostra os produtos com preço na própria página (como a Drogaria Floresta) tem o preço lido dali, no máximo a cada 12 horas.
-7. **Shopee**, pela Open API do Shopee Afiliados, se você ligou em Mais › Configurações › Integrações.
+7. **Shopee** e **AliExpress**, pelas APIs de afiliados deles, se você ligou em Mais › Configurações › Integrações.
 8. **Folheto da semana** e **Instagram** das lojas que você acompanha e que não têm preço pelo site (veja abaixo). A IA lê cada um uma vez.
 9. **IA**: busca na web com a lista de lojas do mapa, para ofertas, cupons, marketplaces e os preços que faltam, avisada das lojas que já têm preço. Depois, o encarte do site das lojas que você cadastrou e uma última pergunta só sobre os itens sem preço.
 
@@ -248,6 +248,12 @@ O App ID, a chave e o acesso ficam só no Home Assistant, em `segredos.json`.
 ## Shopee Afiliados
 
 Em **Mais › Configurações › Integrações › Shopee Afiliados**, informe o App ID e a senha (Secret) da Open API, que você pega em affiliate.shopee.com.br › Open API. Toque em **Salvar e testar**. A partir daí, os preços da Shopee vêm direto da Shopee, sem IA, com o link do produto. A Shopee não informa o frete antes do carrinho, então o preço aparece com "+ frete". As chaves ficam só no Home Assistant, em `segredos.json`, e a senha não aparece de novo no painel.
+
+## AliExpress Afiliados
+
+Em **Mais › Configurações › Integrações › AliExpress Afiliados**, informe o **App Key** e o **App Secret** da API de afiliados do AliExpress e toque em **Salvar e testar**. Para ter as chaves: crie a conta de afiliado em portals.aliexpress.com, entre em openservice.aliexpress.com com a mesma conta, cadastre-se como desenvolvedor afiliado e crie um app (App Management): o App Key e o App Secret ficam na página do app. O cadastro é grátis; a aprovação do app pode levar alguns dias.
+
+Ligada, a busca pega os preços do AliExpress direto de lá, sem IA, em reais e com o envio para o Brasil, com o link do produto. Entram só os produtos com avaliação positiva de 90% ou mais e com as palavras do item no nome. O AliExpress marcado na aba Online de **Mais › Lojas** é o que liga a busca: salvar as chaves já marca, e desmarcar para de procurar. O frete só aparece no carrinho, então o preço vem com "+ frete". As chaves ficam só no Home Assistant, em `segredos.json`, e o App Secret não aparece de novo no painel.
 
 ## Compras online
 

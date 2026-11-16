@@ -21,8 +21,8 @@ Rotas:
 - GET  /api/versoes   cópias anteriores do config.json (as 3 mais recentes)
 - GET  /api/lojas-diretas   lojas com busca direta no site (Giassi, Angeloni) e se atendem o CEP
 - GET  /api/integracoes   Shopee Afiliados: App ID e se a senha está guardada (a senha nunca sai daqui)
-- PUT  /api/integracoes   {"shopee": {"app_id", "secret"}}, {"google": {"key"}}, {"instagram": {"token"}} guardam em segredos.json; null apaga
-- POST /api/integracoes/testar   {"servico": "shopee" | "google" | "instagram" | "brave" | "ml"} faz uma consulta de teste
+- PUT  /api/integracoes   {"shopee": {"app_id", "secret"}}, {"aliexpress": {"app_key", "secret"}}, {"google": {"key"}}, {"instagram": {"token"}} guardam em segredos.json; null apaga
+- POST /api/integracoes/testar   {"servico": "shopee" | "aliexpress" | "google" | "instagram" | "brave" | "ml"} faz uma consulta de teste
 - POST /api/integracoes/ml/conectar   {"codigo"}: o endereço que abriu depois de autorizar no Mercado Livre (ou só o code=TG-…)
 - GET  /api/folhetos   lojas com folheto lido no Kimbino ou no Seus Folhetos e como foi a última leitura
 - GET  /api/lojas-mapa   lojas do raio pelo mapa (OpenStreetMap e, com chave, Google Places)
@@ -106,6 +106,7 @@ SYNC_FILE = os.path.join(DATA, "sync_ha.json")
 SEGREDOS = os.path.join(DATA, "segredos.json")  # chaves das integrações: não vão para o painel, para o HA nem para as versões
 FOLHETOS = os.path.join(DATA, "folhetos.json")  # folhetos já lidos, guardados até vencer
 SHOPEE_API = os.environ.get("OFERTAS_SHOPEE_API", "https://open-api.affiliate.shopee.com.br/graphql")
+ALIEXPRESS_API = os.environ.get("OFERTAS_ALIEXPRESS_API", "https://api-sg.aliexpress.com/sync")
 FOLHETOS_TESTE = os.environ.get("OFERTAS_FOLHETOS_TESTE")  # só para testes: um servidor falso no lugar dos sites de encartes
 SYNC_INTERVALO = int(os.environ.get("OFERTAS_SYNC_SEG", "60"))
 ESPERA_COTA = int(os.environ.get("OFERTAS_ESPERA_COTA", "60"))
@@ -134,10 +135,10 @@ CATEGORIAS = {
     "online": {"nome": "Online", "singular": "Online", "o_que": "marketplaces com entrega no CEP"},
 }
 MARKETPLACES = {"ifood": "iFood", "rappi": "Rappi", "mercadolivre": "Mercado Livre", "amazon": "Amazon", "shopee": "Shopee", "magalu": "Magalu",
-                "americanas": "Americanas", "casasbahia": "Casas Bahia"}
+                "americanas": "Americanas", "casasbahia": "Casas Bahia", "aliexpress": "AliExpress"}
 MKT_SITES = {"ifood": "https://www.ifood.com.br", "rappi": "https://www.rappi.com.br", "mercadolivre": "https://www.mercadolivre.com.br",
              "amazon": "https://www.amazon.com.br", "shopee": "https://shopee.com.br", "magalu": "https://www.magazineluiza.com.br",
-             "americanas": "https://www.americanas.com.br", "casasbahia": "https://www.casasbahia.com.br"}
+             "americanas": "https://www.americanas.com.br", "casasbahia": "https://www.casasbahia.com.br", "aliexpress": "https://pt.aliexpress.com"}
 ASSINATURAS = {"prime": "Amazon Prime", "melimais": "Meli+", "clubeifood": "Clube iFood"}
 TAGS = {"bebe", "pet", "gato", "cachorro", "alcool", "medicamento", "maquiagem", "geriatrico", "skincare", "suplementos",
         "cafe", "bucal", "limpeza", "carnes", "alimentos", "higiene", "lactose", "gluten", "acucar"}
@@ -1304,10 +1305,12 @@ def entrega_ligada(cfg):
 
 
 def mkts_online(cfg):
-    """Marketplaces que a IA procura (a Shopee sai quando vem pela API)."""
+    """Marketplaces que a IA procura (a Shopee e o AliExpress saem quando vêm pela API)."""
     ids = (cfg.get("online") or {}).get("marketplaces") or ["mercadolivre", "amazon"]
     if shopee_pronta():
         ids = [m for m in ids if m != "shopee"]
+    if aliexpress_pronta():
+        ids = [m for m in ids if m != "aliexpress"]
     return [MARKETPLACES.get(m, m) for m in ids]
 
 
@@ -3483,6 +3486,148 @@ def busca_shopee(cfg, itens=None):
     return [(cat, parcial)]
 
 
+# ---------- AliExpress Afiliados (1.40.0): a API de afiliados devolve produto, preço em reais e link, sem IA ----------
+# App Key e App Secret ficam em /data/segredos.json, como os da Shopee; o App Secret só entra na assinatura. A chamada é
+# a do SDK oficial (IOP): POST em /sync, os parâmetros do sistema no endereço e os da consulta no corpo, assinados juntos
+# (MD5 de secret + cada nome com o valor, em ordem, + secret, em maiúsculas).
+ALIEXPRESS_ERROS = {
+    "InvalidAppKey": "O AliExpress não reconheceu o App Key. Confira em openservice.aliexpress.com › App Management.",
+    "IncompleteSignature": "O AliExpress recusou a assinatura: confira o App Secret.",
+    "InvalidSignature": "O AliExpress recusou a assinatura: confira o App Secret.",
+    "ApiCallLimit": "O AliExpress pediu para esperar: consultas demais em pouco tempo.",
+    "AppCallLimited": "O AliExpress pediu para esperar: consultas demais em pouco tempo.",
+    "InsufficientPermission": "O app ainda não tem acesso à API de afiliados. Peça em openservice.aliexpress.com.",
+    "InvalidApi": "O app ainda não tem acesso à API de afiliados. Peça em openservice.aliexpress.com.",
+}
+ALIEXPRESS_PRODUTOS = "aliexpress.affiliate.product.query"
+
+
+class ErroAliExpress(Exception):
+    pass
+
+
+def aliexpress_chaves():
+    a = segredos().get("aliexpress") or {}
+    app, senha = str(a.get("app_key") or "").strip(), str(a.get("secret") or "").strip()
+    return (app, senha) if app and senha else None
+
+
+def aliexpress_pronta():
+    return aliexpress_chaves() is not None
+
+
+def aliexpress_assina(params, senha):
+    base = senha + "".join(f"{k}{params[k]}" for k in sorted(params)) + senha
+    return hashlib.md5(base.encode("utf-8")).hexdigest().upper()
+
+
+def aliexpress_consulta(metodo, consulta):
+    chaves = aliexpress_chaves()
+    if not chaves:
+        raise ErroAliExpress("Falta o App Key e o App Secret do AliExpress em Mais › Configurações › Integrações.")
+    app, senha = chaves
+    sis = {"app_key": app, "method": metodo, "format": "json", "v": "2.0", "sign_method": "md5", "timestamp": str(int(time.time() * 1000))}
+    consulta = {k: str(v) for k, v in consulta.items() if v not in (None, "")}
+    sis["sign"] = aliexpress_assina(dict(sis, **consulta), senha)
+    req = urllib.request.Request(ALIEXPRESS_API + "?" + urllib.parse.urlencode(sis), data=urllib.parse.urlencode(consulta).encode("utf-8"),
+                                 method="POST", headers={"Content-Type": "application/x-www-form-urlencoded;charset=UTF-8", "User-Agent": "EconomIA"})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            d = json.loads(r.read(4_000_000).decode("utf-8") or "{}")
+    except urllib.error.HTTPError as e:
+        raise ErroAliExpress(f"O AliExpress respondeu com erro {e.code}.") from e
+    except (urllib.error.URLError, OSError, ValueError) as e:
+        raise ErroAliExpress(f"Não consegui falar com o AliExpress ({e}).") from e
+    d = d if isinstance(d, dict) else {}
+    erro = d.get("error_response")
+    if isinstance(erro, dict):
+        cod = str(erro.get("code") or "")
+        raise ErroAliExpress(ALIEXPRESS_ERROS.get(cod) or f"O AliExpress recusou a consulta: {str(erro.get('sub_msg') or erro.get('msg') or cod)[:160]}")
+    rr = (d.get(metodo.replace(".", "_") + "_response") or {}).get("resp_result")
+    if not isinstance(rr, dict):
+        return {}
+    cod = str(rr.get("resp_code"))
+    if cod == "405":  # "o resultado está vazio": nenhum produto
+        return {}
+    if cod != "200":
+        raise ErroAliExpress(f"O AliExpress recusou a consulta: {str(rr.get('resp_msg') or cod)[:160]}")
+    return rr.get("result") if isinstance(rr.get("result"), dict) else {}
+
+
+def aliexpress_produtos(termo, limite=20):
+    r = aliexpress_consulta(ALIEXPRESS_PRODUTOS, {"keywords": str(termo)[:80], "page_no": 1, "page_size": int(limite),
+                                                  "target_currency": "BRL", "target_language": "PT", "ship_to_country": "BR"})
+    ps = r.get("products")
+    ps = ps.get("product") if isinstance(ps, dict) else ps
+    return [p for p in ps or [] if isinstance(p, dict)]
+
+
+def aliexpress_preco(p):
+    """O preço em reais (o da moeda pedida; outra moeda não vale)."""
+    for campo in ("target_sale_price", "sale_price"):
+        moeda = str(p.get(campo + "_currency") or "BRL").upper()
+        v = numero(p.get(campo))
+        if v and moeda == "BRL":
+            return v
+    return None
+
+
+def aliexpress_nota(p):
+    """A avaliação positiva em % ("96.5%"), ou None."""
+    m = re.match(r"\s*([\d.,]+)", str(p.get("evaluate_rate") or ""))
+    return numero(m.group(1)) if m else None
+
+
+def testar_aliexpress():
+    try:
+        ps = aliexpress_produtos("garrafa térmica", 5)
+    except ErroAliExpress as e:
+        return {"ok": False, "msg": str(e)}
+    x = next((p for p in ps if aliexpress_preco(p)), None)
+    if not x:
+        return {"ok": True, "msg": "O AliExpress aceitou o App Key e o App Secret, mas não devolveu produtos no teste."}
+    return {"ok": True, "msg": f"Pronto. Exemplo: {str(x.get('product_title') or '')[:60]} por {br_preco(aliexpress_preco(x))}."}
+
+
+def aliexpress_ligado(cfg):
+    """Com as chaves e o AliExpress marcado em Mais › Lojas › Online."""
+    return aliexpress_pronta() and "aliexpress" in ((cfg.get("online") or {}).get("marketplaces") or [])
+
+
+def busca_aliexpress(cfg, itens=None):
+    """Preço de cada item da lista no AliExpress, pela API de afiliados. Devolve [(categoria, parcial)], como a Shopee."""
+    nomes = itens or nomes_da_lista(cfg)
+    if not nomes or not aliexpress_ligado(cfg):
+        return []
+    BUSCA["etapa"] = "preços no AliExpress"
+    lista_bruta, n = [], 0
+    for nome in nomes:
+        try:
+            ps = aliexpress_produtos(nome)
+        except ErroAliExpress as e:
+            log(f"aliexpress '{nome}': {e}")
+            if not str(e).startswith("O AliExpress recusou a consulta"):
+                break  # chave errada, sem acesso ou limite: as outras consultas também vão falhar
+            continue
+        cands = []
+        for x in ps:
+            pn = str(x.get("product_title") or "").strip()
+            preco, nota = aliexpress_preco(x), aliexpress_nota(x)
+            if not pn or not preco or (nota is not None and nota < 90) or not combina(nome, pn):
+                continue
+            cands.append({"nome": pn[:80], "preco": preco, "de": None, "tam": tamanho_nome(pn), "link": fonte_ok(x.get("product_detail_url"))})
+        if cands:
+            n += 1
+            ent, _ = montar_item(nome, {"AliExpress": cands}, frete="carrinho")
+            lista_bruta.append(ent)
+    log(f"aliexpress: {n} de {len(nomes)} item(ns) com preço")
+    if not lista_bruta:
+        return []
+    cat, parcial = normalizar("online", {"lojas": [], "cupons": [], "ofertas": [], "lista": lista_bruta, "_via": "api"},
+                              dict(cfg, lista=[{"produto": x} for x in nomes]))
+    return [(cat, parcial)]
+
+
 # ---------- folhetos dos sites de encartes (Kimbino, Seus Folhetos) ----------
 # O folheto da semana de cada loja escolhida em Mais › Lojas é lido uma vez pela IA de fotos e guardado até vencer.
 # Nas buscas seguintes os preços vêm do que foi guardado, e os itens novos da lista são casados com as ofertas
@@ -4492,6 +4637,16 @@ def busca_scripts(cfg, cats, itens=None, ler_folhetos=True):
             resultado += sh
             rel["shopee"] = sum(len(p) for _, p in sh)
             ja["online"] = sorted(set(ja.get("online") or []) | {"Shopee"})
+    if "online" in cats and aliexpress_ligado(cfg):
+        try:
+            al = busca_aliexpress(cfg, itens)
+        except Exception as e:  # noqa: BLE001
+            al = []
+            log(f"aliexpress: {e}")
+        if al:
+            resultado += al
+            rel["aliexpress"] = sum(len(p) for _, p in al)
+            ja["online"] = sorted(set(ja.get("online") or []) | {"AliExpress"})
     try:  # logo depois do site: o folheto das lojas que não têm preço por lá
         fo, st = busca_folhetos(cfg, lojas_folheto(cfg, cats, ja=ja), so_guardados=not ler_folhetos)
     except Exception as e:  # noqa: BLE001
@@ -6329,6 +6484,23 @@ def testa_marketplace(cfg, mid, nome, memo):
                 st["passos"].append("✗ A API de afiliados da Shopee não trouxe produtos no teste.")
         else:
             st["passos"].append("A Shopee tem API de afiliados, que dá preço sem IA: ligue em Mais › Configurações › Integrações.")
+    if mid == "aliexpress":
+        if aliexpress_pronta():
+            ta = "garrafa térmica"  # café quase não tem lá
+            try:
+                ps = aliexpress_produtos(ta, 5)
+            except ErroAliExpress as e:
+                ps = None
+                st["passos"].append(f"✗ API de afiliados do AliExpress: {e}")
+            x = next((p for p in ps or [] if aliexpress_preco(p)), None)
+            if x:
+                st.update(como="api", exemplo=f"{texto(x.get('product_title'), 45)} por {br_preco(aliexpress_preco(x))}")
+                st["passos"].append(f"✓ API de afiliados do AliExpress: \"{ta}\", {st['exemplo']}.")
+                return st
+            if ps is not None:
+                st["passos"].append("✗ A API de afiliados do AliExpress não trouxe produtos no teste.")
+        else:
+            st["passos"].append("O AliExpress tem API de afiliados, que dá preço sem IA: ligue em Mais › Configurações › Integrações.")
     o, barrado = MKT_SITES.get(mid), False
     if o:
         st["site"] = o.split("://", 1)[-1].replace("www.", "")
@@ -6769,7 +6941,7 @@ def mesclar_resultado(resultado, cfg, extra=None, mapa=None, completa=False, nov
         relatorio["sem_preco"] = [n for n in nomes_da_lista(cfg) if n not in lista]
         relatorio["sugestoes"] = sugestoes_para(relatorio["sem_preco"])
         for k, v in (extra or {}).items():
-            if k in ("diretas", "shopee", "folhetos"):
+            if k in ("diretas", "shopee", "aliexpress", "folhetos"):
                 relatorio[k] = v
         itens_of = [item_ofertas(p, v) for p, v in lista.items()]
         guardar_similares(itens_of)
@@ -8091,9 +8263,11 @@ class Painel(BaseHTTPRequestHandler):
             self._json(200, voz_status())
         elif rota == "/api/integracoes":
             ch = segredos().get("shopee") or {}
+            al = segredos().get("aliexpress") or {}
             ig = segredos().get("instagram") or {}
             ml = ml_conf()
-            self._json(200, {"shopee": {"app_id": str(ch.get("app_id") or ""), "tem_senha": bool(ch.get("secret"))}, "google": {"tem_chave": bool(google_chave())},
+            self._json(200, {"shopee": {"app_id": str(ch.get("app_id") or ""), "tem_senha": bool(ch.get("secret"))},
+                             "aliexpress": {"app_key": str(al.get("app_key") or ""), "tem_senha": bool(al.get("secret"))}, "google": {"tem_chave": bool(google_chave())},
                              "instagram": {"tem_chave": bool(ig.get("token")), "usuario": ig.get("usuario")}, "brave": {"tem_chave": bool(brave_chave())},
                              "ml": {"app_id": str(ml.get("app_id") or ""), "tem_senha": bool(ml.get("secret")), "url_retorno": str(ml.get("url_retorno") or ""),
                                     "conectado": ml_ligado(), "autorizar": ml_autorizar_url(ml), "erro": _ml["erro"]}})
@@ -8204,6 +8378,17 @@ class Painel(BaseHTTPRequestHandler):
                     if not app:
                         return self._json(400, {"erro": "Falta o App ID da Shopee."})
                     seg["shopee"] = {"app_id": app, "secret": senha or (atual.get("secret") if atual.get("app_id") == app else "")}
+            if "aliexpress" in dado:
+                novo = dado.get("aliexpress")
+                if not novo:
+                    seg.pop("aliexpress", None)
+                else:
+                    atual = seg.get("aliexpress") or {}
+                    app = re.sub(r"\s", "", str(novo.get("app_key") or ""))[:40]
+                    senha = re.sub(r"\s", "", str(novo.get("secret") or ""))[:200]
+                    if not app:
+                        return self._json(400, {"erro": "Falta o App Key do AliExpress."})
+                    seg["aliexpress"] = {"app_key": app, "secret": senha or (atual.get("secret") if atual.get("app_key") == app else "")}
             if "google" in dado:
                 novo = dado.get("google")
                 chave = re.sub(r"\s", "", str((novo or {}).get("key") or ""))[:120]
@@ -8253,8 +8438,9 @@ class Painel(BaseHTTPRequestHandler):
                 elif not novo:
                     seg.pop("instagram", None)
             grava_segredos(seg)
-            ch = seg.get("shopee") or {}
+            ch, al = seg.get("shopee") or {}, seg.get("aliexpress") or {}
             self._json(200, {"ok": True, "shopee": {"app_id": str(ch.get("app_id") or ""), "tem_senha": bool(ch.get("secret"))},
+                             "aliexpress": {"app_key": str(al.get("app_key") or ""), "tem_senha": bool(al.get("secret"))},
                              "google": {"tem_chave": bool((seg.get("google") or {}).get("key"))}})
         elif rota == "/api/ofertas":
             dado = self._corpo()
@@ -8338,7 +8524,8 @@ class Painel(BaseHTTPRequestHandler):
                 dado = {}
             serv = dado.get("servico") if isinstance(dado, dict) else None
             return self._json(200, testar_google() if serv == "google" else testar_instagram() if serv == "instagram"
-                              else testar_brave() if serv == "brave" else testar_ml() if serv == "ml" else testar_shopee())
+                              else testar_brave() if serv == "brave" else testar_ml() if serv == "ml"
+                              else testar_aliexpress() if serv == "aliexpress" else testar_shopee())
         if urllib.parse.urlsplit(self.path).path == "/api/integracoes/ml/conectar":
             dado = self._corpo()
             if dado is None:

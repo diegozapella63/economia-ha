@@ -6,7 +6,7 @@
 - LojasFalsas: um servidor HTTP local que responde como a busca da VTEX (regiões, busca por texto, por código de
   barras e por seção), o OAuth e o previsor de categorias do Mercado Livre, o Open Food Facts e páginas soltas
   (com cabeçalhos, redirecionamento ou conexão fechada sem resposta). rotas[caminho] = função(pedido) responde como
-  o Overpass, o Google Places, o Brave, a Graph API do Instagram ou a Shopee; env_servicos() aponta tudo para cá.
+  o Overpass, o Google Places, o Brave, a Graph API do Instagram, a Shopee ou o AliExpress; env_servicos() aponta tudo para cá.
 - prod(): um produto no formato da intelligent-search da VTEX.
 - O Home Assistant de mentira (API REST, IA, listas, fala para texto e WebSocket) fica em ha_falso.py.
 
@@ -163,7 +163,7 @@ class LojasFalsas:
         """env() mais o mapa (Overpass, Google), Brave, Instagram, Shopee, sites de encartes e a casa, todos aqui."""
         return dict(self.env(), OFERTAS_OVERPASS=self.base + "/overpass", OFERTAS_GOOGLE_PLACES=self.base + "/google/nearby",
                     OFERTAS_GOOGLE_TEXTO=self.base + "/google/texto", OFERTAS_BRAVE=self.base + "/brave",
-                    OFERTAS_GRAPH=self.base + "/graph", OFERTAS_SHOPEE_API=self.base + "/shopee",
+                    OFERTAS_GRAPH=self.base + "/graph", OFERTAS_SHOPEE_API=self.base + "/shopee", OFERTAS_ALIEXPRESS_API=self.base + "/aliexpress",
                     OFERTAS_FOLHETOS_TESTE=self.base, OFERTAS_CASA="-26.3000,-48.8500")
 
     # ----- respostas -----

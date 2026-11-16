@@ -44,7 +44,7 @@ OFERTAS_DATA=/tmp/economia OFERTAS_PORT=8099 OFERTAS_ALLOW_ALL=1 python3 economi
 ```
 
 Variáveis só para testes: `OFERTAS_VTEX_TESTE` (lojas VTEX falsas), `OFERTAS_ML_API`/`OFERTAS_ML_AUTH` (Mercado Livre),
-`OFERTAS_OFF` (Open Food Facts), `OFERTAS_SHOPEE_API`, `OFERTAS_OVERPASS`, `OFERTAS_GOOGLE_PLACES`, `OFERTAS_BRAVE`,
+`OFERTAS_OFF` (Open Food Facts), `OFERTAS_SHOPEE_API`, `OFERTAS_ALIEXPRESS_API`, `OFERTAS_OVERPASS`, `OFERTAS_GOOGLE_PLACES`, `OFERTAS_BRAVE`,
 `OFERTAS_GRAPH`, `OFERTAS_HA_API`/`OFERTAS_HA_WS`, `OFERTAS_CASA`, `OFERTAS_VOZ_SIMULADA`. O `tests/apoio.py` tem as
 lojas falsas (`LojasFalsas`) e carrega o servidor numa pasta de dados temporária (`servidor()`); o `tests/ha_falso.py`
 é o Home Assistant falso (IA, listas, fala para texto). Veja `tests/README.md`.
@@ -77,7 +77,7 @@ outros apps do grupo e publique todos. Um arquivo que passa a ser igual entra em
 
 - **Dados pessoais só dentro do Home Assistant** (`/data`). O GitHub tem só o código. Nunca mandar o e-mail do dono
   (ou de ninguém) para serviço externo, cabeçalho ou URL.
-- **Chaves e senhas** (Shopee, Google, Brave, Instagram, Mercado Livre) ficam só em `/data/segredos.json` (modo 600) e
+- **Chaves e senhas** (Shopee, AliExpress, Google, Brave, Instagram, Mercado Livre) ficam só em `/data/segredos.json` (modo 600) e
   **nunca voltam para a página** (a API devolve só "tem chave"). Ninguém pede chave pelo chat: o usuário cola no app.
 - **Não contornar bloqueios**: nada de burlar verificação de robô (captcha, Cloudflare, "playwright-bot-bypass"),
   nada de fingir ser o usuário, nada de usar login ou chave que a loja não abriu para nós. Respeitar o `robots.txt`
@@ -85,7 +85,7 @@ outros apps do grupo e publique todos. Um arquivo que passa a ser igual entra em
   Já decidido assim: Catálogos Ofertas (verificação de robô), Raia (403), Tiendeo (sem downloads), VipCommerce (busca só
   com chave da plataforma), SiteMercado (token de sessão), Instabuy (bloqueia o IP por horas). O plano grátis do Brave
   não serve para guardar preços.
-- **Primeiro o que não gasta IA** (busca direta VTEX, busca do site, páginas de produto, catálogos, Shopee, folhetos);
+- **Primeiro o que não gasta IA** (busca direta VTEX, busca do site, páginas de produto, catálogos, Shopee, AliExpress, folhetos);
   a IA do Home Assistant (`ai_task.generate_data`) entra por último, só para o que faltou, e pode ser desligada.
 - **A Conversa (`POST /api/chat`, `conversar` no servidor) só usa tarefa de IA** (`ia_da_conversa`: `ai_task.*`),
   nunca um assistente `conversation.*`, que pode mexer na casa. A IA só **sugere** ações (`acoes_validas` confere

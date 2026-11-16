@@ -27,7 +27,7 @@ esperar (espera-se a condição: `Cenario.espera`, `espera()` nas visuais), semp
 - `apoio.py`: `servidor()` carrega o `server.py` do zero numa pasta de dados temporária, sem internet; `LojasFalsas`
   responde como a busca da VTEX (regiões, texto, código de barras, seção), o OAuth e o previsor de categorias do
   Mercado Livre, o Open Food Facts, páginas soltas (com cabeçalhos, redirecionamento ou `FECHA`, a conexão fechada sem
-  resposta) e rotas com função (`rotas[caminho] = f(pedido)`: Overpass, Google, Brave, Graph API, Shopee); `prod()` monta
+  resposta) e rotas com função (`rotas[caminho] = f(pedido)`: Overpass, Google, Brave, Graph API, Shopee, AliExpress); `prod()` monta
   um produto da VTEX; `categoria()` uma categoria do `ofertas.json`; `Cenario` é a base dos testes novos (lojas falsas,
   Home Assistant falso e servidor ligados entre si, `config()`, `ofertas()`, `espera()`).
 - `ha_falso.py`: o Home Assistant falso (REST e WebSocket): estados, `ai_task.generate_data` com roteiro por tarefa
@@ -104,6 +104,7 @@ esperar (espera-se a condição: `Cenario.espera`, `espera()` nas visuais), semp
   testar, apagar, chave que nunca volta para a página), Usar IA e a escolha das IAs.
 - `e2e/ec_lojas.py`: Mais › Lojas: abas, procurar, só sem fonte, inativas, clube, loja sem localização.
 - `e2e/ec_lojas_acoes.py`: Encontrar lojas, Testar agora, Como foi testado, adicionar e ignorar loja.
+- `e2e/ec_aliexpress.py`: AliExpress Afiliados em Integrações (assinatura errada e certa, o exemplo, o App Secret só como ••••, marcado em Online com o Preço pela API, desmarcado, Apagar, 320 px).
 - `e2e/ec_beneficios_todas.py`: Mais › Lojas › Benefícios de todas: uma loja por rede, também as online, o andamento, o Parar e as procuradas há pouco de fora.
 - `e2e/ec_ofertas.py`: Ofertas e cupons por categoria, filtros, cupom que vence, online com frete; as escondidas no fim, em
   Escondidas (N), e os cupons vencidos em Vencidos (N), recolhidos até um toque.
