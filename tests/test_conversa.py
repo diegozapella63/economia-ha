@@ -142,6 +142,47 @@ class Conversa(Cenario):
         self.assertNotIn("Ofertas das lojas", vazio)
         self.assertNotIn("Preços da última busca", vazio)
 
+    def test_a_ia_nao_ve_as_ofertas_que_a_tela_esconde(self):
+        """1.42.0: as ofertas que a tela põe em Escondidas (bebê sem crianças, pet sem pets ou de outro bicho, uma
+        etiqueta de Nunca mostrar, uma restrição) também ficam fora da Conversa e das ferramentas do CorrerIA."""
+        S = self.S
+        of = json.loads(json.dumps(OFERTAS))
+        of["categorias"][0]["ofertas"] = [
+            {"id": "b1", "rede": "giassi", "produto": "Fralda P", "preco_normal": 80.0, "preco_oferta": 40.0, "tags": ["bebe"]},
+            {"id": "c1", "rede": "giassi", "produto": "Ração de cachorro", "preco_normal": 80.0, "preco_oferta": 40.0, "tags": ["pet", "cachorro"]},
+            {"id": "c2", "rede": "giassi", "produto": "Areia de gato", "preco_normal": 30.0, "preco_oferta": 20.0, "tags": ["pet", "gato"]},
+            {"id": "q1", "rede": "giassi", "produto": "Queijo prato", "preco_normal": 50.0, "preco_oferta": 30.0, "tags": ["lactose"]},
+            {"id": "v1", "rede": "giassi", "produto": "Vinho tinto", "preco_normal": 50.0, "preco_oferta": 30.0, "tags": ["alcool"]},
+            {"id": "e1", "rede": "giassi", "produto": "Energético 473 ml", "preco_normal": 10.0, "preco_oferta": 5.0},
+            {"id": "g2", "rede": "giassi", "produto": "Arroz 5 kg", "preco_normal": 30.0, "preco_oferta": 27.0}]
+        self.config(categorias=["mercados"], lista=[], perfil={"adultos": 2, "criancas": 0, "bebes": 0, "pets": {"gato": 1},
+                    "restricoes": ["lactose"], "nunca": ["alcool"], "nunca_produtos": ["energético"]})
+        self.ofertas(of)
+        t = S.contexto_chat("ofertas")
+        self.assertIn("Ofertas das lojas acompanhadas (2;", t)
+        self.assertIn("Areia de gato", t)
+        self.assertIn("Arroz 5 kg", t)
+        for fora in ("Fralda", "Ração de cachorro", "Queijo", "Vinho", "Energético"):
+            self.assertNotIn(fora, t)
+        vivas, _ = S._ofertas_vivas(S.ler_config(), S.ler_json(S.OFERTAS, {}))
+        self.assertEqual(sorted(o["id"] for o in vivas), ["c2", "g2"], "as ferramentas do CorrerIA também")
+        # com um bebê na casa e um cachorro, aparecem
+        self.config(categorias=["mercados"], lista=[], perfil={"adultos": 2, "criancas": 0, "bebes": 1, "pets": ["cachorro"]})
+        t = S.contexto_chat("ofertas")
+        self.assertIn("Fralda P", t)
+        self.assertIn("Ração de cachorro", t)
+        self.assertNotIn("Areia de gato", t, "só um cachorro: a de gato não")
+
+    def test_cupons_e_historico_cortados_dizem_quantos(self):
+        S = self.S
+        hist = [{"produto": f"Coisa {i:02d}", "compras": ["2026-10-01"], "saiu": "2026-10-02"} for i in range(20)]
+        cupons = [{"id": f"m{i}", "rede": "giassi", "beneficio": f"Cupom {i}", "valido_ate": "2026-12-01"} for i in range(12)]
+        self.config(categorias=["mercados"], lista=[], historico=hist, cupons_meus=cupons)
+        self.ofertas(OFERTAS)
+        t = S.contexto_chat("lista")
+        self.assertIn("; e mais 5.", t)
+        self.assertIn("Cupons válidos (13):", t)
+
     def test_clipe_foto_ou_pdf_vai_junto(self):
         """1.38.0: Tirar foto, Escolher fotos ou Escolher arquivo: o arquivo vai junto para a IA (a de fotos), e só o nome
         fica na conversa; a pasta de mídia fica vazia depois."""
@@ -191,6 +232,7 @@ class Conversa(Cenario):
         S.conversar({"mensagens": msgs, "tela": "ofertas"})
         t = ha.chamadas_ia[-1]["instructions"]
         self.assertIn("Você é a IA do EconomIA", t)
+        self.assertIn("com todos os acentos e o ç (você, às, não, alimentação)", t, "1.42.0: com os acentos (uma IA respondia sem eles)")
         self.assertIn("Você não muda nada sozinho.", t)
         for tipo in ("por_na_lista", "tirar_da_lista", "comprei", "buscar", "abrir"):
             self.assertIn(f"- {tipo} (", t)

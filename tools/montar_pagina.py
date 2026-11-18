@@ -13,8 +13,9 @@ import sys
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FONTE = os.path.join(RAIZ, "economia", "pagina", "painel.html")
 # os arquivos iguais aos dos outros apps, ao lado da fonte; no add-on, vão embutidos: as caixas de seleção no visual do
-# app (selectsheet.js) e os campos de texto que guardam o tamanho (textareas.js, 1.19.0)
-IGUAIS = ("selectsheet.js", "textareas.js")
+# app (selectsheet.js), os campos de texto que guardam o tamanho (textareas.js, 1.19.0) e o fundo e os cartões do tema do
+# Home Assistant (hatema.js, 1.42.0)
+IGUAIS = ("selectsheet.js", "hatema.js", "textareas.js")
 DESTINO = os.path.join(RAIZ, "economia", "app", "www", "index.html")
 
 CABECALHO = """<!doctype html>

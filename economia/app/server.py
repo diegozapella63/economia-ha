@@ -7065,6 +7065,43 @@ def nunca_produto(cfg, produto):
     return any(t and (" " + t) in n for t in (norm(x) for x in termos if isinstance(x, str)))
 
 
+RESTR_TAG = {"lactose": "lactose", "gluten": "gluten", "vegetariano": "carnes", "acucar": "acucar"}
+
+
+def _qtd(v):
+    try:
+        return max(0, int(float(v)))
+    except (TypeError, ValueError):
+        return 0
+
+
+def oferta_escondida(cfg, o):
+    """A oferta que a tela esconde (em Escondidas, nas Ofertas): a que a pessoa escondeu, a do Nunca mostrar, a de uma
+    etiqueta que ela não quer, a de bebê numa casa sem crianças, a de pet sem pets (ou de outro bicho) e a que bate com
+    uma restrição. 1.42.0: a mesma regra do escondida da página, para a Conversa e as ferramentas não falarem de oferta
+    que a tela não mostra."""
+    cfg = cfg if isinstance(cfg, dict) else {}
+    p = cfg.get("perfil") if isinstance(cfg.get("perfil"), dict) else {}
+    if (o.get("id") or f'{o.get("rede")}|{o.get("produto")}') in set(cfg.get("ocultas") or []):
+        return True
+    if nunca_produto(cfg, o.get("produto")):
+        return True
+    tags = [t for t in (o.get("tags") or []) if isinstance(t, str)]
+    if any(t in tags for t in (p.get("nunca") or [])):
+        return True
+    if "bebe" in tags and _qtd(p.get("criancas")) + _qtd(p.get("bebes")) == 0:
+        return True
+    if "pet" in tags:
+        v = p.get("pets")
+        pets = {k: (1 if isinstance(v, list) and k in v else _qtd(v.get(k)) if isinstance(v, dict) else 0) for k in ("cachorro", "gato", "outros")}
+        if not sum(pets.values()):
+            return True
+        bichos = [b for b in ("gato", "cachorro") if b in tags]
+        if bichos and not any(pets[b] > 0 for b in bichos):
+            return True
+    return any(r in RESTR_TAG and RESTR_TAG[r] in tags for r in (p.get("restricoes") or []))
+
+
 def outro_produto(oferta, nome):
     """O produto achado numa loja é outro, não o da oferta? Comparar preço só junta o mesmo produto (1.11.0: o "Creme Nivea
     Men 4 em 1" não é o "Creme de Barbear Nivea Men Sensitive"). É outro quando o "N em 1" não bate (a oferta tem e o
@@ -7608,15 +7645,15 @@ def contexto_chat(tela, cfg=None, of=None):
     if hist:
         linhas.append("\nJá comprou e não está na lista: " + "; ".join(
             f'{h["produto"]} ({len(h["compras"])}x, a última em {br_data(max(d for d in h["compras"] if data_ok(d)))})'
-            if any(data_ok(d) for d in h["compras"]) else h["produto"] for h in hist[:MAX_HIST_CHAT]) + ".")
-    ocultas = set(cfg.get("ocultas") or [])
+            if any(data_ok(d) for d in h["compras"]) else h["produto"] for h in hist[:MAX_HIST_CHAT])
+            + (f"; e mais {len(hist) - MAX_HIST_CHAT}" if len(hist) > MAX_HIST_CHAT else "") + ".")
     ofertas, cupons = [], []
     for c in of.get("categorias") or []:
         if not isinstance(c, dict):
             continue
         for o in c.get("ofertas") or []:
             if isinstance(o, dict) and acompanha(o.get("rede")) and numero(o.get("preco_oferta")) and o.get("produto") \
-                    and (o.get("id") or f'{o.get("rede")}|{o.get("produto")}') not in ocultas and not nunca_produto(cfg, o.get("produto")):
+                    and not oferta_escondida(cfg, o):
                 ofertas.append(o)
         for k in c.get("cupons") or []:
             if isinstance(k, dict) and acompanha(k.get("rede")) and k.get("status") == "confirmado" and k.get("beneficio") \
@@ -7636,7 +7673,7 @@ def contexto_chat(tela, cfg=None, of=None):
                           + (f" (era {br_preco(de)}, {_pct(o)}% menos)" if _pct(o) else "")
                           + (" com o clube da loja" if o.get("tipo") == "clube" else ""))
     if cupons:
-        linhas.append("\nCupons válidos:")
+        linhas.append(f"\nCupons válidos ({len(cupons)}):" if len(cupons) > MAX_CUPONS_CHAT else "\nCupons válidos:")
         for k in cupons[:MAX_CUPONS_CHAT]:
             loja = (info.get(k.get("rede")) or {}).get("nome") or k.get("rede")
             linhas.append(f'- {loja}: {k["beneficio"]}' + (f' (código {k["codigo"]})' if k.get("codigo") else "")
@@ -7653,7 +7690,7 @@ def instrucoes_chat(contexto, mensagens, arquivos=0):
             if arquivos else "")
     return (
         "Você é a IA do EconomIA, um app do Home Assistant que compara os preços de mercados, farmácias e pet shops do bairro "
-        "e cuida da lista de compras da casa. Converse em português do Brasil, com respostas curtas e diretas (poucas frases ou "
+        "e cuida da lista de compras da casa. Converse em português do Brasil, com todos os acentos e o ç (você, às, não, alimentação), com respostas curtas e diretas (poucas frases ou "
         "uma lista curta). Use os dados do app abaixo e não invente preços, lojas nem cupons: se não souber, diga. "
         "Também pode conversar sobre outros assuntos.\n"
         # 1.41.1: pela busca na web, como está hoje, e não de memória
@@ -7975,14 +8012,14 @@ def _ferr_lista(a, cfg, of):
 def _ofertas_vivas(cfg, of):
     """As ofertas e os cupons das lojas acompanhadas, sem as escondidas, com o nome da loja e o tipo."""
     info, acompanha = redes_acompanhadas(cfg, of)
-    ocultas, hoje = set(cfg.get("ocultas") or []), hoje_br()
+    hoje = hoje_br()
     ofertas, cupons = [], []
     for c in of.get("categorias") or []:
         if not isinstance(c, dict):
             continue
         for o in c.get("ofertas") or []:
             if isinstance(o, dict) and o.get("produto") and numero(o.get("preco_oferta")) and acompanha(o.get("rede")) \
-                    and (o.get("id") or f'{o.get("rede")}|{o.get("produto")}') not in ocultas and not nunca_produto(cfg, o.get("produto")):
+                    and not oferta_escondida(cfg, o):
                 ofertas.append(dict(o, _loja=info[o["rede"]]["nome"], _cat=c.get("id")))
         for k in c.get("cupons") or []:
             if isinstance(k, dict) and acompanha(k.get("rede")) and k.get("status") == "confirmado" and k.get("beneficio") \

@@ -1,5 +1,10 @@
 # Mudanças
 
+## 1.42.0
+
+- **O fundo e os cartões seguem o tema do Home Assistant**, no claro e no escuro: o mesmo fundo do Home Assistant e dos outros apps da família (antes, o EconomIA tinha o seu, esverdeado). Com um tema seu no Home Assistant, o app usa as cores dele; ao trocar o tema ou o modo no Home Assistant, o app muda junto.
+- **Conversa**: a IA responde com todos os acentos (algumas IAs escreviam "voce" e "Alimentacao"). E ela não fala mais das ofertas que a tela esconde (de bebê sem crianças, de pet sem pets, do Nunca mostrar ou de uma restrição); no CorrerIA também.
+
 ## 1.41.1
 
 - **Conversa**: o **Vale a pena?** e o **Compare** agora sempre pesquisam na internet as avaliações e o preço de hoje, e não respondem de memória. Se a IA não conseguir pesquisar, ela avisa.

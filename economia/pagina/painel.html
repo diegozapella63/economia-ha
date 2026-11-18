@@ -9,11 +9,13 @@
    Ofertas: seletor de categoria, resumo e duas colunas (ofertas | cupons). Uma coluna abaixo de 900px.
    Preços em tipo condensado de etiqueta de gôndola, no padrão "De / Por". */
 :root{
-  --bg:#EEF2F0;
-  --surface:#FFFFFF;
+  /* o fundo e os cartões são os do tema do Home Assistant (hatema.js, igual em todos os apps); a linha sai deles e do
+     texto, para todos os apps da família terem o mesmo fundo */
+  --bg:var(--ha-bg-light,#fafafa);
+  --surface:var(--ha-card-light,#ffffff);
   --ink:#15201B;
   --muted:#56645D;
-  --line:#D5DED9;
+  --line:color-mix(in srgb,var(--surface) 84%,var(--ink));
   --accent:#0D7356;
   --accent-soft:#DDEFE7;
   --on-accent:#FFFFFF;
@@ -33,7 +35,7 @@
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#0E1412; --surface:#161F1B; --ink:#E4ECE8; --muted:#98A8A0; --line:#28342F;
+    --bg:var(--ha-bg-dark,#111111); --surface:var(--ha-card-dark,#1c1c1c); --ink:#E4ECE8; --muted:#98A8A0; --line:color-mix(in srgb,var(--surface) 91%,var(--ink));
     --accent:#45C89B; --accent-soft:#153A2D; --on-accent:#05251A;
     --deal:#FF8673; --deal-soft:#3C1F1A; --warn:#EFC063; --warn-soft:#342912;
     --ticket:#25220F; --ticket-line:#6E612F; color-scheme:dark;
@@ -41,7 +43,7 @@
   }
 }
 :root[data-theme="dark"]{
-  --bg:#0E1412; --surface:#161F1B; --ink:#E4ECE8; --muted:#98A8A0; --line:#28342F;
+  --bg:var(--ha-bg-dark,#111111); --surface:var(--ha-card-dark,#1c1c1c); --ink:#E4ECE8; --muted:#98A8A0; --line:color-mix(in srgb,var(--surface) 91%,var(--ink));
   --accent:#45C89B; --accent-soft:#153A2D; --on-accent:#05251A;
   --deal:#FF8673; --deal-soft:#3C1F1A; --warn:#EFC063; --warn-soft:#342912;
   --ticket:#25220F; --ticket-line:#6E612F; color-scheme:dark;
@@ -54,9 +56,9 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body)
 h1,h2,h3,p,ul,ol{margin:0}
 ul,ol{padding:0;list-style:none}
 /* cor do app: troca o destaque e a etiqueta; fora do verde, o fundo fica neutro */
-:root[data-cor]{--bg:#F1F2F3;--ink:#17191B;--muted:#5A6066;--line:#DADDE0}
-@media (prefers-color-scheme: dark){:root[data-cor]:not([data-theme="light"]){--bg:#121314;--surface:#1A1C1E;--ink:#E8EAEC;--muted:#A0A5AA;--line:#2C2F32}}
-:root[data-theme="dark"][data-cor]{--bg:#121314;--surface:#1A1C1E;--ink:#E8EAEC;--muted:#A0A5AA;--line:#2C2F32}
+:root[data-cor]{--ink:#17191B;--muted:#5A6066}
+@media (prefers-color-scheme: dark){:root[data-cor]:not([data-theme="light"]){--ink:#E8EAEC;--muted:#A0A5AA}}
+:root[data-theme="dark"][data-cor]{--ink:#E8EAEC;--muted:#A0A5AA}
 /* a paleta da família (1.9.0): as 12 cores, nesta ordem, com os mesmos nomes em todos os apps (a do CronologIA) */
 :root[data-cor="vermelho"]{--accent:#C42A1F;--accent-soft:#FFE5E3;--on-accent:#FFFFFF;--tag-bg:#C42A1F;--tag-ink:#FFFFFF;--tag-line:rgba(255,255,255,.5);--tag-ring:#FF5A4F}
 @media (prefers-color-scheme: dark){:root[data-cor="vermelho"]:not([data-theme="light"]){--accent:#FF5A4F;--accent-soft:#462321;--on-accent:#290E0D;--tag-bg:#FF5A4F;--tag-ink:#290E0D;--tag-line:rgba(0,0,0,.35);--tag-ring:#FFA49E}}
@@ -1928,6 +1930,7 @@ input.field,select.field{min-height:var(--altura)}
 </section>
 
 <script src="selectsheet.js"></script>
+<script src="hatema.js"></script>
 <script src="textareas.js"></script>
 <script>
 (function(){
