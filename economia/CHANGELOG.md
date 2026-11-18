@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.41.1
+
+- **Conversa**: o **Vale a pena?** e o **Compare** agora sempre pesquisam na internet as avaliações e o preço de hoje, e não respondem de memória. Se a IA não conseguir pesquisar, ela avisa.
+
 ## 1.41.0
 
 - **Integrações › IA** (antes "IA do Home Assistant"): agora há uma IA para cada uso, como nos outros apps. **Para conversar** (a Conversa), **Para ler fotos e PDFs** e **Para pesquisar na internet** (antes "Para buscar ofertas"). A de fotos e a de pesquisar começam **Igual à de conversar**. Assim uma IA mais barata conversa e uma mais caprichada lê as fotos e pesquisa.

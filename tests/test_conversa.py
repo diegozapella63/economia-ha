@@ -291,6 +291,9 @@ class Conversa(Cenario):
         c = ha.chamadas_ia[-1]
         self.assertEqual(c["entity_id"], "ai_task.busca")
         self.assertIn("Comece com o veredito (Vale a pena, Depende ou Não vale)", c["instructions"])
+        self.assertIn("use a busca na web agora: a nota e as avaliações", c["instructions"], "1.41.1: pela busca na web, não de memória")
+        self.assertIn("não use o que você lembra de antes", c["instructions"])
+        self.assertNotIn("se puder", c["instructions"])
         # 1.36.0: Comparar com IA (as opções marcadas na Minha lista): a marca, o rendimento e o preço do que se aproveita
         self.assertIn("Para comparar opções", c["instructions"])
         self.assertIn("quanto custa o que se aproveita de verdade (o osso e a pele do frango", c["instructions"])
