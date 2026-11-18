@@ -824,25 +824,35 @@ def sem_busca():
     return "A IA escolhida não usou a busca na web. " + como_busca()
 
 
-def ia_escolhida(uso):
-    """Entidade escolhida em Mais › Configurações › Integrações (busca ou fotos); em branco, a opção antiga do add-on ou a preferida do HA."""
-    if uso in ("conversa", "avaliar"):
-        return ia_da_conversa(web=uso == "avaliar")
-    ent = str(((ler_config().get("ia") or {}).get(uso)) or "").strip()
-    return ent or str(opcoes().get("ai_task_entity") or "").strip()
-
-
-def ia_da_conversa(web=False):
-    """A conversa usa só uma tarefa de IA (gera texto e não mexe na casa), nunca um assistente de conversa:
-    a escolhida para fotos, a de buscar ofertas ou a do add-on; sem nenhuma, a tarefa de IA preferida do HA.
-    Para avaliar um produto (web), a de buscar ofertas vem primeiro: é ela que tem a busca na web."""
-    escolhas = ler_config().get("ia") or {}
-    ordem = ("busca", "fotos") if web else ("fotos", "busca")
-    for ent in (escolhas.get(ordem[0]), escolhas.get(ordem[1]), opcoes().get("ai_task_entity")):
+def ia_conversa():
+    """1.41.0: a IA Para conversar (só uma tarefa de IA: gera texto e não mexe na casa): a escolhida ou a opção antiga
+    do add-on; sem nenhuma, a tarefa de IA preferida do Home Assistant (vazio)."""
+    for ent in ((ler_config().get("ia") or {}).get("conversa"), opcoes().get("ai_task_entity")):
         ent = str(ent or "").strip()
         if ent.startswith("ai_task."):
             return ent
     return ""
+
+
+def ia_escolhida(uso):
+    """A IA de cada uso (Mais › Configurações › Integrações › IA), como nos outros apps: conversa, fotos (ler fotos e PDFs)
+    ou busca (pesquisar na internet); a de fotos ou de pesquisar em branco é a de conversar (e, sem ela, a opção antiga do
+    add-on, que pode ser um assistente de conversa)."""
+    if uso in ("conversa", "avaliar", "conversa-fotos"):
+        return ia_da_conversa(web=uso == "avaliar", fotos=uso == "conversa-fotos")
+    ent = str(((ler_config().get("ia") or {}).get(uso)) or "").strip()
+    return ent or ia_conversa() or str(opcoes().get("ai_task_entity") or "").strip()
+
+
+def ia_da_conversa(web=False, fotos=False):
+    """A conversa usa só uma tarefa de IA (gera texto e não mexe na casa), nunca um assistente de conversa: a Para
+    conversar. Para avaliar um produto (web), a de pesquisar vem primeiro, se for uma tarefa de IA: é ela que tem a busca
+    na web; com uma foto ou um PDF (fotos), a de ler fotos e PDFs."""
+    if web or fotos:
+        ent = str(((ler_config().get("ia") or {}).get("busca" if web else "fotos")) or "").strip()
+        if ent.startswith("ai_task."):
+            return ent
+    return ia_conversa()
 
 
 def _json_ou_none(t):
@@ -1186,7 +1196,7 @@ def _chamar_ai_task(nome, instrucoes, anexos=None, uso="busca"):
     except urllib.error.URLError as e:
         raise ErroBusca("Não consegui falar com o Home Assistant. Tente de novo em instantes.") from e
     dado = (resp.get("service_response") or {}).get("data") if isinstance(resp, dict) else None
-    if uso in ("conversa", "avaliar") and isinstance(dado, str) and dado.strip():  # na conversa, texto solto também é resposta
+    if uso in ("conversa", "avaliar", "conversa-fotos") and isinstance(dado, str) and dado.strip():  # na conversa, texto solto também é resposta
         if "{" not in dado:
             return {"resposta": dado.strip()}
         try:
@@ -7764,7 +7774,7 @@ def conversar(dado):
     tela = str(dado.get("tela") or "")
     instr = instrucoes_chat(contexto_chat(tela if tela in TELAS_CHAT else "lista", cfg), mensagens, len(arquivos))
     if arquivos:
-        r = ia_com_arquivos("EconomIA: conversa", instr, [(b, t) for b, t, _ in arquivos], uso="conversa")
+        r = ia_com_arquivos("EconomIA: conversa", instr, [(b, t) for b, t, _ in arquivos], uso="conversa-fotos")
     else:
         r = chamar_ai_task("EconomIA: conversa", instr, uso="avaliar" if dado.get("web") is True else "conversa")
     resposta = next((r[k] for k in ("resposta", "texto", "mensagem", "answer", "response") if isinstance(r.get(k), str) and r[k].strip()), "")

@@ -109,11 +109,22 @@ async def main():
             check("google" not in (app.S.ler_json(app.pasta + "/segredos.json") or {}), "Apagar tira a chave do Google")
             await pg.click("#shApagar")
             await st(pg, "shSt", "Desligada")
-            # ----- IA do Home Assistant -----
+            # ----- IA (1.41.0: a IA de cada uso, como nos outros apps) -----
+            titulos = [t.strip() for t in await pg.locator('section[aria-labelledby="h-ia"] .set-t').all_inner_texts()]
+            check(titulos[:4] == ["Usar IA", "Para conversar", "Para ler fotos e PDFs", "Para pesquisar na internet"], f"as IAs na ordem da família ({titulos})")
+            check((await pg.locator("#h-ia").inner_text()).strip() == "IA", "o cartão se chama só IA")
+            conv = [t.strip() for t in await pg.locator("#iaConversa option").all_inner_texts()]
+            check(conv == ["Padrão do Home Assistant", "Claude", "OpenAI"], f"IAs para conversar: só tarefas de IA ({conv})")
             opts = [t.strip() for t in await pg.locator("#iaBusca option").all_inner_texts()]
-            check(opts == ["Padrão do Home Assistant", "Tarefa de IA: Claude", "Tarefa de IA: OpenAI", "Assistente: Gemini"], f"IAs para buscar ({opts})")
+            check(opts == ["Igual à de conversar", "Tarefa de IA: Claude", "Tarefa de IA: OpenAI", "Assistente: Gemini"], f"IAs para pesquisar ({opts})")
             fotos = [t.strip() for t in await pg.locator("#iaFotos option").all_inner_texts()]
-            check(fotos == ["Padrão do Home Assistant", "Claude", "(não lê imagens) OpenAI"], f"IAs para fotos ({fotos})")
+            check(fotos == ["Igual à de conversar", "Claude", "(não lê imagens) OpenAI"], f"IAs para fotos ({fotos})")
+            await pg.select_option("#iaConversa", "ai_task.openai")
+            for _ in range(30):
+                if (app.config_salva().get("ia") or {}).get("conversa") == "ai_task.openai":
+                    break
+                await pg.wait_for_timeout(100)
+            check(app.config_salva()["ia"]["conversa"] == "ai_task.openai", "a de conversar fica gravada")
             check(await pg.locator("#iaGemini").is_visible(), "com um Gemini no Home Assistant, a dica do Gemini")
             await pg.select_option("#iaBusca", "ai_task.claude")
             t = await st(pg, "iaBuscaSt", "Pronta")

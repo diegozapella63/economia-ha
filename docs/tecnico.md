@@ -522,7 +522,7 @@ Como no GerencIA e no InventarIA, Mais é um menu (`#maisMenu`, `.menu-list` com
   o aparelho guarda uma cópia em `ofertas-bairro:ui` só para o script do `<head>`. `CORES` é a paleta da família (12, na
   ordem do CronologIA); `corDaPaleta` troca os nomes de antes (`CORES_VELHAS`: amarelo › ouro, roxo › lilás, magenta ›
   rosa, cinza › grafite); `data-cor` vai sempre no `<html>` (o Verde também).
-- **Integrações**: CorrerIA › IA do Home Assistant (com o Para falar) › Uso da IA › Shopee, Google, Brave, Mercado
+- **Integrações**: CorrerIA › IA (com o Para falar) › Uso da IA › Shopee, Google, Brave, Mercado
   Livre, Instagram e a Lista do Home Assistant › Sensores.
 - **Conversa**: no celular, `abreChat` põe uma entrada `{chat: true}` no histórico; o Voltar do celular (`popstate`)
   fecha só a Conversa; fechada de outro jeito, `fechaChat(depois)` desfaz a entrada e roda `depois` (o Abrir de uma
@@ -611,3 +611,13 @@ em cada oferta) manda `POST api/comparar` com o `id` da oferta; o servidor acha 
 ## Busca velha (1.31.0)
 
 `diasDaBusca()` conta os dias desde `D.gerado_em` (a última busca completa; 0 no exemplo) e `buscaVelha()` passa de 3. `pintaSync` põe `velha` no `#sync` (a cor de `--warn`), troca o texto por "Última busca há N dias (dd/mm)" e mostra o `#syncBuscar` (o mesmo que o Buscar do menu; some com a busca rodando, `botaoBusca` repinta). A barra lateral do computador (`.side-sync.velha`) diz o mesmo.
+
+## A IA de cada uso (1.41.0)
+
+Como nos outros apps da família, **Mais › Configurações › Integrações › IA** tem a IA **Para conversar** (`ia.conversa`,
+`ia_conversa()`: só tarefa de IA; vazia, a opção antiga `ai_task_entity` do add-on se for tarefa de IA, senão a preferida
+do Home Assistant), **Para ler fotos e PDFs** (`ia.fotos`) e **Para pesquisar na internet** (`ia.busca`, a busca das ofertas,
+que pode ser um assistente de conversa com a Pesquisa Google). `ia_escolhida(uso)`: a de fotos ou de pesquisar vazia é a
+de conversar. A Conversa vai pela de conversar; com um arquivo (`uso="conversa-fotos"`), pela de fotos, se for tarefa de IA;
+o **Vale a pena?** (`uso="avaliar"`), pela de pesquisar, se for tarefa de IA.
+

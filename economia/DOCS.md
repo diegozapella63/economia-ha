@@ -4,12 +4,12 @@ Cupons, ofertas e a sua lista de compras nas farmácias, mercados e pet shops pe
 
 ## Antes de começar
 
-O EconomIA usa a IA do próprio Home Assistant (Anthropic Claude, OpenAI, Google Gemini...). Escolha qual usar em **Mais › Configurações › Integrações › IA do Home Assistant** e toque em **Verificar de novo** para testar. A chave **Usar IA**, no mesmo lugar, desliga tudo o que usa IA (leitura de fotos e mensagens, cupons e encartes por print, Falar e Conversa), para todos os aparelhos. O **Buscar** continua, só com o que não gasta IA.
+O EconomIA usa a IA do próprio Home Assistant (Anthropic Claude, OpenAI, Google Gemini...). Escolha a IA de cada uso em **Mais › Configurações › Integrações › IA** e toque em **Verificar de novo** para testar: **Para conversar** (a Conversa; "Padrão do Home Assistant" usa a tarefa de IA preferida de lá), **Para ler fotos e PDFs** e **Para pesquisar na internet** (a busca das ofertas). A de fotos e a de pesquisar começam **Igual à de conversar**. Assim uma IA mais barata conversa e uma mais caprichada lê as fotos e pesquisa. A chave **Usar IA**, no mesmo lugar, desliga tudo o que usa IA (leitura de fotos e mensagens, cupons e encartes por print, Falar e Conversa), para todos os aparelhos. O **Buscar** continua, só com o que não gasta IA.
 
-- **Para buscar ofertas**, a IA precisa de busca na web:
+- **Para pesquisar na internet** (a busca das ofertas), a IA precisa de busca na web:
   - **Anthropic**: marque **Enable web search** na engrenagem da tarefa de IA escolhida (a do assistente de conversa não vale para ela). O **Maximum web searches** é o limite de buscas por resposta: quando acaba no meio, a IA traz o que já achou, e o resto vem na próxima busca. Se a IA responder que não buscou, o EconomIA faz o teste rápido do **Verificar de novo**: com a busca na web funcionando, pergunta de novo uma vez e, sem resposta outra vez, segue com as outras lojas (aquele grupo fica com o resultado anterior); sem ela, para com o aviso.
   - **Google Gemini**: a Pesquisa Google só funciona num **assistente de conversa**. Nas opções do Google Generative AI, crie ou ajuste um assistente com "Controlar o Home Assistant" em nenhum e **Enable Google Search tool** ligado, e escolha esse assistente.
-- **Para ler fotos**, escolha uma tarefa de IA que aceite imagens (Google AI Task e Anthropic aceitam).
+- **Para ler fotos e PDFs**, escolha uma tarefa de IA que aceite imagens (Google AI Task e Anthropic aceitam).
 
 ## Como usar
 
@@ -26,7 +26,7 @@ Como nos outros apps (InventarIA, GerencIA, ResolvIA e CronologIA), **Mais** é 
 
 - **Casa**: CEP e distância, o que acompanhar, quem mora, a rotina de compras, restrições, interesses e o que nunca mostrar.
 - **Lojas**: as lojas perto de casa, com o clube de cada uma, Encontrar lojas e Testar agora; cupons do app; compras online; e como o EconomIA busca os preços.
-- **Configurações**, em abas: **Integrações** (na ordem dos outros apps: CorrerIA; IA do Home Assistant, com Usar IA e Para falar; Uso da IA; Shopee Afiliados, AliExpress Afiliados, Google Places, Brave Search, Mercado Livre, Instagram e Lista do Home Assistant; e Sensores no Home Assistant), **Dados** (Exportar, Backup na pasta share, Importar, Versões anteriores, Onde ficam os dados e Começar do zero), **Aparência** (tema, cor do app e Cor do dia) e **Opções** (as **Listas** e as etapas da busca que dá para desligar). A aba escolhida fica guardada.
+- **Configurações**, em abas: **Integrações** (na ordem dos outros apps: CorrerIA; IA, com Usar IA, a IA de cada uso e Para falar; Uso da IA; Shopee Afiliados, AliExpress Afiliados, Google Places, Brave Search, Mercado Livre, Instagram e Lista do Home Assistant; e Sensores no Home Assistant), **Dados** (Exportar, Backup na pasta share, Importar, Versões anteriores, Onde ficam os dados e Começar do zero), **Aparência** (tema, cor do app e Cor do dia) e **Opções** (as **Listas** e as etapas da busca que dá para desligar). A aba escolhida fica guardada.
 - **Sobre**, a última linha: CorrerIA Code, quem faz os apps, os apps da família, cada um com o link para o GitHub dele (o EconomIA marcado como **Este app**, com a versão), e **Meu GitHub**.
 
 Numa tela de Mais, o **‹ Mais** no alto, o Voltar do celular e arrastar para a direita voltam para o menu. Aberta por um atalho de outra tela (como **Preencher o perfil**, na Minha lista), o Voltar do celular volta para onde você estava.
@@ -35,7 +35,7 @@ Numa tela de Mais, o **‹ Mais** no alto, o Voltar do celular e arrastar para a
 
 O microfone fica no alto da tela, à direita (e em **Minha lista › Falar**). Fale os itens, por exemplo "leite integral, 2 pacotes de café 500 g e detergente"; o Home Assistant transcreve com a fala para texto escolhida em **Mais › Configurações › Integrações › IA do Home Assistant › Para falar** (um assistente de voz do Home Assistant ou uma entidade de fala para texto; no padrão, a do assistente de voz preferido, em **Configurações › Assistentes de voz**; com o Home Assistant Cloud já vem pronta) e a IA de "Para ler fotos" separa os itens para você conferir e adicionar, com o que foi ouvido no alto. Até 2 minutos de cada vez.
 
-Em **Mais › Configurações › Integrações › IA do Home Assistant**, a linha **Falar** mostra se está pronto e com qual fala para texto. O microfone some com **Usar IA** desligado. No app do celular, permita o microfone para o app Home Assistant; no navegador, o Home Assistant precisa estar num endereço com https.
+Em **Mais › Configurações › Integrações › IA**, a linha **Falar** mostra se está pronto e com qual fala para texto. O microfone some com **Usar IA** desligado. No app do celular, permita o microfone para o app Home Assistant; no navegador, o Home Assistant precisa estar num endereço com https.
 
 ## Conversa com a IA
 
@@ -43,7 +43,7 @@ O balão ao lado do microfone abre a **Conversa**: pergunte sobre a tela aberta 
 
 A IA não muda nada sozinha. Quando ajuda, ela sugere ações em botões: **Pôr na lista**, **Tirar da lista**, **Comprei hoje**, **Buscar o preço** e **Abrir** uma tela. Só acontece quando você toca, e o botão fica marcado. O microfone da conversa põe o que você falou na caixa, para conferir antes de enviar.
 
-A conversa usa a tarefa de IA de "Para ler fotos" (ou a de buscar ofertas, ou a preferida do Home Assistant), nunca um assistente de conversa, que poderia mexer na casa. Em cada oferta, **Vale a pena?** abre a conversa e pede uma avaliação do produto: a IA de buscar ofertas procura na web a nota, as avaliações de quem comprou, as reclamações e o preço de costume, e começa pelo veredito (Vale a pena, Depende ou Não vale).
+A conversa usa a tarefa de IA de **Para conversar** (com uma foto ou um PDF, a de **Para ler fotos e PDFs**), nunca um assistente de conversa, que poderia mexer na casa. Em cada oferta, **Vale a pena?** abre a conversa e pede uma avaliação do produto: a IA de buscar ofertas procura na web a nota, as avaliações de quem comprou, as reclamações e o preço de costume, e começa pelo veredito (Vale a pena, Depende ou Não vale).
 
 O **clipe**, à esquerda da caixa, manda junto uma foto ou um PDF: **Tirar foto**, **Escolher fotos** (a galeria, até 4) ou **Escolher arquivo** (uma foto ou um PDF, como um encarte ou uma nota fiscal). A IA olha o arquivo para responder e, se ajudar, sugere ações; na conversa fica só o nome do arquivo. O botão redondo da direita é o microfone com a caixa vazia e vira o Enviar quando você escreve ou escolhe um arquivo.
 

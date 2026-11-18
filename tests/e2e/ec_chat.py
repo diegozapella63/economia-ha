@@ -46,7 +46,7 @@ async def main():
     ha.pipelines = {"pipelines": [{"id": "p1", "name": "Casa", "stt_engine": "stt.home_assistant_cloud", "stt_language": "pt-BR"}], "preferred_pipeline": "p1"}
     ha.stt = (200, {"result": "success", "text": "tem cerveja em oferta"})
     ha.responde_ia("conversa", responde)
-    cfg = {"cep": CEP, "raio_km": 5, "categorias": ["mercados"], "ia": {"fotos": "ai_task.claude", "busca": "ai_task.busca"}, "lista": LISTA}
+    cfg = {"cep": CEP, "raio_km": 5, "categorias": ["mercados"], "ia": {"conversa": "ai_task.claude", "fotos": "ai_task.claude", "busca": "ai_task.busca"}, "lista": LISTA}
     with App(cfg, buscar=False, antes=lambda S: S.gravar_json(S.OFERTAS, OFERTAS), ha=ha) as app:
         async with async_playwright() as p:
             b, pg = await pagina(p, args=["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"], permissoes=["microphone"])
@@ -122,7 +122,7 @@ async def main():
             check(len(corpo.get("attachments") or []) == 1 and corpo["attachments"][0]["media_content_type"] == "application/pdf", "o PDF foi junto para a IA")
             check(await pg.locator(".cm.eu .cm-arq").last.text_content() == "encarte.pdf" and await pg.locator("#chatArqs").is_hidden(), "o nome na pergunta; a caixa limpa")
             c = ha.chamadas_ia[-1]
-            check(c["task_name"] == "EconomIA: conversa" and c["entity_id"] == "ai_task.claude", "vai para a tarefa de IA de fotos")
+            check(c["task_name"] == "EconomIA: conversa" and c.get("entity_id") == "ai_task.claude", "com o PDF, vai para a tarefa de IA Para ler fotos e PDFs")
             t = c["instructions"]
             check("Tela aberta no app: Minha lista." in t and "- Café Pilão 500 g; mais barato no Giassi por R$ 19,90" in t and "Picanha kg, no Giassi" in t,
                   "a IA recebe a tela, a lista com os preços e as ofertas")
@@ -266,7 +266,7 @@ async def main():
             await pg.fill("#chatTxt", "e o café?")
             await pg.keyboard.press("Enter")
             await espera(pg, "() => /19,90/.test(document.querySelector('.cm.ia:last-child') ? document.querySelector('.cm.ia:last-child').textContent : '')")
-            check(ha.chamadas_ia[-1]["entity_id"] == "ai_task.claude", "a pergunta seguinte, escrita, volta para a IA da conversa")
+            check(ha.chamadas_ia[-1].get("entity_id") == "ai_task.claude", "a pergunta seguinte, escrita, volta para a IA da conversa")
             await pg.keyboard.press("Escape")
             await pg.evaluate("localStorage.setItem('ofertas-bairro:ui', JSON.stringify(Object.assign(JSON.parse(localStorage.getItem('ofertas-bairro:ui') || '{}'), {tema: 'claro'})))")
             await pg.reload()

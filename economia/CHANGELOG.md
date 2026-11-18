@@ -1,5 +1,10 @@
 # Mudanças
 
+## 1.41.0
+
+- **Integrações › IA** (antes "IA do Home Assistant"): agora há uma IA para cada uso, como nos outros apps. **Para conversar** (a Conversa), **Para ler fotos e PDFs** e **Para pesquisar na internet** (antes "Para buscar ofertas"). A de fotos e a de pesquisar começam **Igual à de conversar**. Assim uma IA mais barata conversa e uma mais caprichada lê as fotos e pesquisa.
+- A Conversa vai pela IA **Para conversar** (com uma foto ou um PDF, pela de ler fotos e PDFs). Antes ela usava a de fotos: se você só tinha escolhido essa, escolha também a de conversar.
+
 ## 1.40.0
 
 - **AliExpress Afiliados**, em Mais › Configurações › Integrações, logo depois da Shopee: com o App Key e o App Secret da API de afiliados do AliExpress, os preços do AliExpress vêm direto de lá, sem IA, com o link do produto. **Salvar e testar** mostra um exemplo. O App Secret fica só no Home Assistant e não aparece de novo.

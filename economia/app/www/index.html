@@ -1656,7 +1656,7 @@ input.field,select.field{min-height:var(--altura)}
     </div>
     <div class="mais-painel" id="mp-integracoes" role="tabpanel" aria-labelledby="aba-integracoes" hidden>
       
-      <!-- a ordem da família: os outros apps (nenhum aqui) › CorrerIA › IA do Home Assistant (com o Para falar) › Uso da IA ›
+      <!-- a ordem da família: os outros apps (nenhum aqui) › CorrerIA › IA (com o Para falar) › Uso da IA ›
          as integrações daqui › Sensores -->
     <section class="panel settings" aria-labelledby="h-correria">
       <div class="set-head"><h2 id="h-correria"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12z"/></svg></span>CorrerIA</h2><p class="sec-meta">No WhatsApp, no Claude e no Gemini: a lista, os preços e as ofertas. Põe e tira itens e anota compras.</p></div>
@@ -1666,26 +1666,30 @@ input.field,select.field{min-height:var(--altura)}
       </div>
     </section>
     <section class="panel settings" aria-labelledby="h-ia">
-      <div class="set-head"><h2 id="h-ia"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7-4.7-1.8 4.7-1.8z"/><path d="M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg></span>IA do Home Assistant</h2><p class="sec-meta">Usa a IA do seu Home Assistant. Para buscar ofertas, ela precisa de busca na web; para ler fotos, de imagens.</p></div>
+      <div class="set-head"><h2 id="h-ia"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7-4.7-1.8 4.7-1.8z"/><path d="M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg></span>IA</h2><p class="sec-meta">Usa a IA do seu Home Assistant. Para pesquisar na internet, ela precisa de busca na web; para ler fotos, de imagens.</p></div>
       <div class="set-row">
         <div><h3 class="set-t"><label for="usarIA">Usar IA</label></h3><p class="sec-meta" id="usarIATxt"></p></div>
         <input type="checkbox" class="switch" id="usarIA">
       </div>
       <div id="iaDet" class="sub-op"><div class="sub-box">
       <div class="set-row">
-        <div><h3 class="set-t"><label for="iaBusca">Para buscar ofertas</label></h3><p class="ia-st" id="iaBuscaSt">Toque em Verificar de novo para testar.</p></div>
-        <select class="field" id="iaBusca"></select>
+        <div><h3 class="set-t"><label for="iaConversa">Para conversar</label></h3><p class="ia-st" id="iaConversaSt">A Conversa.</p></div>
+        <select class="field" id="iaConversa" aria-label="IA para conversar"></select>
       </div>
       <div class="set-row">
-        <div><h3 class="set-t"><label for="iaFotos">Para ler fotos</label></h3><p class="ia-st" id="iaFotosSt">Usando a IA preferida do Home Assistant.</p></div>
-        <select class="field" id="iaFotos"></select>
+        <div><h3 class="set-t"><label for="iaFotos">Para ler fotos e PDFs</label></h3><p class="ia-st" id="iaFotosSt">Usando a IA preferida do Home Assistant.</p></div>
+        <select class="field" id="iaFotos" aria-label="IA para ler fotos e PDFs"></select>
+      </div>
+      <div class="set-row">
+        <div><h3 class="set-t"><label for="iaBusca">Para pesquisar na internet</label></h3><p class="ia-st" id="iaBuscaSt">Toque em Verificar de novo para testar.</p></div>
+        <select class="field" id="iaBusca" aria-label="IA para pesquisar na internet"></select>
       </div>
       <div class="set-row">
         <div><h3 class="set-t"><label for="iaVoz">Para falar</label></h3><p class="ia-st" id="vozSt">Verificando o assistente de voz…</p></div>
         <select class="field" id="iaVoz"></select>
       </div>
       <div class="row-form"><button type="button" class="ghost big" id="iaTestar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>Verificar de novo</button></div>
-      <p class="hint" id="iaGemini" hidden>Gemini: para buscar ofertas, use um <b>assistente de conversa</b> com "Enable Google Search tool" ligado; para fotos, o Google AI Task.</p>
+      <p class="hint" id="iaGemini" hidden>Gemini: para pesquisar na internet, use um <b>assistente de conversa</b> com "Enable Google Search tool" ligado; para fotos, o Google AI Task.</p>
       </div>
       </div>
     </section>
@@ -2568,7 +2572,7 @@ dialog.ss-wrap::backdrop{background:transparent}
       perfil: {adultos:n0(p.adultos, 1), criancas:n0(p.criancas, 0), bebes:n0(p.bebes, 0), pets:petsDe(p.pets), restricoes:arr(p.restricoes), interesses:arr(p.interesses), nunca:arr(p.nunca),
         nunca_produtos:arr(p.nunca_produtos).map(function(t){ return String(t).trim().slice(0, 40); }).filter(function(t){ return norm(t); }).slice(0, 100)},
       cotidiano: {mercado:arr(r.mercado), farmacia:arr(r.farmacia), avisar:r.avisar || 'vespera', estoque:['mes', 'pouco', 'normal', 'bastante'].indexOf(r.estoque) >= 0 ? r.estoque : 'normal'},
-      ia: {busca:String((c.ia || {}).busca || ''), fotos:String((c.ia || {}).fotos || ''), voz:String((c.ia || {}).voz || '')},
+      ia: {conversa:String((c.ia || {}).conversa || ''), busca:String((c.ia || {}).busca || ''), fotos:String((c.ia || {}).fotos || ''), voz:String((c.ia || {}).voz || '')},
       clubes: arr(c.clubes),
       cupons_meus: arr(c.cupons_meus).filter(function(k){ return k && k.beneficio && k.rede; }),
       roteiro: {paradas:Math.min(4, Math.max(1, Math.round(Number(ro.paradas)) || 2)), escopo:ro.escopo === 'acabando' ? 'acabando' : 'tudo', online:ro.online !== false,
@@ -2775,7 +2779,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.40.0';
+  var VERSAO = '1.41.0';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -6559,7 +6563,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     }).join('') : '<li>Nenhuma chamada ainda.</li>';
     var sumUlt = document.querySelector('.uso-ult summary');
     if (sumUlt) sumUlt.innerHTML = svgT('history') + 'Últimas chamadas' + (ult.length ? ' (' + ult.length + ')' : '');
-    var ids = Object.keys((u.mes && u.mes.ias) || {}).concat(Object.keys(u.semana.ias || {}), [estado.ia.busca || '', estado.ia.fotos || '']);
+    var ids = Object.keys((u.mes && u.mes.ias) || {}).concat(Object.keys(u.semana.ias || {}), [estado.ia.busca || '', estado.ia.fotos || '', estado.ia.conversa || '']);
     var prov = provedorIA(ids), txt = '';
     if (prov === 'google') txt = 'Consumo exato do Gemini: no <a href="https://console.cloud.google.com/apis/dashboard" target="_blank" rel="noopener">Google Cloud Console</a>, abra APIs e serviços ativados → Generative Language API; o gráfico de tráfego mostra os pedidos e os erros 429 de cota. Os limites do plano grátis estão no <a href="https://aistudio.google.com/" target="_blank" rel="noopener">Google AI Studio</a>. A cota diária volta à meia-noite do horário do Pacífico, de madrugada no Brasil (4h ou 5h).';
     else if (prov === 'openai') txt = 'Consumo exato e custo da OpenAI: <a href="https://platform.openai.com/usage" target="_blank" rel="noopener">platform.openai.com/usage</a>.';
@@ -6583,9 +6587,11 @@ dialog.ss-wrap::backdrop{background:transparent}
     var t = (IAS && arr(IAS.tarefas)) || [], a = (IAS && arr(IAS.agentes)) || [], ia = estado.ia;
     var opt = function(x, pre){ return '<option value="' + esc(x.id) + '">' + esc(pre + x.nome) + '</option>'; };
     var extra = function(v, lista){ return v && !lista.some(function(x){ return x.id === v; }) ? '<option value="' + esc(v) + '">' + esc(v) + '</option>' : ''; };
-    $('iaBusca').innerHTML = '<option value="">Padrão do Home Assistant</option>' + t.map(function(x){ return opt(x, 'Tarefa de IA: '); }).join('') + a.map(function(x){ return opt(x, 'Assistente: '); }).join('') + extra(ia.busca, t.concat(a));
-    $('iaFotos').innerHTML = '<option value="">Padrão do Home Assistant</option>' + t.map(function(x){ return opt(x, x.anexos ? '' : '(não lê imagens) '); }).join('') + extra(ia.fotos, t);
-    $('iaBusca').value = ia.busca; $('iaFotos').value = ia.fotos;
+    // 1.41.0: a IA de cada uso, como nos outros apps; a de fotos e a de pesquisar vazias são a de conversar
+    $('iaConversa').innerHTML = '<option value="">Padrão do Home Assistant</option>' + t.map(function(x){ return opt(x, ''); }).join('') + extra(ia.conversa, t);
+    $('iaBusca').innerHTML = '<option value="">Igual à de conversar</option>' + t.map(function(x){ return opt(x, 'Tarefa de IA: '); }).join('') + a.map(function(x){ return opt(x, 'Assistente: '); }).join('') + extra(ia.busca, t.concat(a));
+    $('iaFotos').innerHTML = '<option value="">Igual à de conversar</option>' + t.map(function(x){ return opt(x, x.anexos ? '' : '(não lê imagens) '); }).join('') + extra(ia.fotos, t);
+    $('iaConversa').value = ia.conversa || ''; $('iaBusca').value = ia.busca; $('iaFotos').value = ia.fotos;
     // 1.36.2: a dica do Gemini só com uma IA do Google no Home Assistant
     $('iaGemini').hidden = !t.concat(a).some(function(x){ return /gemini|google/.test(norm(x.id + ' ' + x.nome)); });
     [['busca', 'iaBuscaSt', 'Toque em Verificar de novo para testar.'], ['fotos', 'iaFotosSt', 'Usando a IA preferida do Home Assistant.']].forEach(function(x){
@@ -6605,14 +6611,18 @@ dialog.ss-wrap::backdrop{background:transparent}
       .then(function(r){ return r.json(); }).then(function(j){ IA_ST[uso] = j; pintaIA(); })
       .catch(function(){ IA_ST[uso] = {ok:false, msg:'Não consegui falar com o add-on.'}; pintaIA(); });
   }
+  $('iaConversa').addEventListener('change', function(){
+    estado.ia.conversa = this.value; IA_ST.fotos = null; IA_ST.busca = null;
+    salvar('IA para conversar: ' + this.options[this.selectedIndex].text); pintaIA();
+  });
   $('iaBusca').addEventListener('change', function(){
     estado.ia.busca = this.value; IA_ST.busca = null;
-    salvar('IA para buscar ofertas: ' + this.options[this.selectedIndex].text); pintaIA();
+    salvar('IA para pesquisar na internet: ' + this.options[this.selectedIndex].text); pintaIA();
     setTimeout(function(){ testaIA('busca'); }, 800);
   });
   $('iaFotos').addEventListener('change', function(){
     estado.ia.fotos = this.value; IA_ST.fotos = null;
-    salvar('IA para ler fotos: ' + this.options[this.selectedIndex].text); pintaIA();
+    salvar('IA para ler fotos e PDFs: ' + this.options[this.selectedIndex].text); pintaIA();
     setTimeout(function(){ testaIA('fotos'); }, 800);
   });
   $('iaTestar').addEventListener('click', function(){ carregaIAs(); testaIA('busca'); testaIA('fotos'); carregaVoz(); });
@@ -6959,7 +6969,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>', phone: '<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>'
   };
   function svgT(n){ return '<svg class="t-ic" viewBox="0 0 24 24" aria-hidden="true">' + (T_IC[n] || T_IC.toggle) + '</svg>'; }
-  var T_PAL = [[/CorrerIA/, 'zap'], [/^Usar IA/, 'spark'], [/buscar ofertas/i, 'search'], [/ler fotos/i, 'image'], [/falar/i, 'mic'],
+  var T_PAL = [[/CorrerIA/, 'zap'], [/^Usar IA/, 'spark'], [/buscar ofertas|pesquisar na internet/i, 'search'], [/ler fotos/i, 'image'], [/falar/i, 'mic'], [/^Para conversar/, 'chat'],
     [/^Sincronizar/, 'list'], [/novos/i, 'plus'], [/acabando/i, 'clock'], [/sensores/i, 'activity'], [/Cor do dia/, 'calendar'],
     [/lojas|Lojas|loja/, 'store'], [/folhetos|encartes|Encartes/i, 'file'], [/listas|Listas/, 'list'], [/itens|Itens/, 'tag'], [/App ID|App Key|ID|Chave|Senha|Token|Secret/i, 'key'],
     [/CEP|endereço|Onde|km/i, 'pin'], [/entrega|frete|online/i, 'truck'], [/Nome|nome/, 'edit'], [/Telefone|WhatsApp/i, 'phone'], [/Quem|pessoa/i, 'user']];
@@ -6979,6 +6989,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     });
   }
   // e todo botão com texto, com o ícone do que ele faz (os que ainda não trazem o seu)
+  T_IC.chat = '<path d="M21 12a8 8 0 0 1-11.7 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12Z"/>';  // 1.41.0: Para conversar
   T_IC.check = '<path d="M20 6L9 17l-5-5"/>'; T_IC.x = '<path d="M18 6L6 18M6 6l12 12"/>'; T_IC.trash = '<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>';
   T_IC.refresh = '<path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/>'; T_IC.link = '<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>';
   T_IC.upload = '<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>'; T_IC.columns = '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/>';
