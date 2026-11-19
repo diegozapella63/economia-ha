@@ -975,6 +975,14 @@ html:not(.sem-ia) .so-semia{display:none!important}
 .chat-ed-h svg{color:var(--accent)}
 .chat-ed-lin{display:flex;align-items:center;gap:8px;padding:2px 2px 2px 12px;border:1px solid var(--line);border-radius:12px;font-size:14.5px}
 .chat-ed-lin span{flex:1;min-width:0;overflow-wrap:anywhere}
+.chat-ed-txt{flex:1;min-width:0;min-height:24px;padding:8px 0;border:0;background:none;color:inherit;font:inherit;line-height:1.35;resize:none;field-sizing:content;overflow-wrap:anywhere}
+.chat-ed-txt:focus{outline:none}
+.chat-ed-lin:has(.chat-ed-txt:focus){border-color:var(--accent)}
+.chat-ed-dobra{width:100%;min-height:40px;padding:0;border:0;background:none;font:inherit;font-weight:700;color:var(--ink);text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.chat-ed-dobra>span:not(.chat-ed-seta){flex:1;min-width:0}
+.chat-ed-seta{flex:none;width:20px;height:20px;display:grid;place-items:center;color:var(--muted);transform:rotate(90deg);transition:transform .15s}
+.chat-ed-h .chat-ed-seta svg{color:var(--muted);width:18px;height:18px}
+.chat-ed-dobra[aria-expanded="false"] .chat-ed-seta{transform:none}
 .chat-ed-mais{margin-top:6px}
 .chat-ed-modelo{width:100%;border:1.5px dashed var(--line);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
 .chat-ed-mais-ic{width:40px;height:40px;flex:none!important;display:grid;place-items:center;color:var(--accent-ink,var(--accent))}
@@ -2886,7 +2894,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.43.0';
+  var VERSAO = '1.44.0';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -4741,6 +4749,15 @@ dialog.ss-wrap::backdrop{background:transparent}
     return Array.isArray(v) ? v.filter(function(x){ return typeof x === 'string' && x.trim(); }) : perguntasPadrao();
   }
   function guardaPerguntas(l){ if (l === null){ try { localStorage.removeItem(KEY_PERG); } catch(e){ /* modo privado */ } } else gravarLocal(KEY_PERG, l); }
+  // 1.44.0: em Editar perguntas, Perguntas prontas e Mais perguntas fecham num toque no título, com a seta no canto (o
+  // aparelho lembra); de início, as duas abertas. Um toque numa pergunta muda o texto dela.
+  var KEY_PERG_FECH = 'ofertas-bairro:perguntas-fechadas';
+  var SVG_SETA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+  function edFechadas(){ var v = lerLocal(KEY_PERG_FECH); return Array.isArray(v) ? v : []; }
+  function edDobra(k){ var f = edFechadas(), i = f.indexOf(k); if (i < 0) f.push(k); else f.splice(i, 1); gravarLocal(KEY_PERG_FECH, f); }
+  function edCab(k, svg, titulo, fechada, cls){
+    return '<button type="button" class="chat-ed-h chat-ed-dobra' + (cls || '') + '" data-chat-ed="dobra" data-k="' + k + '" aria-expanded="' + String(!fechada) + '">' + svg + '<span>' + titulo + '</span><span class="chat-ed-seta">' + SVG_SETA + '</span></button>';
+  }
   // as perguntas: na conversa vazia, à vista; com a conversa andando, pelo ✨; Editar perguntas vira uma lista para mudar
   function pintaSug(){
     var box = $('chatSug'), andando = CHAT.msgs.length > 0, mostra = !CHAT.esperando && (!andando || CHAT.rapidas || !!CHAT.ed);
@@ -4750,12 +4767,13 @@ dialog.ss-wrap::backdrop{background:transparent}
     if (!mostra){ box.innerHTML = ''; return; }
     var ed = CHAT.ed;
     if (ed){
-      box.innerHTML = '<div class="chat-ed"><p class="chat-ed-h">' + SVG_LAPIS + 'Perguntas prontas</p>'
-        + ed.lista.map(function(t, i){ return '<div class="chat-ed-lin"><span>' + esc(t) + '</span><button type="button" data-chat-ed="tirar" data-i="' + i + '" aria-label="Tirar “' + esc(t) + '”" title="Tirar">' + SVG_X + '</button></div>'; }).join('')
+      var F = edFechadas(), fp = F.indexOf('prontas') >= 0, fm = F.indexOf('mais') >= 0;
+      box.innerHTML = '<div class="chat-ed">' + edCab('prontas', SVG_LAPIS, 'Perguntas prontas (' + ed.lista.length + ')', fp)
+        + (fp ? '' : ed.lista.map(function(t, i){ return '<div class="chat-ed-lin"><textarea class="chat-ed-txt" data-ed-q="' + i + '" rows="' + Math.min(4, Math.max(1, Math.ceil(t.length / 32))) + '" maxlength="120" enterkeyhint="done" data-size="off" aria-label="Mudar “' + esc(t) + '”">' + esc(t) + '</textarea><button type="button" data-chat-ed="tirar" data-i="' + i + '" aria-label="Tirar “' + esc(t) + '”" title="Tirar">' + SVG_X + '</button></div>'; }).join('')
         + '<div class="chat-ed-nova"><input id="chatEdTxt" maxlength="120" placeholder="Nova pergunta" aria-label="Nova pergunta" enterkeyhint="done" value="' + esc(ed.rascunho || '') + '">'
-        + '<button type="button" class="ghost big" data-chat-ed="add">' + SVG_MAIS + 'Adicionar</button></div>'
-        + (function(mais){ return mais.length ? '<p class="chat-ed-h chat-ed-mais">' + SVG_BRILHO + 'Mais perguntas (' + mais.length + ')</p>'
-            + mais.map(function(t){ return '<button type="button" class="chat-ed-lin chat-ed-modelo" data-chat-ed="por" data-t="' + esc(t) + '" aria-label="Pôr “' + esc(t) + '”"><span>' + esc(t) + '</span><span class="chat-ed-mais-ic">' + SVG_MAIS + '</span></button>'; }).join('') : ''; })(
+        + '<button type="button" class="ghost big" data-chat-ed="add">' + SVG_MAIS + 'Adicionar</button></div>')
+        + (function(mais){ return mais.length ? edCab('mais', SVG_BRILHO, 'Mais perguntas (' + mais.length + ')', fm, ' chat-ed-mais')
+            + (fm ? '' : mais.map(function(t){ return '<button type="button" class="chat-ed-lin chat-ed-modelo" data-chat-ed="por" data-t="' + esc(t) + '" aria-label="Pôr “' + esc(t) + '”"><span>' + esc(t) + '</span><span class="chat-ed-mais-ic">' + SVG_MAIS + '</span></button>'; }).join('')) : ''; })(
             modelosPerguntas().filter(function(t){ return ed.lista.indexOf(t) < 0; }))
         + '<div class="chat-ed-bts"><button type="button" class="ghost big" data-chat-ed="padrao">' + SVG_DESFAZ + 'Padrão</button><button type="button" class="btn" data-chat-ed="pronto">' + SVG_FEITO_BTN + 'Pronto</button></div></div>';
       return;
@@ -4906,8 +4924,14 @@ dialog.ss-wrap::backdrop{background:transparent}
     ed.lista.push(t.slice(0, 120)); ed.rascunho = ''; pintaSug();
     var i = $('chatEdTxt'); if (i) i.focus();
   }
-  $('chatSug').addEventListener('input', function(e){ if (e.target.id === 'chatEdTxt' && CHAT.ed) CHAT.ed.rascunho = e.target.value; });
-  $('chatSug').addEventListener('keydown', function(e){ if (e.target.id === 'chatEdTxt' && e.key === 'Enter' && !e.isComposing){ e.preventDefault(); perguntaNova(); } });
+  $('chatSug').addEventListener('input', function(e){
+    if (e.target.id === 'chatEdTxt' && CHAT.ed) CHAT.ed.rascunho = e.target.value;
+    if (e.target.dataset.edQ != null && CHAT.ed) CHAT.ed.lista[Number(e.target.dataset.edQ)] = e.target.value;  // mudar uma pergunta
+  });
+  $('chatSug').addEventListener('keydown', function(e){
+    if (e.target.id === 'chatEdTxt' && e.key === 'Enter' && !e.isComposing){ e.preventDefault(); perguntaNova(); }
+    if (e.target.dataset.edQ != null && e.key === 'Enter' && !e.isComposing){ e.preventDefault(); e.target.blur(); }
+  });
   $('chatTxt').addEventListener('keydown', function(e){ if (e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); enviaChat(this.value); } });
   $('chatSug').addEventListener('click', function(e){
     var b = e.target.closest('[data-chat-sug]'); if (b){ CHAT.rapidas = false; enviaChat(b.dataset.chatSug); return; }
@@ -4917,9 +4941,11 @@ dialog.ss-wrap::backdrop{background:transparent}
     else if (o === 'tirar') CHAT.ed.lista.splice(Number(ed.dataset.i), 1);
     else if (o === 'por'){ if (CHAT.ed.lista.indexOf(ed.dataset.t) < 0) CHAT.ed.lista.push(ed.dataset.t); }
     else if (o === 'add') return perguntaNova();
+    else if (o === 'dobra') edDobra(ed.dataset.k);
     else if (o === 'padrao'){ guardaPerguntas(null); CHAT.ed = {lista:perguntasPadrao().slice(), rascunho:''}; }
     else if (o === 'pronto'){
-      var t = String(CHAT.ed.rascunho || '').trim(), l = CHAT.ed.lista.concat(t ? [t.slice(0, 120)] : []);
+      // uma pergunta mudada vale como ficou; uma apagada até ficar vazia sai
+      var t = String(CHAT.ed.rascunho || '').trim(), l = CHAT.ed.lista.map(function(q){ return String(q || '').trim(); }).filter(Boolean).concat(t ? [t.slice(0, 120)] : []);
       guardaPerguntas(l.join('\n') === perguntasPadrao().join('\n') ? null : l);  // as da tela: seguem a tela
       CHAT.ed = null;
     }

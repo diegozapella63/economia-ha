@@ -47,7 +47,7 @@ A conversa usa a tarefa de IA de **Para conversar** (com uma foto ou um PDF, a d
 
 O **clipe**, à esquerda da caixa, manda junto uma foto ou um PDF: **Tirar foto**, **Escolher fotos** (a galeria, até 4) ou **Escolher arquivo** (uma foto ou um PDF, como um encarte ou uma nota fiscal). A IA olha o arquivo para responder e, se ajudar, sugere ações; na conversa fica só o nome do arquivo. O botão redondo da direita é o microfone com a caixa vazia e vira o Enviar quando você escreve ou escolhe um arquivo.
 
-**Perguntas prontas**: na conversa vazia aparecem algumas perguntas da tela aberta; depois, o botão ✨ ao lado da caixa abre as mesmas a qualquer momento. Em **Editar perguntas**, o ✕ tira uma pergunta e **Adicionar** põe outra (aí valem em todas as telas); **Padrão** volta às de cada tela. Embaixo, **Mais perguntas (20)**: um toque põe a pergunta na lista. Ficam guardadas neste aparelho.
+**Perguntas prontas**: na conversa vazia aparecem algumas perguntas da tela aberta; depois, o botão ✨ ao lado da caixa abre as mesmas a qualquer momento. Em **Editar perguntas**, toque numa pergunta para mudar o texto, o ✕ tira uma pergunta e **Adicionar** põe outra (aí valem em todas as telas); **Padrão** volta às de cada tela. Embaixo, **Mais perguntas (20)**: um toque põe a pergunta na lista. **Perguntas prontas** e **Mais perguntas** fecham e abrem num toque no título. Fica tudo guardado neste aparelho.
 
 A conversa fica guardada neste aparelho até você tocar em **Nova conversa**. No celular ela sobe de baixo; no computador, abre numa janela no canto. Com **Usar IA** desligado, o balão some.
 
