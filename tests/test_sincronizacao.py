@@ -67,6 +67,68 @@ class Sincronizar(BaseSincronizar):
         self.assertEqual(estado["entidade"], self.ENT)
         self.assertIn("cafe", estado["acabando"])
 
+    def test_as_duas_listas_ficam_iguais(self):
+        """1.43.0: o Comprei do EconomIA conclui o item no HA; o Tirar da lista tira de lá; o que é apagado no HA sai da
+        Minha lista (vai para o histórico, com as compras); se quase tudo some de uma vez, é o HA que falhou: nada sai."""
+        S, hoje = self.S, self.S.hoje_br()
+        self.config(sync=self.sync(), lista=[{"produto": "Leite", "compras": []}])
+        S.sincronizar_lista()  # a primeira volta: o Pão francês chega
+        self.assertIn("Pão francês", self.lista())
+        # Comprei no EconomIA -> concluído no HA
+        cfg = S.ler_config()
+        next(i for i in cfg["lista"] if i["produto"] == "Pão francês")["compras"].append(hoje)
+        S.gravar_config(cfg)
+        S.sincronizar_lista()
+        self.assertIn(("Pão francês", "completed"), self.no_ha(), "Comprei hoje conclui no HA")
+        n = len(self.ha.pedidos_de("/services/todo/update_item"))
+        S.sincronizar_lista()
+        self.assertEqual(len(self.ha.pedidos_de("/services/todo/update_item")), n, "uma vez só")
+        # um item novo no painel vai para o HA; tirar da lista tira de lá
+        cfg = S.ler_config()
+        cfg["lista"].append({"produto": "Detergente", "compras": []})
+        S.gravar_config(cfg)
+        S.sincronizar_lista()
+        self.assertIn(("Detergente", "needs_action"), self.no_ha())
+        cfg = S.ler_config()
+        cfg["lista"] = [i for i in cfg["lista"] if i["produto"] != "Detergente"]
+        S.gravar_config(cfg)
+        S.sincronizar_lista()
+        self.assertNotIn("Detergente", [x for x, _ in self.no_ha()], "tirado da Minha lista, tirado do HA")
+        # apagado no HA -> sai da Minha lista, para o histórico
+        self.ha.item(self.ENT, "Manteiga")
+        S.sincronizar_lista()
+        self.assertIn("Manteiga", self.lista())
+        self.ha.todos[self.ENT] = [i for i in self.ha.todos[self.ENT] if i["summary"] != "Manteiga"]
+        S.sincronizar_lista()
+        self.assertNotIn("Manteiga", self.lista(), "apagado no HA: sai da Minha lista")
+        self.assertIn("Manteiga", [h["produto"] for h in S.ler_config().get("historico") or []], "e fica no histórico")
+        self.assertEqual(S.DIARIO[-1]["tipo"], "saiu")
+
+    def test_o_ha_que_some_de_repente_nao_apaga_a_lista(self):
+        S = self.S
+        for n in ("Arroz", "Feijão", "Café", "Açúcar", "Sal"):
+            self.ha.item(self.ENT, n)
+        self.config(sync=self.sync(), lista=[])
+        S.sincronizar_lista()
+        self.assertEqual(len(self.lista()), 6)
+        self.ha.todos[self.ENT] = [i for i in self.ha.todos[self.ENT] if i["status"] == "completed"]  # o HA devolveu quase nada
+        S.sincronizar_lista()
+        self.assertEqual(len(self.lista()), 6, "nada sai: fica para a próxima volta")
+
+    def test_o_correria_sincroniza_na_hora(self):
+        S = self.S
+        self.config(sync=self.sync(), lista=[], correria=True)
+        S.sincronizar_lista()
+        feitas = []
+        from unittest import mock
+        with mock.patch.object(S, "_sincronizar_logo", lambda: feitas.append(1) or S._sincronizar_ja()):
+            t = S.usar_ferramenta("por_na_lista", {"produto": "Café 500 g"}, "WhatsApp")
+        self.assertTrue(t.endswith("A lista do Home Assistant acompanha."), t)
+        self.assertEqual(len(feitas), 1)
+        self.assertIn(("Café 500 g", "needs_action"), self.no_ha(), "já está na lista do HA")
+        self.config(sync={"ativo": False}, lista=[], correria=True)
+        self.assertNotIn("Home Assistant", S.usar_ferramenta("por_na_lista", {"produto": "Pão"}, "WhatsApp"))
+
     def test_opcoes_desligadas(self):
         S, ha = self.S, self.ha
         self.config(sync=self.sync(enviar_novos=False, enviar_acabando=False), lista=[])

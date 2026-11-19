@@ -1,5 +1,11 @@
 # Mudanças
 
+## 1.43.0
+
+- **Conversa**: 6 perguntas prontas. Em **Editar perguntas**, embaixo, ficam **Mais perguntas (20)**: um toque põe a pergunta na sua lista.
+- **Conversa e CorrerIA**: a IA vê as lojas acompanhadas (com a distância), o total da lista em cada loja (o Roteiro), até 6 preços de cada item e, com as listas prontas ligadas, em qual lista está cada item. O CorrerIA ganhou o **Roteiro de compras**.
+- **Lista do Home Assistant**: as duas listas ficam iguais. O **Comprei hoje** do EconomIA conclui o item lá, **Tirar da lista** tira de lá, e o que você apaga na lista do Home Assistant sai da Minha lista (fica no Histórico). O que o CorrerIA põe na lista vai para lá na hora.
+
 ## 1.42.0
 
 - **O fundo e os cartões seguem o tema do Home Assistant**, no claro e no escuro: o mesmo fundo do Home Assistant e dos outros apps da família (antes, o EconomIA tinha o seu, esverdeado). Com um tema seu no Home Assistant, o app usa as cores dele; ao trocar o tema ou o modo no Home Assistant, o app muda junto.

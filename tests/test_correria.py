@@ -55,7 +55,7 @@ class Ferramentas(Cenario):
     def test_o_catalogo(self):
         S = self.S
         nomes = [f["nome"] for f in S.FERRAMENTAS_CORRERIA]
-        self.assertEqual(nomes, ["lista", "preco", "ofertas", "cupons", "por_na_lista", "tirar_da_lista", "comprei"])
+        self.assertEqual(nomes, ["lista", "preco", "ofertas", "roteiro", "cupons", "por_na_lista", "tirar_da_lista", "comprei"])
         self.assertEqual(set(nomes), set(S.FERR_IMPL))
         for f in S.FERRAMENTAS_CORRERIA:
             self.assertRegex(f["nome"], r"^[a-z0-9_]{1,40}$")
@@ -72,6 +72,19 @@ class Ferramentas(Cenario):
         self.assertIn("- Leite integral: sem preço na última busca", t)
         self.config(lista=[], categorias=["mercados"], correria=True)
         self.assertEqual(self.usa("lista"), "A lista de compras está vazia.")
+
+    def test_roteiro(self):
+        """1.43.0: as lojas acompanhadas e o total da lista em cada loja física (a conta da melhor loja e do Roteiro)."""
+        t = self.usa("roteiro")
+        self.assertIn("Lojas acompanhadas: ", t)
+        self.assertIn("Giassi (1,0 km)", t)
+        self.assertIn("Total da lista em cada loja física (de 3 itens;", t)
+        self.assertIn("- Giassi: 1 item, R$ 19,90 (2 sem preço nela)", t)
+        self.assertIn("- Angeloni: 1 item, R$ 21,50", t)
+        self.assertLess(t.index("Giassi:"), t.index("Angeloni:"), "a de menor total primeiro")
+        self.assertNotIn("Mercado Livre:", t, "só as lojas físicas no total")
+        self.config(lista=[], categorias=["mercados"], correria=True)
+        self.assertIn("Nenhum item da lista tem preço nas lojas físicas ainda.", self.usa("roteiro"))
 
     def test_preco(self):
         t = self.usa("preco", produto="café pilão")
@@ -296,7 +309,7 @@ class FerramentasPelaAPI(Servidor):
         self.assertEqual(self.pede("GET", "/api/integracao/ferramentas", cab={"Authorization": "Basic x"})[0], 401)
         st, d = self.ferr()
         self.assertEqual(st, 200)
-        self.assertEqual(len(d["ferramentas"]), 7)
+        self.assertEqual(len(d["ferramentas"]), 8)
         self.assertIn("economia_lista", d["instrucoes"])
         st, d = self.ferr("POST", {"nome": "por_na_lista", "argumentos": {"produto": "Pão de forma"}, "pessoa": {"id": "p1", "nome": "Ana"}, "cliente": "Claude"})
         self.assertEqual((st, d), (200, {"texto": "Pus Pão de forma na lista. O preço vem na próxima busca do app."}))

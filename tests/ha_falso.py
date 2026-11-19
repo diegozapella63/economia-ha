@@ -219,6 +219,19 @@ class HAFalso:
             ent, nome = (corpo or {}).get("entity_id"), (corpo or {}).get("item")
             self.item(ent, nome)
             return h._out([])
+        if caminho == "/api/services/todo/update_item":  # 1.43.0: pelo nome ou pelo uid, como o Home Assistant
+            ent, alvo = (corpo or {}).get("entity_id"), (corpo or {}).get("item")
+            for i in self.todos.get(ent, []):
+                if alvo in (i["uid"], i["summary"]):
+                    if (corpo or {}).get("status"):
+                        i["status"] = corpo["status"]
+                    break
+            return h._out([])
+        if caminho == "/api/services/todo/remove_item":
+            ent, alvo = (corpo or {}).get("entity_id"), (corpo or {}).get("item")
+            alvos = alvo if isinstance(alvo, list) else [alvo]
+            self.todos[ent] = [i for i in self.todos.get(ent, []) if i["uid"] not in alvos and i["summary"] not in alvos]
+            return h._out([])
         if caminho.startswith("/api/states/"):
             ent = caminho.split("/api/states/", 1)[1]
             novo = ent not in self.estados

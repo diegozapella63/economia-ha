@@ -715,6 +715,8 @@ def sincronizar_lista():
     primeira = estado.get("entidade") != ent
     if primeira:
         estado = {"entidade": ent, "status": {}, "enviados": [norm(nome_item(i)) for i in cfg.get("lista") or []], "acabando": {}}
+    estado.setdefault("nomes", {})     # 1.43.0: o nome (norm) de cada uid do HA, para saber o que saiu de lá
+    estado.setdefault("comprado", {})  # 1.43.0: o Comprei do EconomIA já mandado ao HA (o dia), por item
     itens = itens_ha(ent)
     hoje = hoje_br()
     mudancas = []
@@ -729,7 +731,8 @@ def sincronizar_lista():
                 continue
             uid, situacao, k = str(it.get("uid") or nome), it.get("status"), norm(nome)
             antes = estado["status"].get(uid)
-            if situacao == "needs_action" and antes is None and k not in idx:
+            # (1.43.0: um que o EconomIA conhecia e saiu da Minha lista não volta: sai do HA logo abaixo)
+            if situacao == "needs_action" and antes is None and k not in idx and k not in enviados:
                 idx[k] = {"produto": nome, "compras": [], "origem": "ha"}
                 lista.append(idx[k])
                 enviados.add(k)
@@ -743,6 +746,25 @@ def sincronizar_lista():
                     idx[k]["compras"].append(hoje)
                     mudancas.append({"tipo": "compra", "produto": idx[k]["produto"], "data": hoje})
             estado["status"][uid] = situacao
+            estado["nomes"][uid] = k
+        # 1.43.0: o que foi apagado da lista do HA (estava a fazer e sumiu) sai da Minha lista, para o histórico. Se
+        # sumir quase tudo de uma vez, é o HA que não respondeu direito: fica para a próxima volta.
+        agora_uids = {str(it.get("uid") or str(it.get("summary") or "").strip()[:120]) for it in itens}
+        sumiram = [u for u, sit in estado["status"].items() if sit == "needs_action" and u not in agora_uids]
+        a_fazer = sum(1 for sit in estado["status"].values() if sit == "needs_action")
+        if sumiram and not (len(sumiram) > 3 and len(sumiram) * 2 > a_fazer):
+            for u in sumiram:
+                k = estado["nomes"].get(u)
+                item = idx.get(k) if k else None
+                if item is not None and item in lista:
+                    lista.remove(item)
+                    vai_pro_historico(cfg, item, hoje)
+                    idx.pop(k, None)
+                    mudancas.append({"tipo": "saiu", "produto": item.get("produto"), "data": hoje})
+                estado["status"].pop(u, None)
+                estado["nomes"].pop(u, None)
+        elif sumiram:
+            log(f"lista do HA: {len(sumiram)} itens sumiram de uma vez; fica para a próxima volta")
         if mudancas:
             rev = gravar_config(cfg)["rev"]
             DIARIO.extend(dict(m, rev=rev) for m in mudancas)
@@ -750,7 +772,25 @@ def sincronizar_lista():
             log(f"lista do HA: {len(mudancas)} mudança(s)")
     # do EconomIA para a lista do HA
     pendentes = {norm(i.get("summary") or "") for i in itens if i.get("status") == "needs_action"}
+    nome_ha = {norm(i.get("summary") or ""): i.get("uid") or i.get("summary") for i in itens if i.get("status") == "needs_action"}
     mandou = 0
+    atuais0 = {norm(nome_item(i)) for i in cfg.get("lista") or [] if isinstance(i, dict)}
+    # 1.43.0: o que saiu da Minha lista (Tirar da lista, Limpar) sai da lista do HA; o Comprei de hoje a conclui lá
+    for k in sorted(enviados - atuais0):
+        if k in pendentes:
+            ha_api("POST", "/services/todo/remove_item", {"entity_id": ent, "item": nome_ha[k]})
+            pendentes.discard(k)
+            mandou += 1
+    for item in cfg.get("lista") or []:
+        if not isinstance(item, dict):
+            continue
+        k, compras = norm(nome_item(item)), [c for c in item.get("compras") or [] if data_ok(c)]
+        if k in pendentes and compras and max(compras) == hoje and estado["comprado"].get(k) != hoje:
+            ha_api("POST", "/services/todo/update_item", {"entity_id": ent, "item": nome_ha[k], "status": "completed"})
+            estado["comprado"][k] = hoje
+            pendentes.discard(k)
+            enviados.add(k)
+            mandou += 1
     for item in cfg.get("lista") or []:
         if not isinstance(item, dict):
             continue
@@ -771,6 +811,7 @@ def sincronizar_lista():
         enviados.add(k)
     atuais = {norm(nome_item(i)) for i in cfg.get("lista") or [] if isinstance(i, dict)}
     estado["enviados"] = sorted(k for k in enviados if k in atuais)
+    estado["comprado"] = {k: v for k, v in estado["comprado"].items() if k in atuais and v == hoje}
     gravar_json(SYNC_FILE, estado)
     SYNC.update({"ultima": agora(), "erro": None, "chegaram": SYNC["chegaram"] + len(mudancas), "enviados": SYNC["enviados"] + mandou})
 
@@ -1033,13 +1074,10 @@ def precos_da_lista(cfg, of):
     return out
 
 
-def estados_lista(cfg=None, of=None):
-    """{entidade: corpo} dos dois sensores. A melhor loja é a loja física acompanhada que tem preço de mais itens da lista
-    e, entre elas, a de menor total (com a quantidade de cada item; o clube só nas lojas em que a pessoa é sócia); a
-    economia é contra a média das lojas em cada item. A oferta liga com uma oferta das lojas acompanhadas (sem as
-    escondidas) que bate com um item da lista (todas as palavras do item no nome da oferta, como no economia_preco)."""
-    cfg = ler_config() if cfg is None else cfg
-    of = (ler_json(OFERTAS, {}) or {}) if of is None else of
+def totais_por_loja(cfg, of):
+    """1.43.0: a conta da melhor loja (a do sensor e do Roteiro): para cada loja física acompanhada, quantos itens da
+    lista têm preço nela e quanto dá (com a quantidade; o clube só onde a pessoa é sócia), e a economia contra a média.
+    Da que tem mais itens e, entre elas, a de menor total. [(rede, {itens, total, economia})]."""
     info, acompanha = redes_acompanhadas(cfg, of)
     socios = set(cfg.get("clubes") or [])
     precos = precos_da_lista(cfg, of)
@@ -1054,7 +1092,18 @@ def estados_lista(cfg=None, of=None):
             t["itens"] += 1
             t["total"] += v * q
             t["economia"] += (media - v) * q
-    ordem = sorted(por_loja.items(), key=lambda kv: (-kv[1]["itens"], kv[1]["total"], norm(info[kv[0]]["nome"])))
+    return sorted(por_loja.items(), key=lambda kv: (-kv[1]["itens"], kv[1]["total"], norm(info[kv[0]]["nome"]))), len(itens), info
+
+
+def estados_lista(cfg=None, of=None):
+    """{entidade: corpo} dos dois sensores. A melhor loja é a loja física acompanhada que tem preço de mais itens da lista
+    e, entre elas, a de menor total (com a quantidade de cada item; o clube só nas lojas em que a pessoa é sócia); a
+    economia é contra a média das lojas em cada item. A oferta liga com uma oferta das lojas acompanhadas (sem as
+    escondidas) que bate com um item da lista (todas as palavras do item no nome da oferta, como no economia_preco)."""
+    cfg = ler_config() if cfg is None else cfg
+    of = (ler_json(OFERTAS, {}) or {}) if of is None else of
+    ordem, n_itens, info = totais_por_loja(cfg, of)
+    itens = [(nome_item(it), qtd_item(it)) for it in cfg.get("lista") or [] if nome_item(it)]
     attrs = {"friendly_name": "EconomIA: melhor loja", "icon": "mdi:store-check-outline", "atualizado": of.get("gerado_em")}
     if ordem:
         (r, t), seg = ordem[0], (ordem[1] if len(ordem) > 1 else None)
@@ -7619,12 +7668,32 @@ def contexto_chat(tela, cfg=None, of=None):
     clubes = [info[r]["nome"] for r in cfg.get("clubes") or [] if r in info]
     if clubes:
         linhas.append("Participa dos clubes de desconto: " + ", ".join(clubes) + ".")
+    # 1.43.0: as lojas acompanhadas, com a distância, e o total da lista em cada uma (o Roteiro e a melhor loja)
+    lojas = sorted((r for r in info if acompanha(r)), key=lambda r: (info[r]["cat"] == "online", info[r]["dist"] if info[r]["dist"] is not None else 99, norm(info[r]["nome"])))
+    if lojas:
+        linhas.append("Lojas acompanhadas: " + "; ".join(
+            f'{info[r]["nome"]} ({(info[r]["tipo"] or info[r]["cat"]).lower()}' + (f', {str(round(info[r]["dist"], 1)).replace(".", ",")} km' if isinstance(info[r]["dist"], (int, float)) else "") + ")"
+            for r in lojas[:30]) + ".")
+    ordem, n_lista, _ = totais_por_loja(cfg, of)
+    if ordem:
+        linhas.append(f"Total da lista em cada loja física (os itens com preço nela, de {n_lista}; com a quantidade; o clube só onde é sócia):")
+        linhas += [f'- {info[r]["nome"]}: {t["itens"]} {"item" if t["itens"] == 1 else "itens"}, {br_preco(t["total"])}' + (f', {br_preco(t["economia"])} a menos que a média' if t["economia"] > 0.005 else "")
+                   for r, t in ordem[:10]]
+    crus = {norm(nome_item(i)): i for i in cfg.get("lista") or [] if nome_item(i)}
+    prontas = {x["id"]: str(x["nome"]) for x in cfg.get("listas") or [] if isinstance(x, dict) and x.get("id") and x.get("nome")} \
+        if (cfg.get("opcoes") or {}).get("listas") is True else None
+    if prontas:
+        linhas.append("Listas prontas: " + ", ".join(prontas.values()) + ".")
     if itens:
         linhas.append(f"\nLista de compras ({len(itens)} itens):")
         for i in itens[:MAX_ITENS_CHAT]:
             partes = [(f'{i["quantidade"]} × ' if i["quantidade"] > 1 else "") + i["produto"]]
+            if prontas:
+                cru = crus.get(norm(i["produto"]))
+                em = [prontas[x] for x in (cru.get("listas") or []) if x in prontas] if isinstance(cru, dict) else []
+                partes.append("em " + " e ".join(em) if em else "sem lista")
             if i["mais_barato"]:
-                outros = ", ".join(f'{p["loja"]} {br_preco(p["preco"])}' for p in i["precos"][1:3])
+                outros = ", ".join(f'{p["loja"]} {br_preco(p["preco"])}' for p in i["precos"][1:6])
                 partes.append(f'mais barato no {i["mais_barato"]["loja"]} por {br_preco(i["mais_barato"]["preco"])}'
                               + (f" (também {outros})" if outros else ""))
             else:
@@ -7863,6 +7932,10 @@ FERRAMENTAS_CORRERIA = [
                       "loja": {"type": "string", "description": "Parte do nome da loja, como \"Giassi\"."},
                       "busca": {"type": "string", "description": "Palavras do produto, como \"café\"."},
                       "limite": {"type": "integer", "minimum": 1, "maximum": MAX_OFERTAS_CORRERIA, "description": "Quantas (até 50; padrão 15)."}})},
+    {"nome": "roteiro", "titulo": "Roteiro de compras", "grava": False, "apaga": False,
+     "descricao": "As lojas acompanhadas (com a distância) e o total da lista em cada loja física: quantos itens têm preço "
+                  "nela e quanto dá, da que tem mais itens e o menor total. Serve para \"onde compro tudo de uma vez?\".",
+     "entrada": _obj({})},
     {"nome": "cupons", "titulo": "Cupons", "grava": False, "apaga": False,
      "descricao": "Os cupons válidos das lojas acompanhadas e os guardados pela pessoa, com o código e a validade.",
      "entrada": _obj({})},
@@ -8170,7 +8243,24 @@ def _ferr_comprei(a, cfg, of):
     return f'Anotei a compra de {item["produto"]} em {br_data(data)}' + _prazo(item) + ".", {"tipo": "compra", "produto": item["produto"], "data": data}
 
 
-FERR_IMPL = {"lista": _ferr_lista, "preco": _ferr_preco, "ofertas": _ferr_ofertas, "cupons": _ferr_cupons,
+def _ferr_roteiro(a, cfg, of):
+    """1.43.0: o Roteiro: as lojas acompanhadas e o total da lista em cada uma (a conta da melhor loja)."""
+    ordem, n, info = totais_por_loja(cfg, of)
+    _, acompanha = redes_acompanhadas(cfg, of)
+    lojas = [r for r in info if acompanha(r)]
+    if not lojas:
+        return "Nenhuma loja acompanhada ainda."
+    linhas = ["Lojas acompanhadas: " + "; ".join(
+        info[r]["nome"] + (f' ({str(round(info[r]["dist"], 1)).replace(".", ",")} km)' if isinstance(info[r]["dist"], (int, float)) else "") for r in lojas) + "."]
+    if not ordem:
+        linhas.append("Nenhum item da lista tem preço nas lojas físicas ainda.")
+    else:
+        linhas.append(f"Total da lista em cada loja física (de {n} itens; com a quantidade; o clube só onde é sócia):")
+        linhas += [f'- {info[r]["nome"]}: {t["itens"]} {"item" if t["itens"] == 1 else "itens"}, {br_preco(t["total"])}' + (f' ({n - t["itens"]} sem preço nela)' if n > t["itens"] else "") for r, t in ordem[:15]]
+    return "\n".join(linhas)
+
+
+FERR_IMPL = {"roteiro": _ferr_roteiro, "lista": _ferr_lista, "preco": _ferr_preco, "ofertas": _ferr_ofertas, "cupons": _ferr_cupons,
              "por_na_lista": _ferr_por, "tirar_da_lista": _ferr_tirar, "comprei": _ferr_comprei}
 
 
@@ -8194,7 +8284,28 @@ def usar_ferramenta(nome, argumentos, cliente="CorrerIA"):
             DIARIO.append(dict(mudanca, rev=rev))
             del DIARIO[:-300]
             log(f"CorrerIA ({cliente}): {nome} {mudanca['produto']}")
+    if gravar and mudanca and sync_ligado(cfg):
+        # 1.43.0: com a Lista do Home Assistant ligada, vai para lá na hora (sem esperar a volta de cada minuto)
+        _sincronizar_logo()
+        texto += " A lista do Home Assistant acompanha."
     return texto
+
+
+def sync_ligado(cfg):
+    conf = cfg.get("sync") or {}
+    return bool(conf.get("ativo")) and str(conf.get("entidade") or "").startswith("todo.")
+
+
+def _sincronizar_logo():
+    threading.Thread(target=_sincronizar_ja, daemon=True).start()
+
+
+def _sincronizar_ja():
+    try:
+        sincronizar_lista()
+    except Exception as e:  # noqa: BLE001
+        SYNC["erro"] = f"Erro na sincronização: {e}"
+        log(SYNC["erro"])
 
 
 # ---------- HTTP ----------

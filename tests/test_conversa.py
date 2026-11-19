@@ -142,6 +142,21 @@ class Conversa(Cenario):
         self.assertNotIn("Ofertas das lojas", vazio)
         self.assertNotIn("Preços da última busca", vazio)
 
+    def test_lojas_totais_mais_precos_e_listas_prontas(self):
+        """1.43.0: a Conversa vê as lojas acompanhadas (com a distância), o total da lista em cada loja física (o Roteiro),
+        até 6 preços por item e, com as listas prontas ligadas, em qual lista está cada item."""
+        S = self.S
+        self.prepara(listas=[{"id": "sem", "nome": "Compra semanal"}], opcoes={"listas": True},
+                     lista=[{"produto": "Café Pilão 500 g", "listas": ["sem"]}, {"produto": "Leite integral"}])
+        t = S.contexto_chat("lista")
+        self.assertIn("Lojas acompanhadas: Giassi (mercado, 1,0 km); Angeloni (mercado, 1,5 km).", t)
+        self.assertIn("Total da lista em cada loja física (os itens com preço nela, de 2;", t)
+        self.assertIn("- Giassi: 1 item, R$ 19,90, R$ 0,80 a menos que a média", t)
+        self.assertIn("Listas prontas: Compra semanal.", t)
+        self.assertIn("- Café Pilão 500 g; em Compra semanal; mais barato no Giassi", t)
+        self.assertIn("- Leite integral; sem lista;", t)
+        self.assertNotIn("Mercado Longe", t, "só as acompanhadas (a de longe fica fora do raio)")
+
     def test_a_ia_nao_ve_as_ofertas_que_a_tela_esconde(self):
         """1.42.0: as ofertas que a tela põe em Escondidas (bebê sem crianças, pet sem pets ou de outro bicho, uma
         etiqueta de Nunca mostrar, uma restrição) também ficam fora da Conversa e das ferramentas do CorrerIA."""

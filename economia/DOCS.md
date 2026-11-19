@@ -47,7 +47,7 @@ A conversa usa a tarefa de IA de **Para conversar** (com uma foto ou um PDF, a d
 
 O **clipe**, à esquerda da caixa, manda junto uma foto ou um PDF: **Tirar foto**, **Escolher fotos** (a galeria, até 4) ou **Escolher arquivo** (uma foto ou um PDF, como um encarte ou uma nota fiscal). A IA olha o arquivo para responder e, se ajudar, sugere ações; na conversa fica só o nome do arquivo. O botão redondo da direita é o microfone com a caixa vazia e vira o Enviar quando você escreve ou escolhe um arquivo.
 
-**Perguntas prontas**: na conversa vazia aparecem algumas perguntas da tela aberta; depois, o botão ✨ ao lado da caixa abre as mesmas a qualquer momento. Em **Editar perguntas**, o ✕ tira uma pergunta e **Adicionar** põe outra (aí valem em todas as telas); **Padrão** volta às de cada tela. Ficam guardadas neste aparelho.
+**Perguntas prontas**: na conversa vazia aparecem algumas perguntas da tela aberta; depois, o botão ✨ ao lado da caixa abre as mesmas a qualquer momento. Em **Editar perguntas**, o ✕ tira uma pergunta e **Adicionar** põe outra (aí valem em todas as telas); **Padrão** volta às de cada tela. Embaixo, **Mais perguntas (20)**: um toque põe a pergunta na lista. Ficam guardadas neste aparelho.
 
 A conversa fica guardada neste aparelho até você tocar em **Nova conversa**. No celular ela sobe de baixo; no computador, abre numa janela no canto. Com **Usar IA** desligado, o balão some.
 
@@ -277,7 +277,9 @@ A aba **Online** compara iFood, Rappi, Mercado Livre, Amazon e os outros marcado
 Em **Mais › Configurações › Integrações › Lista do Home Assistant**, escolha a lista de tarefas que o EconomIA deve acompanhar (por exemplo, a **Lista de compras**). A partir daí:
 
 - O que você pedir ao Assist, como "adicione café na lista de compras", aparece na Minha lista em até um minuto.
-- Marcar um item como concluído na lista do Home Assistant conta como **Comprei hoje** no EconomIA.
+- Marcar um item como concluído na lista do Home Assistant conta como **Comprei hoje** no EconomIA, e o **Comprei hoje** do EconomIA conclui o item lá.
+- Apagar um item na lista do Home Assistant tira da Minha lista (fica no **Histórico**), e **Tirar da lista** no EconomIA tira de lá.
+- O que o CorrerIA (WhatsApp, Claude e Gemini) põe na lista vai para a lista do Home Assistant na hora.
 - O que você adicionar no EconomIA vai para a lista do Home Assistant, e os itens que estão acabando entram sozinhos (dá para desligar as duas coisas).
 
 Também dá para usar uma lista do **Google Tasks** conectada ao Home Assistant pela integração Google Tasks. Ela é atualizada pelo Home Assistant a cada 30 minutos.
