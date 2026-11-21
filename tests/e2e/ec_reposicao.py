@@ -185,6 +185,7 @@ async def tudo(p, inv):
         check("Vitamina D · 1 cápsula" not in ops and len(ops) == 4, f"o que já está na reposição sai da escolha ({ops})")
         await tocar(pg, ".ss-opt >> nth=3")
         check(await pg.input_value("#repNome") == "Pilhas AA", "um consumível do InventarIA")
+        check((await pg.input_value("#repCada"), await pg.input_value("#repUn")) == ("6", "mes"), "1.46.3: o A cada já vem com a duração estimada do InventarIA (180 dias = 6 meses)")
         await pg.fill("#repNome", "Pilhas AAA")
         await pg.click("#repSalvar")
         await pg.wait_for_timeout(500)

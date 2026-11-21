@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.46.3
+
+- **Reposição**: ao escolher um consumível do InventarIA (1.82.0) que tem a duração estimada, o **A cada** já vem preenchido com ela.
+
 ## 1.46.2
 
 - **Conversa**: a IA sabe quais são os outros apps da casa e, quando a pergunta é de outro app, diz em qual deles está. Ela também vê a **Reposição** (o que está na hora de repor).

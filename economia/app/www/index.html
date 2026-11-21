@@ -2971,7 +2971,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.46.2';
+  var VERSAO = '1.46.3';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -5640,7 +5640,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // CronologIA e os consumíveis do InventarIA (api/reposicao/fontes): fica guardado só o nome e de qual app veio.
   var REP_UN = {dia:['dia', 'dias'], semana:['semana', 'semanas'], mes:['mês', 'meses']};
   var REP_APP = {cronologia:'CronologIA', inventario:'InventarIA'}, REP_GRUPO = {cronologia:'Remédios do CronologIA', inventario:'Consumíveis do InventarIA'};
-  var REP_EX = {cronologia:[{nome:'Vitamina D', detalhe:'1 cápsula'}, {nome:'Antialérgico', detalhe:'1 comprimido'}], inventario:[{nome:'Pilhas AA', detalhe:'Casa'}, {nome:'Pasta térmica', detalhe:'Informática'}]};
+  var REP_EX = {cronologia:[{nome:'Vitamina D', detalhe:'1 cápsula'}, {nome:'Antialérgico', detalhe:'1 comprimido'}], inventario:[{nome:'Pilhas AA', detalhe:'Pilhas e eletrônicos', dias:180}, {nome:'Pasta térmica', detalhe:'Manutenção e reparos'}]};
   var REP_F = null, REP_EDIT = null, REP_ORIGEM = '';
   var IC_X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>';
   function repCadaTxt(r){ return 'A cada ' + r.cada + ' ' + REP_UN[r.unidade][r.cada > 1 ? 1 : 0]; }
@@ -5740,6 +5740,13 @@ dialog.ss-wrap::backdrop{background:transparent}
     var v = this.value, i = v.indexOf('|'); if (i < 0) return;
     $('repNome').value = v.slice(i + 1); REP_ORIGEM = v.slice(0, i);
     if (REP_ORIGEM === 'cronologia' && !REP_EDIT){ $('repCada').value = 30; $('repUn').value = 'dia'; }
+    // 1.46.3: um consumível do InventarIA com a duração estimada: o A cada já vem com ela (7 dias = 1 semana, 30 = 1 mês)
+    var nomeF = v.slice(i + 1), src = REP_ORIGEM === 'inventario' && !REP_EDIT ? repFontes().inventario.itens.filter(function(x){ return x.nome === nomeF; })[0] : null;
+    var d = src ? Math.round(Number(src.dias)) : 0;
+    if (d > 0){
+      var c = d % 30 === 0 && d <= 360 ? [d / 30, 'mes'] : d === 365 ? [12, 'mes'] : d % 7 === 0 ? [d / 7, 'semana'] : [Math.min(d, 365), 'dia'];
+      $('repCada').value = c[0]; $('repUn').value = c[1];
+    }
     this.value = '';
   });
   $('repNome').addEventListener('input', function(){  // o nome mudado à mão deixa de ser o do outro app

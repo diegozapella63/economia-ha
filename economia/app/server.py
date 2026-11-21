@@ -8085,7 +8085,11 @@ def consumiveis_inventario():
             continue
         if d.get("ligado") is False:
             return {"itens": [], "aviso": "Ligue Usar consumíveis no InventarIA."}
-        itens = [{"nome": " ".join(str(c.get("nome") or "").split())[:120], "detalhe": " ".join(str(c.get("categoria") or "").split())[:60]}
+        def dias(c):  # 1.46.3: a duração estimada do InventarIA 1.82.0 (em dias; sem ela, 0), para o A cada
+            v = c.get("duracao_dias")
+            return int(v) if isinstance(v, (int, float)) and not isinstance(v, bool) and 0 < v <= 3650 else 0
+        itens = [{"nome": " ".join(str(c.get("nome") or "").split())[:120], "detalhe": " ".join(str(c.get("categoria") or "").split())[:60],
+                  **({"dias": dias(c)} if dias(c) else {})}
                  for c in d["consumiveis"][:500] if isinstance(c, dict) and str(c.get("nome") or "").strip()]
         return {"itens": itens, "aviso": ""}
     return {"itens": [], "aviso": "O InventarIA não respondeu."}

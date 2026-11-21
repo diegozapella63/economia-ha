@@ -24,8 +24,8 @@ class InventarioFalso:
             def do_GET(self):
                 dono.pedidos.append((self.path, self.headers.get("Authorization"), self.headers.get("X-App")))
                 st, corpo = dono.resposta or (200, {"versao": "1.81.0", "ligado": True, "consumiveis": [
-                    {"id": "c1", "nome": "Pasta  térmica", "categoria": "Informática", "quantidade": "2", "para_que_serve": "Processador"},
-                    {"id": "c2", "nome": "Pilhas AA", "categoria": "", "quantidade": "8", "para_que_serve": ""},
+                    {"id": "c1", "nome": "Pasta  térmica", "categoria": "Informática", "duracao_dias": 365, "duracao": "1 ano", "para_que_serve": "Processador"},
+                    {"id": "c2", "nome": "Pilhas AA", "categoria": "", "duracao_dias": 180, "duracao": "6 meses", "para_que_serve": ""},
                     {"id": "c3", "nome": "  ", "categoria": "x"}, "torto"]})
                 if self.headers.get("Authorization") != "Bearer " + dono.chave:
                     st, corpo = 401, {"erro": "chave"}
@@ -100,7 +100,7 @@ class Reposicao(Cenario):
         self.grava("inventario", {"url": "http://127.0.0.1:9", "ip_url": self.inv.url + "/", "chave": self.inv.chave})
         f = self.S.reposicao_fontes(cfg)["inventario"]
         self.assertEqual(f, {"tem": True, "ligado": True, "aviso": "", "itens": [
-            {"nome": "Pasta térmica", "detalhe": "Informática"}, {"nome": "Pilhas AA", "detalhe": ""}]})
+            {"nome": "Pasta térmica", "detalhe": "Informática", "dias": 365}, {"nome": "Pilhas AA", "detalhe": "", "dias": 180}]}, "1.46.3: com a duração estimada, quando há")
         self.assertEqual(self.inv.pedidos, [("/api/integracao/consumiveis", "Bearer chave-inv", "EconomIA")], "o endereço que responde, com a chave")
 
     def test_o_inventario_de_antes_desligado_ou_fora(self):
