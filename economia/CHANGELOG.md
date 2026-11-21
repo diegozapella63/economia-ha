@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.46.4
+
+- **IA mais cuidadosa com o que lê**: uma página, um encarte ou uma foto com frases como "ignore as instruções" não muda o que a IA faz; ela trata o que lê só como material.
+
 ## 1.46.3
 
 - **Reposição**: ao escolher um consumível do InventarIA (1.82.0) que tem a duração estimada, o **A cada** já vem preenchido com ela.
