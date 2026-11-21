@@ -102,6 +102,13 @@ class Conversa(Cenario):
         self.assertIn("Casa: 2 adulto(s); 1 criança(s) e 0 bebê(s); pets: 1 gato; restrições: lactose.", t)
         self.assertIn("Participa dos clubes de desconto: Angeloni.", t)
         self.assertIn("Lista de compras (3 itens):", t)
+        self.assertNotIn("Reposição", t, "sem nada na Reposição, nada sobre ela")
+        # 1.46.2: a Reposição (HOJE é 02/11/2026): o que está na hora primeiro
+        cfg = S.ler_config()
+        cfg["reposicao"] = [{"id": "aaaa1", "nome": "Ração 15 kg", "cada": 30, "unidade": "dia", "desde": "2026-10-20"},
+                            {"id": "bbbb2", "nome": "Filtro de água", "cada": 6, "unidade": "mes", "desde": "2026-04-30"}]
+        r = S.contexto_chat("lista", cfg)
+        self.assertIn("Reposição, o que a casa compra de tempos em tempos (1 na hora de repor):\n- Filtro de água: a cada 6 meses; na hora de repor\n- Ração 15 kg: a cada 30 dias; volta em 19/11/2026", r)
         self.assertIn("- Café Pilão 500 g; mais barato no Giassi por R$ 19,90 (também Angeloni R$ 21,50); comprado 2 vezes, "
                       "a última em 19/10/2026, costuma comprar a cada 14 dias", t)
         self.assertIn("- Leite integral; sem preço na última busca", t)
@@ -247,6 +254,11 @@ class Conversa(Cenario):
         S.conversar({"mensagens": msgs, "tela": "ofertas"})
         t = ha.chamadas_ia[-1]["instructions"]
         self.assertIn("Você é a IA do EconomIA", t)
+        # 1.46.2: o contexto da família (a mesma frase em todos os apps)
+        self.assertIn(S.FAMILIA_IA, t)
+        for app in ("ResolvIA (listas de tarefas)", "CronologIA (agenda", "GerencIA (finanças)", "InventarIA (inventário", "MemorIA (blocos", "EconomIA (lista de compras", "CorrerIA (os apps no WhatsApp"):
+            self.assertIn(app, S.FAMILIA_IA)
+        self.assertTrue(S.FAMILIA_IA.endswith("Você só vê os dados deste app: se a pessoa perguntar algo que é de outro, diga em qual app está, sem inventar."))
         self.assertIn("com todos os acentos e o ç (você, às, não, alimentação)", t, "1.42.0: com os acentos (uma IA respondia sem eles)")
         self.assertIn("Você não muda nada sozinho.", t)
         for tipo in ("por_na_lista", "tirar_da_lista", "comprei", "buscar", "abrir"):

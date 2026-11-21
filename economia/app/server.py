@@ -7657,6 +7657,9 @@ def _pct(o):
     return round(100 * (de - por) / de) if de and por and de > por else 0
 
 
+MAX_REPOR_CHAT = 40
+
+
 def contexto_chat(tela, cfg=None, of=None):
     """O que a IA sabe do app: a data, a tela aberta, a casa, a lista com os preços, o que mais se compra, ofertas e cupons."""
     cfg = ler_config() if cfg is None else cfg
@@ -7755,7 +7758,19 @@ def contexto_chat(tela, cfg=None, of=None):
                           + (f' ({k["condicao"]})' if k.get("condicao") else "")
                           + (f' até {br_data(k["valido_ate"])}' if data_ok(k.get("valido_ate")) else "")
                           + (", guardado pela pessoa" if k.get("meu") else ""))
+    # 1.46.2: a Reposição (o que a casa compra de tempos em tempos), para a IA saber o que está na hora
+    rep = sorted(itens_reposicao(cfg), key=lambda r: (repor_proxima(r), norm(r["nome"])))
+    if rep:
+        vez = sum(1 for r in rep if repor_proxima(r) <= hoje)
+        linhas.append(f"\nReposição, o que a casa compra de tempos em tempos ({vez} na hora de repor):")
+        for r in rep[:MAX_REPOR_CHAT]:
+            prox = repor_proxima(r)
+            linhas.append(f'- {r["nome"]}: {_repor_cada(r)}; ' + ("na hora de repor" if prox <= hoje else f"volta em {br_data(prox)}"))
     return "\n".join(linhas)
+
+
+# 1.46.2: o contexto da família, igual em todos os apps: a IA só vê os dados daqui e diz em qual app está o resto
+FAMILIA_IA = ("Este app é um dos apps da casa (a família da CorrerIA Code), cada um com o seu assunto: ResolvIA (listas de tarefas), CronologIA (agenda, rotinas, remédios e placar), GerencIA (finanças), InventarIA (inventário da casa), MemorIA (blocos de anotações), EconomIA (lista de compras e preços) e CorrerIA (os apps no WhatsApp e em outras IAs). Você só vê os dados deste app: se a pessoa perguntar algo que é de outro, diga em qual app está, sem inventar.")
 
 
 def instrucoes_chat(contexto, mensagens, arquivos=0):
@@ -7768,6 +7783,7 @@ def instrucoes_chat(contexto, mensagens, arquivos=0):
         "e cuida da lista de compras da casa. Converse em português do Brasil, com todos os acentos e o ç (você, às, não, alimentação), com respostas curtas e diretas (poucas frases ou "
         "uma lista curta). Use os dados do app abaixo e não invente preços, lojas nem cupons: se não souber, diga. "
         "Também pode conversar sobre outros assuntos.\n"
+        + FAMILIA_IA + "\n"  # 1.46.2: os outros apps da casa, para dizer em qual está o que não é daqui
         # 1.41.1: pela busca na web, como está hoje, e não de memória
         "Para avaliar um produto (\"vale a pena?\", \"é bom?\"), use a busca na web agora: a nota e as avaliações de quem "
         "comprou, as reclamações mais comuns e o preço de hoje dele, como estão hoje (não use o que você lembra de antes). Comece com o veredito (Vale a pena, Depende ou Não vale) "

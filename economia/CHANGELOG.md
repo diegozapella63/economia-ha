@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.46.2
+
+- **Conversa**: a IA sabe quais são os outros apps da casa e, quando a pergunta é de outro app, diz em qual deles está. Ela também vê a **Reposição** (o que está na hora de repor).
+
 ## 1.46.1
 
 - **Reposição no CorrerIA**: pelo WhatsApp, pelo Claude e pelo Gemini dá para ver a Reposição (o que está na hora), pôr um item com o intervalo, mudar o intervalo e dizer que já foi reposto.

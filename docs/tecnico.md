@@ -514,6 +514,7 @@ O que se compra de tempos em tempos. Tudo na página (a configuração inteira v
 - **Opções › Reposição** (`pintaRepOpcoes`): as duas chaves, cada uma com a linha do estado (quantos itens, o que falta no
   outro app ou "não está neste Home Assistant"). No exemplo (fora do add-on), uma casa inventada (`REP_EX`).
 - **CorrerIA** (1.46.1): as ferramentas `reposicao` (ler), `repor` (pôr ou mudar o intervalo: `item`, `a_cada`, `unidade` dias|semanas|meses) e `reposto` (a contagem recomeça hoje), com a mesma conta da página (`repor_proxima`). As de gravar entram no diário com `tipo: "repor"` e o item inteiro, e o `aplicar_diario` troca o item (pelo id ou pelo nome) na configuração que a página grava com a revisão velha. O **Começar do zero** apaga a `reposicao` e deixa o `repor` (`FICA_NO_ZERO`).
+- **Conversa** (1.46.2): o `contexto_chat` leva a Reposição (até `MAX_REPOR_CHAT` itens, o que está na hora primeiro), e as instruções levam a `FAMILIA_IA` (os outros apps da casa: a IA só vê os dados daqui e diz em qual app está o resto; a mesma frase em todos os apps).
 - Testes: `tests/test_reposicao.py`, `tests/test_correria.py` (as ferramentas) e `tests/e2e/ec_reposicao.py`.
 
 ## Mais: o menu (1.3.0)
