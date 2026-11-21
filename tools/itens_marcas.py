@@ -231,6 +231,34 @@ BEBIDAS = {
         Energético Monster | Energético Burn | Burn | Energético Baly | Baly | Energético Flash Power | Energético Night Power | Energético Vibe |
         Energético Furioso | Energético 220V | Energético Fusion | Chá gelado Leão | Chá Matte Leão gelado | Mate Couro | Guaraviton |
         Guaraná Viton | Guaraná Power | Café gelado Starbucks""",
+    # 1.48.1 (o dono: "os vinhos todos"): os tipos, as uvas e os rótulos que os mercados do Brasil mais vendem
+    "Vinhos": """Vinho tinto de mesa | Vinho branco de mesa | Vinho tinto bordô | Vinho bordô suave | Vinho colonial | Vinho de garrafão |
+        Vinho branco suave | Vinho rosé seco | Vinho rosé suave | Vinho tinto meio seco | Vinho frisante | Vinho frisante branco |
+        Vinho frisante rosé | Vinho frisante tinto | Vinho verde | Vinho sem álcool | Vinho orgânico | Vinho em lata | Vinho bag in box |
+        Vinho para cozinhar | Sangria | Vinho quente | Prosecco | Espumante rosé | Espumante demi-sec | Espumante sem álcool | Cava |
+        Vinho Cabernet Sauvignon | Vinho Merlot | Vinho Malbec | Vinho Carménère | Vinho Tannat | Vinho Pinot Noir | Vinho Syrah |
+        Vinho Tempranillo | Vinho Sangiovese | Vinho Primitivo | Vinho Chardonnay | Vinho Sauvignon Blanc | Vinho Moscato | Vinho Riesling |
+        Vinho Pinot Grigio | Vinho Torrontés | Vinho Alvarinho |
+        Vinho Naturelle | Naturelle | Naturelle frisante | Naturelle branco suave | Naturelle rosé suave | Naturelle tinto suave |
+        Vinho Lunae | Lunae | Lunae frisante | Lunae branco | Lunae rosé | Lunae tinto |
+        Vinho Salton Classic | Salton Classic | Vinho Salton Intenso | Salton Intenso | Vinho Salton Paradoxo | Vinho Miolo Seleção | Miolo Seleção |
+        Vinho Miolo Reserva | Miolo Reserva | Vinho Aurora Reserva | Aurora Reserva | Vinho Aurora Varietal | Vinho Marcus James | Marcus James |
+        Vinho Saint Germain | Saint Germain | Vinho Casa Perini | Casa Perini | Vinho Garibaldi | Vinho Cantina da Serra | Cantina da Serra |
+        Vinho Góes | Vinho Mioranza | Mioranza | Vinho Jota Pe | Jota Pe | Vinho Collina | Vinho Del Grano | Vinho Terranova | Vinho Rio Sol |
+        Rio Sol | Vinho Pizzato | Vinho Dal Pizzol | Vinho Lidio Carraro | Vinho Don Guerino | Vinho Casa Geraldo | Vinho Guaspari |
+        Vinho Reservado Santa Carolina | Santa Carolina | Vinho Santa Rita 120 | Santa Rita 120 | Vinho Tarapacá | Tarapacá |
+        Vinho Cono Sur Bicicleta | Cono Sur Bicicleta | Vinho Marqués de Casa Concha | Vinho Diablo | Vinho Emiliana | Vinho Montes |
+        Vinho Ventisquero | Vinho Santa Ema | Vinho Alamos | Alamos | Vinho Benjamin Nieto Senetiner | Benjamin Nieto Senetiner |
+        Vinho Finca Las Moras | Finca Las Moras | Vinho Trivento | Trivento | Vinho Luigi Bosca | Vinho Rutini | Vinho Zuccardi |
+        Vinho Salentein | Vinho Angelica Zapata | Vinho DV Catena | Vinho Casal Garcia | Casal Garcia | Vinho Mateus Rosé | Mateus Rosé |
+        Vinho EA | Vinho Monte Velho | Monte Velho | Vinho Esporão | Vinho Porca de Murça | Porca de Murça | Vinho Papa Figos |
+        Vinho Cartuxa | Vinho Quinta do Crasto | Vinho Gazela | Vinho JP Chenet | JP Chenet | Vinho Yellow Tail | Yellow Tail |
+        Vinho Barefoot | Vinho Riunite | Riunite | Lambrusco Cella | Lambrusco Riunite | Vinho Chianti | Vinho Rioja | Vinho Bordeaux |
+        Vinho Marqués de Riscal | Vinho Toro Loco | Toro Loco | Vinho Don Simón | Don Simón |
+        Espumante Salton Brut | Espumante Salton Moscatel | Espumante Garibaldi Moscatel | Espumante Garibaldi Prosecco | Espumante Aurora Moscatel |
+        Espumante Casa Perini | Espumante Casa Perini Moscatel | Espumante Chandon Brut | Espumante Chandon Rosé | Espumante Chandon Passion |
+        Espumante Miolo Cuvée | Espumante Terranova | Espumante Rio Sol | Espumante Cave Geisse | Espumante Naturelle | Espumante Mumm |
+        Prosecco Salton | Prosecco Garibaldi | Cava Freixenet | Freixenet Carta Nevada | Freixenet Cordon Negro""",
     "Vinhos e destilados": """Vinho Casillero del Diablo | Casillero del Diablo | Vinho Concha y Toro | Concha y Toro | Vinho Reservado Concha y Toro |
         Vinho Santa Helena | Santa Helena | Vinho Santa Carolina | Vinho Gato Negro | Gato Negro | Vinho Alma Mora | Vinho Pérgola | Pérgola |
         Vinho Salton | Salton | Vinho Miolo | Miolo | Vinho Aurora | Vinho Chalise | Chalise | Vinho Quinta do Morgado | Quinta do Morgado |

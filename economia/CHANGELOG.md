@@ -1,5 +1,11 @@
 # Mudanças
 
+## 1.48.1
+
+- **Minha lista**: o **Histórico** e o **Código de barras** viraram quadrinhos na linha de baixo, com o nome, junto de Escolher fotos, Colar mensagem e Falar. O Adicionar ocupa a linha.
+- **Sugestões ao digitar**: mais vinhos (tipos, uvas e rótulos como Naturelle e Lunae) e espumantes.
+- **Conversa no celular**: o Enter do teclado vai para a próxima linha; quem envia é o botão. Com teclado de verdade, o Enter continua enviando.
+
 ## 1.48.0
 
 - **Compras no InventarIA**: o consumível acha o item daqui também pelo nome parecido ("Creme de Mãos" acha "Creme de mãos Nivea 50 g"), e o Pôr na lista e o Repor de lá usam esse item em vez de criar outro. Com mais de uma lista pronta, o InventarIA (1.86.0) pergunta em qual pôr.

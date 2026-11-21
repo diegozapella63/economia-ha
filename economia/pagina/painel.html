@@ -654,14 +654,14 @@ li.escolhida{border-color:var(--accent) !important}
 .r-dica{display:block;color:var(--accent);font-size:12px;font-weight:600}
 /* 1.27.0: o que põe itens na lista, junto (some sem lista aberta, com as listas ligadas); o mesmo espaço do .panel */
 #addArea{display:flex;flex-direction:column;gap:14px;min-width:0}
-#addForm{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:8px}
+#addForm{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
 /* 1.35.0: onde comprar o item novo (setor), antes do Adicionar: o nome numa linha, embaixo onde comprar e os botões;
    no computador, tudo numa linha. No pé do cartão, o setor de cada item */
 #addForm > #novoSetor[hidden]{display:none}
 #addForm:has(> #novoSetor:not([hidden])) > #novoItem{grid-column:1/-1}
 /* 1.37.0: no celular, o nome sempre na linha toda (o Adicionar com o ícone deixava a caixa estreita demais), os botões embaixo */
-@media (max-width:599px){#addForm > #novoItem{grid-column:1/-1}}
-@media (min-width:1000px){#addForm:has(> #novoSetor:not([hidden])){grid-template-columns:minmax(0,1fr) 180px auto auto auto}#addForm:has(> #novoSetor:not([hidden])) > #novoItem{grid-column:auto}}
+@media (max-width:599px){#addForm{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#addForm > #novoItem{grid-column:1/-1}#addForm:not(:has(> #novoSetor:not([hidden]))) > .btn{grid-column:1/-1}}
+@media (min-width:1000px){#addForm:has(> #novoSetor:not([hidden])){grid-template-columns:minmax(0,1fr) 180px auto}#addForm:has(> #novoSetor:not([hidden])) > #novoItem{grid-column:auto}}
 .i-botoes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .i-botoes > *{width:100%;min-width:0;min-height:var(--altura,50px);margin:0}
 .i-botoes > .ic-btn{justify-content:center;text-align:center;line-height:1.15;padding:0 8px}
@@ -680,8 +680,7 @@ li.escolhida{border-color:var(--accent) !important}
 .cod-res label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
 .corr-btn{font:inherit;font-weight:700}
 @media (max-width:480px){.cod-row{grid-template-columns:1fr 1fr}.cod-row .field{grid-column:1/-1;grid-row:1}.cod-res{grid-template-columns:1fr}}
-.hist-btn{width:44px;padding:0;justify-content:center;position:relative}
-.hist-btn svg{width:20px;height:20px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hist-btn{position:relative}
 .hist-btn[aria-expanded="true"]{border-color:var(--accent);background:var(--accent-soft)}
 .hist-btn .n{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:var(--on-accent);font-size:11px;font-weight:700;line-height:18px}
 .hist-box{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px}
@@ -839,7 +838,12 @@ html:not(.sem-ia) .so-semia{display:none!important}
 /* etapa da busca desligada em Mais › Configurações › Opções: some da ordem da busca */
 .sem-diretas .so-diretas,.sem-folhetos .so-folhetos,.sem-itens .so-itens{display:none!important}
 /* Escolher fotos, Colar mensagem e Falar numa linha só, em quadrinhos */
-.ler-tiles{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:8px}
+/* 1.48.1: o Histórico e o Código de barras são os quadrinhos da linha de baixo (antes, ao lado do Adicionar): os três da IA
+   dividem a linha de cima e os dois, a de baixo; sem a IA (ou sem o Falar), os que ficam dividem a linha */
+.ler-tiles{display:flex;flex-wrap:wrap;gap:8px}
+.ler-tiles > .ler-tile{flex:1 1 calc(33.333% - 6px);min-width:0}
+.ler-tiles > .hist-btn{flex-basis:calc(50% - 4px)}
+.ler-tile[aria-expanded="true"]{border-color:var(--accent);background:var(--accent-soft)}
 .ler-tile{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;min-height:76px;padding:14px 6px 10px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit;font-size:14px;font-weight:500;line-height:1.2;text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .ler-tile:hover{border-color:var(--accent)}
 .ler-tile:active{transform:scale(.98)}
@@ -1462,9 +1466,11 @@ input.field,select.field{min-height:var(--altura)}
         <input class="field" id="novoItem" name="novoItem" data-sug="itens" autocomplete="off" placeholder="Ex.: Lysoform, Café 500 g, Atorvastatina 20 mg" aria-label="Produto para acompanhar">
         <select class="field" id="novoSetor" aria-label="Onde comprar" hidden></select>
         <button class="btn" type="submit">Adicionar</button>
-        <button type="button" class="ghost big hist-btn" id="histBtn" aria-expanded="false" aria-controls="histBox" aria-label="Histórico: itens que já estiveram na lista" title="Histórico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></svg><span class="n" id="histN" hidden></span></button>
-        <button type="button" class="ghost big hist-btn" id="codBtn" aria-expanded="false" aria-controls="codBox" aria-label="Pôr na lista pelo código de barras" title="Código de barras"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8v8M10 8v8M13 8v8M16.5 8v8"/></svg></button>
       </form>
+      <p class="hint" id="addMsg" aria-live="polite"></p>
+      <div class="ler-tiles"><label class="ler-tile so-ia" for="fotoArq" id="fotoBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Escolher fotos</label><button type="button" class="ler-tile so-ia" id="textoBtn" aria-controls="fotoBox"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Colar mensagem</button><button type="button" class="ler-tile so-voz" id="falarBtn" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Falar</button><button type="button" class="ler-tile hist-btn" id="histBtn" aria-expanded="false" aria-controls="histBox" aria-label="Histórico: itens que já estiveram na lista" title="Histórico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></svg>Histórico<span class="n" id="histN" hidden></span></button><button type="button" class="ler-tile hist-btn" id="codBtn" aria-expanded="false" aria-controls="codBox" aria-label="Pôr na lista pelo código de barras" title="Código de barras"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8v8M10 8v8M13 8v8M16.5 8v8"/></svg>Código de barras</button></div>
+      <input type="file" id="fotoArq" class="arq" accept="image/*" multiple>
+      <p class="hint so-ia">Lista escrita à mão, print da conversa ou a embalagem que acabou.</p>
       <div class="hist-box" id="histBox" hidden>
         <h3>Histórico</h3>
         <p class="hint" id="histMeta"></p>
@@ -1486,10 +1492,6 @@ input.field,select.field{min-height:var(--altura)}
           <button type="button" class="btn" id="codPor">Pôr na lista</button>
         </div>
       </div>
-      <p class="hint" id="addMsg" aria-live="polite"></p>
-      <div class="ler-tiles so-ia"><label class="ler-tile" for="fotoArq" id="fotoBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Escolher fotos</label><button type="button" class="ler-tile" id="textoBtn" aria-controls="fotoBox"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Colar mensagem</button><button type="button" class="ler-tile so-voz" id="falarBtn" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Falar</button></div>
-      <input type="file" id="fotoArq" class="arq" accept="image/*" multiple>
-      <p class="hint so-ia">Lista escrita à mão, print da conversa ou a embalagem que acabou.</p>
       <div class="foto-box" id="fotoBox" hidden>
         <div class="fotos" id="fotoPrev"></div>
         <textarea class="field" id="fotoTxt" rows="3" hidden placeholder="Cole aqui a mensagem, ex.: compra 2 leites, Lysoform e pão de forma" aria-label="Mensagem com itens para comprar"></textarea>
@@ -4458,7 +4460,10 @@ input.field,select.field{min-height:var(--altura)}
     if (e.target.id === 'chatEdTxt' && e.key === 'Enter' && !e.isComposing){ e.preventDefault(); perguntaNova(); }
     if (e.target.dataset.edQ != null && e.key === 'Enter' && !e.isComposing){ e.preventDefault(); e.target.blur(); }
   });
-  $('chatTxt').addEventListener('keydown', function(e){ if (e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); enviaChat(this.value); } });
+  // 1.48.1: no celular (o teclado da tela), o Enter da Conversa vai para a próxima linha e quem envia é o botão
+  var noCelular = function(){ return window.matchMedia && matchMedia('(hover: none) and (pointer: coarse)').matches; };
+  $('chatTxt').setAttribute('enterkeyhint', noCelular() ? 'enter' : 'send');
+  $('chatTxt').addEventListener('keydown', function(e){ if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && !noCelular()){ e.preventDefault(); enviaChat(this.value); } });
   $('chatSug').addEventListener('click', function(e){
     var b = e.target.closest('[data-chat-sug]'); if (b){ CHAT.rapidas = false; enviaChat(b.dataset.chatSug); return; }
     var ed = e.target.closest('[data-chat-ed]'); if (!ed) return;

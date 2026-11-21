@@ -153,6 +153,16 @@ async def main():
             check("Tela aberta no app: Minha lista." in t and "- Café Pilão 500 g; mais barato no Giassi por R$ 19,90" in t and "Picanha kg, no Giassi" in t,
                   "a IA recebe a tela, a lista com os preços e as ofertas")
             check(ha.pedidos_de("/services/conversation/process") == [], "nunca um assistente de conversa")
+            # ----- 1.48.1: no celular (o teclado da tela), o Enter é uma linha nova e quem envia é o botão -----
+            # (a tela do teste é a de um celular, com o dedo: vale o que o aparelho diz)
+            antes = await pg.locator(".cm").count()
+            await pg.fill("#chatTxt", "linha um")
+            await pg.press("#chatTxt", "Enter")
+            await pg.wait_for_timeout(200)
+            check(await pg.input_value("#chatTxt") == "linha um\n" and await pg.locator(".cm").count() == antes, "no celular, o Enter vai para a próxima linha e nada é enviado")
+            # com teclado de verdade (um computador), o Enter envia
+            await pg.evaluate('() => { window.__mm = window.__mm || window.matchMedia.bind(window); window.matchMedia = (q) => (q === "(hover: none) and (pointer: coarse)" ? { matches: false } : window.__mm(q)); }')
+            await pg.fill("#chatTxt", "")
             # ----- Enter envia, Shift+Enter quebra a linha -----
             await pg.click("#chatTxt")
             await pg.keyboard.type("Monte um")

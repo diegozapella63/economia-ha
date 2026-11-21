@@ -138,3 +138,5 @@ no roteiro (preço da ANP × km); reduflação; resumo semanal no celular; orça
 Pendente de antes: papel toalha com tamanho errado ("Pague Menos R$ 233,99").
 
 **Teclado no celular** (1.46.5): em `economia/pagina/teclado.js` (embutido pelo `tools/montar_pagina.py`, como o `textareas.js`), o `tecladoCalmo` (o mesmo código do `teclado.js` dos outros apps): com o foco num campo de texto, ou quando o teclado muda a altura da tela, as páginas em volta do app (a do Home Assistant) voltam para o começo; a página do próprio app não é tocada.
+
+1.48.1: na Conversa, no celular (`noCelular()`: `(hover: none) and (pointer: coarse)`, o dedo como jeito principal), o Enter é uma linha nova e o botão envia (`enterkeyhint="enter"`); com teclado de verdade, o Enter envia. Vale em todos os apps da família. Na Minha lista, o Histórico (`#histBtn`) e o Código de barras (`#codBtn`) são quadrinhos (`.ler-tile.hist-btn`) da `.ler-tiles`, na linha de baixo (os da IA levam o `so-ia` cada um). Os vinhos das sugestões ficam em `"Vinhos"` no `tools/itens_marcas.py`.
