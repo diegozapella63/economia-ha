@@ -253,6 +253,11 @@ select.field{appearance:none;-webkit-appearance:none;padding-right:34px;text-ove
 .pick{display:flex;align-items:center;justify-content:center;min-height:40px;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:6px 10px;font-size:13.5px;font-weight:600;line-height:1.2;text-align:center;min-width:0}
 .picks.dias .pick{padding:6px 2px}
 .pick:hover{border-color:var(--accent)}
+/* 1.49.0: depois do Comprei hoje de um item da Reposição (ou um consumível do InventarIA): por quanto tempo vai ter */
+.rep-dur{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0}
+.rep-dur .pick{min-height:50px}
+.rep-agora-nao{width:100%;min-height:50px;justify-content:center}
+@media (min-width:1000px){.rep-dur{grid-template-columns:repeat(4,minmax(0,1fr))}.rep-agora-nao{width:250px}}
 .pick[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
 .pick[aria-pressed="true"] span::before{content:"✓\00a0"}
 .people{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
@@ -1457,6 +1462,12 @@ input.field,select.field{min-height:var(--altura)}
     <section class="panel" id="repAgora" aria-labelledby="h-repagora" hidden>
       <div class="sec-head"><h2 id="h-repagora"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg></span>Hora de repor</h2><span class="chip warn" id="repAgoraN"></span></div>
       <ul class="rep-lista" id="repAgoraLista"></ul>
+    </section>
+    <section class="panel" id="repComprou" aria-labelledby="h-repcomprou" hidden>
+      <div class="sec-head"><h2 id="h-repcomprou"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Dura quanto tempo?</h2></div>
+      <p class="hint" id="repComprouTxt"></p>
+      <div class="rep-dur" id="repComprouOp" role="group" aria-labelledby="h-repcomprou"></div>
+      <button type="button" class="ghost big rep-agora-nao" id="repComprouNao"><svg class="b-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>Agora não</button>
     </section>
     <section class="panel" aria-labelledby="h-lista">
       <div class="sec-head"><h2 id="h-lista"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg></span>Itens da lista</h2><button type="button" class="rm" id="limpar" hidden>Limpar lista</button></div>
@@ -3747,7 +3758,8 @@ input.field,select.field{min-height:var(--altura)}
       var it = estado.lista[Number(b.dataset.comprei)], hoje = hojeSP(), lo = listaObj(listaAtual());
       if (it.compras.indexOf(hoje) < 0) it.compras.push(hoje);
       if (lo && arr(lo.comprados).indexOf(norm(it.produto)) < 0) lo.comprados = arr(lo.comprados).concat([norm(it.produto)]);
-      salvar(lo ? 'Comprado: ' + it.produto : 'Compra registrada'); pintaLista(); return;
+      repComprou(it.produto);  // 1.49.0: a Reposição dele recomeça de hoje, o InventarIA fica sabendo e a tela pergunta quanto dura
+      salvar(lo ? 'Comprado: ' + it.produto : 'Compra registrada'); pintaLista(); pintaReposicao(); return;
     }
     // numa lista pronta, sai só dela; se não está em outra, sai da lista e fica no histórico (1.27.0: nada vai para Nenhuma)
     if (b.dataset.rm != null && listaAtual() && arr((estado.lista[Number(b.dataset.rm)] || {}).listas).length > 1){
@@ -5175,6 +5187,75 @@ input.field,select.field{min-height:var(--altura)}
     }).join('');
   }
   function repDe(id){ return estado.reposicao.filter(function(r){ return r.id === id; })[0]; }
+  // ----- 1.49.0: o Comprei hoje e a Reposição (e o consumível do InventarIA) -----
+  // O item comprado que está na Reposição, ou que é um consumível do InventarIA (pelo nome igual ou parecido: o mesmo tipo,
+  // a primeira palavra, e as palavras de um dentro das do outro), recomeça a contar de hoje; o InventarIA é avisado (lá, o
+  // Dura até do consumível volta a contar de hoje) e a tela pergunta por quanto tempo vai ter: a resposta vira o A cada da
+  // Reposição e a Duração estimada do consumível.
+  var REP_DUR = [[7, '1 semana', 1, 'semana'], [15, '15 dias', 15, 'dia'], [30, '1 mês', 1, 'mes'], [60, '2 meses', 2, 'mes'], [90, '3 meses', 3, 'mes'], [180, '6 meses', 6, 'mes'], [365, '1 ano', 12, 'mes'], [730, '2 anos', 24, 'mes']];
+  var REP_VAZIAS = ['de', 'da', 'do', 'das', 'dos', 'para', 'com', 'e', 'a', 'o', 'em'];
+  var REP_COMP = null;
+  function repChave(n){
+    return norm(n).split(' ').filter(function(w){ return w && !/^[0-9]/.test(w) && REP_VAZIAS.indexOf(w) < 0 && !/^(g|kg|ml|l|un|und)$/.test(w); })
+      .map(function(w){ return w.length > 3 && /s$/.test(w) ? w.slice(0, -1) : w; });
+  }
+  function repParecido(nome, nomes){
+    var k = norm(nome), i, a = repChave(nome), melhor = null;
+    for (i = 0; i < nomes.length; i++) if (norm(nomes[i]) === k) return nomes[i];
+    if (!a.length) return null;
+    nomes.forEach(function(n){
+      var b = repChave(n);
+      if (!b.length || b[0] !== a[0]) return;
+      var aEmB = a.every(function(w){ return b.indexOf(w) >= 0; }), bEmA = b.every(function(w){ return a.indexOf(w) >= 0; });
+      if (!aEmB && !bEmA) return;
+      var nota = (aEmB ? 0 : 100) + Math.abs(b.length - a.length);
+      if (!melhor || nota < melhor[0]) melhor = [nota, n];
+    });
+    return melhor ? melhor[1] : null;
+  }
+  function repDias(r){ return r.cada * (r.unidade === 'mes' ? 30 : r.unidade === 'semana' ? 7 : 1); }
+  function repAvisaInventario(nome, dias){
+    if (MODO !== 'addon' || !nome) return;
+    var corpo = {nome:nome}; if (dias) corpo.dias = dias;
+    fetch('api/reposicao/comprado', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(corpo)}).catch(function(){});
+  }
+  function repComprou(produto){
+    var rn = repParecido(produto, estado.reposicao.map(function(r){ return r.nome; }));
+    var rep = rn ? estado.reposicao.filter(function(r){ return r.nome === rn; })[0] : null;
+    var cons = repFontes().inventario.itens, cn = repParecido(produto, cons.map(function(c){ return c.nome; }));
+    var con = cn ? cons.filter(function(c){ return c.nome === cn; })[0] : null;
+    if (!rep && !con){ REP_COMP = null; pintaRepComprou(); return; }
+    if (rep) rep.desde = hojeSP();
+    if (con) repAvisaInventario(con.nome, 0);
+    REP_COMP = {produto:produto, rep:rep ? rep.id : null, con:con ? con.nome : null, dias:rep ? repDias(rep) : con && con.dias ? con.dias : 0};
+    pintaRepComprou();
+  }
+  function pintaRepComprou(){
+    var c = REP_COMP;
+    $('repComprou').hidden = !c;
+    if (!c) return;
+    $('repComprouTxt').innerHTML = 'Você comprou <b>' + esc(c.produto) + '</b>. Volta para a Hora de repor depois desse tempo'
+      + (c.con ? ', e o InventarIA mostra até quando dura' : '') + '.';
+    $('repComprouOp').innerHTML = REP_DUR.map(function(d){
+      return '<button type="button" class="pick" data-rep-dur="' + d[0] + '" aria-pressed="' + (c.dias === d[0]) + '"><span>' + d[1] + '</span></button>'; }).join('');
+    $('repComprou').scrollIntoView({block:'nearest'});
+  }
+  function repEscolheDur(dias){
+    var c = REP_COMP, d = REP_DUR.filter(function(x){ return x[0] === dias; })[0]; if (!c || !d) return;
+    var rep = c.rep ? repDe(c.rep) : null;
+    if (!rep){
+      if (estado.reposicao.length >= 200){ toast('A Reposição chegou a 200 itens.'); return; }
+      rep = {id:'r' + Math.random().toString(36).slice(2, 10), nome:c.con || c.produto, cada:d[2], unidade:d[3], desde:hojeSP()};
+      if (c.con) rep.origem = 'inventario';
+      estado.reposicao.push(rep);
+    } else { rep.cada = d[2]; rep.unidade = d[3]; rep.desde = hojeSP(); }
+    if (c.con) repAvisaInventario(c.con, dias);
+    REP_COMP = null;
+    salvar('"' + rep.nome + '" volta ' + repQuando(rep).replace(/<[^>]+>/g, ''));
+    pintaRepComprou(); pintaReposicao();
+  }
+  $('repComprouOp').addEventListener('click', function(e){ var b = e.target.closest('[data-rep-dur]'); if (b) repEscolheDur(Number(b.dataset.repDur)); });
+  $('repComprouNao').addEventListener('click', function(){ REP_COMP = null; pintaRepComprou(); });
   function repEditar(r){
     REP_EDIT = r ? r.id : null; REP_ORIGEM = r && r.origem ? r.origem : '';
     $('repNome').value = r ? r.nome : ''; $('repCada').value = r ? r.cada : 30; $('repUn').value = r ? r.unidade : 'dia';

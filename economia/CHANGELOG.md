@@ -1,5 +1,11 @@
 # Mudanças
 
+## 1.49.0
+
+- **Comprei hoje e a Reposição**: ao comprar um item que está na Reposição (ou que é um consumível do InventarIA), a contagem recomeça de hoje e a tela pergunta **Dura quanto tempo?**. A resposta vira o **A cada** da Reposição, e o item entra nela se ainda não estava.
+- **InventarIA** (1.87.0 ou mais novo): o consumível de lá fica sabendo da compra: o **Dura até** volta a contar de hoje, com a duração que você escolheu aqui.
+- **Pelo CorrerIA**: anotar uma compra faz o mesmo, e aceita por quantos dias o item vai durar.
+
 ## 1.48.1
 
 - **Minha lista**: o **Histórico** e o **Código de barras** viraram quadrinhos na linha de baixo, com o nome, junto de Escolher fotos, Colar mensagem e Falar. O Adicionar ocupa a linha.

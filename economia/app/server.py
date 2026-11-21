@@ -601,6 +601,8 @@ def ler_planilha(dado):
 
 
 def aplicar_diario(cfg, d):
+    if d.get("repor"):  # 1.49.0: a compra anotada pela CorrerIA que também recomeçou a Reposição do item
+        aplicar_diario(cfg, {"tipo": "repor", "item": d["repor"]})
     if d["tipo"] == "repor":  # 1.46.1: um item da Reposição posto, mudado ou reposto pela CorrerIA (o item inteiro, pelo id ou pelo nome)
         novo = d["item"]
         outros = [r for r in cfg.get("reposicao") or [] if not (isinstance(r, dict) and (r.get("id") == novo["id"] or norm(r.get("nome")) == norm(novo["nome"])))]
@@ -7978,7 +7980,9 @@ FERRAMENTAS_CORRERIA = [
     {"nome": "comprei", "titulo": "Anotar compra", "grava": True, "apaga": False,
      "descricao": "Anota que um item da lista foi comprado (hoje, ou na data dada). As compras dizem de quanto em quanto "
                   "tempo o item acaba.",
-     "entrada": _obj({"produto": _DO_ITEM, "data": {"type": "string", "description": "AAAA-MM-DD; sem data, hoje."}}, ["produto"])},
+     "entrada": _obj({"produto": _DO_ITEM, "data": {"type": "string", "description": "AAAA-MM-DD; sem data, hoje."},
+                      "dura_dias": {"type": "integer", "description": "Por quantos dias a pessoa vai ter o item antes de repor (1 a 3650), se ela disse: "
+                                                                      "vira o A cada da Reposição e a duração do consumível no InventarIA."}}, ["produto"])},
     # 1.46.1: a Reposição (Mais › Reposição)
     {"nome": "reposicao", "titulo": "Reposição", "grava": False, "apaga": False,
      "descricao": "O que a casa compra de tempos em tempos: cada item com o seu intervalo (a cada N dias, semanas ou meses) e "
@@ -8098,6 +8102,35 @@ def consumiveis_inventario():
                  for c in d["consumiveis"][:500] if isinstance(c, dict) and str(c.get("nome") or "").strip()]
         return {"itens": itens, "aviso": ""}
     return {"itens": [], "aviso": "O InventarIA não respondeu."}
+
+
+def inventario_comprado(nome, dias=None):
+    """1.49.0: o Comprei hoje de um item que é um consumível do InventarIA (1.87.0): lá, o Dura até volta a contar de hoje
+    e, se a pessoa disse por quanto tempo vai ter, a Duração estimada muda. Só com a chave de Opções › Reposição ligada.
+    Devolve {ok, dura_ate?, aviso?}; nada daqui fica guardado lá além disso."""
+    if not repor_ligado(ler_config(), "inventario"):
+        return {"ok": False, "aviso": ""}
+    j = _integracao_de("inventario") or {}
+    corpo = {"nome": " ".join(str(nome or "").split())[:120]}
+    if dias is not None:
+        corpo["dias"] = dias
+    for base in (j.get("url"), j.get("ip_url")):
+        if not j.get("chave") or not re.match(r"https?://[^\s/]+", str(base or "")):
+            continue
+        req = urllib.request.Request(str(base).rstrip("/") + "/api/integracao/consumiveis/comprado", method="POST", data=json.dumps(corpo).encode("utf-8"),
+                                     headers={"Authorization": "Bearer " + str(j["chave"]), "X-App": "EconomIA", "Content-Type": "application/json"})
+        try:
+            with _SEM_PROXY.open(req, timeout=6) as r:
+                d = json.loads(r.read(100_000).decode("utf-8") or "null")
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                return {"ok": False, "aviso": ""}  # não é um consumível de lá (ou o InventarIA é de antes da 1.87.0): nada a fazer
+            continue
+        except (OSError, ValueError):
+            continue
+        ate = d.get("dura_ate") if isinstance(d, dict) else ""
+        return {"ok": True, "dura_ate": ate if isinstance(ate, str) and data_ok(ate) else ""}
+    return {"ok": False, "aviso": "O InventarIA não respondeu."}
 
 
 def reposicao_fontes(cfg=None):
@@ -8520,7 +8553,37 @@ def _ferr_comprei(a, cfg, of):
         return f'A compra de {item["produto"]} em {br_data(data)} já estava anotada.', None
     compras.append(data)
     compras.sort()
-    return f'Anotei a compra de {item["produto"]} em {br_data(data)}' + _prazo(item) + ".", {"tipo": "compra", "produto": item["produto"], "data": data}
+    # 1.49.0: como o Comprei hoje da tela: a Reposição do item (o igual ou o parecido) recomeça da compra, com a duração dita
+    # (dura_dias), e o consumível do InventarIA volta a contar de hoje
+    extra = ""
+    cada = _dias_em_cada(a.get("dura_dias")) if a.get("dura_dias") is not None else None
+    if a.get("dura_dias") is not None and not cada:
+        raise ErroFerramenta("dura_dias vale de 1 a 3650.")
+    reps = itens_reposicao(cfg)
+    rn = nome_parecido(item["produto"], [x["nome"] for x in reps])
+    r = next((x for x in reps if x["nome"] == rn), None) if rn else None
+    con = None
+    if repor_ligado(cfg, "inventario") and data == hoje:
+        cons = [c["nome"] for c in consumiveis_inventario()["itens"]]
+        con = nome_parecido(item["produto"], cons)
+    if not r and cada and len(reps) < 200:
+        r = {"id": "r" + secrets.token_hex(4), "nome": con or item["produto"], "cada": 1, "unidade": "dia", "desde": data}
+        if con:
+            r["origem"] = "inventario"
+        reps = reps + [r]
+    if r:
+        r["desde"] = data
+        if cada:
+            r["cada"], r["unidade"] = cada[0], REPOR_ARG[cada[1]]
+        cfg["reposicao"] = reps
+        extra = f" Na Reposição, {r['nome']} volta em {br_data(repor_proxima(r))}."
+    if con:
+        ok = inventario_comprado(con, int(a["dura_dias"]) if cada else None).get("ok")
+        extra += " O InventarIA já sabe." if ok else ""
+    mud = {"tipo": "compra", "produto": item["produto"], "data": data}
+    if r:
+        mud["repor"] = dict(r)
+    return (f'Anotei a compra de {item["produto"]} em {br_data(data)}' + _prazo(item) + "." + extra), mud
 
 
 def _ferr_roteiro(a, cfg, of):
@@ -9166,6 +9229,17 @@ class Painel(BaseHTTPRequestHandler):
                 return self._json(400, {"erro": "Escolha uma foto ou cole o texto da mensagem."})
             return self._json(202, {"id": job})
         rota = urllib.parse.urlsplit(self.path).path
+        if rota == "/api/reposicao/comprado":
+            # 1.49.0: o Comprei hoje avisa o InventarIA (o consumível de lá volta a contar de hoje, com a duração dita aqui)
+            dado = self._corpo()
+            if dado is None:
+                return None
+            dias = dado.get("dias") if isinstance(dado, dict) else None
+            if dias is not None and (isinstance(dias, bool) or not isinstance(dias, int) or not 1 <= dias <= 3650):
+                return self._json(400, {"erro": "dias vale de 1 a 3650."})
+            if not isinstance(dado, dict) or len(norm(dado.get("nome") or "")) < 2:
+                return self._json(400, {"erro": "Mande nome."})
+            return self._json(200, inventario_comprado(dado.get("nome"), dias))
         if rota not in ("/api/buscar", "/api/buscar-itens", "/api/comparar"):
             return self._json(404, {"erro": "Não encontrado"})
         alvo, args = buscar, ()

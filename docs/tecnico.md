@@ -38,6 +38,7 @@ O botão **Buscar** chama `ai_task.generate_data` pela API do Home Assistant (`h
 | GET | `/api/estado` | `{config, ofertas, usuario}`. `usuario` vem do cabeçalho `X-Remote-User-Display-Name` do ingress. |
 | PUT | `/api/config` | Grava `config.json`. |
 | GET | `/api/reposicao/fontes` | Reposição: de cada app (`cronologia`, `inventario`), `{tem, ligado, itens: [{nome, detalhe}], aviso}`. Os itens só com a chave do app ligada (`config.repor`). |
+| POST | `/api/reposicao/comprado` | `{nome, dias?}`: o Comprei hoje avisa o InventarIA (o consumível com esse nome volta a contar de hoje; com `dias`, 1 a 3650, a duração muda). `{ok, dura_ate?, aviso?}`; só com `repor.inventario` ligado. |
 | GET, POST | `/api/integracao/compras` | Para o InventarIA (fora do ingress, com a chave de `share/economia/integracao.json`, só com `repor.inventario` ligado): `?nome=` → `{na_lista, vezes, ultima, compras, reposicao}`; `POST {nome, acao: lista ou repor, dias?}` faz e devolve o mesmo com `texto`. |
 | PUT | `/api/ofertas` | Grava `ofertas.json` (precisa ter `categorias`). |
 | POST | `/api/chat` | Conversa: `{mensagens: [{de: "eu" ou "ia", texto}], tela}` → `{resposta, acoes}`. Ver "Conversa com a IA". |

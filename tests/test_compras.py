@@ -126,6 +126,100 @@ class Compras(Cenario):
             self.assertIn(diz, str(e.exception))
 
 
+class InventarioFalso:
+    """O InventarIA de mentira: /api/integracao/consumiveis e, 1.87.0 de lá, o POST .../comprado (guarda o que recebeu)."""
+
+    def __init__(self, consumiveis):
+        import threading
+        from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+        dono = self
+        self.pedidos, self.consumiveis, self.status = [], consumiveis, 200
+
+        class H(BaseHTTPRequestHandler):
+            def log_message(self, *a):
+                pass
+
+            def _manda(self, st, corpo):
+                dado = json.dumps(corpo).encode()
+                self.send_response(st)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(dado)))
+                self.end_headers()
+                self.wfile.write(dado)
+
+            def do_GET(self):
+                self._manda(200, {"versao": "1.87.0", "ligado": True, "consumiveis": dono.consumiveis})
+
+            def do_POST(self):
+                corpo = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
+                dono.pedidos.append({"caminho": self.path, "corpo": corpo, "chave": self.headers.get("Authorization")})
+                if dono.status != 200:
+                    return self._manda(dono.status, {"error": "x"})
+                self._manda(200, {"id": "con-001", "dura_ate": "2027-05-02"})
+
+        self.http = ThreadingHTTPServer(("127.0.0.1", 0), H)
+        threading.Thread(target=self.http.serve_forever, daemon=True).start()
+
+    def liga(self, S):
+        pasta = os.path.join(S.SHARE_CASA, "inventario")
+        os.makedirs(pasta, exist_ok=True)
+        with open(os.path.join(pasta, "integracao.json"), "w", encoding="utf-8") as f:
+            json.dump({"url": f"http://127.0.0.1:{self.http.server_address[1]}", "chave": "chave-do-inventario"}, f)
+
+    def fecha(self):
+        self.http.shutdown()
+        self.http.server_close()
+
+
+class ComprouAvisaOInventario(Cenario):
+    """1.49.0: o Comprei hoje (da tela e da CorrerIA) recomeça a Reposição do item e avisa o InventarIA."""
+
+    def setUp(self):
+        super().setUp()
+        self.S.hoje_br = lambda: HOJE
+        self.inv = InventarioFalso([{"id": "con-001", "nome": "Creme de mãos", "categoria": "Higiene", "duracao_dias": 180}])
+        self.inv.liga(self.S)
+        self.addCleanup(self.inv.fecha)
+
+    def test_o_aviso_ao_inventario(self):
+        self.config(**casa())
+        r = self.S.inventario_comprado("Creme de mãos", 90)
+        self.assertEqual(r, {"ok": True, "dura_ate": "2027-05-02"})
+        p = self.inv.pedidos[-1]
+        self.assertEqual((p["caminho"], p["corpo"], p["chave"]), ("/api/integracao/consumiveis/comprado", {"nome": "Creme de mãos", "dias": 90}, "Bearer chave-do-inventario"))
+        self.S.inventario_comprado("Creme de mãos")
+        self.assertEqual(self.inv.pedidos[-1]["corpo"], {"nome": "Creme de mãos"}, "sem os dias: só recomeça a contar")
+        self.inv.status = 404
+        self.assertEqual(self.S.inventario_comprado("Leite"), {"ok": False, "aviso": ""}, "não é um consumível de lá: nada a dizer")
+        self.inv.status = 500
+        self.assertEqual(self.S.inventario_comprado("Creme de mãos")["aviso"], "O InventarIA não respondeu.")
+        n = len(self.inv.pedidos)
+        self.config(**dict(casa(), repor={"inventario": False}))
+        self.assertEqual(self.S.inventario_comprado("Creme de mãos"), {"ok": False, "aviso": ""})
+        self.assertEqual(len(self.inv.pedidos), n, "com a chave desligada, nada é chamado")
+
+    def test_a_compra_pela_correria_recomeca_a_reposicao_e_avisa(self):
+        self.config(**dict(casa(), lista=[{"produto": "Creme de mãos Nivea 50 g", "compras": []}, {"produto": "Sabão líquido 3 L", "compras": []}], historico=[]))
+        cfg = self.S.ler_config()
+        texto, mud = self.S._ferr_comprei({"produto": "Creme de mãos Nivea 50 g", "dura_dias": 90}, cfg, {})
+        rep = next(x for x in cfg["reposicao"] if x["nome"] == "Creme de mãos")
+        self.assertEqual((rep["cada"], rep["unidade"], rep["desde"], rep["origem"]), (3, "mes", HOJE, "inventario"), "entra na Reposição com o nome do consumível")
+        self.assertIn("volta em 02/02/2027", texto)
+        self.assertIn("O InventarIA já sabe.", texto)
+        self.assertEqual(self.inv.pedidos[-1]["corpo"], {"nome": "Creme de mãos", "dias": 90})
+        self.assertEqual(mud["repor"]["nome"], "Creme de mãos", "a Reposição vai no diário, para a página aberta juntar")
+        velho = {"reposicao": []}
+        self.S.aplicar_diario(velho, dict(mud, rev=9))
+        self.assertEqual(velho["reposicao"][0]["nome"], "Creme de mãos")
+        n = len(self.inv.pedidos)
+        texto, mud = self.S._ferr_comprei({"produto": "Sabão líquido 3 L"}, cfg, {})
+        sab = next(x for x in cfg["reposicao"] if x["nome"] == "Sabão líquido 3 L")
+        self.assertEqual((sab["desde"], sab["cada"]), (HOJE, 1), "sem a duração: a mesma, contando da compra")
+        self.assertEqual(len(self.inv.pedidos), n, "não é um consumível: o InventarIA não é chamado")
+        with self.assertRaises(self.S.ErroFerramenta):
+            self.S._ferr_comprei({"produto": "Sabão líquido 3 L", "data": "2026-11-01", "dura_dias": 0}, cfg, {})
+
+
 class ComprasPelaAPI(Servidor):
     @classmethod
     def prepara(cls):
@@ -152,5 +246,10 @@ class ComprasPelaAPI(Servidor):
         self.assertEqual((st, r["na_lista"]), (200, True))
         self.assertEqual(self.pedir("POST", "/api/integracao/compras", {"nome": "Creme de mãos", "acao": "x"})[0], 400)
         self.assertEqual(self.pedir("POST", "/api/integracao/compras", ["x"])[0], 400)
+        # 1.49.0: a rota da página para o Comprei hoje (pelo ingress, sem chave): sem o InventarIA na casa, nada a fazer
+        st, r = self.pedir("POST", "/api/reposicao/comprado", {"nome": "Creme de mãos", "dias": 90}, chave="")
+        self.assertEqual((st, r["ok"]), (200, False))
+        self.assertEqual(self.pedir("POST", "/api/reposicao/comprado", {"nome": "Creme de mãos", "dias": 0}, chave="")[0], 400)
+        self.assertEqual(self.pedir("POST", "/api/reposicao/comprado", {"nome": ""}, chave="")[0], 400)
         arq = os.path.join(self.pasta, "share", "integracao.json")
         self.assertTrue(os.path.exists(arq) or os.path.exists(self.S.INTEGRACAO_ARQ), "o servidor grava o arquivo ao subir")
