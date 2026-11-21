@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.48.0
+
+- **Compras no InventarIA**: o consumível acha o item daqui também pelo nome parecido ("Creme de Mãos" acha "Creme de mãos Nivea 50 g"), e o Pôr na lista e o Repor de lá usam esse item em vez de criar outro. Com mais de uma lista pronta, o InventarIA (1.86.0) pergunta em qual pôr.
+
 ## 1.47.0
 
 - **Compras no InventarIA**: com **Consumíveis do InventarIA** ligado em Opções › Reposição, a ficha de cada consumível no InventarIA (1.85.0 ou mais novo) mostra se ele está na lista daqui, as últimas compras e a Reposição, e de lá dá para pôr na lista e repor a cada duração dele.

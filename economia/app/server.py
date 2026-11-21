@@ -8176,21 +8176,65 @@ def integracao_autorizada(headers):
     return h.startswith("Bearer ") and hmac.compare_digest(h[7:].strip().encode(), integracao_chave().encode())
 
 
-def compras_de(nome, cfg=None):
-    """O que o EconomIA sabe de um consumível do InventarIA, pelo nome (o mesmo `norm` da lista): se está na lista, as
-    datas de compra (da lista ou do histórico; as 5 últimas, a mais nova primeiro) e a Reposição dele."""
-    cfg = ler_config() if cfg is None else cfg
+def _chave_parecida(nome):
+    """As palavras que contam de um nome (sem tamanho, sem "de" e "para", sem o plural): "Creme de Mãos" e "Creme de mão 50 g"
+    dão as mesmas."""
+    return [w[:-1] if len(w) > 3 and w.endswith("s") else w for w in palavras_busca(nome)]
+
+
+def nome_parecido(nome, nomes):
+    """1.48.0: qual dos `nomes` é o item de `nome` (um consumível do InventarIA): o igual (o mesmo `norm`) ou, sem ele, o
+    parecido: o mesmo tipo (a primeira palavra) e as palavras de um dentro das do outro ("Creme de Mãos" acha "Creme de mãos
+    50 g" e "Creme de mãos Nivea"; não acha "Creme de leite"). Entre vários, o de nome mais perto; None se nenhum."""
     k = norm(nome)
-    na = next((i for i in cfg.get("lista") or [] if norm(nome_item(i)) == k), None)
-    h = na if isinstance(na, dict) else next((x for x in cfg.get("historico") or [] if isinstance(x, dict) and norm(x.get("produto")) == k), None)
-    datas = sorted((c for c in ((h or {}).get("compras") or []) if data_ok(c)), reverse=True)
-    r = next((x for x in itens_reposicao(cfg) if norm(x["nome"]) == k), None)
+    for n in nomes:
+        if norm(n) == k:
+            return n
+    a = _chave_parecida(nome)
+    if not a:
+        return None
+    melhor = None
+    for n in nomes:
+        b = _chave_parecida(n)
+        if not b or b[0] != a[0] or not (set(a) <= set(b) or set(b) <= set(a)):
+            continue
+        # primeiro o que tem todas as palavras do nome (o item daqui é mais completo); depois, o de menos palavras de diferença
+        nota = (0 if set(a) <= set(b) else 1, abs(len(set(b)) - len(set(a))))
+        if melhor is None or nota < melhor[0]:
+            melhor = (nota, n)
+    return melhor[1] if melhor else None
+
+
+def _compras_achar(nome, cfg):
+    """O item da lista, o do histórico e o da Reposição que são deste nome (o igual ou o parecido)."""
+    lista = [i for i in cfg.get("lista") or [] if nome_item(i)]
+    n = nome_parecido(nome, [nome_item(i) for i in lista])
+    na = next((i for i in lista if nome_item(i) == n), None) if n else None
+    hist = [x for x in cfg.get("historico") or [] if isinstance(x, dict) and x.get("produto")]
+    n = nome_parecido(nome, [x["produto"] for x in hist])
+    h = next((x for x in hist if x["produto"] == n), None) if n else None
+    reps = itens_reposicao(cfg)
+    n = nome_parecido(nome, [x["nome"] for x in reps])
+    r = next((x for x in reps if x["nome"] == n), None) if n else None
+    return na, h, r
+
+
+def compras_de(nome, cfg=None):
+    """O que o EconomIA sabe de um consumível do InventarIA, pelo nome (o igual ou, 1.48.0, o parecido; `item` diz qual
+    achou): se está na lista, as datas de compra (da lista ou do histórico; as 5 últimas, a mais nova primeiro) e a
+    Reposição dele. Com as listas prontas ligadas e mais de uma, `listas` leva os nomes, para o Pôr na lista perguntar."""
+    cfg = ler_config() if cfg is None else cfg
+    na, h, r = _compras_achar(nome, cfg)
+    de = na if isinstance(na, dict) else (h if na is None else None)
+    datas = sorted((c for c in ((de or {}).get("compras") or []) if data_ok(c)), reverse=True)
     rep = None
     if r:
         prox = repor_proxima(r)
-        rep = {"cada": r["cada"], "unidade": r["unidade"], "texto": _repor_cada(r), "proxima": prox, "na_hora": prox <= hoje_br()}
-    return {"versao": VERSAO, "nome": nome, "na_lista": na is not None, "vezes": len(datas), "ultima": datas[0] if datas else "",
-            "compras": datas[:5], "reposicao": rep}
+        rep = {"nome": r["nome"], "cada": r["cada"], "unidade": r["unidade"], "texto": _repor_cada(r), "proxima": prox, "na_hora": prox <= hoje_br()}
+    prontas = [str(x["nome"]) for x in cfg.get("listas") or [] if isinstance(x, dict) and x.get("id") and x.get("nome")] if (cfg.get("opcoes") or {}).get("listas") is True else []
+    return {"versao": VERSAO, "nome": nome, "item": nome_item(na) if na is not None else (h["produto"] if h else ""),
+            "na_lista": na is not None, "vezes": len(datas), "ultima": datas[0] if datas else "",
+            "compras": datas[:5], "reposicao": rep, "listas": prontas if len(prontas) > 1 else []}
 
 
 def _dias_em_cada(dias):
@@ -8214,24 +8258,30 @@ def compras_fazer(dado):
     a revisão nova e o diário, para a página aberta juntar ao gravar."""
     nome = _texto_arg(dado, "nome")
     acao = str(dado.get("acao") or "")
-    if acao == "lista":
-        nome_f, a = "por", {"produto": nome}
-    elif acao == "repor":
-        cada = _dias_em_cada(dado.get("dias"))
-        if not cada:
-            raise ErroFerramenta("Para repor, mande dias (a duração do consumível), de 1 a 3650.")
-        nome_f, a = "repor", {"item": nome, "a_cada": cada[0], "unidade": cada[1]}
-    else:
+    if acao not in ("lista", "repor"):
         raise ErroFerramenta("acao vale lista ou repor.")
+    cada = _dias_em_cada(dado.get("dias")) if acao == "repor" else None
+    if acao == "repor" and not cada:
+        raise ErroFerramenta("Para repor, mande dias (a duração do consumível), de 1 a 3650.")
     of = ler_json(OFERTAS, {}) or {}
     with _cfg_trava:
         cfg = ler_config()
-        texto, mudanca = (_ferr_por if nome_f == "por" else _ferr_repor)(a, cfg, of)
+        # 1.48.0: o item parecido que já existe é o mesmo (não entra outro com o nome do InventarIA)
+        na, h, r = _compras_achar(nome, cfg)
+        alvo = nome_item(na) if na is not None else (h["produto"] if h else nome)
+        if acao == "lista":
+            a = {"produto": alvo}
+            if dado.get("lista"):
+                a["lista"] = " ".join(str(dado.get("lista")).split())[:60]
+            texto, mudanca = _ferr_por(a, cfg, of)
+        else:
+            alvo = r["nome"] if r else alvo
+            texto, mudanca = _ferr_repor({"item": alvo, "a_cada": cada[0], "unidade": cada[1]}, cfg, of)
         if mudanca:
-            if nome_f == "repor":  # veio do InventarIA: a origem fica marcada, como ao escolher de outro app
-                for r in cfg.get("reposicao") or []:
-                    if isinstance(r, dict) and norm(r.get("nome")) == norm(nome):
-                        r["origem"] = "inventario"
+            if acao == "repor":  # veio do InventarIA: a origem fica marcada, como ao escolher de outro app
+                for x in cfg.get("reposicao") or []:
+                    if isinstance(x, dict) and norm(x.get("nome")) == norm(alvo):
+                        x["origem"] = "inventario"
             try:
                 guardar_versao("auto")
             except OSError as e:
@@ -8239,7 +8289,7 @@ def compras_fazer(dado):
             rev = gravar_config(cfg, por="InventarIA")["rev"]
             DIARIO.append(dict(mudanca, rev=rev))
             del DIARIO[:-300]
-            log(f"InventarIA: {nome_f} {mudanca['produto']}")
+            log(f"InventarIA: {acao} {mudanca['produto']}")
     if mudanca and mudanca["tipo"] != "repor" and sync_ligado(cfg):
         _sincronizar_logo()
     return dict(compras_de(nome), texto=texto)

@@ -54,13 +54,55 @@ class Compras(Cenario):
         self.config(**casa())
         c = self.S.compras_de("sabao liquido 3 l")
         self.assertEqual((c["na_lista"], c["vezes"], c["ultima"], c["compras"]), (True, 3, "2026-10-28", ["2026-10-28", "2026-10-05", "2026-09-01"]))
-        self.assertEqual(c["reposicao"], {"cada": 1, "unidade": "mes", "texto": self.S._repor_cada({"cada": 1, "unidade": "mes"}), "proxima": "2026-11-28", "na_hora": False})
+        self.assertEqual(c["reposicao"], {"nome": "Sabão líquido 3 L", "cada": 1, "unidade": "mes", "texto": self.S._repor_cada({"cada": 1, "unidade": "mes"}), "proxima": "2026-11-28", "na_hora": False})
         h = self.S.compras_de("Creme de Mãos")
         self.assertEqual((h["na_lista"], h["vezes"], h["ultima"], h["reposicao"]), (False, 1, "2026-08-10", None), "fora da lista: as compras do histórico")
         s = self.S.compras_de("Leite integral")
         self.assertEqual((s["na_lista"], s["vezes"], s["ultima"]), (True, 0, ""), "um item só com o nome")
         n = self.S.compras_de("Pasta térmica")
         self.assertEqual((n["na_lista"], n["vezes"], n["compras"], n["reposicao"]), (False, 0, [], None))
+
+    def test_o_nome_parecido_acha_o_item(self):
+        """1.48.0: "Creme de Mãos" (o consumível) acha "Creme de mãos 50 g" (o item daqui); nunca outro tipo de coisa."""
+        P = self.S.nome_parecido
+        nomes = ["Creme de leite", "Creme de mãos Nivea 50 g", "Sabão líquido 3 L", "Sabão em pó", "Leite integral"]
+        self.assertEqual(P("Creme de Mãos", nomes), "Creme de mãos Nivea 50 g")
+        self.assertEqual(P("creme para a mão", nomes), "Creme de mãos Nivea 50 g", "sem o plural e sem as palavras vazias")
+        self.assertEqual(P("Sabão líquido", nomes), "Sabão líquido 3 L")
+        self.assertEqual(P("Sabão", nomes), "Sabão líquido 3 L", "dois igualmente perto: o primeiro da lista")
+        self.assertEqual(P("Sabão líquido de coco", nomes + ["Sabão líquido de coco Ypê 1 L"]), "Sabão líquido de coco Ypê 1 L", "entre vários, o de nome mais perto")
+        self.assertEqual(P("sabao liquido 3 l", nomes), "Sabão líquido 3 L", "o igual vem antes do parecido")
+        self.assertIsNone(P("Creme dental", nomes), "uma palavra a mais dos dois lados: outro produto")
+        self.assertIsNone(P("Leite de coco", nomes))
+        self.assertIsNone(P("Mãos", nomes), "o tipo (a primeira palavra) tem de ser o mesmo")
+        self.assertIsNone(P("500 g", nomes), "só o tamanho não é um nome")
+        self.assertIsNone(P("Pasta térmica", []))
+        self.config(**dict(casa(), lista=[{"produto": "Creme de mãos Nivea 50 g", "compras": ["2026-10-30"]}], historico=[],
+                           reposicao=[{"id": "r2", "nome": "Creme de mãos Nivea 50 g", "cada": 2, "unidade": "mes", "desde": "2026-10-30"}]))
+        c = self.S.compras_de("Creme de Mãos")
+        self.assertEqual((c["item"], c["na_lista"], c["ultima"], c["reposicao"]["nome"]), ("Creme de mãos Nivea 50 g", True, "2026-10-30", "Creme de mãos Nivea 50 g"))
+        r = self.S.compras_fazer({"nome": "Creme de Mãos", "acao": "lista"})
+        self.assertIn("já está na lista", r["texto"])
+        self.assertEqual(len(self.S.ler_config()["lista"]), 1, "não entra outro com o nome do InventarIA")
+        r = self.S.compras_fazer({"nome": "Creme de Mãos", "acao": "repor", "dias": 180})
+        reps = self.S.ler_config()["reposicao"]
+        self.assertEqual([(x["nome"], x["cada"]) for x in reps], [("Creme de mãos Nivea 50 g", 6)], "muda a Reposição do item parecido")
+        self.assertEqual(self.S.compras_de("Pasta térmica")["item"], "")
+
+    def test_com_varias_listas_prontas_o_por_na_lista_pergunta_qual(self):
+        self.config(**dict(casa(), opcoes={"listas": True}, listas=[{"id": "l1", "nome": "Mercado"}, {"id": "l2", "nome": "Farmácia"}]))
+        self.assertEqual(self.S.compras_de("Pasta térmica")["listas"], ["Mercado", "Farmácia"])
+        with self.assertRaises(self.S.ErroFerramenta) as e:
+            self.S.compras_fazer({"nome": "Pasta térmica", "acao": "lista"})
+        self.assertIn("Diga em qual lista", str(e.exception))
+        r = self.S.compras_fazer({"nome": "Pasta térmica", "acao": "lista", "lista": "farmacia"})
+        self.assertIn("Farmácia", r["texto"])
+        item = next(i for i in self.S.ler_config()["lista"] if isinstance(i, dict) and i.get("produto") == "Pasta térmica")
+        self.assertEqual(item["listas"], ["l2"])
+        self.config(**dict(casa(), opcoes={"listas": True}, listas=[{"id": "l1", "nome": "Mercado"}]))
+        self.assertEqual(self.S.compras_de("Pasta térmica")["listas"], [], "uma lista só: não há o que perguntar")
+        self.config(**casa())
+        self.assertEqual(self.S.compras_de("Pasta térmica")["listas"], [], "sem as listas prontas")
 
     def test_por_na_lista_traz_do_historico_e_repor_pela_duracao(self):
         self.config(**casa())
