@@ -15,6 +15,7 @@ Rotas:
 - PUT  /api/ofertas  grava um ofertas.json pronto
 - POST /api/buscar   começa a busca agora
 - POST /api/buscar-itens   {"itens": [...]} busca só esses itens da lista e junta ao resultado
+- GET  /api/reposicao/fontes   Reposição: os remédios do CronologIA e os consumíveis do InventarIA, com a chave de cada um ligada
 - GET  /api/uso-ia   chamadas de IA por dia, tipo e resultado (e sensor.economia_ia_hoje, se ligado)
 - GET  /api/voz/status   se o Falar está pronto e com qual fala para texto
 - POST /api/voz   áudio PCM 16 kHz, 16 bits, mono → {"texto"} pela fala para texto do Home Assistant
@@ -7995,6 +7996,76 @@ def correria_endereco():
     return f"http://{host}:{PORT}", (f"http://{ip}:{PORT}" if ip else None)
 
 
+# ---------- Reposição (1.46.0): o que os outros apps da casa têm para comprar de novo ----------
+SHARE_CASA = os.path.dirname(SHARE.rstrip("/")) or "/share"  # a pasta share da casa: share/<app>/integracao.json
+_SEM_PROXY = urllib.request.build_opener(urllib.request.ProxyHandler({}))  # os outros apps ficam dentro do Home Assistant
+
+
+def repor_ligado(cfg, app):
+    """Mais › Configurações › Opções › Reposição: cada app com a sua chave, desligada de início."""
+    r = (cfg or {}).get("repor")
+    return isinstance(r, dict) and r.get(app) is True
+
+
+def _integracao_de(app):
+    j = ler_json(os.path.join(SHARE_CASA, app, "integracao.json"))
+    return j if isinstance(j, dict) else None
+
+
+def remedios_cronologia():
+    """Os remédios cadastrados no CronologIA (1.106.0 grava `remedios` no integracao.json dele): o nome e a dose."""
+    j = _integracao_de("cronologia") or {}
+    if not isinstance(j.get("remedios"), list):
+        return {"itens": [], "aviso": "Atualize o CronologIA (1.106.0 ou mais novo)."}
+    itens, vistos = [], set()
+    for r in j["remedios"][:200]:
+        nome = " ".join(str(r.get("nome") or "").split())[:120] if isinstance(r, dict) else ""
+        if not nome or norm(nome) in vistos:
+            continue
+        vistos.add(norm(nome))
+        itens.append({"nome": nome, "detalhe": " ".join(str(r.get("dose") or "").split())[:60]})
+    return {"itens": itens, "aviso": ""}
+
+
+def consumiveis_inventario():
+    """Os consumíveis do InventarIA (1.81.0): GET /api/integracao/consumiveis, com a chave do integracao.json dele."""
+    j = _integracao_de("inventario") or {}
+    for base in (j.get("url"), j.get("ip_url")):
+        if not j.get("chave") or not re.match(r"https?://[^\s/]+", str(base or "")):
+            continue
+        req = urllib.request.Request(str(base).rstrip("/") + "/api/integracao/consumiveis",
+                                     headers={"Authorization": "Bearer " + str(j["chave"]), "X-App": "EconomIA", "Accept": "application/json"})
+        try:
+            with _SEM_PROXY.open(req, timeout=6) as r:
+                d = json.loads(r.read(1_000_000).decode("utf-8") or "null")
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                return {"itens": [], "aviso": "Atualize o InventarIA (1.81.0 ou mais novo)."}
+            continue
+        except (OSError, ValueError):
+            continue
+        if not isinstance(d, dict) or not isinstance(d.get("consumiveis"), list):
+            continue
+        if d.get("ligado") is False:
+            return {"itens": [], "aviso": "Ligue Usar consumíveis no InventarIA."}
+        itens = [{"nome": " ".join(str(c.get("nome") or "").split())[:120], "detalhe": " ".join(str(c.get("categoria") or "").split())[:60]}
+                 for c in d["consumiveis"][:500] if isinstance(c, dict) and str(c.get("nome") or "").strip()]
+        return {"itens": itens, "aviso": ""}
+    return {"itens": [], "aviso": "O InventarIA não respondeu."}
+
+
+def reposicao_fontes(cfg=None):
+    """O que a página mostra para escolher em Mais › Reposição: de cada app, se ele está na casa (`tem`), se a chave
+    está ligada e, só com ela ligada, os itens. Nada fica guardado aqui: a página grava só o nome escolhido."""
+    cfg = cfg if cfg is not None else ler_config()
+    out = {}
+    for app, ler in (("cronologia", remedios_cronologia), ("inventario", consumiveis_inventario)):
+        tem, ligado = _integracao_de(app) is not None, repor_ligado(cfg, app)
+        f = ler() if tem and ligado else {"itens": [], "aviso": ""}
+        out[app] = {"tem": tem, "ligado": ligado, "itens": f["itens"], "aviso": f["aviso"]}
+    return out
+
+
 def publicar_correria(cfg=None):
     """Grava (ligado) ou apaga (desligado) share/economia/correria.json, só com permissão do dono e de uma vez."""
     try:
@@ -8416,9 +8487,13 @@ class Painel(BaseHTTPRequestHandler):
                 self._json(502, {"erro": str(e)})
         elif rota == "/api/busca":
             self._json(200, BUSCA)
+        elif rota == "/api/reposicao/fontes":
+            self._json(200, reposicao_fontes())
         elif rota == "/api/uso-ia":
             self._json(200, uso_resumo())
         elif rota == "/api/voz/status":
+            if "novo=1" in urllib.parse.urlsplit(self.path).query:  # 1.46.0, o Verificar de novo do Falar: lê os motores de novo, sem esperar o minuto
+                VOZ.cache = None
             self._json(200, voz_status())
         elif rota == "/api/integracoes":
             ch = segredos().get("shopee") or {}

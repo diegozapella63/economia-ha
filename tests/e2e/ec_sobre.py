@@ -84,7 +84,7 @@ async def main():
                 ult = await pg.evaluate("""() => [...document.querySelectorAll('#v-mais > *')].filter((x) => x.getClientRects().length).map((x) => x.id)""")
                 check(ult == ["maisMenu", "maisPe"], f"{tag}: em Mais, só o menu e o rodapé ({ult})")
                 linhas = [" ".join(x.split()) for x in await pg.locator("#maisMenu .menu-row").all_inner_texts()]
-                check(len(linhas) == 4 and linhas[-1] == "Sobre CorrerIA Code, os apps e o GitHub.", f"{tag}: Sobre, CorrerIA Code, os apps e o GitHub., a última linha ({linhas})")
+                check(len(linhas) == 5 and linhas[-1] == "Sobre CorrerIA Code, os apps e o GitHub.", f"{tag}: Sobre, CorrerIA Code, os apps e o GitHub., a última linha ({linhas})")
                 check(await pg.evaluate("document.querySelector('#maisMenu li:last-child .menu-row').id") == "sobreBtn", f"{tag}: o Sobre é a última linha")
                 check(await pg.evaluate("document.querySelector('#sobreBtn .h-ic svg').innerHTML") == INFO, f"{tag}: com o ícone de informação")
                 rb, lb = await pg.evaluate("""() => [document.getElementById('sobreBtn'), document.querySelector('#maisMenu .menu-list')]

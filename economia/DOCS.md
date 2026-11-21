@@ -26,16 +26,26 @@ Como nos outros apps (InventarIA, GerencIA, ResolvIA e CronologIA), **Mais** é 
 
 - **Casa**: CEP e distância, o que acompanhar, quem mora, a rotina de compras, restrições, interesses e o que nunca mostrar.
 - **Lojas**: as lojas perto de casa, com o clube de cada uma, Encontrar lojas e Testar agora; cupons do app; compras online; e como o EconomIA busca os preços.
-- **Configurações**, em abas: **Integrações** (na ordem dos outros apps: CorrerIA; IA, com Usar IA, a IA de cada uso e Para falar; Uso da IA; Shopee Afiliados, AliExpress Afiliados, Google Places, Brave Search, Mercado Livre, Instagram e Lista do Home Assistant; e Sensores no Home Assistant), **Dados** (Exportar, Backup na pasta share, Importar, Versões anteriores, Onde ficam os dados e Começar do zero), **Aparência** (tema, cor do app e Cor do dia) e **Opções** (as **Listas** e as etapas da busca que dá para desligar). A aba escolhida fica guardada.
+- **Reposição**: o que você compra de tempos em tempos, cada item com o seu **A cada** (veja **Reposição**, abaixo).
+- **Configurações**, em abas: **Integrações** (na ordem dos outros apps: CorrerIA; IA, com Usar IA e a IA de cada uso; Falar; Uso da IA; Shopee Afiliados, AliExpress Afiliados, Google Places, Brave Search, Mercado Livre, Instagram e Lista do Home Assistant; e Sensores no Home Assistant), **Dados** (Exportar, Backup na pasta share, Importar, Versões anteriores, Onde ficam os dados e Começar do zero), **Aparência** (tema, cor do app e Cor do dia) e **Opções** (as **Listas** e as etapas da busca que dá para desligar). A aba escolhida fica guardada.
 - **Sobre**, a última linha: CorrerIA Code, quem faz os apps, os apps da família, cada um com o link para o GitHub dele (o EconomIA marcado como **Este app**, com a versão), e **Meu GitHub**.
 
 Numa tela de Mais, o **‹ Mais** no alto, o Voltar do celular e arrastar para a direita voltam para o menu. Aberta por um atalho de outra tela (como **Preencher o perfil**, na Minha lista), o Voltar do celular volta para onde você estava.
 
+## Reposição
+
+Em **Mais › Reposição** fica o que você compra de tempos em tempos: o filtro de água, a ração, o remédio de todo mês.
+
+- **Adicionar**: escreva o item, escolha **A cada** quantos dias, semanas ou meses (de 1 a 365) e toque em **Adicionar**. O tempo começa a contar do dia em que o item entrou.
+- **Na hora**, o item aparece no cartão **Hora de repor**, no alto da **Minha lista**: **Pôr na lista** leva para a lista de compras e **Já tenho** só recomeça a contagem. Os dois contam de novo a partir de hoje.
+- A tela mostra os itens do que volta antes para o que volta depois. Toque num item para mudar o nome ou o **A cada** (o tempo não recomeça); o **X** apaga.
+- **Itens de outros apps**: em **Mais › Configurações › Opções › Reposição**, **Remédios do CronologIA** e **Consumíveis do InventarIA** (desligadas de início) põem em **Escolher de outro app** os remédios cadastrados no CronologIA (1.106.0 ou mais novo) e os consumíveis do InventarIA (1.81.0 ou mais novo, com **Usar consumíveis** ligado lá). O EconomIA guarda só o nome escolhido e de qual app veio; nada muda nos outros apps. Do CronologIA vêm o nome e a dose do remédio, nunca quem toma.
+
 ## Falar
 
-O microfone fica no alto da tela, à direita (e em **Minha lista › Falar**). Fale os itens, por exemplo "leite integral, 2 pacotes de café 500 g e detergente"; o Home Assistant transcreve com a fala para texto escolhida em **Mais › Configurações › Integrações › IA do Home Assistant › Para falar** (um assistente de voz do Home Assistant ou uma entidade de fala para texto; no padrão, a do assistente de voz preferido, em **Configurações › Assistentes de voz**; com o Home Assistant Cloud já vem pronta) e a IA de "Para ler fotos" separa os itens para você conferir e adicionar, com o que foi ouvido no alto. Até 2 minutos de cada vez.
+O microfone fica no alto da tela, à direita (e em **Minha lista › Falar**). Fale os itens, por exemplo "leite integral, 2 pacotes de café 500 g e detergente"; o Home Assistant transcreve com a fala para texto escolhida em **Mais › Configurações › Integrações › Falar › Fala para texto** (um assistente de voz do Home Assistant ou uma entidade de fala para texto; no padrão, a do assistente de voz preferido, em **Configurações › Assistentes de voz**; com o Home Assistant Cloud já vem pronta) e a IA de "Para ler fotos" separa os itens para você conferir e adicionar, com o que foi ouvido no alto. Até 2 minutos de cada vez.
 
-Em **Mais › Configurações › Integrações › IA**, a linha **Falar** mostra se está pronto e com qual fala para texto. O microfone some com **Usar IA** desligado. No app do celular, permita o microfone para o app Home Assistant; no navegador, o Home Assistant precisa estar num endereço com https.
+Em **Mais › Configurações › Integrações**, o cartão **Falar** (igual ao dos outros apps) mostra se está pronto (**Pronto para ouvir**) e com qual fala para texto; em **Fala para texto**, o **Automático** usa a do assistente de voz preferido do Home Assistant. **Verificar de novo** lê os motores na hora; sem nenhum, **Como configurar** mostra os passos. O microfone some com **Usar IA** desligado. No app do celular, permita o microfone para o app Home Assistant; no navegador, o Home Assistant precisa estar num endereço com https.
 
 ## Conversa com a IA
 

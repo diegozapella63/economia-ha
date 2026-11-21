@@ -86,6 +86,8 @@ esperar (espera-se a condição: `Cenario.espera`, `espera()` nas visuais), semp
   e o `main()`, com o servidor num processo.
 - `test_comparar.py`: Comparar preço (a oferta nas outras lojas): sites primeiro e a IA só se faltar, a loja da oferta
   de fora, outro tamanho pelo preço por quilo, medidas diferentes, online com frete, o que guarda e os erros.
+- `test_reposicao.py`: a Reposição no servidor: os remédios do `share/cronologia/integracao.json`, os consumíveis pela rota do InventarIA
+  (de mentira), cada app com a sua chave (desligada, nada é lido) e a rota `/api/reposicao/fontes`.
 - `test_correria.py`: a CorrerIA pelas ferramentas: o arquivo em share (só ligado, modo 600, chave guardada), a rota com
   a chave (401, 404, 400), cada ferramenta com as regras da tela, o diário que junta a gravação da página e as lojas
   desligadas em Online.
@@ -123,7 +125,9 @@ esperar (espera-se a condição: `Cenario.espera`, `espera()` nas visuais), semp
 - `e2e/ec_setor.py`: a Melhor compra, o avulso e a economia por quilo ou litro; nada comparado entre setores (o automático e o escolhido no pé do cartão, que traz outro tamanho de sempre); Onde comprar ao adicionar.
 - `e2e/ec_links.py`: o Abrir de um preço ou oferta da IA num marketplace vira a busca do marketplace; o anúncio do Mercado Livre (MLB) e o link do site da loja continuam.
 - `e2e/ec_estoque.py`: sem o ritmo de compra, quanto um tamanho dura vem de Quem mora; com o Espaço para estoque (e o Só o do mês), a caixa de 18 kg fica de fora; o próximo mais barato é o seguinte depois da melhor compra.
-- `e2e/ec_mais.py`: Mais é um menu (Casa, Lojas, Configurações e Sobre por último): as linhas (ícone, título, o que tem,
+- `e2e/ec_reposicao.py`: a Reposição: o cartão Hora de repor na Minha lista (Pôr na lista, Já tenho), Mais › Reposição (adicionar, o A cada,
+  editar, apagar), as chaves de Opções e a escolha entre os remédios do CronologIA e os consumíveis do InventarIA (de mentira).
+- `e2e/ec_mais.py`: Mais é um menu (Casa, Lojas, Reposição, Configurações e Sobre por último): as linhas (ícone, título, o que tem,
   seta, alinhadas, nada cortado), cada tela com o ‹ Mais e só o painel dela, as abas de Configurações (só a aba aberta,
   as setas do teclado, a aba guardada, as quatro cabendo em 320 px), o ‹ Mais, o Voltar, arrastar e o Mais de baixo
   voltando ao menu, recarregar na mesma tela, o atalho Preencher o perfil (o Voltar volta para a Minha lista), quem vinha

@@ -1,4 +1,4 @@
-# EconomIA 1.3.0: Mais é um menu, como no GerencIA e no InventarIA: Casa, Lojas, Configurações e, por último, Sobre,
+# EconomIA 1.3.0: Mais é um menu, como no GerencIA e no InventarIA: Casa, Lojas, Reposição (1.46.0), Configurações e, por último, Sobre,
 # cada linha com o ícone no quadradinho, o título, uma linha do que tem e a seta, e cada uma abre a sua tela.
 # Configurações tem as abas Integrações, Dados, Aparência e Opções (a aba fica guardada). O ‹ Mais, o Voltar do celular,
 # arrastar para a direita e o Mais de baixo (ou da barra lateral) voltam ao menu; recarregar volta na mesma tela. Um
@@ -15,6 +15,7 @@ from base_e2e import CEP, SHOTS, App, check, espera, pagina, resumo
 
 LINHAS = [("casa", "Casa", "CEP, quem mora, rotina e preferências."),
           ("lojas", "Lojas", "Perto de casa, clubes e cupons do app."),
+          ("reposicao", "Reposição", "O que comprar de novo de tempos em tempos."),
           ("config", "Configurações", "Integrações, dados, aparência e opções."),
           ("sobre", "Sobre", "CorrerIA Code, os apps e o GitHub.")]
 ABAS = [("integracoes", "Integrações"), ("dados", "Dados"), ("aparencia", "Aparência"), ("opcoes", "Opções")]
@@ -91,7 +92,7 @@ async def main():
                 check(await pg.get_attribute(aba_mais, "aria-current") == "page", f"{tag}: Mais marcado embaixo (ou na barra lateral)")
                 # ----- o menu: uma linha por função, Configurações e Sobre por último -----
                 linhas = await pg.evaluate(LINHAS_JS)
-                check([(x["k"], x["t"], x["s"]) for x in linhas] == LINHAS, f"{tag}: Casa, Lojas, Configurações e Sobre, cada uma com a sua linha ({linhas})")
+                check([(x["k"], x["t"], x["s"]) for x in linhas] == LINHAS, f"{tag}: Casa, Lojas, Reposição, Configurações e Sobre, cada uma com a sua linha ({linhas})")
                 check(all(x["ic"] and x["chev"] for x in linhas), f"{tag}: cada linha com o ícone no quadradinho e a seta")
                 check(all(abs(x["x"]) <= 1 and abs(x["w"]) <= 1 and x["h"] >= 60 for x in linhas), f"{tag}: as linhas na largura do menu, todas alinhadas")
                 check(all(a["fim"] <= c["y"] + 1 for a, c in zip(linhas, linhas[1:])), f"{tag}: uma embaixo da outra, sem encostar")
@@ -118,6 +119,10 @@ async def main():
                 await pg.screenshot(path=f"{SHOTS}/ecmais-lojas-{'escuro' if escuro else 'claro'}-{w}.png")
                 await pg.go_back()
                 await no_menu(pg, f"{tag}: o Voltar em Lojas")
+                await abre(pg, "reposicao")
+                await na_tela(pg, "reposicao", "Reposição", ["mp-reposicao"], f"{tag}: Reposição")
+                await pg.go_back()
+                await no_menu(pg, f"{tag}: o Voltar em Reposição")
                 # ----- Configurações: as abas -----
                 await abre(pg, "config")
                 await na_tela(pg, "config", "Configurações", ["mp-integracoes"], f"{tag}: Configurações abre em Integrações")
@@ -125,7 +130,7 @@ async def main():
                 check(nomes == [n for _, n in ABAS], f"{tag}: as abas Integrações, Dados, Aparência e Opções ({nomes})")
                 # 1.9.0: Integrações na ordem da família (CorrerIA, IA do Home Assistant, Uso da IA, as daqui e os Sensores por último)
                 ints = await pg.evaluate("() => [...document.querySelectorAll('#mp-integracoes > section > .set-head h2')].map((h) => h.id)")
-                check(ints == ["h-correria", "h-ia", "h-uso", "h-shopee", "h-ali", "h-google", "h-brave", "h-ml", "h-insta", "h-ha", "h-sens"], f"{tag}: Integrações na ordem da família ({ints})")
+                check(ints == ["h-correria", "h-ia", "h-falar", "h-uso", "h-shopee", "h-ali", "h-google", "h-brave", "h-ml", "h-insta", "h-ha", "h-sens"], f"{tag}: Integrações na ordem da família ({ints})")
                 cabe = await pg.evaluate("(s => [s.scrollWidth, s.clientWidth])(document.getElementById('maisAbas'))")
                 check(cabe[0] <= cabe[1] + 1, f"{tag}: as quatro abas cabem, sem rolar para o lado ({cabe})")
                 for k, n in ABAS:

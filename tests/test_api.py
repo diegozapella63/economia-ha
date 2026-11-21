@@ -94,15 +94,15 @@ class Pagina(Servidor):
         self.assertEqual(fonte[:4], b"wOFF")
 
     def test_mais_e_um_menu(self):
-        """1.3.0: Mais é um menu (Casa, Lojas, Configurações e Sobre por último); as abas são só as de Configurações, e
+        """1.3.0: Mais é um menu (Casa, Lojas, Reposição desde a 1.46.0, Configurações e Sobre por último); as abas são só as de Configurações, e
         nenhum texto da página ou do servidor manda para o caminho antigo (Mais › Integrações, Mais › Opções)."""
         st, html = self.pede("GET", "/")
         self.assertEqual(st, 200)
         menu = re.search(r'<nav id="maisMenu" aria-label="Mais">(.*?)</nav>', html, re.S).group(1)
-        self.assertEqual(re.findall(r'data-mais="(\w+)"', menu), ["casa", "lojas", "config", "sobre"])
-        self.assertEqual(re.findall(r'<span class="mb"><b>([^<]+)</b>', menu), ["Casa", "Lojas", "Configurações", "Sobre"])
-        self.assertEqual(menu.count('class="h-ic"'), 4, "cada linha com o ícone no quadradinho")
-        self.assertEqual(menu.count('class="chev"'), 4, "e a seta")
+        self.assertEqual(re.findall(r'data-mais="(\w+)"', menu), ["casa", "lojas", "reposicao", "config", "sobre"])
+        self.assertEqual(re.findall(r'<span class="mb"><b>([^<]+)</b>', menu), ["Casa", "Lojas", "Reposição", "Configurações", "Sobre"])
+        self.assertEqual(menu.count('class="h-ic"'), 5, "cada linha com o ícone no quadradinho")
+        self.assertEqual(menu.count('class="chev"'), 5, "e a seta")
         abas = re.search(r'<div class="mais-abas" id="maisAbas" role="tablist" aria-label="Seções de Configurações">(.*?)</div>', html, re.S).group(1)
         self.assertEqual(re.findall(r'data-aba="(\w+)"', abas), ["integracoes", "dados", "aparencia", "opcoes"])
         self.assertNotIn('id="aba-casa"', html)

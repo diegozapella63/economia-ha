@@ -327,6 +327,12 @@ class HomeAssistant(Rotas):
     def test_voz(self):
         S = self.S
         self.assertFalse(self.pede("GET", "/api/voz/status")[1]["pronta"], "sem fala para texto no HA")
+        # 1.46.0: um motor instalado depois só aparece passado o minuto guardado; o Verificar de novo (?novo=1) lê na hora
+        from ha_falso import estado
+        self.ha.estados["stt.faster_whisper"] = estado("stt.faster_whisper", "unknown", friendly_name="Faster Whisper")
+        self.assertFalse(self.pede("GET", "/api/voz/status")[1]["pronta"], "ainda o que estava guardado")
+        st = self.pede("GET", "/api/voz/status?novo=1")[1]
+        self.assertEqual((st["pronta"], st["nome"], [o["id"] for o in st["opcoes"]]), (True, "Faster Whisper", ["stt.faster_whisper"]))
         self.assertEqual(self.so_tamanho("POST", "/api/voz", 0), (413, {"erro": "Fale até 2 minutos de cada vez."}))
         self.assertEqual(self.so_tamanho("POST", "/api/voz", S.voz.MAX_BYTES + 5000)[0], 413)
         S.voz_texto = lambda pcm: {"texto": f"{len(pcm)} bytes", "nome": "x"}

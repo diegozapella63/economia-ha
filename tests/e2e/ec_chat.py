@@ -71,6 +71,11 @@ async def main():
             # 1.38.1: em linhas, quebrando (nada de rolar de lado), cada uma com o ✨, dentro da largura
             caixas = [await b.bounding_box() for b in await pg.locator("#chatSug [data-chat-sug]").all()]
             check(len({round(c["y"]) for c in caixas}) >= 2 and all(c["x"] >= 0 and c["x"] + c["width"] <= 391 for c in caixas), f"as perguntas em linhas, na largura ({caixas})")
+            # 1.46.0: no meio, uma por linha, como no CorrerIA e nos outros apps
+            check(len({round(c["y"]) for c in caixas}) == len(caixas) and all(abs(c["x"] + c["width"] / 2 - 195) <= 1.5 for c in caixas), f"1.46.0: uma por linha, no meio ({[(round(c['x']), round(c['width'])) for c in caixas]})")
+            vz = await pg.locator(".chat-vazio").evaluate("(e) => getComputedStyle(e).textAlign")
+            ed = await pg.locator("#chatSug .chat-ed-abrir").bounding_box()
+            check(vz == "center" and abs(ed["x"] + ed["width"] / 2 - 195) <= 1.5, f"1.46.0: o texto de cima e o Editar perguntas também no meio ({vz}, {ed})")
             check(await pg.locator("#chatSug [data-chat-sug] svg").count() == 6, "cada uma com o ✨")
             check(await pg.evaluate("() => { const l = document.querySelector('#chatSug .chat-sug-l'); return l.scrollWidth <= l.clientWidth + 1; }"), "sem rolar de lado")
             check(await pg.is_disabled("#chatNova"), "sem conversa: Nova conversa inativa")

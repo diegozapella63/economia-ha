@@ -53,6 +53,7 @@ A busca começa pelo que não gasta IA (os sites das lojas, os folhetos e a Shop
 - **Lista por voz**: sincroniza com a lista de compras do Home Assistant (Assist, Alexa, Google Tasks).
 - **Integrações opcionais**: Google Places (as lojas pequenas), Brave Search (o site das lojas sem site), Mercado Livre (confere a categoria do produto), Instagram das lojas, Shopee Afiliados e AliExpress Afiliados. As chaves ficam só no Home Assistant.
 - **Uso da IA**: quantas chamadas a busca, a leitura de fotos, o Falar e a Conversa fizeram por dia, erros de cota e tokens estimados, com o sensor `sensor.economia_ia_hoje` para painel e automação, além de `sensor.economia_melhor_loja` (onde a lista sai mais barata) e `binary_sensor.economia_oferta` (um item da lista em oferta).
+- **Reposição**: o que você compra de tempos em tempos (de quanto em quanto tempo cada item volta), com os remédios do CronologIA e os consumíveis do InventarIA para escolher.
 - **Perfil da casa**: quem mora, pets, restrições e interesses decidem o que aparece.
 - **Mais, um menu** como nos outros apps: Casa, Lojas, Configurações (Integrações, Dados, Aparência e Opções, com **Usar IA**, sensores opcionais, versões anteriores, exportação para Excel e JSON, tema claro ou escuro, as 12 cores da família e a Cor do dia) e Sobre.
 

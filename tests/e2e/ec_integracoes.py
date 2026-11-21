@@ -28,6 +28,14 @@ async def main():
             check(await pg.locator("#mlAutorizar").is_hidden() and await pg.locator("#mlPasso2").is_hidden(), "sem App ID: sem Autorizar")
             await card.locator("details.ml-como summary").click()
             check("developers.mercadolivre.com.br" in await card.locator("details.ml-como").inner_text(), "Como configurar: os passos")
+            # 1.46.0: o site citado abre num toque, em outra janela (como nos outros apps)
+            sites = await pg.evaluate("() => [...document.querySelectorAll('#mp-integracoes a.site')].map((x) => [x.closest('section').getAttribute('aria-labelledby'), x.textContent, x.getAttribute('href'), x.target, x.rel])")
+            check([x[:3] for x in sites] == [["h-shopee", "affiliate.shopee.com.br", "https://affiliate.shopee.com.br/"], ["h-ali", "openservice.aliexpress.com", "https://openservice.aliexpress.com/"],
+                                             ["h-ali", "portals.aliexpress.com", "https://portals.aliexpress.com/"], ["h-google", "console.cloud.google.com", "https://console.cloud.google.com/"],
+                                             ["h-brave", "api-dashboard.search.brave.com", "https://api-dashboard.search.brave.com/"], ["h-ml", "developers.mercadolivre.com.br", "https://developers.mercadolivre.com.br/"]]
+                  and all(x[3] == "_blank" and "noopener" in x[4] for x in sites), f"1.46.0: cada site citado é um link que abre o site ({sites})")
+            fechada = await pg.evaluate("() => { const s = document.querySelector('section[aria-labelledby=\"h-ali\"]'), a = s.querySelector('a.site'); a.addEventListener('click', (e) => e.preventDefault(), {once: true}); a.click(); return s.classList.contains('fechada'); }")
+            check(not fechada and await pg.evaluate("document.documentElement.scrollWidth <= innerWidth"), "tocar no site não fecha a seção, e nada passa da largura")
             # URL de retorno sem https
             await pg.fill("#mlApp", "123456")
             await pg.fill("#mlSenha", "segredo-ml")

@@ -1,5 +1,14 @@
 # Mudanças
 
+## 1.46.0
+
+- **Reposição**, uma linha nova em **Mais**: o que você compra de tempos em tempos. Adicione o item e diga **A cada** quantos dias, semanas ou meses. Na hora, ele aparece no cartão **Hora de repor**, no alto da Minha lista, com **Pôr na lista** e **Já tenho** (os dois recomeçam a contagem). Toque num item para mudar; o X apaga.
+- **Reposição com os outros apps**: em **Mais › Configurações › Opções › Reposição**, ligue **Remédios do CronologIA** (1.106.0 ou mais novo) e **Consumíveis do InventarIA** (1.81.0 ou mais novo) para escolher o item entre os remédios e os consumíveis cadastrados neles. Desligadas de início.
+- **Falar** agora tem o cartão dele em **Integrações**, depois do IA, igual ao dos outros apps: **Pronto para ouvir**, a **Fala para texto** (com **Automático**), **Verificar de novo** (que já lê os motores na hora) e, sem fala para texto, **Como configurar**.
+- **Conversa**: as perguntas prontas ficam no meio, uma por linha, como nos outros apps.
+- **Sites que abrem num toque**: em Integrações, o endereço de cada serviço (Shopee, AliExpress, Google, Brave e Mercado Livre) abre o site.
+- Os textos de **Uso da IA**, **Sensores**, **Tema**, **Cor do app** e **CorrerIA** ficaram iguais aos dos outros apps.
+
 ## 1.45.0
 
 - **Conversa › Falar**: ouvindo, o clipe dá lugar ao **Cancelar**: o microfone para e nada vai para a caixa.

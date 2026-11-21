@@ -37,6 +37,7 @@ O botão **Buscar** chama `ai_task.generate_data` pela API do Home Assistant (`h
 | GET | `/` | Página do painel. |
 | GET | `/api/estado` | `{config, ofertas, usuario}`. `usuario` vem do cabeçalho `X-Remote-User-Display-Name` do ingress. |
 | PUT | `/api/config` | Grava `config.json`. |
+| GET | `/api/reposicao/fontes` | Reposição: de cada app (`cronologia`, `inventario`), `{tem, ligado, itens: [{nome, detalhe}], aviso}`. Os itens só com a chave do app ligada (`config.repor`). |
 | PUT | `/api/ofertas` | Grava `ofertas.json` (precisa ter `categorias`). |
 | POST | `/api/chat` | Conversa: `{mensagens: [{de: "eu" ou "ia", texto}], tela}` → `{resposta, acoes}`. Ver "Conversa com a IA". |
 | POST | `/api/buscar` | Começa a busca agora, uma categoria por vez, pela ação `ai_task.generate_data` do HA. No fim, faz uma pergunta só sobre os itens que ficaram sem preço. |
@@ -201,6 +202,8 @@ O servidor só aceita conexões do ingress (`172.30.32.2`). Para testar fora do 
   "usar_ia": true,
   "sensores": false,
   "opcoes": {"itens_sem_preco": true, "encartes_auto": true, "lojas_diretas": true},
+  "reposicao": [{"id": "r1ab2", "nome": "Filtro de água", "cada": 6, "unidade": "dia|semana|mes", "desde": "2026-11-04", "origem": "cronologia|inventario"}],
+  "repor": {"cronologia": false, "inventario": false},
   "clubes": ["merc-condor"],
   "cupons_meus": [{"id": "meu-1", "rede": "farm-panvel", "beneficio": "20% em protetor solar", "codigo": null, "valido_ate": "2026-10-24"}],
   "ocultas": ["giassi-cerveja-12"]
@@ -486,14 +489,40 @@ A tela só diz que algo vai acontecer quando a opção ou a integração que faz
   Folhetos desligados, "Folhetos desligados em Mais › Configurações › Opções"; só com os dois, "a IA lê na próxima busca".
 - **Avisar no celular**: fora da tela enquanto o aviso no celular não existe; `cotidiano.avisar` continua na config.
 
+## Reposição (1.46.0)
+
+O que se compra de tempos em tempos. Tudo na página (a configuração inteira vai para `PUT /api/config`, como a lista):
+
+- **Dados** (`normaliza`): `reposicao: [{id, nome, cada (1 a 365), unidade: dia|semana|mes, desde: AAAA-MM-DD, origem?: cronologia|inventario}]`
+  (até 200) e `repor: {cronologia, inventario}` (as chaves de Opções, `true` só quando ligadas).
+- **A conta**: `repProxima(r)` soma o `cada` ao `desde` (meses pelo calendário: o mesmo dia ou o último do mês); `repNaHora(r)` é
+  `diasAte(repProxima(r)) <= 0`, pelo dia de São Paulo (`hojeSP`). `repQuando` escreve "amanhã", "em N dias" (até 60) ou "em DD/MM".
+- **Minha lista**: o cartão `#repAgora` (Hora de repor), antes dos Itens da lista, só com o que está na hora, o mais atrasado
+  primeiro. **Pôr na lista** (`data-rep-por`) usa o `entraNaLista` de sempre (com as listas ligadas e nenhuma aberta, avisa
+  como o Adicionar) e **Já tenho** (`data-rep-tenho`) não mexe na lista; os dois gravam `desde` = hoje. A página repinta ao
+  voltar a ficar à vista e de 10 em 10 minutos (o dia vira com ela aberta).
+- **Mais › Reposição** (`#mp-reposicao`, `pintaReposicao`): o campo (`data-sug="repor"`: a lista, o histórico e os itens dos
+  outros apps), **Escolher de outro app** (`#repFonte`, uma caixa do `selectsheet.js` com um grupo por app; some sem nada para
+  escolher), o **A cada** e a lista `#repLista` (tocar edita, `REP_EDIT`, sem mexer no `desde`; o X apaga). O nome mudado à mão
+  perde a `origem`.
+- **Os outros apps** (`reposicao_fontes` no servidor, `GET /api/reposicao/fontes`): `SHARE_CASA` é a pasta de cima do
+  `OFERTAS_SHARE` (`/share`). **CronologIA**: `remedios` do `share/cronologia/integracao.json` (`[{nome, dose, vezes}]`, 1.106.0;
+  sem a chave, "Atualize o CronologIA"). **InventarIA**: `GET <url ou ip_url>/api/integracao/consumiveis` com
+  `Authorization: Bearer <chave>` do `share/inventario/integracao.json` (1.81.0; 404: "Atualize o InventarIA"; `ligado: false`:
+  "Ligue Usar consumíveis no InventarIA"), sem proxy e com 6 s de espera. Com a chave de Opções desligada, nada é lido nem
+  chamado. Nada disso fica guardado no EconomIA: só o nome escolhido e a `origem`.
+- **Opções › Reposição** (`pintaRepOpcoes`): as duas chaves, cada uma com a linha do estado (quantos itens, o que falta no
+  outro app ou "não está neste Home Assistant"). No exemplo (fora do add-on), uma casa inventada (`REP_EX`).
+- Testes: `tests/test_reposicao.py` e `tests/e2e/ec_reposicao.py`.
+
 ## Mais: o menu (1.3.0)
 
 Como no GerencIA e no InventarIA, Mais é um menu (`#maisMenu`, `.menu-list` com um `.menu-row` por linha: o ícone no
 `.h-ic`, o título e a linha em `.mb`, a seta `.chev`), e cada linha (`data-mais`) abre a sua tela: **Casa** (`#mp-casa`),
 **Lojas** (`#mp-lojas`), **Configurações** (as abas `#maisAbas`: `#mp-integracoes`, `#mp-dados`, `#mp-aparencia` e
-`#mp-opcoes`) e, por último, **Sobre** (`#sobreBtn`, `#mp-sobre`). Nada de função do app misturada com as configurações.
+`#mp-opcoes`) e, por último, **Sobre** (`#sobreBtn`, `#mp-sobre`). Desde a 1.46.0, **Reposição** (`#mp-reposicao`) depois de Lojas. Nada de função do app misturada com as configurações.
 
-- **Estado**: `ui.maisTela` (`MAIS_IDS`: `casa`, `lojas`, `config`, `sobre`; `''` é o menu) e `ui.maisAba` (`CONFIG_ABAS`;
+- **Estado**: `ui.maisTela` (`MAIS_IDS`: `casa`, `lojas`, `reposicao`, `config`, `sobre`; `''` é o menu) e `ui.maisAba` (`CONFIG_ABAS`;
   `integracoes` de começo), guardados em `ofertas-bairro:ui`. Recarregar volta na mesma tela e aba.
 - **`irPara(v, tela)`**: só com `v === 'mais'` e uma tela de `MAIS_IDS` abre a tela; sem ela, Mais abre no menu, e
   qualquer outro caminho (abas de baixo, barra lateral, arrastar, ‹ Mais) sai da tela. Põe no `<html>` `na-menu` (sem a

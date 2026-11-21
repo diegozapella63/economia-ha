@@ -108,6 +108,7 @@ ul,ol{padding:0;list-style:none}
 @media (prefers-color-scheme: dark){:root[data-cor="grafite"]:not([data-theme="light"]){--accent:#B5B9C2;--accent-soft:#36383A;--on-accent:#1D1E1F;--tag-bg:#B5B9C2;--tag-ink:#1D1E1F;--tag-line:rgba(0,0,0,.35);--tag-ring:#D6D8DD}}
 :root[data-theme="dark"][data-cor="grafite"]{--accent:#B5B9C2;--accent-soft:#36383A;--on-accent:#1D1E1F;--tag-bg:#B5B9C2;--tag-ink:#1D1E1F;--tag-line:rgba(0,0,0,.35);--tag-ring:#D6D8DD}
 a{color:var(--accent)}
+a.site{font-weight:600;overflow-wrap:anywhere} /* 1.46.0: o site citado abre num toque */
 button{font:inherit;cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
 .num{font-variant-numeric:tabular-nums}
@@ -617,6 +618,9 @@ li.escolhida{border-color:var(--accent) !important}
 .passos li{position:relative;padding-left:2em;font-size:14px;line-height:1.5;color:var(--muted);counter-increment:passo}
 .passos li::before{content:counter(passo);position:absolute;left:0;top:.1em;width:1.45em;height:1.45em;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
 .passos li b{color:var(--ink);font-weight:600}
+.passos-box{display:flex;flex-direction:column;gap:8px}
+.passos-box > b{font-size:14px;font-weight:600}
+.ia-st b{color:var(--ink);font-weight:600}
 /* Opções › Atalho no celular: o caminho na largura toda (inteiro também em 320 px), o Copiar embaixo */
 .copiar{display:grid;gap:8px;margin:16px 0 4px}
 .copiar label{font-size:13px;font-weight:600;color:var(--muted)}
@@ -701,6 +705,26 @@ li.escolhida{border-color:var(--accent) !important}
 .hist-mais{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--accent);background:none;color:var(--accent);font-size:20px;line-height:1;cursor:pointer}
 .hist-tirar{display:inline-flex;align-items:center;justify-content:center;padding:0}
 .hist-tirar svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+/* 1.46.0: Reposição (Mais › Reposição e o cartão Hora de repor na Minha lista) */
+.rep-form{display:flex;flex-direction:column;gap:8px}
+.rep-form > .field{width:100%}
+.rep-cada{display:flex;align-items:center;gap:8px}
+.rep-cada > label{flex:none;font-size:14px;color:var(--muted)}
+.rep-cada > input.field{flex:0 0 4.6em;width:4.6em;text-align:center}
+.rep-cada > select.field{flex:1 1 auto;min-width:0}
+.rep-lista{list-style:none;margin:0;padding:0}
+.rep-lista .hist-add small b{font-weight:600;color:var(--warn)}
+.rep-de{display:inline-block;margin-left:6px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.rep-vez{padding:12px 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.rep-vez:first-child{border-top:0;padding-top:0}
+.rep-vez:last-child{padding-bottom:0}
+.rep-vez > div:first-child{display:flex;flex-direction:column;gap:2px;min-width:0}
+.rep-vez b{font-weight:600;overflow-wrap:anywhere}
+.rep-vez small{color:var(--muted);font-size:12.5px}
+.rep-vez > .row-form{flex-wrap:nowrap}
+.rep-vez > .row-form > :is(.btn, .ghost.big){flex:1 1 50% !important;box-sizing:border-box;min-width:0 !important;padding-left:8px;padding-right:8px} /* lado a lado também em 320 px */
+@media (min-width:1000px){.rep-vez{flex-direction:row;align-items:center;justify-content:space-between}.rep-vez > .row-form{flex:none}.rep-vez > .row-form > :is(.btn, .ghost.big){flex:none !important;width:170px !important}
+  .rep-form{max-width:560px}}
 .foto-box{display:flex;flex-direction:column;gap:10px;border:1px dashed var(--accent);border-radius:12px;padding:12px}
 .arq{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 .fotos{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:10px}
@@ -944,7 +968,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
 .chat-x{flex:none;width:40px;height:40px;border:0;border-radius:50%;display:grid;place-items:center;background:var(--bg);color:var(--ink)}
 .chat-x svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
 .chat-msgs{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:14px 14px 8px;display:flex;flex-direction:column;gap:10px}
-.chat-vazio{margin:auto 4px 0;color:var(--muted);font-size:15px;line-height:1.45}
+.chat-vazio{margin:auto 4px 0;color:var(--muted);font-size:15px;line-height:1.45;text-align:center}
 .cm{max-width:88%;padding:9px 13px;border-radius:16px;font-size:15.5px;line-height:1.45;overflow-wrap:anywhere}
 .cm p{margin:0}
 .cm.eu{align-self:flex-end;background:var(--accent);color:var(--on-accent);border-bottom-right-radius:5px;white-space:pre-wrap}
@@ -961,16 +985,17 @@ html:not(.sem-ia) .so-semia{display:none!important}
 .cm.pensando i:nth-child(3){animation-delay:.3s}
 @keyframes pisca{0%,80%,100%{opacity:.25}40%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.cm.pensando i{animation:none;opacity:.6}}
-.chat-sug{padding:2px 14px 10px}
+.chat-sug{padding:2px 14px 10px;text-align:center}
 /* 1.38.1: as perguntas em linhas, quebrando, como nos outros apps (nada de rolar de lado), cada uma com o ✨ */
-.chat-sug-l{display:flex;flex-wrap:wrap;gap:8px}
+/* 1.46.0: no meio, uma por linha, como no CorrerIA e nos outros apps */
+.chat-sug-l{display:flex;flex-direction:column;align-items:center;gap:8px}
 .chat-sug-l button{display:inline-flex;align-items:center;gap:6px;max-width:100%;min-height:38px;padding:6px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font-size:14.5px;white-space:normal;text-align:left;overflow-wrap:anywhere}
 .chat-sug-l button svg{width:16px;height:16px;flex:none;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 /* 1.38.0: as perguntas prontas (Editar perguntas; com a conversa andando, pelo ✨), o clipe e os arquivos escolhidos */
 .chat-sug.aberta{margin:0 12px 8px;padding:10px;border:1px solid var(--line);border-radius:16px;max-height:42vh;overflow-y:auto}
 .chat-ed-abrir{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:6px 4px;border:0;background:none;color:var(--accent);font-size:14px;font-weight:600}
 .chat-ed-abrir svg,.chat-ed-h svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.chat-ed{display:grid;gap:8px}
+.chat-ed{display:grid;gap:8px;text-align:left}
 .chat-ed-h{display:flex;align-items:center;gap:8px;margin:0;font-weight:700;color:var(--ink)}
 .chat-ed-h svg{color:var(--accent)}
 .chat-ed-lin{display:flex;align-items:center;gap:8px;padding:2px 2px 2px 12px;border:1px solid var(--line);border-radius:12px;font-size:14.5px}
@@ -1436,6 +1461,10 @@ input.field,select.field{min-height:var(--altura)}
       <p class="sec-meta">Já tem uma lista salva? Importe o arquivo .json. Ou comece adicionando aqui embaixo o que você compra sempre.</p>
       <div class="row-form"><button type="button" class="btn" data-ir="mais">Preencher o perfil</button><button type="button" class="ghost big" data-ir="importar">Importar lista</button></div>
     </div>
+    <section class="panel" id="repAgora" aria-labelledby="h-repagora" hidden>
+      <div class="sec-head"><h2 id="h-repagora"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg></span>Hora de repor</h2><span class="chip warn" id="repAgoraN"></span></div>
+      <ul class="rep-lista" id="repAgoraLista"></ul>
+    </section>
     <section class="panel" aria-labelledby="h-lista">
       <div class="sec-head"><h2 id="h-lista"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg></span>Itens da lista</h2><button type="button" class="rm" id="limpar" hidden>Limpar lista</button></div>
       <p class="hint add-bloq" id="addBloq" hidden></p>
@@ -1520,6 +1549,7 @@ input.field,select.field{min-height:var(--altura)}
     <nav id="maisMenu" aria-label="Mais"><ul class="menu-list">
       <li><button type="button" class="menu-row" id="menu-casa" data-mais="casa"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span><span class="mb"><b>Casa</b><span>CEP, quem mora, rotina e preferências.</span></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></li>
       <li><button type="button" class="menu-row" id="menu-lojas" data-mais="lojas"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 11v9h14v-9"/><path d="M10 20v-5h4v5"/></svg></span><span class="mb"><b>Lojas</b><span>Perto de casa, clubes e cupons do app.</span></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></li>
+      <li><button type="button" class="menu-row" id="menu-reposicao" data-mais="reposicao"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg></span><span class="mb"><b>Reposição</b><span>O que comprar de novo de tempos em tempos.</span></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></li>
       <li><button type="button" class="menu-row" id="menu-config" data-mais="config"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></span><span class="mb"><b>Configurações</b><span>Integrações, dados, aparência e opções.</span></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></li>
       <li><button type="button" class="menu-row" id="sobreBtn" data-mais="sobre"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span><span class="mb"><b>Sobre</b><span>CorrerIA Code, os apps e o GitHub.</span></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></li>
     </ul></nav>
@@ -1599,6 +1629,19 @@ input.field,select.field{min-height:var(--altura)}
         </section>
       </div></div>
     </div>
+    <div class="mais-painel" id="mp-reposicao" aria-label="Reposição" hidden>
+      <section class="panel" aria-labelledby="h-rep">
+        <div class="sec-head"><h2 id="h-rep"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg></span>Itens da reposição</h2></div>
+        <p class="sec-meta">Na hora de comprar, o item aparece na Minha lista.</p>
+        <form class="rep-form" id="repForm" novalidate>
+          <input class="field" id="repNome" data-sug="repor" autocomplete="off" maxlength="120" placeholder="Ex.: Filtro de água, Ração 15 kg" aria-label="Item para repor">
+          <select class="field" id="repFonte" aria-label="Escolher de outro app" hidden></select>
+          <div class="rep-cada"><label for="repCada">A cada</label><input class="field num" id="repCada" type="text" inputmode="numeric" maxlength="3" value="30" autocomplete="off"><select class="field" id="repUn" aria-label="Dias, semanas ou meses"><option value="dia">dias</option><option value="semana">semanas</option><option value="mes">meses</option></select></div>
+          <div class="row-form"><button class="btn" type="submit" id="repSalvar">Adicionar</button><button type="button" class="ghost big" id="repCancelar" hidden>Cancelar</button></div>
+        </form>
+        <ul class="rep-lista" id="repLista"></ul>
+      </section>
+    </div>
     <div class="mais-painel" id="mp-lojas" aria-label="Lojas" hidden>
       
       <div class="cols even" id="lojasSec"><div class="col">
@@ -1673,7 +1716,7 @@ input.field,select.field{min-height:var(--altura)}
       <!-- a ordem da família: os outros apps (nenhum aqui) › CorrerIA › IA (com o Para falar) › Uso da IA ›
          as integrações daqui › Sensores -->
     <section class="panel settings" aria-labelledby="h-correria">
-      <div class="set-head"><h2 id="h-correria"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12z"/></svg></span>CorrerIA</h2><p class="sec-meta">No WhatsApp, no Claude e no Gemini: a lista, os preços e as ofertas. Põe e tira itens e anota compras.</p></div>
+      <div class="set-head"><h2 id="h-correria"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12z"/></svg></span>CorrerIA</h2><p class="sec-meta">O CorrerIA junta os apps da casa no WhatsApp, no Claude e no Gemini.</p></div>
       <div class="set-row">
         <div><h3 class="set-t"><label for="correria">Ligar a CorrerIA</label></h3><p class="sec-meta" id="correriaTxt"></p></div>
         <input type="checkbox" class="switch" id="correria">
@@ -1698,17 +1741,26 @@ input.field,select.field{min-height:var(--altura)}
         <div><h3 class="set-t"><label for="iaBusca">Para pesquisar na internet</label></h3><p class="ia-st" id="iaBuscaSt">Toque em Verificar de novo para testar.</p></div>
         <select class="field" id="iaBusca" aria-label="IA para pesquisar na internet"></select>
       </div>
-      <div class="set-row">
-        <div><h3 class="set-t"><label for="iaVoz">Para falar</label></h3><p class="ia-st" id="vozSt">Verificando o assistente de voz…</p></div>
-        <select class="field" id="iaVoz"></select>
-      </div>
       <div class="row-form"><button type="button" class="ghost big" id="iaTestar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>Verificar de novo</button></div>
       <p class="hint" id="iaGemini" hidden>Gemini: para pesquisar na internet, use um <b>assistente de conversa</b> com "Enable Google Search tool" ligado; para fotos, o Google AI Task.</p>
       </div>
       </div>
     </section>
+    <section class="panel settings so-ia" aria-labelledby="h-falar">
+      <div class="set-head"><h2 id="h-falar"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span>Falar</h2><p class="sec-meta">Quem transforma a fala em texto. Não muda o assistente de voz do Home Assistant.</p></div>
+      <p class="ia-st" id="vozSt"><span><b>Verificando…</b></span></p>
+      <div class="set-row" id="vozLinha" hidden>
+        <div><h3 class="set-t"><label for="iaVoz">Fala para texto</label></h3></div>
+        <select class="field" id="iaVoz" aria-label="Fala para texto"></select>
+      </div>
+      <div class="row-form"><button type="button" class="ghost big" id="vozTestar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>Verificar de novo</button></div>
+      <div class="passos-box" id="vozComo" hidden><b>Como configurar</b><ol class="passos">
+        <li>Com o Home Assistant Cloud, a fala para texto já vem pronta.</li>
+        <li>Sem ele, instale um motor de fala: o app Whisper (local, de graça) com a integração Wyoming, ou a fala para texto de uma IA como Google Gemini ou OpenAI.</li>
+        <li>Volte aqui, toque em Verificar de novo e escolha o motor na lista.</li></ol></div>
+    </section>
     <section class="panel settings so-ia" aria-labelledby="h-uso">
-      <div class="set-head"><h2 id="h-uso"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Uso da IA</h2><p class="sec-meta">Tokens estimados pelo tamanho do texto: o Home Assistant não informa.</p></div>
+      <div class="set-head"><h2 id="h-uso"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Uso da IA</h2><p class="sec-meta">As chamadas do app para a IA. Os tokens são estimados.</p></div>
       <div class="uso-tiles" id="usoTiles"></div>
       <div class="uso-chart" id="usoChart" role="group" aria-label="Chamadas de IA nos últimos 7 dias"></div>
       <p class="uso-cap num" id="usoCap" aria-live="polite"></p>
@@ -1718,7 +1770,7 @@ input.field,select.field{min-height:var(--altura)}
       <p class="hint" id="usoSensor"></p>
     </section>
     <section class="panel settings" aria-labelledby="h-shopee">
-      <div class="set-head"><h2 id="h-shopee"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6z"/><path d="M9 8a3 3 0 0 1 6 0"/><path d="M10 13.5c0 1 .9 1.5 2 1.5s2 .5 2 1.5-1 1.5-2 1.5-1.7-.4-2-1M14 13c-.3-.6-1-1-2-1"/></svg></span>Shopee Afiliados</h2><p class="sec-meta">Preços direto da Shopee, sem IA. App ID e senha em affiliate.shopee.com.br › Open API.</p></div>
+      <div class="set-head"><h2 id="h-shopee"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6z"/><path d="M9 8a3 3 0 0 1 6 0"/><path d="M10 13.5c0 1 .9 1.5 2 1.5s2 .5 2 1.5-1 1.5-2 1.5-1.7-.4-2-1M14 13c-.3-.6-1-1-2-1"/></svg></span>Shopee Afiliados</h2><p class="sec-meta">Preços direto da Shopee, sem IA. App ID e senha em <a class="site" href="https://affiliate.shopee.com.br/" target="_blank" rel="noopener noreferrer">affiliate.shopee.com.br</a> › Open API.</p></div>
       <div class="sh-row">
         <label for="shApp">App ID<input class="field" id="shApp" inputmode="numeric" autocomplete="off" spellcheck="false"></label>
         <label for="shSenha"><span>Senha (Secret) <span class="chip selo" id="shSenhaOk" hidden>Guardada</span></span><input class="field" id="shSenha" type="password" autocomplete="new-password" spellcheck="false"></label>
@@ -1727,7 +1779,7 @@ input.field,select.field{min-height:var(--altura)}
       <p class="ia-st" id="shSt"></p>
     </section>
     <section class="panel settings" aria-labelledby="h-ali">
-      <div class="set-head"><h2 id="h-ali"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.3 3.6 5.1 3.6 8.5s-1.2 6.2-3.6 8.5c-2.4-2.3-3.6-5.1-3.6-8.5s1.2-6.2 3.6-8.5z"/></svg></span>AliExpress Afiliados</h2><p class="sec-meta">Preços direto do AliExpress, sem IA. App Key e App Secret em openservice.aliexpress.com, com a conta de afiliado de portals.aliexpress.com.</p></div>
+      <div class="set-head"><h2 id="h-ali"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.3 3.6 5.1 3.6 8.5s-1.2 6.2-3.6 8.5c-2.4-2.3-3.6-5.1-3.6-8.5s1.2-6.2 3.6-8.5z"/></svg></span>AliExpress Afiliados</h2><p class="sec-meta">Preços direto do AliExpress, sem IA. App Key e App Secret em <a class="site" href="https://openservice.aliexpress.com/" target="_blank" rel="noopener noreferrer">openservice.aliexpress.com</a>, com a conta de afiliado de <a class="site" href="https://portals.aliexpress.com/" target="_blank" rel="noopener noreferrer">portals.aliexpress.com</a>.</p></div>
       <div class="sh-row">
         <label for="alApp">App Key<input class="field" id="alApp" inputmode="numeric" autocomplete="off" spellcheck="false"></label>
         <label for="alSenha"><span>App Secret <span class="chip selo" id="alSenhaOk" hidden>Guardada</span></span><input class="field" id="alSenha" type="password" autocomplete="new-password" spellcheck="false"></label>
@@ -1736,13 +1788,13 @@ input.field,select.field{min-height:var(--altura)}
       <p class="ia-st" id="alSt"></p>
     </section>
     <section class="panel settings" aria-labelledby="h-google">
-      <div class="set-head"><h2 id="h-google"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg></span>Google Places (opcional)</h2><p class="sec-meta">Acha as lojas pequenas que o OpenStreetMap não tem. Chave da Places API (New) em console.cloud.google.com; a cota gratuita cobre o uso.</p></div>
+      <div class="set-head"><h2 id="h-google"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg></span>Google Places (opcional)</h2><p class="sec-meta">Acha as lojas pequenas que o OpenStreetMap não tem. Chave da Places API (New) em <a class="site" href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer">console.cloud.google.com</a>; a cota gratuita cobre o uso.</p></div>
       <div class="sh-row"><label for="gKey"><span>Chave <span class="chip selo" id="gKeyOk" hidden>Guardada</span></span><input class="field" id="gKey" type="password" autocomplete="off" spellcheck="false"></label></div>
       <div class="row-form"><button type="button" class="btn" id="gSalvar">Salvar e testar</button><button type="button" class="ghost big" id="gTestar">Testar</button><button type="button" class="ghost big" id="gApagar" hidden>Apagar</button></div>
       <p class="ia-st" id="gSt"></p>
     </section>
     <section class="panel settings" aria-labelledby="h-brave">
-      <div class="set-head"><h2 id="h-brave"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></span>Brave Search (opcional)</h2><p class="sec-meta">Acha o site das lojas que o mapa não traz, sem IA. Chave grátis (2.000 buscas por mês) em api-dashboard.search.brave.com.</p></div>
+      <div class="set-head"><h2 id="h-brave"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></span>Brave Search (opcional)</h2><p class="sec-meta">Acha o site das lojas que o mapa não traz, sem IA. Chave grátis (2.000 buscas por mês) em <a class="site" href="https://api-dashboard.search.brave.com/" target="_blank" rel="noopener noreferrer">api-dashboard.search.brave.com</a>.</p></div>
       <div class="sh-row"><label for="bKey"><span>Chave <span class="chip selo" id="bKeyOk" hidden>Guardada</span></span><input class="field" id="bKey" type="password" autocomplete="off" spellcheck="false"></label></div>
       <div class="row-form"><button type="button" class="btn" id="bSalvar">Salvar e testar</button><button type="button" class="ghost big" id="bTestar">Testar</button><button type="button" class="ghost big" id="bApagar" hidden>Apagar</button></div>
       <p class="ia-st" id="bSt"></p>
@@ -1762,7 +1814,7 @@ input.field,select.field{min-height:var(--altura)}
       <p class="ia-st" id="mlSt"></p>
       <details class="ml-como"><summary>Como configurar</summary>
         <ol class="passos">
-          <li>Em <b>developers.mercadolivre.com.br</b>, entre com sua conta e crie uma aplicação (Minhas aplicações › Criar aplicação). Nome e descrição podem ser "EconomIA".</li>
+          <li>Em <b><a class="site" href="https://developers.mercadolivre.com.br/" target="_blank" rel="noopener noreferrer">developers.mercadolivre.com.br</a></b>, entre com sua conta e crie uma aplicação (Minhas aplicações › Criar aplicação). Nome e descrição podem ser "EconomIA".</li>
           <li>Em <b>URI de redirect</b>, ponha <b>https://www.google.com</b>. Nas permissões, leitura basta; se aparecer <b>offline_access</b> (acesso offline), marque: é ela que deixa o EconomIA renovar o acesso sozinho.</li>
           <li>Copie o <b>App ID</b> e a <b>Chave secreta</b> (Secret Key) para cá, com a mesma URL de retorno, e toque em Salvar.</li>
           <li>Toque em <b>Autorizar no Mercado Livre</b> e aceite. A página que abrir (o Google) tem no endereço <b>code=TG-…</b>: copie o endereço inteiro, cole aqui e toque em Conectar. O código vale só alguns minutos.</li>
@@ -1793,7 +1845,7 @@ input.field,select.field{min-height:var(--altura)}
       </div>
     </section>
     <section class="panel settings so-ia" aria-labelledby="h-sens">
-      <div class="set-head"><h2 id="h-sens"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span>Sensores no Home Assistant</h2><p class="sec-meta">As chamadas de IA, a loja mais barata para a lista e as ofertas dela, para painéis e automações.</p></div>
+      <div class="set-head"><h2 id="h-sens"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span>Sensores no Home Assistant</h2><p class="sec-meta">Para usar em painéis e automações do Home Assistant.</p></div>
       <div class="set-row">
         <div><h3 class="set-t"><label for="sensores">Criar sensores</label></h3><p class="sec-meta" id="sensoresTxt"></p></div>
         <input type="checkbox" class="switch" id="sensores">
@@ -1851,11 +1903,11 @@ input.field,select.field{min-height:var(--altura)}
     <div class="mais-painel" id="mp-aparencia" role="tabpanel" aria-labelledby="aba-aparencia" hidden>
       
       <section class="panel settings" aria-labelledby="h-tema">
-      <div class="set-head"><h2 id="h-tema"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor"/></svg></span>Tema</h2><p class="sec-meta">Vale só para este aparelho.</p></div>
+      <div class="set-head"><h2 id="h-tema"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor"/></svg></span>Tema</h2><p class="sec-meta">Cada aparelho guarda a sua escolha.</p></div>
       <div class="seg temas" id="tema" role="radiogroup" aria-label="Tema"></div>
     </section>
     <section class="panel settings" aria-labelledby="h-cor">
-      <div class="set-head"><h2 id="h-cor"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0 0 18c1.1 0 1.8-.8 1.8-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14.5" cy="7" r="1"/></svg></span>Cor do app</h2><p class="sec-meta">Em todos os aparelhos da casa.</p></div>
+      <div class="set-head"><h2 id="h-cor"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0 0 18c1.1 0 1.8-.8 1.8-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14.5" cy="7" r="1"/></svg></span>Cor do app</h2><p class="sec-meta">Vale para todos os aparelhos.</p></div>
       <div class="set-row cor-dia">
         <div><h3 class="set-t"><label for="corDia">Cor do dia</label></h3><p class="sec-meta">Muda a cor do app todo dia.</p></div>
         <input type="checkbox" class="switch" id="corDia" role="switch">
@@ -1887,6 +1939,17 @@ input.field,select.field{min-height:var(--altura)}
       <div class="set-row so-ia">
         <div><h3 class="set-t"><label for="opEncartes">Ler o encarte das lojas sem preço</label></h3><p class="sec-meta">A IA lê o encarte do site das lojas sem preço (até 2 por busca).</p></div>
         <input type="checkbox" class="switch" id="opEncartes">
+      </div>
+    </section>
+      <section class="panel settings" aria-labelledby="h-oprep">
+      <div class="set-head"><h2 id="h-oprep"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg></span>Reposição</h2><p class="sec-meta">Escolher em Mais › Reposição um item de outro app.</p></div>
+      <div class="set-row">
+        <div><h3 class="set-t"><label for="opRepCron">Remédios do CronologIA</label></h3><p class="ia-st" id="opRepCronSt"></p></div>
+        <input type="checkbox" class="switch" id="opRepCron">
+      </div>
+      <div class="set-row">
+        <div><h3 class="set-t"><label for="opRepInv">Consumíveis do InventarIA</label></h3><p class="ia-st" id="opRepInvSt"></p></div>
+        <input type="checkbox" class="switch" id="opRepInv">
       </div>
     </section>
       <section class="panel settings" id="opAtalho" aria-labelledby="h-opatalho" hidden>
@@ -2594,8 +2657,8 @@ dialog.ss-wrap::backdrop{background:transparent}
   var VIEWS = ['lista', 'roteiro', 'ofertas', 'mais'];
   var TITULOS = {lista:'Minha lista', roteiro:'Roteiro', ofertas:'Ofertas', mais:'Mais'};
   // Mais é um menu: as telas (ui.maisTela; '' é o menu) e as abas de Configurações (ui.maisAba)
-  var MAIS_IDS = ['casa', 'lojas', 'config', 'sobre'];
-  var MAIS_TELAS = {casa:'Casa', lojas:'Lojas', config:'Configurações', sobre:'Sobre'};
+  var MAIS_IDS = ['casa', 'lojas', 'reposicao', 'config', 'sobre'];
+  var MAIS_TELAS = {casa:'Casa', lojas:'Lojas', reposicao:'Reposição', config:'Configurações', sobre:'Sobre'};
   var CONFIG_ABAS = ['integracoes', 'dados', 'aparencia', 'opcoes'];
   // Até a 1.2, Mais era em abas (maisAba): Casa e Lojas viraram telas e o resto foi para Configurações. Quem abre o app
   // atualizado em Mais volta no mesmo lugar, já no caminho novo.
@@ -2702,7 +2765,18 @@ dialog.ss-wrap::backdrop{background:transparent}
       sensores: c.sensores === true,
       correria: c.correria === true,
       opcoes: {itens_sem_preco:(c.opcoes || {}).itens_sem_preco !== false, encartes_auto:(c.opcoes || {}).encartes_auto !== false, lojas_diretas:(c.opcoes || {}).lojas_diretas !== false, folhetos:(c.opcoes || {}).folhetos !== false,
-        listas:(c.opcoes || {}).listas === true}
+        listas:(c.opcoes || {}).listas === true},
+      // 1.46.0, Reposição: o que comprar de novo de tempos em tempos ({id, nome, cada, unidade: dia|semana|mes, desde: o dia
+      // em que o tempo começou a contar, origem?: cronologia|inventario}) e as chaves de Opções (repor), desligadas de início
+      reposicao: arr(c.reposicao).filter(function(x){ return x && String(x.nome || '').trim(); }).map(function(x, i){
+        var n = Math.round(Number(x.cada));
+        var r = {id:/^[a-z0-9]{4,20}$/.test(String(x.id || '')) ? String(x.id) : 'r' + i + Date.now().toString(36), nome:String(x.nome).trim().slice(0, 120),
+          cada:n >= 1 && n <= 365 ? n : 30, unidade:x.unidade === 'semana' || x.unidade === 'mes' ? x.unidade : 'dia',
+          desde:/^\d{4}-\d{2}-\d{2}$/.test(String(x.desde || '')) ? String(x.desde) : hojeSP()};
+        if (x.origem === 'cronologia' || x.origem === 'inventario') r.origem = x.origem;
+        return r;
+      }).slice(0, 200),
+      repor: {cronologia:(c.repor || {}).cronologia === true, inventario:(c.repor || {}).inventario === true}
     };
   }
 
@@ -2850,7 +2924,8 @@ dialog.ss-wrap::backdrop{background:transparent}
     $('maisMenu').hidden = !menu;
     $('maisAbas').hidden = t !== 'config';
     if ($('maisAbas').parentElement.classList.contains('abas-wrap')){ $('maisAbas').parentElement.hidden = t !== 'config'; if (t === 'config') setTimeout(marcaAbas, 0); }
-    ['casa', 'lojas', 'sobre'].forEach(function(x){ $('mp-' + x).hidden = t !== x; });
+    ['casa', 'lojas', 'reposicao', 'sobre'].forEach(function(x){ $('mp-' + x).hidden = t !== x; });
+    if (t === 'reposicao' && typeof carregaRepFontes === 'function'){ repEditar(null); carregaRepFontes(); }
     if (t === 'config') abaConfig(ui.maisAba); else CONFIG_ABAS.forEach(function(x){ $('mp-' + x).hidden = true; });
     $('maisPe').hidden = t === 'sobre';  // em Sobre, a versão está em Este app
     marcarTela();
@@ -2868,6 +2943,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     if (t.offsetParent){ var l = b.offsetLeft - 8, r = b.offsetLeft + b.offsetWidth + 8; if (l < t.scrollLeft) t.scrollLeft = l; else if (r > t.scrollLeft + t.clientWidth) t.scrollLeft = r - t.clientWidth; }
     if (k === 'integracoes' && USO) carregaUso();
     if (k === 'opcoes' && typeof carregaDiretas === 'function') carregaDiretas();
+    if (k === 'opcoes' && typeof carregaRepFontes === 'function') carregaRepFontes();
     if (k === 'dados') carregaBackups();
     if (k === 'integracoes' && typeof carregaShopee === 'function') carregaShopee();
   }
@@ -2895,7 +2971,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.45.0';
+  var VERSAO = '1.46.0';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -2990,7 +3066,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   }, {passive:true});
   document.addEventListener('touchcancel', function(){ arraste = null; }, {passive:true});
 
-  function tudo(){ corDaCasa(); pintaOfertasTela(); pintaLista(); pintaLojas(); pintaContas(); pintaPerfil(); pintaLado(); pintaHist(); }
+  function tudo(){ corDaCasa(); pintaOfertasTela(); pintaLista(); pintaLojas(); pintaContas(); pintaPerfil(); pintaLado(); pintaHist(); pintaReposicao(); }
   // A cor do app vale para a casa toda (1.9.0), como nos outros apps: fica no config.json (cor, cor_dia). O aparelho guarda
   // uma cópia (ui.cor, ui.corDia) só para o script do <head> pintar sem piscar. Na primeira vez, a casa adota a deste aparelho.
   // só a cor vai para o servidor (api/cor), sem mexer no resto da configuração; fora do add-on, fica no exemplo
@@ -3965,7 +4041,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     salvar('Lista ' + nome + ' criada'); pintaLista();
   });
   function pintaLista(){
-    pintaListas();
+    pintaListas(); pintaReposicao();  // 1.46.0: o Hora de repor diz o que já está na lista
     var aberta = listaAtual(), pode = podePor();
     $('addArea').hidden = !pode; $('addBloq').hidden = pode; $('addBloq').textContent = pode ? '' : porBloqueado();
     var todos = estado.lista.map(function(it, i){ var r = ritmo(it.compras); return {it:it, i:i, r:r}; }).filter(function(x){ return naListaAtual(x.it); });
@@ -4575,27 +4651,30 @@ dialog.ss-wrap::backdrop{background:transparent}
     var ok = vozPronta();
     [].forEach.call(document.querySelectorAll('.so-voz'), function(el){ el.hidden = !ok; });
     if (CHAT) pintaEnvio();  // na Conversa, o microfone divide o botão com o Enviar
+    // 1.46.0: o cartão Falar com os textos dos outros apps (Pronto para ouvir · Transcreve com…, Automático: nome, Como configurar)
     var el = $('vozSt'), v = VOZ_ST, sel = $('iaVoz'), ops = arr(v && v.opcoes);
     // a escolha como o servidor entende (uma de antes, de um assistente, vira o motor dele: voz.py, igual ao do GerencIA)
     var escolhida = (v && v.selecionada) || estado.ia.voz || '';
-    sel.innerHTML = '<option value="">Padrão do Home Assistant</option>'
-      + ops.map(function(o){ return '<option value="' + esc(o.id) + '">' + esc(o.nome + (o.preferido ? ' · preferido' : '')) + '</option>'; }).join('')
-      + (escolhida && !ops.some(function(o){ return o.id === escolhida; }) ? '<option value="' + esc(escolhida) + '">' + esc(escolhida) + ' (não existe mais)</option>' : '');
+    if (!ops.some(function(o){ return o.id === escolhida; })) escolhida = '';  // a que sumiu do Home Assistant: vale o automático
+    sel.innerHTML = '<option value="">Automático' + (!escolhida && v && v.pronta && v.nome ? ': ' + esc(v.nome) : '') + '</option>'
+      + ops.map(function(o){ return '<option value="' + esc(o.id) + '">' + esc(o.nome) + '</option>'; }).join('');
     sel.value = escolhida;
-    sel.disabled = !ops.length;
+    $('vozLinha').hidden = !ops.length;
+    $('vozComo').hidden = !v || !!v.pronta;
     el.className = 'ia-st' + (v && v.pronta ? ' ok' : v && v.pronta === false ? ' erro' : '');
-    el.textContent = !v ? 'Verificando o assistente de voz…'
-      : v.pronta ? (v.escolha_sumiu ? 'A fala para texto escolhida não existe mais; usando ' : 'Usando ') + (v.nome || 'a fala para texto do Home Assistant') + '. O microfone fica no alto da tela.'
-        : (v.motivo || 'Não está pronto.');
+    var st = !v ? ['Verificando…', ''] : v.pronta
+      ? ['Pronto para ouvir', 'Transcreve com ' + esc(v.nome || 'a fala para texto do Home Assistant') + '.' + (v.escolha_sumiu ? ' O escolhido não foi encontrado: usando o automático.' : '')]
+      : ['Sem fala para texto', esc(v.motivo || '')];
+    el.innerHTML = '<span><b>' + st[0] + '</b>' + (st[1] ? ' · ' + st[1] : '') + '</span>';
   }
-  function carregaVoz(){
+  function carregaVoz(novo){  // novo: o Verificar de novo (o servidor lê os motores outra vez)
     if (!iaOn()){ VOZ_ST = null; pintaVoz(); return; }
     if (MODO !== 'addon'){
       var ops = [{id:'stt.home_assistant_cloud', nome:'Home Assistant Cloud', preferido:true}, {id:'stt.google_generative_ai_stt', nome:'Google Generative AI STT', preferido:false}];
       var u = ops.filter(function(o){ return o.id === estado.ia.voz; })[0] || ops[0];
       VOZ_ST = {pronta:true, nome:u.nome, opcoes:ops, escolha:estado.ia.voz, selecionada:u.id === estado.ia.voz ? u.id : ''}; pintaVoz(); return;
     }
-    fetch('api/voz/status', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){ VOZ_ST = j; pintaVoz(); })
+    fetch('api/voz/status' + (novo === true ? '?novo=1' : ''), {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){ VOZ_ST = j; pintaVoz(); })
       .catch(function(){ VOZ_ST = {pronta:false, motivo:'Não consegui falar com o add-on.'}; pintaVoz(); });
   }
   function pintaGrav(){
@@ -5554,6 +5633,166 @@ dialog.ss-wrap::backdrop{background:transparent}
     irPara(ir); window.scrollTo(0, 0);
   });
 
+  // ===== Reposição (1.46.0) =====
+  // O que se compra de tempos em tempos (Mais › Reposição): cada item com o seu "A cada" (dias, semanas ou meses). O tempo
+  // conta de `desde`; na hora, o item aparece no cartão Hora de repor, no alto da Minha lista, com Pôr na lista e Já tenho
+  // (os dois recomeçam a contagem de hoje). Com a chave ligada em Opções, o item pode ser escolhido entre os remédios do
+  // CronologIA e os consumíveis do InventarIA (api/reposicao/fontes): fica guardado só o nome e de qual app veio.
+  var REP_UN = {dia:['dia', 'dias'], semana:['semana', 'semanas'], mes:['mês', 'meses']};
+  var REP_APP = {cronologia:'CronologIA', inventario:'InventarIA'}, REP_GRUPO = {cronologia:'Remédios do CronologIA', inventario:'Consumíveis do InventarIA'};
+  var REP_EX = {cronologia:[{nome:'Vitamina D', detalhe:'1 cápsula'}, {nome:'Antialérgico', detalhe:'1 comprimido'}], inventario:[{nome:'Pilhas AA', detalhe:'Casa'}, {nome:'Pasta térmica', detalhe:'Informática'}]};
+  var REP_F = null, REP_EDIT = null, REP_ORIGEM = '';
+  var IC_X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>';
+  function repCadaTxt(r){ return 'A cada ' + r.cada + ' ' + REP_UN[r.unidade][r.cada > 1 ? 1 : 0]; }
+  function repProxima(r){
+    var a = r.desde.split('-').map(Number), d;
+    if (r.unidade === 'mes'){  // o mesmo dia do mês (ou o último dele: 31 de janeiro + 1 mês = 28 de fevereiro)
+      d = new Date(Date.UTC(a[0], a[1] - 1 + r.cada, 1));
+      d.setUTCDate(Math.min(a[2], new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate()));
+    } else d = new Date(Date.UTC(a[0], a[1] - 1, a[2] + r.cada * (r.unidade === 'semana' ? 7 : 1)));
+    return d.toISOString().slice(0, 10);
+  }
+  function repNaHora(r){ return diasAte(repProxima(r)) <= 0; }
+  function repQuando(r){
+    var n = diasAte(repProxima(r));
+    return n <= 0 ? '<b>Hora de repor</b>' : n === 1 ? 'amanhã' : n <= 60 ? 'em ' + n + ' dias' : 'em ' + dataBR(repProxima(r));
+  }
+  function repFontes(){  // os itens de cada app com a chave ligada (no exemplo, uma casa inventada)
+    var f = MODO === 'addon' ? REP_F || {} : {cronologia:{tem:true, itens:REP_EX.cronologia, aviso:''}, inventario:{tem:true, itens:REP_EX.inventario, aviso:''}};
+    var out = {};
+    ['cronologia', 'inventario'].forEach(function(app){
+      var x = f[app] || {};
+      out[app] = {tem:!!x.tem, aviso:String(x.aviso || ''), itens:estado.repor[app] ? arr(x.itens) : [], lido:MODO !== 'addon' || !!REP_F};
+    });
+    return out;
+  }
+  function carregaRepFontes(){
+    if (MODO !== 'addon'){ pintaReposicao(); pintaRepOpcoes(); return; }
+    fetch('api/reposicao/fontes', {cache:'no-store'}).then(function(r){ return r.json(); })
+      .then(function(j){ REP_F = j && typeof j === 'object' ? j : {}; pintaReposicao(); pintaRepOpcoes(); })
+      .catch(function(){ REP_F = REP_F || {}; pintaReposicao(); pintaRepOpcoes(); });
+  }
+  function pintaRepOpcoes(){
+    if (!$('opRepCron')) return;
+    var f = repFontes();
+    [['cronologia', 'opRepCron', 'remédio', 'remédios', 'O CronologIA não está neste Home Assistant.'], ['inventario', 'opRepInv', 'consumível', 'consumíveis', 'O InventarIA não está neste Home Assistant.']].forEach(function(x){
+      var on = estado.repor[x[0]], a = f[x[0]], n = a.itens.length;
+      $(x[1]).checked = on;
+      $(x[1] + 'St').textContent = !a.lido ? '' : !a.tem ? x[4] : !on ? 'Desligado.' : a.aviso ? a.aviso : n ? n + ' ' + x[n > 1 ? 3 : 2] + '.' : 'Nenhum ' + x[2] + ' cadastrado.';
+      $(x[1] + 'St').className = 'ia-st' + (a.lido && a.tem && on ? (a.aviso ? ' erro' : ' ok') : '');  // o ponto: ligado e lendo, ou o que falta no outro app
+    });
+  }
+  [['opRepCron', 'cronologia'], ['opRepInv', 'inventario']].forEach(function(x){
+    $(x[0]).addEventListener('change', function(){
+      estado.repor[x[1]] = this.checked;
+      var p = salvar(REP_GRUPO[x[1]] + (this.checked ? ': ligado' : ': desligado'));
+      pintaRepOpcoes(); pintaReposicao();
+      if (p && p.then) p.then(carregaRepFontes); else carregaRepFontes();  // o servidor só lê o outro app com a chave já gravada
+    });
+  });
+  function pintaReposicao(){
+    if (!estado || !$('repLista')) return;
+    var todos = estado.reposicao.slice().sort(function(a, b){ return utc(repProxima(a)) - utc(repProxima(b)) || a.nome.localeCompare(b.nome, 'pt-BR'); });
+    // Mais › Reposição
+    $('repLista').innerHTML = todos.map(function(r){
+      return '<li class="hist-row"><button type="button" class="hist-add" data-rep="' + r.id + '" aria-label="Editar ' + esc(r.nome) + '"><b>' + esc(r.nome) + (r.origem ? '<span class="rep-de">' + REP_APP[r.origem] + '</span>' : '') + '</b>'
+        + '<small>' + repCadaTxt(r) + ' · ' + repQuando(r) + '</small></button>'
+        + '<button type="button" class="hist-mais hist-tirar" data-rep-rm="' + r.id + '" aria-label="Apagar ' + esc(r.nome) + ' da reposição" title="Apagar">' + IC_X + '</button></li>';
+    }).join('');
+    $('repLista').hidden = !todos.length;
+    // escolher de outro app: só com alguma chave ligada e algo para escolher
+    var f = repFontes(), tem = {}, grupos = '';
+    estado.reposicao.forEach(function(r){ if (!REP_EDIT || r.id !== REP_EDIT) tem[norm(r.nome)] = true; });
+    ['cronologia', 'inventario'].forEach(function(app){
+      var ops = f[app].itens.filter(function(i){ return i && i.nome && !tem[norm(i.nome)]; });
+      if (ops.length) grupos += '<optgroup label="' + REP_GRUPO[app] + '">' + ops.map(function(i){
+        return '<option value="' + app + '|' + esc(i.nome) + '">' + esc(i.nome) + (i.detalhe ? ' · ' + esc(i.detalhe) : '') + '</option>'; }).join('') + '</optgroup>';
+    });
+    $('repFonte').hidden = !grupos;
+    $('repFonte').innerHTML = '<option value="">Escolher de outro app</option>' + grupos;
+    $('repSalvar').lastChild.textContent = REP_EDIT ? 'Salvar' : 'Adicionar';
+    $('repCancelar').hidden = !REP_EDIT;
+    // Minha lista: o cartão Hora de repor
+    var vez = todos.filter(repNaHora);
+    $('repAgora').hidden = !vez.length;
+    $('repAgoraN').textContent = vez.length + (vez.length > 1 ? ' itens' : ' item');
+    $('repAgoraLista').innerHTML = vez.map(function(r){
+      var na = itemDaLista(r.nome) >= 0;
+      return '<li class="rep-vez"><div><b>' + esc(r.nome) + '</b><small>' + repCadaTxt(r) + (na ? ' · já está na lista' : '') + '</small></div>'
+        + '<div class="row-form"><button type="button" class="btn" data-rep-por="' + r.id + '"><svg class="b-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Pôr na lista</button>'
+        + '<button type="button" class="ghost big" data-rep-tenho="' + r.id + '"><svg class="b-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Já tenho</button></div></li>';
+    }).join('');
+  }
+  function repDe(id){ return estado.reposicao.filter(function(r){ return r.id === id; })[0]; }
+  function repEditar(r){
+    REP_EDIT = r ? r.id : null; REP_ORIGEM = r && r.origem ? r.origem : '';
+    $('repNome').value = r ? r.nome : ''; $('repCada').value = r ? r.cada : 30; $('repUn').value = r ? r.unidade : 'dia';
+    pintaReposicao();
+  }
+  SUG_FONTES.repor = function(inp){  // o que já passou pela lista e o que os outros apps têm, menos o que já está na Reposição
+    var q = norm(inp.value), tem = {}, f = repFontes();
+    if (q.length < 2) return [];
+    estado.reposicao.forEach(function(r){ tem[norm(r.nome)] = true; });
+    return estado.lista.map(function(i){ return i.produto; }).concat(ordemHist().map(function(x){ return x.produto; }))
+      .concat(f.cronologia.itens.concat(f.inventario.itens).map(function(i){ return i.nome; })).filter(function(v){ return v && !tem[norm(v)]; });
+  };
+  $('repFonte').addEventListener('change', function(){
+    var v = this.value, i = v.indexOf('|'); if (i < 0) return;
+    $('repNome').value = v.slice(i + 1); REP_ORIGEM = v.slice(0, i);
+    if (REP_ORIGEM === 'cronologia' && !REP_EDIT){ $('repCada').value = 30; $('repUn').value = 'dia'; }
+    this.value = '';
+  });
+  $('repNome').addEventListener('input', function(){  // o nome mudado à mão deixa de ser o do outro app
+    var k = norm(this.value), f = repFontes();
+    if (REP_ORIGEM && !f[REP_ORIGEM].itens.some(function(i){ return norm(i.nome) === k; })) REP_ORIGEM = '';
+  });
+  $('repForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var nome = $('repNome').value.replace(/\s+/g, ' ').trim().slice(0, 120), n = Math.round(Number(String($('repCada').value).replace(',', '.'))), un = $('repUn').value;
+    if (!nome){ toast('Escreva o item.'); $('repNome').focus(); return; }
+    if (!(n >= 1 && n <= 365)){ toast('A cada quanto? De 1 a 365.'); $('repCada').focus(); return; }
+    var igual = estado.reposicao.filter(function(r){ return norm(r.nome) === norm(nome) && r.id !== REP_EDIT; })[0];
+    if (igual){ toast('"' + igual.nome + '" já está na reposição'); return; }
+    var r = REP_EDIT ? repDe(REP_EDIT) : null;
+    if (r){ r.nome = nome; r.cada = n; r.unidade = REP_UN[un] ? un : 'dia'; if (REP_ORIGEM) r.origem = REP_ORIGEM; else delete r.origem; }
+    else {
+      if (estado.reposicao.length >= 200){ toast('A reposição chegou a 200 itens.'); return; }
+      r = {id:'r' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36), nome:nome, cada:n, unidade:REP_UN[un] ? un : 'dia', desde:hojeSP()};
+      if (REP_ORIGEM) r.origem = REP_ORIGEM;
+      estado.reposicao.push(r);
+    }
+    var novo = !REP_EDIT;
+    sugFechar(); repEditar(null);
+    salvar(novo ? '"' + nome + '" volta ' + repQuando(r).replace(/<[^>]+>/g, '') : 'Salvo');
+  });
+  $('repCancelar').addEventListener('click', function(){ repEditar(null); });
+  $('repLista').addEventListener('click', function(e){
+    var rm = e.target.closest('[data-rep-rm]'), ed = e.target.closest('[data-rep]');
+    if (rm){
+      var x = repDe(rm.dataset.repRm); if (!x) return;
+      estado.reposicao = estado.reposicao.filter(function(r){ return r !== x; });
+      if (REP_EDIT === x.id) repEditar(null); else pintaReposicao();
+      salvar('"' + x.nome + '" saiu da reposição');
+      return;
+    }
+    if (ed && repDe(ed.dataset.rep)){ repEditar(repDe(ed.dataset.rep)); $('repForm').scrollIntoView({block:'nearest'}); }
+  });
+  $('repAgoraLista').addEventListener('click', function(e){
+    var por = e.target.closest('[data-rep-por]'), tenho = e.target.closest('[data-rep-tenho]');
+    var r = repDe(por ? por.dataset.repPor : tenho ? tenho.dataset.repTenho : ''); if (!r) return;
+    var msg;
+    if (por){
+      if (itemDaLista(r.nome) >= 0) msg = '"' + r.nome + '" já está na lista';
+      else {
+        if (!podePor()){ toast(porBloqueado()); return; }
+        msg = '"' + r.nome + '" ' + (entraNaLista(r.nome) ? 'voltou para a lista' : 'entrou na lista');
+      }
+    }
+    r.desde = hojeSP();
+    salvar(msg || '"' + r.nome + '" volta ' + repQuando(r).replace(/<[^>]+>/g, ''));
+    pintaLista(); pintaOfertasTela(); pintaHist(); pintaLado(); pintaReposicao();
+  });
+
   // ===== Lojas =====
   // loja que a busca achou perto, mas sem nenhum preço (nem oferta, nem item da lista)
   // as lojas do raio que a última busca deixou sem preço nenhum
@@ -6261,6 +6500,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     $('sensLista').hidden = !estado.sensores;
     $('opItens').checked = estado.opcoes.itens_sem_preco; $('opEncartes').checked = estado.opcoes.encartes_auto; $('opListas').checked = estado.opcoes.listas;
     $('opDiretas').checked = estado.opcoes.lojas_diretas; $('opFolhetos').checked = estado.opcoes.folhetos;
+    pintaRepOpcoes();
     $('onEntrega').checked = estado.online.mercados_entrega;
     pintaEntregaKm();
     pintaEtapas();
@@ -6723,7 +6963,7 @@ dialog.ss-wrap::backdrop{background:transparent}
       openai: 'OpenAI: consumo e custo em <a href="https://platform.openai.com/usage" target="_blank" rel="noopener">platform.openai.com/usage</a>.',
       anthropic: 'Claude: consumo e custo no <a href="https://platform.claude.com/usage" target="_blank" rel="noopener">Claude Console</a>; o saldo dos créditos, em <a href="https://platform.claude.com/settings/billing" target="_blank" rel="noopener">Billing</a>.'
     };
-    var provs = provedoresIA(ids), txt = provs.length ? provs.map(function(k){ return NOTAS[k]; }).join('<br>') : 'Consumo exato e custo: no painel do provedor da sua IA.';
+    var provs = provedoresIA(ids), txt = provs.length ? provs.map(function(k){ return NOTAS[k]; }).join('<br>') : 'O consumo exato fica no painel do provedor da IA.';
     $('usoProv').innerHTML = txt;
     $('usoSensor').innerHTML = estado.sensores
       ? ''
@@ -6781,9 +7021,10 @@ dialog.ss-wrap::backdrop{background:transparent}
     setTimeout(function(){ testaIA('fotos'); }, 800);
   });
   $('iaTestar').addEventListener('click', function(){ carregaIAs(); testaIA('busca'); testaIA('fotos'); carregaVoz(); });
+  $('vozTestar').addEventListener('click', function(){ VOZ_ST = null; pintaVoz(); carregaVoz(true); });
   $('iaVoz').addEventListener('change', function(){
     estado.ia.voz = this.value; VOZ_ST = null; pintaVoz();
-    salvar('Para falar: ' + this.options[this.selectedIndex].text);
+    salvar('Fala para texto: ' + this.options[this.selectedIndex].text);
     setTimeout(carregaVoz, 800);
   });
 
@@ -7124,7 +7365,8 @@ dialog.ss-wrap::backdrop{background:transparent}
     edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>', phone: '<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>'
   };
   function svgT(n){ return '<svg class="t-ic" viewBox="0 0 24 24" aria-hidden="true">' + (T_IC[n] || T_IC.toggle) + '</svg>'; }
-  var T_PAL = [[/CorrerIA/, 'zap'], [/^Usar IA/, 'spark'], [/buscar ofertas|pesquisar na internet/i, 'search'], [/ler fotos/i, 'image'], [/falar/i, 'mic'], [/^Para conversar/, 'chat'],
+  T_IC.pill = '<path d="M10.5 20.5a5 5 0 0 1-7-7l9-9a5 5 0 0 1 7 7z"/><path d="M8.5 8.5l7 7"/>'; T_IC.box = '<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>';
+  var T_PAL = [[/^Remédios/, 'pill'], [/^Consumíveis/, 'box'], [/CorrerIA/, 'zap'], [/^Usar IA/, 'spark'], [/buscar ofertas|pesquisar na internet/i, 'search'], [/ler fotos/i, 'image'], [/falar|^Fala para texto/i, 'mic'], [/^Para conversar/, 'chat'],
     [/^Sincronizar/, 'list'], [/novos/i, 'plus'], [/acabando/i, 'clock'], [/sensores/i, 'activity'], [/Cor do dia/, 'calendar'],
     [/lojas|Lojas|loja/, 'store'], [/folhetos|encartes|Encartes/i, 'file'], [/listas|Listas/, 'list'], [/itens|Itens/, 'tag'], [/App ID|App Key|ID|Chave|Senha|Token|Secret/i, 'key'],
     [/CEP|endereço|Onde|km/i, 'pin'], [/entrega|frete|online/i, 'truck'], [/Nome|nome/, 'edit'], [/Telefone|WhatsApp/i, 'phone'], [/Quem|pessoa/i, 'user']];
@@ -7150,7 +7392,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   T_IC.upload = '<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>'; T_IC.columns = '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/>';
   var B_PAL = [[/^Salvar|^Guardar/, 'check'], [/^Testar/, 'refresh'], [/^Apagar|^Limpar|^Tirar/, 'trash'], [/^Conectar/, 'link'], [/^Cancelar|^Fechar/, 'x'],
     [/^Adicionar|^Pôr|^Nova/, 'plus'], [/IA$|^Ler/, 'spark'], [/^Buscar|^Procurar/, 'search'], [/^Importar/, 'upload'], [/^Comparar/, 'columns'],
-    [/^Preencher/, 'edit'], [/^Completa|^Resumida/, 'list']];
+    [/^Preencher/, 'edit'], [/^Completa|^Resumida/, 'list'], [/^Já /, 'check']];
   function iconesBotoes(raiz){
     Array.prototype.forEach.call((raiz || document).querySelectorAll('button'), function(b){
       if (b.querySelector('svg') || b.closest('.tabbar, .cmp-dia, .uso-chart')) return;
@@ -7202,6 +7444,9 @@ dialog.ss-wrap::backdrop{background:transparent}
     $('hello').innerHTML = '<span class="brand">' + ICONE_APP + 'Econom<span>IA</span></span>' + (usuario ? '<span class="eb-sep"> · </span>Olá, ' + esc(usuario) : '');
     pintaSync(); tudo(); irPara(ui.view, ui.maisTela);
     carregaListas(); carregaIAs(); carregaUso(); carregaVoz();
+    // 1.46.0: a Reposição olha o dia de hoje: com a página aberta de um dia para o outro, o cartão aparece ao voltar a ela
+    document.addEventListener('visibilitychange', function(){ if (!document.hidden) pintaReposicao(); });
+    setInterval(function(){ if (!document.hidden) pintaReposicao(); }, 600000);
     if (MODO === 'addon'){
       testaIA('fotos');
       acompanhaBusca(true);
