@@ -446,7 +446,7 @@ MAX_BACKUPS = 10
 ARQ_BACKUP = ("config.json", "ofertas.json", "comparacoes.json")
 BACKUP_RE = re.compile(r"^economia-(\d{8})-(\d{6})\.zip$")
 # no Começar do zero ficam só os ajustes (IA, integrações, opções, sensores, a cor); a lista, o perfil, as lojas e o resto saem
-FICA_NO_ZERO = ("usar_ia", "ia", "sensores", "correria", "opcoes", "sync", "cor", "cor_dia")
+FICA_NO_ZERO = ("usar_ia", "ia", "sensores", "correria", "opcoes", "repor", "sync", "cor", "cor_dia")  # repor: as chaves de Opções › Reposição
 
 
 def share_ok():
@@ -597,6 +597,11 @@ def ler_planilha(dado):
 
 
 def aplicar_diario(cfg, d):
+    if d["tipo"] == "repor":  # 1.46.1: um item da Reposição posto, mudado ou reposto pela CorrerIA (o item inteiro, pelo id ou pelo nome)
+        novo = d["item"]
+        outros = [r for r in cfg.get("reposicao") or [] if not (isinstance(r, dict) and (r.get("id") == novo["id"] or norm(r.get("nome")) == norm(novo["nome"])))]
+        cfg["reposicao"] = outros + [dict(novo)]
+        return
     lista = cfg.setdefault("lista", [])
     k = norm(d["produto"])
     idx = {norm(nome_item(i)): i for i in lista if isinstance(i, dict)}
@@ -7902,8 +7907,8 @@ CORRERIA_ASSUNTO = ("compras da casa: a lista de compras, o preço de cada item 
 CORRERIA_INSTRUCOES = (
     "EconomIA: a lista de compras da casa e os preços dos mercados, farmácias e pet shops do bairro e online, da última busca "
     "de preços (que roda no app). Valores em reais e datas no formato AAAA-MM-DD. Comece por economia_lista; economia_preco "
-    "diz onde um produto está mais barato. Use o nome do item como está na lista. Antes de gravar, diga à pessoa o que vai "
-    "ser feito.")
+    "diz onde um produto está mais barato. Use o nome do item como está na lista. economia_reposicao mostra o que a casa "
+    "compra de tempos em tempos e o que está na hora de repor. Antes de gravar, diga à pessoa o que vai ser feito.")
 CATS_CORRERIA = {"farmacias": "Farmácias", "mercados": "Mercados", "petshops": "Pet shops", "online": "Online"}
 MAX_OFERTAS_CORRERIA = 50
 
@@ -7953,6 +7958,22 @@ FERRAMENTAS_CORRERIA = [
      "descricao": "Anota que um item da lista foi comprado (hoje, ou na data dada). As compras dizem de quanto em quanto "
                   "tempo o item acaba.",
      "entrada": _obj({"produto": _DO_ITEM, "data": {"type": "string", "description": "AAAA-MM-DD; sem data, hoje."}}, ["produto"])},
+    # 1.46.1: a Reposição (Mais › Reposição)
+    {"nome": "reposicao", "titulo": "Reposição", "grava": False, "apaga": False,
+     "descricao": "O que a casa compra de tempos em tempos: cada item com o seu intervalo (a cada N dias, semanas ou meses) e "
+                  "quando volta; primeiro os que estão na hora de repor.",
+     "entrada": _obj({})},
+    {"nome": "repor", "titulo": "Pôr na reposição", "grava": True, "apaga": False,
+     "descricao": "Põe um item na Reposição com o intervalo dado, ou muda o intervalo de um que já está lá (o tempo dele "
+                  "continua contando de onde estava). Na hora, o item aparece no app para comprar.",
+     "entrada": _obj({"item": _PRODUTO,
+                      "a_cada": {"type": "integer", "minimum": 1, "maximum": 365, "description": "De quanto em quanto tempo."},
+                      "unidade": {"type": "string", "enum": ["dias", "semanas", "meses"], "description": "A unidade do intervalo (padrão: dias)."}},
+                     ["item", "a_cada"])},
+    {"nome": "reposto", "titulo": "Reposto", "grava": True, "apaga": False,
+     "descricao": "Recomeça de hoje a contagem de um item da Reposição (foi comprado, ou a casa ainda tem). Para pôr o item na "
+                  "lista de compras, use economia_por_na_lista.",
+     "entrada": _obj({"item": {"type": "string", "description": "O item, com o nome como está na Reposição (de economia_reposicao)."}}, ["item"])},
 ]
 
 
@@ -8331,8 +8352,100 @@ def _ferr_roteiro(a, cfg, of):
     return "\n".join(linhas)
 
 
+# ---------- a Reposição pelas ferramentas (1.46.1): a mesma conta da página (repProxima) ----------
+REPOR_UN = {"dia": ("dia", "dias"), "semana": ("semana", "semanas"), "mes": ("mês", "meses")}
+REPOR_ARG = {"dias": "dia", "dia": "dia", "semanas": "semana", "semana": "semana", "meses": "mes", "mes": "mes", "mês": "mes"}
+
+
+def itens_reposicao(cfg):
+    """Os itens da Reposição que valem (como o normaliza da página): nome, cada (1 a 365), unidade e desde."""
+    out = []
+    for r in cfg.get("reposicao") or []:
+        if not isinstance(r, dict) or not str(r.get("nome") or "").strip() or not data_ok(str(r.get("desde") or "")):
+            continue
+        try:
+            n = int(round(float(r.get("cada"))))
+        except (TypeError, ValueError):
+            n = 30
+        r["cada"], r["unidade"] = (n if 1 <= n <= 365 else 30), (r.get("unidade") if r.get("unidade") in REPOR_UN else "dia")
+        out.append(r)
+    return out
+
+
+def repor_proxima(r):
+    """Quando o item volta: o desde mais o intervalo; os meses pelo calendário (o mesmo dia, ou o último do mês)."""
+    d = datetime.strptime(r["desde"], "%Y-%m-%d").date()
+    if r["unidade"] != "mes":
+        return (d + timedelta(days=r["cada"] * (7 if r["unidade"] == "semana" else 1))).isoformat()
+    m = d.month - 1 + r["cada"]
+    ano, mes = d.year + m // 12, m % 12 + 1
+    fim = (datetime(ano + mes // 12, mes % 12 + 1, 1) - timedelta(days=1)).day
+    return f"{ano:04d}-{mes:02d}-{min(d.day, fim):02d}"
+
+
+def _repor_cada(r):
+    return f'a cada {r["cada"]} {REPOR_UN[r["unidade"]][1 if r["cada"] > 1 else 0]}'
+
+
+def _repor_item(cfg, nome):
+    """O item da Reposição pelo nome: igual, ou o único que contém (ou está contido em) o nome dado."""
+    itens, k = itens_reposicao(cfg), norm(nome)
+    achados = [r for r in itens if norm(r["nome"]) == k] or [r for r in itens if k in norm(r["nome"]) or norm(r["nome"]) in k]
+    if len(achados) != 1:
+        raise ErroFerramenta((f'"{nome}" não está na Reposição.' if not achados else f'"{nome}" bate com mais de um item: ' + ", ".join(r["nome"] for r in achados) + ".")
+                             + " Veja os nomes em economia_reposicao.")
+    return achados[0]
+
+
+def _ferr_reposicao(a, cfg, of):
+    hoje = hoje_br()
+    itens = sorted(itens_reposicao(cfg), key=lambda r: (repor_proxima(r), norm(r["nome"])))
+    if not itens:
+        return "A Reposição está vazia."
+    vez = [r for r in itens if repor_proxima(r) <= hoje]
+    linhas = [f"Reposição ({len(itens)} {'item' if len(itens) == 1 else 'itens'}; {len(vez)} na hora de repor)."]
+    for r in itens:
+        prox = repor_proxima(r)
+        de = {"cronologia": " (remédio do CronologIA)", "inventario": " (consumível do InventarIA)"}.get(r.get("origem"), "")
+        linhas.append(f'- {r["nome"]}{de}: {_repor_cada(r)}; ' + ("na hora de repor" + (f", desde {br_data(prox)}" if prox < hoje else "") if prox <= hoje else f"volta em {br_data(prox)}"))
+    return "\n".join(linhas)
+
+
+def _ferr_repor(a, cfg, of):
+    nome = _texto_arg(a, "item")
+    try:
+        n = int(a.get("a_cada"))
+    except (TypeError, ValueError):
+        n = 0
+    un = REPOR_ARG.get(norm(str(a.get("unidade") or "dias")).replace(" ", ""))
+    if not 1 <= n <= 365 or isinstance(a.get("a_cada"), bool) or not un:
+        raise ErroFerramenta("a_cada vale de 1 a 365, e unidade, dias, semanas ou meses.")
+    itens = itens_reposicao(cfg)
+    r = next((x for x in itens if norm(x["nome"]) == norm(nome)), None)
+    if r:
+        if (r["cada"], r["unidade"]) == (n, un):
+            return f'{r["nome"]} já está na Reposição, {_repor_cada(r)}.', None
+        r["cada"], r["unidade"] = n, un
+        return f'{r["nome"]} agora volta {_repor_cada(r)}: a próxima em {br_data(repor_proxima(r))}.', {"tipo": "repor", "produto": r["nome"], "item": dict(r)}
+    if len(itens) >= 200:
+        raise ErroFerramenta("A Reposição chegou a 200 itens.")
+    r = {"id": "r" + secrets.token_hex(4), "nome": nome, "cada": n, "unidade": un, "desde": hoje_br()}
+    cfg["reposicao"] = itens + [r]
+    return f'Pus {nome} na Reposição, {_repor_cada(r)}: volta em {br_data(repor_proxima(r))}.', {"tipo": "repor", "produto": nome, "item": dict(r)}
+
+
+def _ferr_reposto(a, cfg, of):
+    r = _repor_item(cfg, _texto_arg(a, "item"))
+    hoje = hoje_br()
+    if r["desde"] == hoje:
+        return f'A contagem de {r["nome"]} já começou hoje: volta em {br_data(repor_proxima(r))}.', None
+    r["desde"] = hoje
+    return f'{r["nome"]}: a contagem recomeçou hoje; volta em {br_data(repor_proxima(r))}.', {"tipo": "repor", "produto": r["nome"], "item": dict(r)}
+
+
 FERR_IMPL = {"roteiro": _ferr_roteiro, "lista": _ferr_lista, "preco": _ferr_preco, "ofertas": _ferr_ofertas, "cupons": _ferr_cupons,
-             "por_na_lista": _ferr_por, "tirar_da_lista": _ferr_tirar, "comprei": _ferr_comprei}
+             "por_na_lista": _ferr_por, "tirar_da_lista": _ferr_tirar, "comprei": _ferr_comprei,
+             "reposicao": _ferr_reposicao, "repor": _ferr_repor, "reposto": _ferr_reposto}
 
 
 def usar_ferramenta(nome, argumentos, cliente="CorrerIA"):
@@ -8355,7 +8468,7 @@ def usar_ferramenta(nome, argumentos, cliente="CorrerIA"):
             DIARIO.append(dict(mudanca, rev=rev))
             del DIARIO[:-300]
             log(f"CorrerIA ({cliente}): {nome} {mudanca['produto']}")
-    if gravar and mudanca and sync_ligado(cfg):
+    if gravar and mudanca and mudanca["tipo"] != "repor" and sync_ligado(cfg):
         # 1.43.0: com a Lista do Home Assistant ligada, vai para lá na hora (sem esperar a volta de cada minuto)
         _sincronizar_logo()
         texto += " A lista do Home Assistant acompanha."

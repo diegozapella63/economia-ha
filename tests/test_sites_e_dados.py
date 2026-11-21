@@ -193,10 +193,12 @@ class Dados19(Base):
     def test_zerar_deixa_so_os_ajustes(self):
         S = self.S
         S.gravar_config({"cep": "1", "lista": [{"produto": "Café"}], "historico": [{"produto": "Pão"}], "perfil": {"adultos": 3},
-                         "usar_ia": False, "sensores": True, "cor": "azul", "cor_dia": False, "opcoes": {"folhetos": False}})
+                         "usar_ia": False, "sensores": True, "cor": "azul", "cor_dia": False, "opcoes": {"folhetos": False},
+                         "reposicao": [{"id": "aaaa1", "nome": "Filtro de água", "cada": 6, "unidade": "mes", "desde": "2026-11-04"}], "repor": {"cronologia": True}})
         S.gravar_json(S.OFERTAS, {"categorias": []})
         novo = S.zerar()
-        self.assertEqual({k for k in novo if k not in ("rev", "atualizado_em")}, {"usar_ia", "sensores", "cor", "cor_dia", "opcoes"})
+        self.assertEqual({k for k in novo if k not in ("rev", "atualizado_em")}, {"usar_ia", "sensores", "cor", "cor_dia", "opcoes", "repor"},
+                         "1.46.1: a Reposição sai com a lista; as chaves de Opções › Reposição ficam, como as outras opções")
         self.assertFalse(os.path.exists(S.OFERTAS))
         v = S.listar_versoes()
         self.assertEqual((v[0]["motivo"], v[0]["itens"]), ("antes de começar do zero", 1), "uma versão antes, que traz tudo de volta")

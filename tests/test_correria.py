@@ -1,6 +1,6 @@
 """CorrerIA (o WhatsApp, o Claude e o Gemini) usando o EconomIA pelas ferramentas: o arquivo share/economia/correria.json
 (só ligado, permissão do dono, chave própria guardada), a rota /api/integracao/ferramentas (chave, desligado, 404, 400),
-cada ferramenta (lista, preço, ofertas, cupons, pôr e tirar da lista, compra) com as regras da tela (histórico, nomes
+cada ferramenta (lista, preço, ofertas, cupons, pôr e tirar da lista, compra e, 1.46.1, a Reposição) com as regras da tela (histórico, nomes
 parecidos), o diário que junta a gravação da página com revisão velha, o aviso "pela CorrerIA" e as lojas desligadas em
 Online (o marketplace fora da busca e os mercados da região), que não entram nas ofertas."""
 import json
@@ -55,14 +55,15 @@ class Ferramentas(Cenario):
     def test_o_catalogo(self):
         S = self.S
         nomes = [f["nome"] for f in S.FERRAMENTAS_CORRERIA]
-        self.assertEqual(nomes, ["lista", "preco", "ofertas", "roteiro", "cupons", "por_na_lista", "tirar_da_lista", "comprei"])
+        self.assertEqual(nomes, ["lista", "preco", "ofertas", "roteiro", "cupons", "por_na_lista", "tirar_da_lista", "comprei", "reposicao", "repor", "reposto"])
         self.assertEqual(set(nomes), set(S.FERR_IMPL))
         for f in S.FERRAMENTAS_CORRERIA:
             self.assertRegex(f["nome"], r"^[a-z0-9_]{1,40}$")
             self.assertEqual(f["entrada"]["type"], "object")
             self.assertEqual(set(f), {"nome", "titulo", "descricao", "entrada", "grava", "apaga"})
-        self.assertEqual([f["nome"] for f in S.FERRAMENTAS_CORRERIA if f["grava"]], ["por_na_lista", "tirar_da_lista", "comprei"])
+        self.assertEqual([f["nome"] for f in S.FERRAMENTAS_CORRERIA if f["grava"]], ["por_na_lista", "tirar_da_lista", "comprei", "repor", "reposto"])
         self.assertIn("economia_lista", S.CORRERIA_INSTRUCOES)
+        self.assertIn("economia_reposicao", S.CORRERIA_INSTRUCOES)
 
     def test_lista(self):
         t = self.usa("lista")
@@ -260,6 +261,94 @@ class Ferramentas(Cenario):
         self.assertEqual(pagina["lista"][1]["compras"], [HOJE])
         self.assertEqual([h["produto"] for h in pagina["historico"]], ["Leite desnatado"], "o Sabonete sai e o Leite desnatado entra")
 
+    # ----- 1.46.1: a Reposição (HOJE é 2026-11-02) -----
+    REPOR = [{"id": "aaaa1", "nome": "Filtro de água", "cada": 6, "unidade": "mes", "desde": "2026-04-30"},
+             {"id": "bbbb2", "nome": "Ração 15 kg", "cada": 30, "unidade": "dia", "desde": "2026-10-20"},
+             {"id": "cccc3", "nome": "Vitamina D", "cada": 2, "unidade": "semana", "desde": "2026-10-19", "origem": "cronologia"},
+             {"id": "dddd4", "nome": "Pilhas AA", "cada": "muitas", "unidade": "ano", "desde": "2026-11-01", "origem": "inventario"},
+             {"nome": "", "cada": 1}, {"id": "eeee5", "nome": "Sem data", "cada": 1}, "torto"]
+
+    def test_reposicao(self):
+        self.assertEqual(self.usa("reposicao"), "A Reposição está vazia.")
+        self.prepara(reposicao=json.loads(json.dumps(self.REPOR)))
+        self.assertEqual(self.usa("reposicao").split("\n"), [
+            "Reposição (4 itens; 2 na hora de repor).",
+            "- Filtro de água: a cada 6 meses; na hora de repor, desde 30/10/2026",
+            "- Vitamina D (remédio do CronologIA): a cada 2 semanas; na hora de repor",
+            "- Ração 15 kg: a cada 30 dias; volta em 19/11/2026",
+            "- Pilhas AA (consumível do InventarIA): a cada 30 dias; volta em 01/12/2026"])
+        self.assertEqual(self.S.ler_config()["reposicao"], self.REPOR, "ler não grava nada")
+
+    def test_reposicao_os_meses_pelo_calendario(self):
+        prox = lambda desde, n, un="mes": self.S.repor_proxima({"desde": desde, "cada": n, "unidade": un})
+        self.assertEqual([prox("2026-01-31", 1), prox("2026-08-31", 6), prox("2026-11-15", 2), prox("2026-12-31", 12), prox("2024-01-31", 1)],
+                         ["2026-02-28", "2027-02-28", "2027-01-15", "2027-12-31", "2024-02-29"])
+        self.assertEqual([prox("2026-12-25", 1, "semana"), prox("2026-12-25", 10, "dia")], ["2027-01-01", "2027-01-04"])
+
+    def test_repor(self):
+        S = self.S
+        self.prepara(reposicao=json.loads(json.dumps(self.REPOR)))
+        rev = S.ler_config()["rev"]
+        self.assertEqual(self.usa("repor", item="Sabão em pó", a_cada=3, unidade="semanas"), "Pus Sabão em pó na Reposição, a cada 3 semanas: volta em 23/11/2026.")
+        c = S.ler_config()
+        novo = c["reposicao"][-1]
+        self.assertEqual((c["rev"], c["mudou_por"], {k: v for k, v in novo.items() if k != "id"}),
+                         (rev + 1, "CorrerIA", {"nome": "Sabão em pó", "cada": 3, "unidade": "semana", "desde": HOJE}))
+        self.assertRegex(novo["id"], r"^r[0-9a-f]{8}$")
+        self.assertEqual(len(c["reposicao"]), 5, "o que não valia (sem nome, sem data) sai ao gravar")
+        # o mesmo item com outro intervalo: muda, e o tempo continua de onde estava
+        self.assertEqual(self.usa("repor", item="ração 15 KG", a_cada=1, unidade="meses"), "Ração 15 kg agora volta a cada 1 mês: a próxima em 20/11/2026.")
+        r = next(x for x in S.ler_config()["reposicao"] if x["id"] == "bbbb2")
+        self.assertEqual((r["cada"], r["unidade"], r["desde"]), (1, "mes", "2026-10-20"))
+        self.assertEqual(self.usa("repor", item="Ração 15 kg", a_cada=1, unidade="mês"), "Ração 15 kg já está na Reposição, a cada 1 mês.")
+        self.assertEqual(self.usa("repor", item="Fio dental", a_cada=45), "Pus Fio dental na Reposição, a cada 45 dias: volta em 17/12/2026.", "sem a unidade, dias")
+        self.assertEqual(S.ler_config()["rev"], rev + 3, "o que não mudou não grava")
+        for ruim in ({"item": "Fio", "a_cada": 0}, {"item": "Fio", "a_cada": 366}, {"item": "Fio", "a_cada": "x"}, {"item": "Fio", "a_cada": True},
+                     {"item": "Fio", "a_cada": 2, "unidade": "anos"}, {"item": "Fio"}):
+            with self.assertRaises(S.ErroFerramenta) as e:
+                self.usa("repor", **ruim)
+            self.assertEqual(str(e.exception), "a_cada vale de 1 a 365, e unidade, dias, semanas ou meses.", ruim)
+        with self.assertRaises(S.ErroFerramenta):
+            self.usa("repor", item="", a_cada=2)
+        self.prepara(reposicao=[{"id": f"r{i:04d}", "nome": f"Item {i}", "cada": 1, "unidade": "dia", "desde": HOJE} for i in range(200)])
+        with self.assertRaises(S.ErroFerramenta) as e:
+            self.usa("repor", item="Mais um", a_cada=2)
+        self.assertEqual(str(e.exception), "A Reposição chegou a 200 itens.")
+
+    def test_reposto(self):
+        S = self.S
+        self.prepara(reposicao=json.loads(json.dumps(self.REPOR)), sync={"ativo": True, "entidade": "todo.compras"})
+        self.assertEqual(self.usa("reposto", item="filtro"), "Filtro de água: a contagem recomeçou hoje; volta em 02/05/2027.")
+        self.assertEqual(next(x for x in S.ler_config()["reposicao"] if x["id"] == "aaaa1")["desde"], HOJE)
+        self.assertEqual(self.usa("reposto", item="Filtro de água"), "A contagem de Filtro de água já começou hoje: volta em 02/05/2027.")
+        self.assertIn("1 na hora de repor", self.usa("reposicao"))
+        for nome, msg in (("Arroz", '"Arroz" não está na Reposição. Veja os nomes em economia_reposicao.'),
+                          ("a", 'Falta "item": o nome do produto, como "Café Pilão 500 g".')):
+            with self.assertRaises(S.ErroFerramenta) as e:
+                self.usa("reposto", item=nome)
+            self.assertEqual(str(e.exception), msg)
+        self.prepara(reposicao=[dict(self.REPOR[0]), dict(self.REPOR[0], id="ffff6", nome="Filtro do ar")])
+        with self.assertRaises(S.ErroFerramenta) as e:
+            self.usa("reposto", item="filtro")
+        self.assertEqual(str(e.exception), '"filtro" bate com mais de um item: Filtro de água, Filtro do ar. Veja os nomes em economia_reposicao.')
+
+    def test_reposicao_o_diario_junta_a_gravacao_da_pagina(self):
+        """A página abriu antes: a gravação dela (revisão velha) não perde o que a CorrerIA fez na Reposição."""
+        S = self.S
+        self.prepara(reposicao=json.loads(json.dumps(self.REPOR[:3])))
+        pagina = json.loads(json.dumps(S.ler_config()))
+        self.usa("repor", item="Sabão em pó", a_cada=3, unidade="semanas")
+        self.usa("reposto", item="Vitamina D")
+        self.usa("repor", item="Ração 15 kg", a_cada=45)
+        pagina["reposicao"] = [r for r in pagina["reposicao"] if r["id"] != "aaaa1"]  # enquanto isso, a pessoa apagou o filtro na tela
+        for d in [x for x in S.DIARIO if x["rev"] > pagina["rev"]]:
+            S.aplicar_diario(pagina, d)
+        self.assertEqual(sorted((r["nome"], r["cada"], r["unidade"], r["desde"], r.get("origem")) for r in pagina["reposicao"]),
+                         [("Ração 15 kg", 45, "dia", "2026-10-20", None), ("Sabão em pó", 3, "semana", HOJE, None), ("Vitamina D", 2, "semana", HOJE, "cronologia")])
+        sem = {"lista": []}
+        S.aplicar_diario(sem, next(x for x in S.DIARIO if x["tipo"] == "repor"))
+        self.assertEqual([r["nome"] for r in sem["reposicao"]], ["Sabão em pó"], "numa configuração sem a Reposição")
+
     def test_arquivo_para_o_correria(self):
         S = self.S
         S.publicar_correria()
@@ -309,7 +398,7 @@ class FerramentasPelaAPI(Servidor):
         self.assertEqual(self.pede("GET", "/api/integracao/ferramentas", cab={"Authorization": "Basic x"})[0], 401)
         st, d = self.ferr()
         self.assertEqual(st, 200)
-        self.assertEqual(len(d["ferramentas"]), 8)
+        self.assertEqual(len(d["ferramentas"]), 11)
         self.assertIn("economia_lista", d["instrucoes"])
         st, d = self.ferr("POST", {"nome": "por_na_lista", "argumentos": {"produto": "Pão de forma"}, "pessoa": {"id": "p1", "nome": "Ana"}, "cliente": "Claude"})
         self.assertEqual((st, d), (200, {"texto": "Pus Pão de forma na lista. O preço vem na próxima busca do app."}))
@@ -329,6 +418,16 @@ class FerramentasPelaAPI(Servidor):
         st, d = self.pede("PUT", "/api/config", dict(est["config"], rev=rev_velha, lista=[{"produto": "Café Pilão 500 g", "compras": []}], mudou_por=None))
         self.assertEqual((st, d["mesclado"]), (200, True))
         self.assertIn("Pão de forma", [i["produto"] for i in d["config"]["lista"]])
+        # 1.46.1: a Reposição pela rota, e a página com a revisão de antes junta também
+        antes = d["config"]
+        st, d = self.ferr("POST", {"nome": "repor", "argumentos": {"item": "Filtro de água", "a_cada": 6, "unidade": "meses"}, "cliente": "WhatsApp"})
+        self.assertEqual(st, 200)
+        self.assertIn("Pus Filtro de água na Reposição, a cada 6 meses", d["texto"])
+        st, d = self.ferr("POST", {"nome": "repor", "argumentos": {"item": "Filtro de água", "a_cada": 900}})
+        self.assertEqual((st, d["erro"]), (400, "a_cada vale de 1 a 365, e unidade, dias, semanas ou meses."))
+        self.assertIn("- Filtro de água: a cada 6 meses; volta em", self.ferr("POST", {"nome": "reposicao"})[1]["texto"])
+        st, d = self.pede("PUT", "/api/config", dict(antes, mudou_por=None))
+        self.assertEqual((st, d["mesclado"], [r["nome"] for r in d["config"]["reposicao"]]), (200, True, ["Filtro de água"]))
         self.assertNotIn("mudou_por", d["config"], "gravado pela página: o aviso some")
         # desligar: o arquivo some e a rota fecha
         self.config(correria=False)

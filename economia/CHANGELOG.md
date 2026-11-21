@@ -1,5 +1,11 @@
 # Mudanças
 
+## 1.46.1
+
+- **Reposição no CorrerIA**: pelo WhatsApp, pelo Claude e pelo Gemini dá para ver a Reposição (o que está na hora), pôr um item com o intervalo, mudar o intervalo e dizer que já foi reposto.
+- **Mais sites que abrem num toque**: os sites de encartes (Opções), o OpenStreetMap, o Home Assistant Cloud (em Falar › Como configurar) e onde pegar a chave do Instagram.
+- **Dados** e **IA**: os textos de cima no mesmo jeito dos outros apps. **Começar do zero** apaga também a Reposição (as chaves de Opções ficam) e diz que uma cópia fica em Versões anteriores.
+
 ## 1.46.0
 
 - **Reposição**, uma linha nova em **Mais**: o que você compra de tempos em tempos. Adicione o item e diga **A cada** quantos dias, semanas ou meses. Na hora, ele aparece no cartão **Hora de repor**, no alto da Minha lista, com **Pôr na lista** e **Já tenho** (os dois recomeçam a contagem). Toque num item para mudar; o X apaga.

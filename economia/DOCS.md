@@ -39,6 +39,7 @@ Em **Mais › Reposição** fica o que você compra de tempos em tempos: o filtr
 - **Adicionar**: escreva o item, escolha **A cada** quantos dias, semanas ou meses (de 1 a 365) e toque em **Adicionar**. O tempo começa a contar do dia em que o item entrou.
 - **Na hora**, o item aparece no cartão **Hora de repor**, no alto da **Minha lista**: **Pôr na lista** leva para a lista de compras e **Já tenho** só recomeça a contagem. Os dois contam de novo a partir de hoje.
 - A tela mostra os itens do que volta antes para o que volta depois. Toque num item para mudar o nome ou o **A cada** (o tempo não recomeça); o **X** apaga.
+- **Pelo CorrerIA** (WhatsApp, Claude e Gemini): ver a Reposição e o que está na hora, pôr um item com o intervalo, mudar o intervalo e dizer que já foi reposto.
 - **Itens de outros apps**: em **Mais › Configurações › Opções › Reposição**, **Remédios do CronologIA** e **Consumíveis do InventarIA** (desligadas de início) põem em **Escolher de outro app** os remédios cadastrados no CronologIA (1.106.0 ou mais novo) e os consumíveis do InventarIA (1.81.0 ou mais novo, com **Usar consumíveis** ligado lá). O EconomIA guarda só o nome escolhido e de qual app veio; nada muda nos outros apps. Do CronologIA vêm o nome e a dose do remédio, nunca quem toma.
 
 ## Falar

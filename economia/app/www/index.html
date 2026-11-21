@@ -1692,7 +1692,7 @@ input.field,select.field{min-height:var(--altura)}
         <div class="sec-head"><h2 id="h-como"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 5v2M3.5 11h1.2L3.5 13h1.5M3.5 17h1.5v2H3.5"/></svg></span>Como o EconomIA busca os preços</h2></div>
         <p class="sec-meta">Primeiro o que não gasta IA. A IA entra por último, só para o que faltar.</p>
         <ol class="passos">
-          <li><b>Lojas perto de casa.</b> Pelo mapa (OpenStreetMap e Google Maps). Sem IA.</li>
+          <li><b>Lojas perto de casa.</b> Pelo mapa (<a class="site" href="https://www.openstreetmap.org/" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> e Google Maps). Sem IA.</li>
           <li><b>Site das lojas sem site.</b> Pela busca do Brave (chave em Integrações) e, com a IA ligada, pela IA. Uma vez por mês.</li>
           <li class="so-diretas"><b>Site da loja.</b> Preço direto, quando o site permite (Giassi, Angeloni…). Sem IA.</li>
           <li class="so-diretas"><b>Busca do site.</b> A página de resultados da busca da loja, como a da Cobasi. Sem IA.</li>
@@ -1723,7 +1723,7 @@ input.field,select.field{min-height:var(--altura)}
       </div>
     </section>
     <section class="panel settings" aria-labelledby="h-ia">
-      <div class="set-head"><h2 id="h-ia"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7-4.7-1.8 4.7-1.8z"/><path d="M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg></span>IA</h2><p class="sec-meta">Usa a IA do seu Home Assistant. Para pesquisar na internet, ela precisa de busca na web; para ler fotos, de imagens.</p></div>
+      <div class="set-head"><h2 id="h-ia"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7-4.7-1.8 4.7-1.8z"/><path d="M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg></span>IA</h2><p class="sec-meta">Usa a IA configurada no Home Assistant. Para pesquisar na internet, ela precisa de busca na web; para ler fotos, de imagens.</p></div>
       <div class="set-row">
         <div><h3 class="set-t"><label for="usarIA">Usar IA</label></h3><p class="sec-meta" id="usarIATxt"></p></div>
         <input type="checkbox" class="switch" id="usarIA">
@@ -1755,7 +1755,7 @@ input.field,select.field{min-height:var(--altura)}
       </div>
       <div class="row-form"><button type="button" class="ghost big" id="vozTestar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>Verificar de novo</button></div>
       <div class="passos-box" id="vozComo" hidden><b>Como configurar</b><ol class="passos">
-        <li>Com o Home Assistant Cloud, a fala para texto já vem pronta.</li>
+        <li>Com o <a class="site" href="https://www.nabucasa.com/" target="_blank" rel="noopener noreferrer">Home Assistant Cloud</a>, a fala para texto já vem pronta.</li>
         <li>Sem ele, instale um motor de fala: o app Whisper (local, de graça) com a integração Wyoming, ou a fala para texto de uma IA como Google Gemini ou OpenAI.</li>
         <li>Volte aqui, toque em Verificar de novo e escolha o motor na lista.</li></ol></div>
     </section>
@@ -1788,7 +1788,7 @@ input.field,select.field{min-height:var(--altura)}
       <p class="ia-st" id="alSt"></p>
     </section>
     <section class="panel settings" aria-labelledby="h-google">
-      <div class="set-head"><h2 id="h-google"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg></span>Google Places (opcional)</h2><p class="sec-meta">Acha as lojas pequenas que o OpenStreetMap não tem. Chave da Places API (New) em <a class="site" href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer">console.cloud.google.com</a>; a cota gratuita cobre o uso.</p></div>
+      <div class="set-head"><h2 id="h-google"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg></span>Google Places (opcional)</h2><p class="sec-meta">Acha as lojas pequenas que o <a class="site" href="https://www.openstreetmap.org/" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> não tem. Chave da Places API (New) em <a class="site" href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer">console.cloud.google.com</a>; a cota gratuita cobre o uso.</p></div>
       <div class="sh-row"><label for="gKey"><span>Chave <span class="chip selo" id="gKeyOk" hidden>Guardada</span></span><input class="field" id="gKey" type="password" autocomplete="off" spellcheck="false"></label></div>
       <div class="row-form"><button type="button" class="btn" id="gSalvar">Salvar e testar</button><button type="button" class="ghost big" id="gTestar">Testar</button><button type="button" class="ghost big" id="gApagar" hidden>Apagar</button></div>
       <p class="ia-st" id="gSt"></p>
@@ -1823,7 +1823,7 @@ input.field,select.field{min-height:var(--altura)}
       </details>
     </section>
     <section class="panel settings" aria-labelledby="h-insta">
-      <div class="set-head"><h2 id="h-insta"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="0.9"/></svg></span>Instagram (opcional)</h2><p class="sec-meta">Lê os encartes que as lojas postam. Precisa de conta profissional do Instagram ligada a uma página do Facebook; a loja precisa ter conta comercial.</p></div>
+      <div class="set-head"><h2 id="h-insta"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="0.9"/></svg></span>Instagram (opcional)</h2><p class="sec-meta">Lê os encartes que as lojas postam. Precisa de conta profissional do Instagram ligada a uma página do Facebook; a loja precisa ter conta comercial. Chave de acesso em <a class="site" href="https://developers.facebook.com/tools/explorer" target="_blank" rel="noopener noreferrer">developers.facebook.com</a> › Explorador da Graph API.</p></div>
       <div class="sh-row"><label for="iKey"><span>Chave de acesso <span class="chip selo" id="iKeyOk" hidden>Guardada</span></span><input class="field" id="iKey" type="password" autocomplete="off" spellcheck="false"></label></div>
       <div class="row-form"><button type="button" class="btn" id="iSalvar">Salvar e testar</button><button type="button" class="ghost big" id="iTestar">Testar</button><button type="button" class="ghost big" id="iApagar" hidden>Apagar</button></div>
       <p class="ia-st" id="iSt"></p>
@@ -1874,7 +1874,7 @@ input.field,select.field{min-height:var(--altura)}
       <p class="hint" id="bkMsg" aria-live="polite"></p>
     </section>
     <section class="panel settings" aria-labelledby="h-imp">
-      <div class="set-head"><h2 id="h-imp"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"/></svg></span>Importar</h2><p class="sec-meta">O .json ou a planilha (Excel) do Exportar. Itens repetidos não duplicam.</p></div>
+      <div class="set-head"><h2 id="h-imp"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"/></svg></span>Importar</h2><p class="sec-meta">Um .json ou a planilha (Excel) exportados pelo EconomIA, sem duplicar.</p></div>
       <div class="row-form">
         <label class="ghost big" for="impArq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"/></svg>Escolher arquivo</label>
         <input type="file" id="impArq" accept=".json,.xlsx,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
@@ -1882,16 +1882,16 @@ input.field,select.field{min-height:var(--altura)}
       <p class="hint" id="impMsg" aria-live="polite"></p>
     </section>
     <section class="panel settings" aria-labelledby="h-ver">
-      <div class="set-head"><h2 id="h-ver"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Versões anteriores</h2><p class="sec-meta">Cópia automática a cada 10 minutos de uso e antes de importar ou limpar a lista. Ficam as 3 mais recentes.</p></div>
+      <div class="set-head"><h2 id="h-ver"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Versões anteriores</h2><p class="sec-meta">Uma cópia a cada 10 minutos de uso e antes de importar, restaurar, limpar a lista ou começar do zero. Ficam as 3 mais recentes.</p></div>
       <div class="row-form"><button type="button" class="ghost big" id="verBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Ver versões</button></div>
       <ul class="ver-lista" id="verLista" hidden></ul>
       <p class="hint" id="verMsg" aria-live="polite"></p>
     </section>
     <section class="panel settings" aria-labelledby="h-dados">
-      <div class="set-head"><h2 id="h-dados"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></span>Onde ficam os dados</h2><p class="sec-meta">Em arquivos JSON dentro do add-on (<code>config.json</code>, <code>ofertas.json</code>, <code>segredos.json</code>…), incluídos nos backups do Home Assistant.</p></div>
+      <div class="set-head"><h2 id="h-dados"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></span>Onde ficam os dados</h2><p class="sec-meta">Em arquivos JSON dentro do app (<code>config.json</code>, <code>ofertas.json</code>, <code>segredos.json</code>…), no backup do Home Assistant.</p></div>
     </section>
     <section class="panel settings" aria-labelledby="h-zero">
-      <div class="set-head"><h2 id="h-zero"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></span>Começar do zero</h2><p class="sec-meta">Apaga a lista, o histórico, o perfil, as lojas, os cupons e as ofertas da última busca. A IA, as integrações, as opções e a cor continuam.</p></div>
+      <div class="set-head"><h2 id="h-zero"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></span>Começar do zero</h2><p class="sec-meta">Apaga a lista, a reposição, o histórico, o perfil, as lojas, os cupons e as ofertas da última busca. A IA, as integrações, as opções e a cor continuam. Uma cópia fica em Versões anteriores.</p></div>
       <div class="row-form"><button type="button" class="btn perigo" id="zeroBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Apagar tudo</button></div>
       <div class="confirma" id="zeroConf" hidden>
         <p id="zeroTxt"></p>
@@ -1925,7 +1925,7 @@ input.field,select.field{min-height:var(--altura)}
         <details class="fonte-det" id="opDiretasLojas" hidden><summary></summary><ul></ul></details>
       </div>
       <div class="set-row so-ia">
-        <div><h3 class="set-t"><label for="opFolhetos">Folhetos dos sites de encartes</label></h3><p class="sec-meta">Kimbino, Portafolhetos, Seus Folhetos e Catálogos Ofertas, lidos uma vez pela IA.</p></div>
+        <div><h3 class="set-t"><label for="opFolhetos">Folhetos dos sites de encartes</label></h3><p class="sec-meta"><a class="site" href="https://www.kimbino.com.br/" target="_blank" rel="noopener noreferrer">Kimbino</a>, <a class="site" href="https://www.portafolhetos.com.br/" target="_blank" rel="noopener noreferrer">Portafolhetos</a>, <a class="site" href="https://seusfolhetos.com.br/" target="_blank" rel="noopener noreferrer">Seus Folhetos</a> e <a class="site" href="https://www.catalogosofertas.com.br/" target="_blank" rel="noopener noreferrer">Catálogos Ofertas</a>, lidos uma vez pela IA.</p></div>
         <input type="checkbox" class="switch" id="opFolhetos">
       </div>
       <div class="set-row">
@@ -2971,7 +2971,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.46.0';
+  var VERSAO = '1.46.1';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {

@@ -513,7 +513,8 @@ O que se compra de tempos em tempos. Tudo na página (a configuração inteira v
   chamado. Nada disso fica guardado no EconomIA: só o nome escolhido e a `origem`.
 - **Opções › Reposição** (`pintaRepOpcoes`): as duas chaves, cada uma com a linha do estado (quantos itens, o que falta no
   outro app ou "não está neste Home Assistant"). No exemplo (fora do add-on), uma casa inventada (`REP_EX`).
-- Testes: `tests/test_reposicao.py` e `tests/e2e/ec_reposicao.py`.
+- **CorrerIA** (1.46.1): as ferramentas `reposicao` (ler), `repor` (pôr ou mudar o intervalo: `item`, `a_cada`, `unidade` dias|semanas|meses) e `reposto` (a contagem recomeça hoje), com a mesma conta da página (`repor_proxima`). As de gravar entram no diário com `tipo: "repor"` e o item inteiro, e o `aplicar_diario` troca o item (pelo id ou pelo nome) na configuração que a página grava com a revisão velha. O **Começar do zero** apaga a `reposicao` e deixa o `repor` (`FICA_NO_ZERO`).
+- Testes: `tests/test_reposicao.py`, `tests/test_correria.py` (as ferramentas) e `tests/e2e/ec_reposicao.py`.
 
 ## Mais: o menu (1.3.0)
 
