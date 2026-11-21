@@ -15,7 +15,7 @@ FONTE = os.path.join(RAIZ, "economia", "pagina", "painel.html")
 # os arquivos iguais aos dos outros apps, ao lado da fonte; no add-on, vão embutidos: as caixas de seleção no visual do
 # app (selectsheet.js), os campos de texto que guardam o tamanho (textareas.js, 1.19.0) e o fundo e os cartões do tema do
 # Home Assistant (hatema.js, 1.42.0)
-IGUAIS = ("selectsheet.js", "hatema.js", "textareas.js")
+IGUAIS = ("selectsheet.js", "hatema.js", "textareas.js", "teclado.js")  # teclado.js (1.46.5): o teclado do celular não deixa a página em volta rolada
 DESTINO = os.path.join(RAIZ, "economia", "app", "www", "index.html")
 
 CABECALHO = """<!doctype html>

@@ -135,3 +135,5 @@ ler a nota fiscal pelo QR code (preço pago, loja e data; conferir se a consulta
 "Hora de estocar"; dia da semana de cada loja; descontos fixos por loja (cartão, cashback); custo do deslocamento
 no roteiro (preço da ANP × km); reduflação; resumo semanal no celular; orçamento do mês; alerta de preço-alvo.
 Pendente de antes: papel toalha com tamanho errado ("Pague Menos R$ 233,99").
+
+**Teclado no celular** (1.46.5): em `economia/pagina/teclado.js` (embutido pelo `tools/montar_pagina.py`, como o `textareas.js`), o `tecladoCalmo` (o mesmo código do `teclado.js` dos outros apps): com o foco num campo de texto, ou quando o teclado muda a altura da tela, as páginas em volta do app (a do Home Assistant) voltam para o começo; a página do próprio app não é tocada.
