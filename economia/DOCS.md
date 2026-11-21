@@ -41,7 +41,7 @@ Em **Mais › Configurações › Integrações › IA**, a linha **Falar** most
 
 O balão ao lado do microfone abre a **Conversa**: pergunte sobre a tela aberta ("onde a compra fica mais barata?", "tem cupom bom agora?") ou sobre qualquer assunto. A IA recebe a data, a tela, quem mora na casa, a sua lista com os preços da última busca, o que você mais compra, as ofertas e os cupons das lojas que você acompanha. Ela responde em texto.
 
-A IA não muda nada sozinha. Quando ajuda, ela sugere ações em botões: **Pôr na lista**, **Tirar da lista**, **Comprei hoje**, **Buscar o preço** e **Abrir** uma tela. Só acontece quando você toca, e o botão fica marcado. O microfone da conversa põe o que você falou na caixa, para conferir antes de enviar.
+A IA não muda nada sozinha. Quando ajuda, ela sugere ações em botões: **Pôr na lista**, **Tirar da lista**, **Comprei hoje**, **Buscar o preço** e **Abrir** uma tela. Só acontece quando você toca, e o botão fica marcado. O microfone da conversa põe o que você falou na caixa, para conferir antes de enviar. Ouvindo, o clipe dá lugar ao **Cancelar**, que para o microfone sem pôr nada na caixa.
 
 A conversa usa a tarefa de IA de **Para conversar** (com uma foto ou um PDF, a de **Para ler fotos e PDFs**), nunca um assistente de conversa, que poderia mexer na casa. Em cada oferta, **Vale a pena?** abre a conversa e pede uma avaliação do produto: a IA de buscar ofertas procura na web a nota, as avaliações de quem comprou, as reclamações e o preço de costume, e começa pelo veredito (Vale a pena, Depende ou Não vale).
 
@@ -286,7 +286,7 @@ Também dá para usar uma lista do **Google Tasks** conectada ao Home Assistant 
 
 ## Uso da IA e sensores
 
-Em **Mais › Configurações › Integrações › Uso da IA**: as chamadas de hoje, dos últimos 7 dias e do mês, o gráfico por dia, o tipo de uso (busca, itens sem preço, encartes, fotos, cupons, Falar, Conversa e testes), erros e cota excedida, e as últimas chamadas. Para economizar a cota, desligue em **Mais › Configurações › Opções** a busca extra dos itens sem preço e a leitura automática de encartes.
+Em **Mais › Configurações › Integrações › Uso da IA**: as chamadas de hoje, dos últimos 7 dias e do mês, o gráfico por dia, o tipo de uso (busca, itens sem preço, encartes, fotos, cupons, Falar, Conversa e testes), erros e cota excedida, e as últimas chamadas. No fim, o link para o consumo e o saldo de cada IA em uso (o Gemini no Google AI Studio, o Claude no Claude Console, a OpenAI no painel dela). Para economizar a cota, desligue em **Mais › Configurações › Opções** a busca extra dos itens sem preço e a leitura automática de encartes.
 
 **Sensores › Criar sensores** vem desligado. Ligado, o app cria no Home Assistant os três abaixo, que aparecem listados embaixo da chave (desligado, apaga os três):
 

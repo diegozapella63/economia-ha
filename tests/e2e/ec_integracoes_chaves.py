@@ -153,7 +153,11 @@ async def main():
             ult = await pg.text_content("#usoUlt")
             check("Testes" in ult and "cota excedida" in ult and "Claude" in ult, "últimas chamadas, com o resultado e o nome da IA")
             prov = await pg.text_content("#usoProv")
-            check("Consumo exato e custo da OpenAI" in prov, f"o painel do provedor de uma das IAs escolhidas (fotos: OpenAI) ({prov[:90]})")
+            check("OpenAI: consumo e custo em platform.openai.com/usage." in prov and "Claude: consumo e custo no Claude Console; o saldo dos créditos, em Billing." in prov,
+                  f"1.45.0: o painel do provedor de cada IA em uso (fotos: OpenAI; as chamadas: Claude) ({prov[:160]})")
+            links = await pg.evaluate("[...document.querySelectorAll('#usoProv a')].map(a => a.getAttribute('href'))")
+            check("https://platform.claude.com/usage" in links and "https://platform.claude.com/settings/billing" in links and "https://platform.openai.com/usage" in links
+                  and not any("console.cloud.google.com" in h for h in links), f"com o link de cada um, sem o Cloud Console ({links})")
             await pg.locator('#v-mais section[aria-labelledby="h-uso"]').screenshot(path=SHOTS + "/ecic-uso.png")
             check(not pg.erros, f"sem erros na página {pg.erros}")
             await b.close()

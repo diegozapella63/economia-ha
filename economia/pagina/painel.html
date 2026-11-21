@@ -1934,6 +1934,7 @@ input.field,select.field{min-height:var(--altura)}
   <p class="chat-ouvindo" id="chatOuvindo" aria-live="polite" hidden></p>
   <form class="chat-form" id="chatForm" novalidate>
     <button type="button" class="chat-clip" id="chatClip" aria-label="Anexar" title="Anexar" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.4 11.1-9.2 9.2a6 6 0 0 1-8.5-8.5l8.6-8.6a4 4 0 1 1 5.7 5.7l-8.6 8.6a2 2 0 0 1-2.8-2.8l8-8"/></svg></button>
+    <button type="button" class="chat-clip chat-cancel" id="chatMicX" aria-label="Cancelar: não usar o que falei" title="Cancelar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <textarea id="chatTxt" rows="1" data-size="off" maxlength="2000" placeholder="Pergunte o que quiser" aria-label="Mensagem para a IA" enterkeyhint="send"></textarea>
     <button type="button" class="chat-q" id="chatQ" aria-label="Perguntas prontas" title="Perguntas prontas" aria-expanded="false" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.9 15.5a2 2 0 0 0-1.4-1.4L2.4 12.5a.5.5 0 0 1 0-1l6.1-1.6a2 2 0 0 0 1.4-1.4l1.6-6.1a.5.5 0 0 1 1 0l1.6 6.1a2 2 0 0 0 1.4 1.4l6.1 1.6a.5.5 0 0 1 0 1l-6.1 1.6a2 2 0 0 0-1.4 1.4l-1.6 6.1a.5.5 0 0 1-1 0z"/><path d="M20 3v4M22 5h-4"/></svg></button>
     <button type="button" class="chat-mic" id="chatMic" aria-label="Falar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
@@ -4443,6 +4444,8 @@ input.field,select.field{min-height:var(--altura)}
     var b = $('chatMic'), on = CHAT.voz === 'on';
     b.classList.toggle('on', on); b.disabled = CHAT.voz === 'starting' || CHAT.voz === 'enviando';
     b.setAttribute('aria-label', on ? 'Pronto: transcrever o que falei' : 'Falar');
+    // 1.45.0: ouvindo, o clipe dá lugar ao Cancelar (o microfone para e nada vai para a caixa)
+    $('chatMicX').hidden = !on; $('chatClip').hidden = on;
   }
   function comecaVozChat(){
     if (CHAT.grav || GRAV) return;
@@ -4482,6 +4485,7 @@ input.field,select.field{min-height:var(--altura)}
     }).catch(function(err){ CHAT.voz = 'off'; pintaMicChat(); vozChatMsg(err.message, true); });
   }
   $('chatMic').addEventListener('click', function(){ if (CHAT.voz === 'on') terminaVozChat(); else if (CHAT.voz === 'off') comecaVozChat(); });
+  $('chatMicX').addEventListener('click', function(){ if (CHAT.voz === 'on'){ paraVozChat(); $('chatTxt').focus(); } });
 
   $('fotoAdd').addEventListener('click', function(){
     var novos = 0;
@@ -6112,12 +6116,10 @@ input.field,select.field{min-height:var(--altura)}
     var t = (IAS && arr(IAS.tarefas).concat(arr(IAS.agentes))) || [], x = t.filter(function(y){ return y.id === id; })[0];
     return x ? x.nome : String(id || '').replace(/^[a-z_]+\./, '').replace(/_/g, ' ');
   }
-  function provedorIA(ids){
-    var j = norm(ids.join(' '));
-    if (/google|gemini/.test(j)) return 'google';
-    if (/openai|chatgpt|gpt/.test(j)) return 'openai';
-    if (/anthropic|claude/.test(j)) return 'anthropic';
-    return '';
+  function provedoresIA(ids){  // todos os provedores das IAs em uso (pelo id e pelo nome de cada uma), cada um uma vez
+    var j = norm(ids.map(function(id){ return id + ' ' + nomeIA(id); }).join(' '));
+    return [['google', /google|gemini/], ['openai', /openai|chatgpt|gpt/], ['anthropic', /anthropic|claude/]]
+      .filter(function(p){ return p[1].test(j); }).map(function(p){ return p[0]; });
   }
   function carregaUso(){
     if (MODO !== 'addon'){ USO = usoExemplo(); pintaUso(); return; }
@@ -6158,11 +6160,15 @@ input.field,select.field{min-height:var(--altura)}
     var sumUlt = document.querySelector('.uso-ult summary');
     if (sumUlt) sumUlt.innerHTML = svgT('history') + 'Últimas chamadas' + (ult.length ? ' (' + ult.length + ')' : '');
     var ids = Object.keys((u.mes && u.mes.ias) || {}).concat(Object.keys(u.semana.ias || {}), [estado.ia.busca || '', estado.ia.fotos || '', estado.ia.conversa || '']);
-    var prov = provedorIA(ids), txt = '';
-    if (prov === 'google') txt = 'Consumo exato do Gemini: no <a href="https://console.cloud.google.com/apis/dashboard" target="_blank" rel="noopener">Google Cloud Console</a>, abra APIs e serviços ativados → Generative Language API; o gráfico de tráfego mostra os pedidos e os erros 429 de cota. Os limites do plano grátis estão no <a href="https://aistudio.google.com/" target="_blank" rel="noopener">Google AI Studio</a>. A cota diária volta à meia-noite do horário do Pacífico, de madrugada no Brasil (4h ou 5h).';
-    else if (prov === 'openai') txt = 'Consumo exato e custo da OpenAI: <a href="https://platform.openai.com/usage" target="_blank" rel="noopener">platform.openai.com/usage</a>.';
-    else if (prov === 'anthropic') txt = 'Consumo exato e custo da Anthropic: <a href="https://platform.claude.com/usage" target="_blank" rel="noopener">Claude Console → Usage</a>.';
-    else txt = 'Consumo exato e custo: no painel do provedor da sua IA.';
+    // 1.45.0: uma linha para cada provedor das IAs em uso (a de buscar, a de fotos e a de conversar podem ser de
+    // provedores diferentes), com o endereço que cada um documenta: a API do Gemini no Google AI Studio (Dashboard >
+    // Usage; os créditos, em Billing), a do Claude no Claude Console (Usage; o saldo dos créditos, em Settings > Billing)
+    var NOTAS = {
+      google: 'Gemini: consumo e cota no <a href="https://aistudio.google.com/" target="_blank" rel="noopener">Google AI Studio</a>, em Dashboard › Usage; o saldo dos créditos, em Billing. A cota diária do plano grátis volta à meia-noite do horário do Pacífico, de madrugada no Brasil (4h ou 5h).',
+      openai: 'OpenAI: consumo e custo em <a href="https://platform.openai.com/usage" target="_blank" rel="noopener">platform.openai.com/usage</a>.',
+      anthropic: 'Claude: consumo e custo no <a href="https://platform.claude.com/usage" target="_blank" rel="noopener">Claude Console</a>; o saldo dos créditos, em <a href="https://platform.claude.com/settings/billing" target="_blank" rel="noopener">Billing</a>.'
+    };
+    var provs = provedoresIA(ids), txt = provs.length ? provs.map(function(k){ return NOTAS[k]; }).join('<br>') : 'Consumo exato e custo: no painel do provedor da sua IA.';
     $('usoProv').innerHTML = txt;
     $('usoSensor').innerHTML = estado.sensores
       ? ''

@@ -155,6 +155,11 @@ que gravar com a revisão velha junta pelo `aplicar_diario`. O último uso fica 
 
 ### Conversa com a IA
 
+1.45.0: ouvindo (`CHAT.voz === 'on'`), o `pintaMicChat` esconde o clipe e mostra o `#chatMicX` (Cancelar), que chama o
+`paraVozChat` (o gravador é cancelado e nada vai para a caixa). No Uso da IA, `provedoresIA(ids)` devolve todos os
+provedores das IAs em uso (pelo id e pelo nome) e o `#usoProv` ganha uma linha de cada (`NOTAS`): o Gemini no Google AI
+Studio (Dashboard › Usage; os créditos, em Billing), o Claude no Claude Console (`/usage` e `/settings/billing`).
+
 `conversar` no `server.py`. A página manda as últimas 12 mensagens (até 2000 letras cada; a mensagem da IA leva junto
 "(Sugeri: …, feito)" com as ações e o que a pessoa fez) e a tela aberta. `contexto_chat` monta o que a IA vê: data e dia
 da semana, tela, casa (`descreve_casa`), clubes, a lista com o mais barato e as compras (`dados_lista`, até 80 itens), o
