@@ -128,6 +128,8 @@ MEDIA = os.environ.get("OFERTAS_MEDIA", "/media")
 SHARE = os.environ.get("OFERTAS_SHARE", "/share/economia")  # a pasta que os outros apps da casa leem (o CorrerIA)
 CORRERIA_ARQ = os.path.join(SHARE, "correria.json")
 CORRERIA_CHAVE = os.path.join(DATA, "correria.key")
+INTEGRACAO_ARQ = os.path.join(SHARE, "integracao.json")  # 1.47.0: onde o InventarIA acha este app (Compras no EconomIA)
+INTEGRACAO_CHAVE = os.path.join(DATA, "integracao.key")
 MEDIA_URI = os.environ.get("OFERTAS_MEDIA_URI", "media-source://media_source/local")
 LEITURAS = {}
 
@@ -8130,6 +8132,119 @@ def publicar_correria(cfg=None):
         log(f"CorrerIA: não consegui gravar {CORRERIA_ARQ} ({e})")
 
 
+# ---------- Compras no EconomIA (1.47.0): o InventarIA mostra, na ficha de um consumível, as compras dele daqui ----------
+# Só com Mais › Configurações › Opções › Reposição › InventarIA ligado (`repor.inventario`): o arquivo
+# share/economia/integracao.json leva o endereço e uma chave própria (nenhum dado da casa), e a rota
+# /api/integracao/compras responde pelo nome do consumível: se está na lista, as datas de compra e a Reposição dele.
+def integracao_chave():
+    try:
+        with open(INTEGRACAO_CHAVE, encoding="utf-8") as f:
+            chave = f.read().strip()
+    except OSError:
+        chave = ""
+    if len(chave) < 32:
+        chave = secrets.token_urlsafe(32)
+        os.makedirs(DATA, exist_ok=True)
+        with open(INTEGRACAO_CHAVE, "w", encoding="utf-8") as f:
+            f.write(chave)
+        os.chmod(INTEGRACAO_CHAVE, 0o600)
+    return chave
+
+
+def publicar_integracao(cfg=None):
+    """Grava (com a chave do InventarIA ligada em Opções › Reposição) ou apaga share/economia/integracao.json."""
+    try:
+        if not repor_ligado(ler_config() if cfg is None else cfg, "inventario"):
+            if os.path.exists(INTEGRACAO_ARQ):
+                os.remove(INTEGRACAO_ARQ)
+            return
+        url, ip_url = correria_endereco()
+        corpo = {"app": "economia", "nome": "EconomIA", "versao": VERSAO, "gravado_em": agora(),
+                 "url": url, "ip_url": ip_url, "chave": integracao_chave(), "compras": "/api/integracao/compras"}
+        os.makedirs(SHARE, exist_ok=True)
+        tmp = INTEGRACAO_ARQ + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(corpo, f, ensure_ascii=False, indent=1)
+        os.chmod(tmp, 0o600)
+        os.replace(tmp, INTEGRACAO_ARQ)
+    except OSError as e:
+        log(f"integração: não consegui gravar {INTEGRACAO_ARQ} ({e})")
+
+
+def integracao_autorizada(headers):
+    h = headers.get("Authorization") or ""
+    return h.startswith("Bearer ") and hmac.compare_digest(h[7:].strip().encode(), integracao_chave().encode())
+
+
+def compras_de(nome, cfg=None):
+    """O que o EconomIA sabe de um consumível do InventarIA, pelo nome (o mesmo `norm` da lista): se está na lista, as
+    datas de compra (da lista ou do histórico; as 5 últimas, a mais nova primeiro) e a Reposição dele."""
+    cfg = ler_config() if cfg is None else cfg
+    k = norm(nome)
+    na = next((i for i in cfg.get("lista") or [] if norm(nome_item(i)) == k), None)
+    h = na if isinstance(na, dict) else next((x for x in cfg.get("historico") or [] if isinstance(x, dict) and norm(x.get("produto")) == k), None)
+    datas = sorted((c for c in ((h or {}).get("compras") or []) if data_ok(c)), reverse=True)
+    r = next((x for x in itens_reposicao(cfg) if norm(x["nome"]) == k), None)
+    rep = None
+    if r:
+        prox = repor_proxima(r)
+        rep = {"cada": r["cada"], "unidade": r["unidade"], "texto": _repor_cada(r), "proxima": prox, "na_hora": prox <= hoje_br()}
+    return {"versao": VERSAO, "nome": nome, "na_lista": na is not None, "vezes": len(datas), "ultima": datas[0] if datas else "",
+            "compras": datas[:5], "reposicao": rep}
+
+
+def _dias_em_cada(dias):
+    """A duração do consumível (em dias, até 3650) no A cada da Reposição: 180 → 6 meses, 14 → 2 semanas, 45 → 45 dias, 730 → 24 meses."""
+    try:
+        d = int(dias)
+    except (TypeError, ValueError):
+        return None
+    if isinstance(dias, bool) or d < 1:
+        return None
+    if d > 3650:
+        return None
+    for tam, un in ((30, "meses"), (7, "semanas"), (1, "dias")):
+        if d % tam == 0 and d // tam <= 365:
+            return d // tam, un
+    return round(d / 30), "meses"  # mais de um ano, numa conta quebrada (730 dias): os meses mais próximos
+
+
+def compras_fazer(dado):
+    """O Pôr na lista e o Repor da ficha do consumível: as mesmas regras das ferramentas (`_ferr_por`, `_ferr_repor`), com
+    a revisão nova e o diário, para a página aberta juntar ao gravar."""
+    nome = _texto_arg(dado, "nome")
+    acao = str(dado.get("acao") or "")
+    if acao == "lista":
+        nome_f, a = "por", {"produto": nome}
+    elif acao == "repor":
+        cada = _dias_em_cada(dado.get("dias"))
+        if not cada:
+            raise ErroFerramenta("Para repor, mande dias (a duração do consumível), de 1 a 3650.")
+        nome_f, a = "repor", {"item": nome, "a_cada": cada[0], "unidade": cada[1]}
+    else:
+        raise ErroFerramenta("acao vale lista ou repor.")
+    of = ler_json(OFERTAS, {}) or {}
+    with _cfg_trava:
+        cfg = ler_config()
+        texto, mudanca = (_ferr_por if nome_f == "por" else _ferr_repor)(a, cfg, of)
+        if mudanca:
+            if nome_f == "repor":  # veio do InventarIA: a origem fica marcada, como ao escolher de outro app
+                for r in cfg.get("reposicao") or []:
+                    if isinstance(r, dict) and norm(r.get("nome")) == norm(nome):
+                        r["origem"] = "inventario"
+            try:
+                guardar_versao("auto")
+            except OSError as e:
+                log(f"versão anterior: {e}")
+            rev = gravar_config(cfg, por="InventarIA")["rev"]
+            DIARIO.append(dict(mudanca, rev=rev))
+            del DIARIO[:-300]
+            log(f"InventarIA: {nome_f} {mudanca['produto']}")
+    if mudanca and mudanca["tipo"] != "repor" and sync_ligado(cfg):
+        _sincronizar_logo()
+    return dict(compras_de(nome), texto=texto)
+
+
 def correria_autorizado(headers):
     h = headers.get("Authorization") or ""
     return h.startswith("Bearer ") and hmac.compare_digest(h[7:].strip().encode(), correria_chave().encode())
@@ -8573,9 +8688,30 @@ class Painel(BaseHTTPRequestHandler):
         CORRERIA_USO["ultimo"] = {"app": cliente, "em": agora(), "nome": nome}
         return self._json(200, {"texto": texto})
 
+    def _compras(self):
+        """O InventarIA, de outro contêiner do Home Assistant, com a chave de share/economia/integracao.json."""
+        if not repor_ligado(ler_config(), "inventario") or not integracao_autorizada(self.headers):
+            return self._json(401, {"erro": "Chave inválida ou InventarIA desligado em Opções › Reposição do EconomIA."})
+        if self.command == "GET":
+            nome = " ".join((urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("nome") or [""])[0].split())[:120]
+            if len(norm(nome)) < 2:
+                return self._json(400, {"erro": "Mande nome."})
+            return self._json(200, compras_de(nome))
+        dado = self._corpo()
+        if dado is None:
+            return None
+        if not isinstance(dado, dict):
+            return self._json(400, {"erro": "Mande {nome, acao}."})
+        try:
+            return self._json(200, compras_fazer(dado))
+        except ErroFerramenta as e:
+            return self._json(400, {"erro": str(e)})
+
     def do_GET(self):
         if urllib.parse.urlsplit(self.path).path == "/api/integracao/ferramentas":
             return self._ferramentas()
+        if urllib.parse.urlsplit(self.path).path == "/api/integracao/compras":
+            return self._compras()
         if not self._permitido():
             return
         rota = urllib.parse.urlsplit(self.path).path
@@ -8729,6 +8865,7 @@ class Painel(BaseHTTPRequestHandler):
                 novo = gravar_config(cfg)
             if correria_ligada(novo) != correria_ligada(atual):
                 publicar_correria(novo)
+                publicar_integracao(novo)
             if (sensores_ligados(novo), ia_ligada(novo)) != ligados:
                 threading.Thread(target=publica_sensor_uso, daemon=True).start()
             self._json(200, {"ok": True, "config": novo, "mesclado": mesclado})
@@ -8826,6 +8963,8 @@ class Painel(BaseHTTPRequestHandler):
     def do_POST(self):
         if urllib.parse.urlsplit(self.path).path == "/api/integracao/ferramentas":
             return self._ferramentas()
+        if urllib.parse.urlsplit(self.path).path == "/api/integracao/compras":
+            return self._compras()
         if not self._permitido():
             return
         if urllib.parse.urlsplit(self.path).path == "/api/sincronizar-lista":
@@ -9014,6 +9153,7 @@ def main():
     log("chave do Home Assistant: " + ("encontrada" if token_ha() else "AUSENTE (a busca e a lista do HA não vão funcionar)"))
     threading.Thread(target=laco_sincronizacao, daemon=True).start()
     publicar_correria()  # o endereço e a versão de agora (ou apaga o arquivo, se desligado)
+    publicar_integracao()  # 1.47.0: o do InventarIA (Compras no EconomIA), com a chave dele ligada em Opções › Reposição
     servidor = ThreadingHTTPServer(("0.0.0.0", PORT), Painel)
     log(f"painel no ar na porta {PORT}; dados em {DATA}")
     servidor.serve_forever()

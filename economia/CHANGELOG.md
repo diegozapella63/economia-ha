@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.47.0
+
+- **Compras no InventarIA**: com **Consumíveis do InventarIA** ligado em Opções › Reposição, a ficha de cada consumível no InventarIA (1.85.0 ou mais novo) mostra se ele está na lista daqui, as últimas compras e a Reposição, e de lá dá para pôr na lista e repor a cada duração dele.
+
 ## 1.46.5
 
 - **Teclado no celular**: ao abrir uma janela com um campo de texto, a tela não fica mais deslocada (a barra de cima sumia até um toque).

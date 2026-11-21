@@ -41,6 +41,7 @@ Em **Mais › Reposição** fica o que você compra de tempos em tempos: o filtr
 - A tela mostra os itens do que volta antes para o que volta depois. Toque num item para mudar o nome ou o **A cada** (o tempo não recomeça); o **X** apaga.
 - **Pelo CorrerIA** (WhatsApp, Claude e Gemini): ver a Reposição e o que está na hora, pôr um item com o intervalo, mudar o intervalo e dizer que já foi reposto.
 - **Itens de outros apps**: em **Mais › Configurações › Opções › Reposição**, **Remédios do CronologIA** e **Consumíveis do InventarIA** (desligadas de início) põem em **Escolher de outro app** os remédios cadastrados no CronologIA (1.106.0 ou mais novo) e os consumíveis do InventarIA (1.81.0 ou mais novo, com **Usar consumíveis** ligado lá). O EconomIA guarda só o nome escolhido e de qual app veio; nada muda nos outros apps. Do CronologIA vêm o nome e a dose do remédio, nunca quem toma.
+- **No InventarIA** (1.85.0 ou mais novo): com **Consumíveis do InventarIA** ligado, a ficha de cada consumível de lá mostra **Compras no EconomIA**: se o item está na lista daqui, as últimas compras e a Reposição dele, com **Pôr na lista** e **Repor**. Vale o nome igual ao do item daqui.
 
 ## Falar
 
