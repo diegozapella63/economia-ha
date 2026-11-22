@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.51.0
+
+- A **Memória da IA** do CorrerIA (Configurações › Integrações, lá) vale aqui também: o que a casa pediu para a IA lembrar entra na Conversa e na leitura por IA deste app, com a opção CorrerIA ligada.
+
 ## 1.50.0
 
 - **Ler a foto da lista pelo CorrerIA**: mande no CorrerIA (ou no meio de uma ronda) a foto de uma lista de compras, de um bilhete ou um print e peça para pôr na lista. A IA do EconomIA lê, como no Ler com IA daqui, e o CorrerIA mostra os itens que achou para você escolher. Precisa do CorrerIA 1.24.0.

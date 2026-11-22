@@ -1193,6 +1193,31 @@ def publica_sensor_uso():
     publica_sensores_lista()
 
 
+# As lembranças da casa (CorrerIA › Configurações › Integrações › Memória da IA): o CorrerIA grava as frases em
+# share/correria/lembrancas.json e a IA daqui as recebe na frente das instruções, só com a opção CorrerIA ligada neste app.
+LEMBRANCAS_ARQ = os.environ.get("ECONOMIA_LEMBRANCAS", "/share/correria/lembrancas.json")
+LEMBRANCAS_TITULO = "O que a casa pediu para lembrar (preferências da casa; use quando tiver a ver com o que você está fazendo):"
+_LEMBRANCAS = {"em": 0.0, "texto": ""}
+
+
+def lembrancas_da_casa(agora=None):
+    """O bloco das lembranças para as instruções da IA ("" sem elas ou com o CorrerIA desligado); relido no máximo uma vez por minuto."""
+    if not correria_ligada():
+        return ""
+    agora = time.time() if agora is None else agora
+    if agora - _LEMBRANCAS["em"] < 60:
+        return _LEMBRANCAS["texto"]
+    try:
+        with open(LEMBRANCAS_ARQ, encoding="utf-8") as f:
+            v = json.load(f)
+        lista = v.get("lembrancas") if isinstance(v, dict) else None
+    except (OSError, ValueError):
+        lista = None
+    frases = [" ".join(str(x).split())[:240] for x in (lista if isinstance(lista, list) else []) if x is not None and str(x).strip()][:60]
+    _LEMBRANCAS.update(em=agora, texto=LEMBRANCAS_TITULO + "\n" + "\n".join(f"- {x}" for x in frases) if frases else "")
+    return _LEMBRANCAS["texto"]
+
+
 def chamar_ai_task(nome, instrucoes, anexos=None, uso="busca"):
     if not ia_ligada():
         raise ErroBusca(IA_DESLIGADA)
@@ -1228,7 +1253,8 @@ def _chamar_ai_task(nome, instrucoes, anexos=None, uso="busca"):
             raise ErroBusca("Um assistente de conversa não lê imagens. Em Mais › Configurações › Integrações, escolha uma tarefa de IA para ler fotos.")
         return chamar_conversa(entidade, instrucoes)
     # 1.46.4: o que a IA lê vem de fora (uma página, um encarte, uma foto): é material, nunca uma ordem
-    corpo = {"task_name": nome, "instructions": IA_SO_MATERIAL + "\n\n" + instrucoes}  # no começo: a conversa termina na última mensagem
+    lemb = lembrancas_da_casa()  # 1.51.0: as lembranças da casa (a Memória da IA do CorrerIA), logo depois da guarda
+    corpo = {"task_name": nome, "instructions": IA_SO_MATERIAL + "\n\n" + (lemb + "\n\n" if lemb else "") + instrucoes}  # no começo: a conversa termina na última mensagem
     if anexos:
         corpo["attachments"] = anexos
     if entidade:
