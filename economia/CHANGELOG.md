@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.50.0
+
+- **Ler a foto da lista pelo CorrerIA**: mande no CorrerIA (ou no meio de uma ronda) a foto de uma lista de compras, de um bilhete ou um print e peça para pôr na lista. A IA do EconomIA lê, como no Ler com IA daqui, e o CorrerIA mostra os itens que achou para você escolher. Precisa do CorrerIA 1.24.0.
+
 ## 1.49.0
 
 - **Comprei hoje e a Reposição**: ao comprar um item que está na Reposição (ou que é um consumível do InventarIA), a contagem recomeça de hoje e a tela pergunta **Dura quanto tempo?**. A resposta vira o **A cada** da Reposição, e o item entra nela se ainda não estava.

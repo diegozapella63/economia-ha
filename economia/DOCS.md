@@ -329,6 +329,8 @@ A **CorrerIA** é o app da família que põe os apps da casa no WhatsApp, no Cla
 
 Pela CorrerIA dá para ver a lista com o preço mais barato de cada item, perguntar onde um produto está mais barato, ver as ofertas (por tipo de loja, loja ou produto) e os cupons, pôr e tirar itens da lista e anotar compras. As mudanças seguem as mesmas regras da tela: o item tirado fica no histórico e volta com as compras. Os preços são os da última busca do app. A tela avisa "Sua lista foi atualizada pela CorrerIA", e o quadro mostra o último uso. Desligar fecha o acesso na hora.
 
+**Ler a foto da lista** (1.50.0, com o CorrerIA 1.24.0): mande no CorrerIA a foto de uma lista de compras, de um bilhete ou um print e peça para pôr na lista. A IA do EconomIA lê e o CorrerIA mostra os itens que achou para você escolher.
+
 ## Dados
 
 Em **Mais › Configurações › Dados**, na ordem dos outros apps:

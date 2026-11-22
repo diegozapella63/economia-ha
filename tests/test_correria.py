@@ -6,6 +6,7 @@ Online (o marketplace fora da busca e os mercados da região), que não entram n
 import json
 import os
 import stat
+import unittest.mock
 
 from apoio import Cenario, categoria
 from test_api_fluxos import Servidor
@@ -52,15 +53,41 @@ class Ferramentas(Cenario):
     def usa(self, nome, **a):
         return self.S.usar_ferramenta(nome, a, "Claude")
 
+    def test_ler_arquivo_a_foto_da_conversa_lida_como_lista(self):
+        """1.50.0: a foto que a pessoa mandou no CorrerIA, lida pela IA daqui (o Ler com IA da lista); nada entra na lista."""
+        import base64
+        S = self.S
+        f = next(x for x in S.FERRAMENTAS_CORRERIA if x["nome"] == "ler_arquivo")
+        self.assertEqual((f["grava"], f["apaga"], f["anexo"]), (False, False, ["image/jpeg", "image/png", "image/webp"]))
+        foto = {"tipo": "image/jpeg", "nome": "lista.jpg", "b64": "data:image/jpeg;base64," + base64.b64encode(b"\xff\xd8" + b"x" * 50).decode()}
+        antes = json.dumps(S.ler_config().get("lista"), sort_keys=True)
+        self.ha.responde_ia("ler lista", {"itens": [{"produto": "leite integral", "quantidade": "2"}, {"produto": "Sabão em pó", "obs": "o grande"}]})
+        txt = S.usar_ferramenta("ler_arquivo", {"dica": "a lista da geladeira"}, "CorrerIA", anexo=foto)
+        self.assertEqual(txt, "Na foto (lida pela IA do EconomIA) há 2 itens:\n- Leite integral (2) [já está na lista]\n- Sabão em pó (o grande)\n"
+                              "Nada foi posto na lista. Mostre à pessoa e use economia_por_na_lista com os que ela quiser.")
+        self.assertEqual(json.dumps(S.ler_config().get("lista"), sort_keys=True), antes, "a lista não muda")
+        self.assertFalse([k for k in S.LEITURAS if k.startswith("correria-")], "a leitura não fica guardada")
+        with unittest.mock.patch.object(S, "chamar_ai_task", return_value={"itens": []}):
+            self.assertIn("não achou nenhum item de compra", S.usar_ferramenta("ler_arquivo", {}, "CorrerIA", anexo=foto))
+        with unittest.mock.patch.object(S, "chamar_ai_task", side_effect=S.ErroBusca("A IA está desligada.")):
+            with self.assertRaises(S.ErroFerramenta) as cm:
+                S.usar_ferramenta("ler_arquivo", {}, "CorrerIA", anexo=foto)
+        self.assertIn("não conseguiu ler a foto: A IA está desligada. Diga isso à pessoa, sem inventar", str(cm.exception))
+        for anexo, parte in ((None, "Falta a foto"), (dict(foto, tipo="application/pdf"), "PDF, não"), (dict(foto, b64="data:image/jpeg;base64,"), "Falta a foto"),
+                             (dict(foto, b64=base64.b64encode(b"x" * (6 * 1024 * 1024 + 1)).decode()), "grande demais")):
+            with self.assertRaises(S.ErroFerramenta) as cm:
+                S.usar_ferramenta("ler_arquivo", {}, "CorrerIA", anexo=anexo)
+            self.assertIn(parte, str(cm.exception))
+
     def test_o_catalogo(self):
         S = self.S
         nomes = [f["nome"] for f in S.FERRAMENTAS_CORRERIA]
-        self.assertEqual(nomes, ["lista", "preco", "ofertas", "roteiro", "cupons", "por_na_lista", "tirar_da_lista", "comprei", "reposicao", "repor", "reposto"])
+        self.assertEqual(nomes, ["lista", "preco", "ofertas", "roteiro", "cupons", "por_na_lista", "tirar_da_lista", "comprei", "reposicao", "repor", "reposto", "ler_arquivo"])
         self.assertEqual(set(nomes), set(S.FERR_IMPL))
         for f in S.FERRAMENTAS_CORRERIA:
             self.assertRegex(f["nome"], r"^[a-z0-9_]{1,40}$")
             self.assertEqual(f["entrada"]["type"], "object")
-            self.assertEqual(set(f), {"nome", "titulo", "descricao", "entrada", "grava", "apaga"})
+            self.assertEqual(set(f) - {"anexo"}, {"nome", "titulo", "descricao", "entrada", "grava", "apaga"})  # 1.50.0: a que recebe a foto leva `anexo`
         self.assertEqual([f["nome"] for f in S.FERRAMENTAS_CORRERIA if f["grava"]], ["por_na_lista", "tirar_da_lista", "comprei", "repor", "reposto"])
         self.assertIn("economia_lista", S.CORRERIA_INSTRUCOES)
         self.assertIn("economia_reposicao", S.CORRERIA_INSTRUCOES)
@@ -398,7 +425,7 @@ class FerramentasPelaAPI(Servidor):
         self.assertEqual(self.pede("GET", "/api/integracao/ferramentas", cab={"Authorization": "Basic x"})[0], 401)
         st, d = self.ferr()
         self.assertEqual(st, 200)
-        self.assertEqual(len(d["ferramentas"]), 11)
+        self.assertEqual(len(d["ferramentas"]), 12)
         self.assertIn("economia_lista", d["instrucoes"])
         st, d = self.ferr("POST", {"nome": "por_na_lista", "argumentos": {"produto": "Pão de forma"}, "pessoa": {"id": "p1", "nome": "Ana"}, "cliente": "Claude"})
         self.assertEqual((st, d), (200, {"texto": "Pus Pão de forma na lista. O preço vem na próxima busca do app."}))

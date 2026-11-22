@@ -7999,6 +7999,15 @@ FERRAMENTAS_CORRERIA = [
      "descricao": "Recomeça de hoje a contagem de um item da Reposição (foi comprado, ou a casa ainda tem). Para pôr o item na "
                   "lista de compras, use economia_por_na_lista.",
      "entrada": _obj({"item": {"type": "string", "description": "O item, com o nome como está na Reposição (de economia_reposicao)."}}, ["item"])},
+    # 1.50.0 (o dono: "todos os apps que tenham as funções de PDF ou imagem ou foto funcionem no correria/rondas"): o Ler com
+    # IA da lista (foto de uma lista escrita, de um bilhete, de um print), pelo CorrerIA. `anexo` diz ao CorrerIA que esta
+    # ferramenta recebe o arquivo (ele manda em `anexo`, fora dos argumentos). Nada entra na lista: a IA de lá propõe.
+    {"nome": "ler_arquivo", "titulo": "Ler foto da lista", "grava": False, "apaga": False, "anexo": ["image/jpeg", "image/png", "image/webp"],
+     "descricao": "Lê com a IA do EconomIA a foto ou a imagem que a pessoa acabou de mandar na conversa (uma lista de compras "
+                  "escrita à mão, um bilhete, um print de mensagem, a prateleira ou a despensa) e devolve os itens de compra que há nela, "
+                  "dizendo os que já estão na lista. Não põe nada na lista: depois, use economia_por_na_lista com os que a pessoa "
+                  "quiser. Só serve logo depois de a pessoa mandar a foto.",
+     "entrada": _obj({"dica": {"type": "string", "description": "O que a pessoa disse sobre a foto, se disse (ajuda a IA a ler)."}})},
 ]
 
 
@@ -8696,13 +8705,52 @@ def _ferr_reposto(a, cfg, of):
 
 FERR_IMPL = {"roteiro": _ferr_roteiro, "lista": _ferr_lista, "preco": _ferr_preco, "ofertas": _ferr_ofertas, "cupons": _ferr_cupons,
              "por_na_lista": _ferr_por, "tirar_da_lista": _ferr_tirar, "comprei": _ferr_comprei,
-             "reposicao": _ferr_reposicao, "repor": _ferr_repor, "reposto": _ferr_reposto}
+             "reposicao": _ferr_reposicao, "repor": _ferr_repor, "reposto": _ferr_reposto,
+             "ler_arquivo": None}  # 1.50.0: recebe o arquivo; roda pelo ler_arquivo_correria
 
 
-def usar_ferramenta(nome, argumentos, cliente="CorrerIA"):
+def ler_arquivo_correria(a, anexo):
+    """1.50.0: economia_ler_arquivo: a foto da conversa do CorrerIA lida como uma lista de compras, pelo mesmo ler_lista do
+    Ler com IA da página (os mesmos limites: JPG, PNG ou WebP, até 6 MB). Devolve o texto; nada entra na lista."""
+    b64 = anexo.get("b64") if isinstance(anexo, dict) and isinstance(anexo.get("b64"), str) else ""
+    mime = str(anexo.get("tipo") or "").lower() if isinstance(anexo, dict) else ""
+    b64 = b64.split(",", 1)[1] if b64.startswith("data:") and "," in b64 else b64
+    if not b64:
+        raise ErroFerramenta("Falta a foto: peça para a pessoa mandar a foto na conversa e tente de novo.")
+    if mime not in ("image/jpeg", "image/png", "image/webp"):
+        raise ErroFerramenta("O EconomIA lê foto ou imagem (JPG, PNG ou WebP); PDF, não. Diga isso à pessoa.")
+    try:
+        bruto = base64.b64decode(b64, validate=False)
+    except ValueError:
+        bruto = b""
+    if not 0 < len(bruto) <= 6 * 1024 * 1024:
+        raise ErroFerramenta("A foto não abriu ou é grande demais (até 6 MB). Peça uma foto menor.")
+    job = "correria-" + os.urandom(4).hex()
+    LEITURAS[job] = {"status": "lendo", "itens": [], "erro": None}
+    try:
+        ler_lista(job, [(bruto, mime)], str(a.get("dica") or "").strip()[:500])
+        r = LEITURAS[job]
+    finally:
+        LEITURAS.pop(job, None)
+    if r.get("status") == "erro":
+        raise ErroFerramenta(f"O EconomIA não conseguiu ler a foto: {r.get('erro')} Diga isso à pessoa, sem inventar o que há nela.")
+    itens = r.get("itens") or []
+    if not itens:
+        return "A IA do EconomIA leu a foto e não achou nenhum item de compra nela. Diga isso à pessoa e pergunte o que ela quer fazer."
+    linhas = []
+    for it in itens:
+        extra = "; ".join(x for x in (it.get("quantidade"), it.get("obs")) if x)
+        linhas.append(f"- {it['produto']}" + (f" ({extra})" if extra else "") + (" [já está na lista]" if it.get("ja_na_lista") else ""))
+    return (f"Na foto (lida pela IA do EconomIA) {'há 1 item' if len(itens) == 1 else f'há {len(itens)} itens'}:\n" + "\n".join(linhas)
+            + "\nNada foi posto na lista. Mostre à pessoa e use economia_por_na_lista com os que ela quiser.")
+
+
+def usar_ferramenta(nome, argumentos, cliente="CorrerIA", anexo=None):
     """Uma ferramenta chamada pelo CorrerIA. As de gravar mudam a lista com a revisão nova e entram no diário, para a
     página que estava aberta com a revisão velha juntar ao gravar (como a lista do Home Assistant)."""
     a = argumentos if isinstance(argumentos, dict) else {}
+    if nome == "ler_arquivo":
+        return ler_arquivo_correria(a, anexo)
     gravar = next(f["grava"] for f in FERRAMENTAS_CORRERIA if f["nome"] == nome)
     of = ler_json(OFERTAS, {}) or {}
     if not gravar:
@@ -8785,7 +8833,7 @@ class Painel(BaseHTTPRequestHandler):
             return self._json(401, {"erro": "Chave inválida ou CorrerIA desligado no EconomIA."})
         if self.command == "GET":
             return self._json(200, {"instrucoes": CORRERIA_INSTRUCOES, "ferramentas": FERRAMENTAS_CORRERIA})
-        dado = self._corpo()
+        dado = self._corpo(limite=12 * 1024 * 1024)  # 1.50.0: com a foto de ler_arquivo (até 6 MB, em base64)
         if dado is None:
             return None
         if not isinstance(dado, dict):
@@ -8795,7 +8843,7 @@ class Painel(BaseHTTPRequestHandler):
             return self._json(404, {"erro": f"Ferramenta desconhecida: {nome[:40]}. Vale: " + ", ".join(FERR_IMPL) + "."})
         cliente = str(dado.get("cliente") or self.headers.get("X-App") or "CorrerIA")[:40]
         try:
-            texto = usar_ferramenta(nome, dado.get("argumentos"), cliente)
+            texto = usar_ferramenta(nome, dado.get("argumentos"), cliente, anexo=dado.get("anexo"))
         except ErroFerramenta as e:
             return self._json(400, {"erro": str(e)})
         CORRERIA_USO["ultimo"] = {"app": cliente, "em": agora(), "nome": nome}

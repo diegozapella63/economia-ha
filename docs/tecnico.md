@@ -156,6 +156,8 @@ que gravar com a revisão velha junta pelo `aplicar_diario`. O último uso fica 
 (`correria: {ligada, ultimo}`). `redes_acompanhadas` também tira, em Online, o marketplace fora de `online.marketplaces`
 (`mkt_id`) e os mercados da região com `mercados_entrega` desligado (a mesma regra da página).
 
+**1.50.0, `ler_arquivo`**: ferramenta de leitura com `anexo: [image/jpeg, image/png, image/webp]` (o CorrerIA 1.24.0 manda a foto da conversa em `anexo`, fora dos argumentos; `usar_ferramenta(..., anexo=)`, `ler_arquivo_correria`): roda o `ler_lista` da página numa leitura só dela (`LEITURAS["correria-…"]`, apagada no fim), com os mesmos limites (até 6 MB), e devolve os itens em texto, marcando os que já estão na lista; nada é gravado. O pedido da rota aceita 12 MB.
+
 ### Conversa com a IA
 
 1.45.0: ouvindo (`CHAT.voz === 'on'`), o `pintaMicChat` esconde o clipe e mostra o `#chatMicX` (Cancelar), que chama o
