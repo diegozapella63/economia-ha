@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.52.1
+
+- **Memória da IA**: dois apps gravando uma frase no mesmo instante não apagam mais a frase um do outro (cada um espera a sua vez).
+
 ## 1.52.0
 
 - **Memória da IA** (Mais › Configurações › Integrações, depois do IA): agora o cartão existe aqui. É uma memória só, da casa, compartilhada por todos os apps: o que você escreve aqui a IA lembra em toda conversa, em qualquer um deles, e o que foi escrito nos outros aparece aqui, com o nome do app.
