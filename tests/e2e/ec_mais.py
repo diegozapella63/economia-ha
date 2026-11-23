@@ -130,7 +130,7 @@ async def main():
                 check(nomes == [n for _, n in ABAS], f"{tag}: as abas Integrações, Dados, Aparência e Opções ({nomes})")
                 # 1.9.0: Integrações na ordem da família (CorrerIA, IA do Home Assistant, Uso da IA, as daqui e os Sensores por último)
                 ints = await pg.evaluate("() => [...document.querySelectorAll('#mp-integracoes > section > .set-head h2')].map((h) => h.id)")
-                check(ints == ["h-correria", "h-ia", "h-falar", "h-uso", "h-shopee", "h-ali", "h-google", "h-brave", "h-ml", "h-insta", "h-ha", "h-sens"], f"{tag}: Integrações na ordem da família ({ints})")
+                check(ints == ["h-correria", "h-ia", "h-memoria", "h-falar", "h-uso", "h-shopee", "h-ali", "h-google", "h-brave", "h-ml", "h-insta", "h-ha", "h-sens"], f"{tag}: Integrações na ordem da família ({ints})")
                 cabe = await pg.evaluate("(s => [s.scrollWidth, s.clientWidth])(document.getElementById('maisAbas'))")
                 check(cabe[0] <= cabe[1] + 1, f"{tag}: as quatro abas cabem, sem rolar para o lado ({cabe})")
                 for k, n in ABAS:

@@ -282,6 +282,7 @@ def servidor(env=None):
     if APP not in sys.path:
         sys.path.insert(0, APP)
     sys.modules.pop("server", None)
+    sys.modules.pop("memoria_ia", None)  # de novo a cada servidor: sem a lista guardada de outro teste (e a cobertura vê o módulo inteiro)
     S = importlib.import_module("server")
     msgs = []
     S.log = msgs.append

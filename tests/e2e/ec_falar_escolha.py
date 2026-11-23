@@ -26,7 +26,7 @@ async def main():
             # 1.46.0: o cartão Falar, depois do IA, com os textos dos outros apps
             sec = pg.locator('section[aria-labelledby="h-falar"]')
             ids = await pg.evaluate("() => [...document.querySelectorAll('#mp-integracoes > section > .set-head h2')].map((h) => h.id)")
-            check(ids[:4] == ["h-correria", "h-ia", "h-falar", "h-uso"] and (await pg.locator("#h-falar").inner_text()).strip() == "Falar" and await pg.locator("#h-falar .h-ic svg").count() == 1,
+            check(ids[:5] == ["h-correria", "h-ia", "h-memoria", "h-falar", "h-uso"] and (await pg.locator("#h-falar").inner_text()).strip() == "Falar" and await pg.locator("#h-falar .h-ic svg").count() == 1,
                   f"1.46.0: o cartão Falar depois do IA, com o ícone ({ids[:4]})")
             check((await sec.locator(".set-head .sec-meta").inner_text()).strip() == "Quem transforma a fala em texto. Não muda o assistente de voz do Home Assistant.", "o texto de cima, o dos outros apps")
             check(await pg.locator('section[aria-labelledby="h-ia"] #iaVoz').count() == 0 and "Para falar" not in await pg.locator('section[aria-labelledby="h-ia"]').inner_text(), "o Para falar saiu do cartão IA")
