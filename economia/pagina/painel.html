@@ -612,6 +612,16 @@ li.escolhida{border-color:var(--accent) !important}
 .passos li{position:relative;padding-left:2em;font-size:14px;line-height:1.5;color:var(--muted);counter-increment:passo}
 .passos li::before{content:counter(passo);position:absolute;left:0;top:.1em;width:1.45em;height:1.45em;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
 .passos li b{color:var(--ink);font-weight:600}
+/* 1.52.0: a Memória da IA: o campo de uma linha (aumenta puxando o canto) e a lista das frases, com a linha fina entre elas */
+.mem-campo > textarea.field{flex:1 1 100%;width:100%;height:50px;min-height:50px;resize:vertical}
+.mem-lista{list-style:none;margin:14px 0 0;padding:0}
+.mem-lista:empty{display:none}
+.mem-lista li{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.mem-lista li:first-child{border-top:0;padding-top:0}
+.mem-lista li > span{flex:1;min-width:0;display:flex;flex-direction:column;overflow-wrap:anywhere}
+.mem-lista small{color:var(--muted);font-size:13px}
+.mem-lista .mem-del{flex:none;width:44px;height:44px;padding:0;display:grid;place-items:center}
+.mem-lista .mem-del svg{width:20px;height:20px}
 .passos-box{display:flex;flex-direction:column;gap:8px}
 .passos-box > b{font-size:14px;font-weight:600}
 .ia-st b{color:var(--ink);font-weight:600}
@@ -1747,6 +1757,15 @@ input.field,select.field{min-height:var(--altura)}
       <p class="hint" id="iaGemini" hidden>Gemini: para pesquisar na internet, use um <b>assistente de conversa</b> com "Enable Google Search tool" ligado; para fotos, o Google AI Task.</p>
       </div>
       </div>
+    </section>
+    <section class="panel settings so-ia" aria-labelledby="h-memoria" id="memoriaIa">
+      <div class="set-head"><h2 id="h-memoria"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg></span>Memória da IA</h2><p class="sec-meta">Uma memória só, da casa, compartilhada por todos os apps: o que você escreve aqui a IA lembra em toda conversa, em qualquer um deles.</p></div>
+      <div class="set-row mem-campo">
+        <div><h3 class="set-t"><label for="memTexto">O que lembrar</label></h3></div>
+        <textarea class="field" id="memTexto" rows="1" maxlength="240" placeholder="O café é sempre o da marca azul" aria-label="O que lembrar"></textarea>
+      </div>
+      <div class="row-form"><button type="button" class="btn" id="memSalvar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg>Salvar</button></div>
+      <ul class="mem-lista" id="memLista"></ul>
     </section>
     <section class="panel settings so-ia" aria-labelledby="h-falar">
       <div class="set-head"><h2 id="h-falar"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span>Falar</h2><p class="sec-meta">Quem transforma a fala em texto. Não muda o assistente de voz do Home Assistant.</p></div>
@@ -4127,6 +4146,42 @@ input.field,select.field{min-height:var(--altura)}
       : ['Sem fala para texto', esc(v.motivo || '')];
     el.innerHTML = '<span><b>' + st[0] + '</b>' + (st[1] ? ' · ' + st[1] : '') + '</span>';
   }
+  // 1.52.0: a Memória da IA (Integrações, antes do Falar): uma lista só, da casa, compartilhada por todos os apps (fica na
+  // pasta share do Home Assistant); escrever uma frase, ver a lista, apagar
+  var MEM = null;
+  function pintaMemoria(){
+    var ul = $('memLista');
+    if (!ul) return;
+    ul.innerHTML = ((MEM && MEM.lista) || []).map(function(x){
+      var t = /^(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d)/.exec(x.em || '');
+      var de = [t ? t[3] + '/' + t[2] + '/' + t[1] + ' ' + t[4] + ':' + t[5] : '', x.app, x.quem].filter(function(v){ return !!v; }).join(' · ');
+      return '<li><span><b>' + esc(x.texto) + '</b><small>' + esc(de) + '</small></span>'
+        + '<button type="button" class="ghost mem-del" data-mem="' + esc(x.id) + '" aria-label="Apagar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button></li>';
+    }).join('');
+  }
+  function carregaMemoria(){
+    if (!iaOn()){ return; }
+    if (MODO !== 'addon'){
+      MEM = MEM || {lista:[{id:'m1', texto:'O café é sempre o da marca azul', em:'2026-11-02T09:30:00-0300', app:'EconomIA', quem:'Ana'}], max:60};
+      pintaMemoria(); return;
+    }
+    fetch('api/memoria-ia', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){ MEM = j; pintaMemoria(); }).catch(function(){});
+  }
+  function mudaMemoria(corpo, ok){
+    if (MODO !== 'addon'){
+      if (corpo.acao === 'apagar') MEM.lista = MEM.lista.filter(function(x){ return x.id !== corpo.id; });
+      else {
+        var t = String(corpo.texto || '').replace(/\s+/g, ' ').trim().slice(0, 240);
+        if (t.length < 3){ toast('Escreva o que é para lembrar.'); return; }
+        MEM.lista.push({id:'m' + Date.now(), texto:t, em:new Date().toISOString(), app:'EconomIA', quem:'Ana'});
+      }
+      $('memTexto').value = ''; pintaMemoria(); toast(ok); return;
+    }
+    fetch('api/memoria-ia', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(corpo)})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+      .then(function(r){ if (!r.ok){ toast(r.j.erro || 'Não consegui salvar.'); return; } MEM = r.j; if (corpo.acao !== 'apagar') $('memTexto').value = ''; pintaMemoria(); toast(ok); })
+      .catch(function(){ toast('Não consegui falar com o add-on.'); });
+  }
   function carregaVoz(novo){  // novo: o Verificar de novo (o servidor lê os motores outra vez)
     if (!iaOn()){ VOZ_ST = null; pintaVoz(); return; }
     if (MODO !== 'addon'){
@@ -6071,7 +6126,7 @@ input.field,select.field{min-height:var(--altura)}
   $('usarIA').addEventListener('change', function(){
     estado.usar_ia = this.checked;
     salvar(this.checked ? 'IA ligada' : 'IA desligada');
-    pintaAjustes(); carregaVoz(); pintaLista(); pintaLado(); pintaLojas(); pintaIntegSt(); pintaOfertasTela();
+    pintaAjustes(); carregaVoz(); carregaMemoria(); pintaLista(); pintaLado(); pintaLojas(); pintaIntegSt(); pintaOfertasTela();
     if (this.checked){ carregaIAs(); carregaUso(); }
   });
   // ----- CorrerIA: o contato no WhatsApp e os apps no Claude e no Gemini (sem depender da IA daqui) -----
@@ -6561,6 +6616,11 @@ input.field,select.field{min-height:var(--altura)}
   });
   $('iaTestar').addEventListener('click', function(){ carregaIAs(); testaIA('busca'); testaIA('fotos'); carregaVoz(); });
   $('vozTestar').addEventListener('click', function(){ VOZ_ST = null; pintaVoz(); carregaVoz(true); });
+  $('memSalvar').addEventListener('click', function(){ mudaMemoria({acao:'nova', texto:$('memTexto').value}, 'A IA vai lembrar'); });
+  $('memLista').addEventListener('click', function(ev){
+    var b = ev.target.closest ? ev.target.closest('[data-mem]') : null;
+    if (b) mudaMemoria({acao:'apagar', id:b.getAttribute('data-mem')}, 'Apagado da memória');
+  });
   $('iaVoz').addEventListener('change', function(){
     estado.ia.voz = this.value; VOZ_ST = null; pintaVoz();
     salvar('Fala para texto: ' + this.options[this.selectedIndex].text);
@@ -6982,7 +7042,7 @@ input.field,select.field{min-height:var(--altura)}
     iconesTitulos(); iconesBotoes(); aplicaDobras(); marcaAbas();
     $('hello').innerHTML = '<span class="brand">' + ICONE_APP + 'Econom<span>IA</span></span>' + (usuario ? '<span class="eb-sep"> · </span>Olá, ' + esc(usuario) : '');
     pintaSync(); tudo(); irPara(ui.view, ui.maisTela);
-    carregaListas(); carregaIAs(); carregaUso(); carregaVoz();
+    carregaListas(); carregaIAs(); carregaUso(); carregaVoz(); carregaMemoria();
     // 1.46.0: a Reposição olha o dia de hoje: com a página aberta de um dia para o outro, o cartão aparece ao voltar a ela
     document.addEventListener('visibilitychange', function(){ if (!document.hidden) pintaReposicao(); });
     setInterval(function(){ if (!document.hidden) pintaReposicao(); }, 600000);

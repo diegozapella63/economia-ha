@@ -73,6 +73,7 @@ from xml.sax.saxutils import escape as xml_esc
 import shutil
 import zipfile
 
+import memoria_ia
 import voz
 
 DATA = os.environ.get("OFERTAS_DATA", "/data")
@@ -1193,29 +1194,28 @@ def publica_sensor_uso():
     publica_sensores_lista()
 
 
-# As lembranças da casa (CorrerIA › Configurações › Integrações › Memória da IA): o CorrerIA grava as frases em
-# share/correria/lembrancas.json e a IA daqui as recebe na frente das instruções, só com a opção CorrerIA ligada neste app.
-LEMBRANCAS_ARQ = os.environ.get("ECONOMIA_LEMBRANCAS", "/share/correria/lembrancas.json")
-LEMBRANCAS_TITULO = "O que a casa pediu para lembrar (preferências da casa; use quando tiver a ver com o que você está fazendo):"
-_LEMBRANCAS = {"em": 0.0, "texto": ""}
+# 1.52.0 (o dono: "e se eu não usar o CorrerIA e só decidir usar o InventarIA e o ResolvIA?"; "memória compartilhada"): a Memória
+# da IA é uma só, da casa, na pasta share do Home Assistant (share/familia/memoria_ia.json; memoria_ia.py, igual nos apps em
+# Python). Este app tem o cartão dela (Integrações), lê e escreve ali e a põe na frente de toda instrução da IA daqui.
+MEMORIA_ARQ = os.environ.get("MEMORIA_IA_ARQ") or os.path.join(os.path.dirname(SHARE.rstrip("/")) or "/share", "familia", "memoria_ia.json")
 
 
 def lembrancas_da_casa(agora=None):
-    """O bloco das lembranças para as instruções da IA ("" sem elas ou com o CorrerIA desligado); relido no máximo uma vez por minuto."""
-    if not correria_ligada():
-        return ""
-    agora = time.time() if agora is None else agora
-    if agora - _LEMBRANCAS["em"] < 60:
-        return _LEMBRANCAS["texto"]
-    try:
-        with open(LEMBRANCAS_ARQ, encoding="utf-8") as f:
-            v = json.load(f)
-        lista = v.get("lembrancas") if isinstance(v, dict) else None
-    except (OSError, ValueError):
-        lista = None
-    frases = [" ".join(str(x).split())[:240] for x in (lista if isinstance(lista, list) else []) if x is not None and str(x).strip()][:60]
-    _LEMBRANCAS.update(em=agora, texto=LEMBRANCAS_TITULO + "\n" + "\n".join(f"- {x}" for x in frases) if frases else "")
-    return _LEMBRANCAS["texto"]
+    """O bloco da Memória da IA para as instruções da IA ("" sem nada nela)."""
+    return memoria_ia.para_a_ia(MEMORIA_ARQ, agora)
+
+
+def memoria_estado():
+    return {"lista": memoria_ia.ler(MEMORIA_ARQ), "max": memoria_ia.MAX_FRASES}
+
+
+def memoria_mudar(c, quem=""):
+    """{acao: nova, texto} guarda uma frase; {acao: apagar, id} tira. Devolve a lista de agora (ErroMemoria diz o que vale)."""
+    if c.get("acao") == "apagar":
+        memoria_ia.esquecer(c.get("id"), MEMORIA_ARQ)
+    else:
+        memoria_ia.lembrar(c.get("texto"), "EconomIA", quem or "", MEMORIA_ARQ)
+    return memoria_estado()
 
 
 def chamar_ai_task(nome, instrucoes, anexos=None, uso="busca"):
@@ -8950,6 +8950,8 @@ class Painel(BaseHTTPRequestHandler):
             self._json(200, reposicao_fontes())
         elif rota == "/api/uso-ia":
             self._json(200, uso_resumo())
+        elif rota == "/api/memoria-ia":  # 1.52.0: a Memória da IA, de todos os apps
+            self._json(200, memoria_estado())
         elif rota == "/api/voz/status":
             if "novo=1" in urllib.parse.urlsplit(self.path).query:  # 1.46.0, o Verificar de novo do Falar: lê os motores de novo, sem esperar o minuto
                 VOZ.cache = None
@@ -9160,6 +9162,15 @@ class Painel(BaseHTTPRequestHandler):
             except ErroBusca as e:
                 SYNC["erro"] = str(e)
             return self._json(200, {"sync": SYNC, "rev": int(ler_config().get("rev") or 0)})
+        if urllib.parse.urlsplit(self.path).path == "/api/memoria-ia":
+            dado = self._corpo(4000)
+            if dado is None:
+                return None
+            try:
+                return self._json(200, memoria_mudar(dado if isinstance(dado, dict) else {},
+                                                     self.headers.get("X-Remote-User-Display-Name") or self.headers.get("X-Remote-User-Name") or ""))
+            except memoria_ia.ErroMemoria as e:
+                return self._json(400, {"erro": str(e)})
         if urllib.parse.urlsplit(self.path).path == "/api/voz":
             tamanho = int(self.headers.get("Content-Length") or 0)
             if tamanho <= 0 or tamanho > voz.MAX_BYTES + 4096:
