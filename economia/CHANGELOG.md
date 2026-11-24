@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.52.3
+
+- **Mais › Sobre**: o **OdisseIA** (os filmes e as séries da casa) entra na lista dos apps.
+
 ## 1.52.2
 
 - **Conversa**: abre sempre no chat. As perguntas prontas ou o **Editar perguntas** que ficaram abertos fecham ao sair.
