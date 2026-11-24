@@ -37,6 +37,8 @@ async def main():
             check(await pg.evaluate("document.documentElement.scrollWidth <= window.innerWidth"), "nada sai da tela")
             await card.scroll_into_view_if_needed()
             await shot(pg, "memoria-ia")
+            await pg.fill("#memTexto", "A feira da casa é sempre no sábado de manhã, e o pão é o da padaria da esquina, nunca o do mercado")
+            check(await pg.evaluate("(() => { const t = document.querySelector('#memTexto'); return t.scrollHeight <= t.clientHeight + 1 && t.offsetHeight > 60; })()"), "o campo cresce com o texto, sem rolagem dentro dele")
             await pg.fill("#memTexto", "O café é sempre o da marca azul")
             await pg.click("#memSalvar")
             await espera(pg, "() => document.querySelectorAll('#memLista li').length === 2")

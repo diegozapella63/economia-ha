@@ -1,5 +1,10 @@
 # Mudanças
 
+## 1.52.2
+
+- **Conversa**: abre sempre no chat. As perguntas prontas ou o **Editar perguntas** que ficaram abertos fecham ao sair.
+- **Memória da IA**: o campo **O que lembrar** cresce com o texto, sem a barra de rolagem dentro dele.
+
 ## 1.52.1
 
 - **Memória da IA**: dois apps gravando uma frase no mesmo instante não apagam mais a frase um do outro (cada um espera a sua vez).

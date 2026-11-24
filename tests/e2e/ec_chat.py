@@ -97,6 +97,12 @@ async def main():
             await pg.click("#chatQ")
             check(await pg.locator("#chatSug.aberta").is_visible() and await pg.get_attribute("#chatQ", "aria-expanded") == "true", "o ✨ abre as perguntas")
             await pg.click("#chatSug .chat-ed-abrir")
+            # 1.52.2: fechar e abrir a Conversa de novo começa no chat, sem o Editar perguntas que ficou aberto
+            await pg.click("#chatFechar"); await pg.wait_for_timeout(300)
+            await bolha.click(); await pg.wait_for_timeout(300)
+            check(await pg.locator('#chatSug [data-chat-ed="por"]').count() == 0, "a Conversa abre no chat")
+            await pg.click("#chatQ")
+            await pg.click("#chatSug .chat-ed-abrir")
             mods = [t.strip() for t in await pg.locator('#chatSug [data-chat-ed="por"]').all_text_contents()]
             check(len(mods) == 20 and not set(mods) & set(sug), f"1.43.0: mais 20 modelos em Editar perguntas ({len(mods)})")
             check((await pg.text_content("#chatSug .chat-ed-mais")).strip() == "Mais perguntas (20)", "com a contagem")

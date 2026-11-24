@@ -613,7 +613,8 @@ li.escolhida{border-color:var(--accent) !important}
 .passos li::before{content:counter(passo);position:absolute;left:0;top:.1em;width:1.45em;height:1.45em;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
 .passos li b{color:var(--ink);font-weight:600}
 /* 1.52.0: a Memória da IA: o campo de uma linha (aumenta puxando o canto) e a lista das frases, com a linha fina entre elas */
-.mem-campo > textarea.field{flex:1 1 100%;width:100%;height:50px;min-height:50px;resize:vertical}
+.mem-campo > textarea.field{flex:1 1 100%;width:100%;height:auto;min-height:50px;max-height:40vh;field-sizing:content;resize:vertical}
+.mem-campo > textarea.field::placeholder{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mem-lista{list-style:none;margin:14px 0 0;padding:0}
 .mem-lista:empty{display:none}
 .mem-lista li{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
@@ -4403,6 +4404,7 @@ input.field,select.field{min-height:var(--altura)}
   function abreChat(){
     if (!iaOn()) return;
     if (!noComputador() && !histChat()){ try { history.pushState({tela:histTela() || undefined, chat:true}, ''); } catch(e){ /* sem histórico */ } }
+    CHAT.menu = false; CHAT.rapidas = false; CHAT.ed = null;   // 1.52.2: a Conversa abre sempre no chat
     CHAT.aberto = true; $('chat').hidden = false; $('chatFundo').hidden = false;
     document.documentElement.classList.add('chat-aberto');
     marcaBalao(true);
