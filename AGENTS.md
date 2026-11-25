@@ -151,3 +151,6 @@ Pendente de antes: papel toalha com tamanho errado ("Pague Menos R$ 233,99").
 1.52.2 (o dono: "esses campos com scroll quebram as pernas"): o campo da Memória da IA cresce com o texto (`field-sizing: content`, até 40vh), sem rolagem dentro dele; uma linha continua com 50 px e o tamanho puxado pelo canto continua guardado.
 
 1.52.2: a Conversa abre sempre no chat (`abreChat` zera `CHAT.menu`, `CHAT.rapidas` e `CHAT.ed`; o `ec_chat` confere).
+
+
+1.53.0: as ferramentas `mudar_item`, `nova_lista` e `guardar_cupom` (diários `campos`, `nova_lista` e `cupom`).

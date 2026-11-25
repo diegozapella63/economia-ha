@@ -1,5 +1,13 @@
 # Mudanças
 
+## 1.53.0
+
+- **Pela CorrerIA**, a IA agora também:
+  - **muda a quantidade** de um item da lista e **onde comprar** (mercado, farmácia ou pet shop);
+  - **cria uma lista pronta** (com as listas prontas ligadas);
+  - **guarda um cupom** que você recebeu, de uma das lojas acompanhadas.
+- Como toda mudança pela CorrerIA, só depois do seu sim.
+
 ## 1.52.3
 
 - **Mais › Sobre**: o **OdisseIA** (os filmes e as séries da casa) entra na lista dos apps.

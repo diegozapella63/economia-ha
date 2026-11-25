@@ -604,6 +604,14 @@ def ler_planilha(dado):
 def aplicar_diario(cfg, d):
     if d.get("repor"):  # 1.49.0: a compra anotada pela CorrerIA que também recomeçou a Reposição do item
         aplicar_diario(cfg, {"tipo": "repor", "item": d["repor"]})
+    if d["tipo"] == "nova_lista":  # 1.51.0: uma lista pronta criada pela CorrerIA
+        if not any(isinstance(x, dict) and (x.get("id") == d["lista_pronta"]["id"] or norm(x.get("nome")) == norm(d["lista_pronta"]["nome"])) for x in cfg.get("listas") or []):
+            cfg.setdefault("listas", []).append(dict(d["lista_pronta"]))
+        return
+    if d["tipo"] == "cupom":  # 1.51.0: um cupom guardado pela CorrerIA
+        if not any(isinstance(k, dict) and k.get("id") == d["cupom"]["id"] for k in cfg.get("cupons_meus") or []):
+            cfg.setdefault("cupons_meus", []).append(dict(d["cupom"]))
+        return
     if d["tipo"] == "repor":  # 1.46.1: um item da Reposição posto, mudado ou reposto pela CorrerIA (o item inteiro, pelo id ou pelo nome)
         novo = d["item"]
         outros = [r for r in cfg.get("reposicao") or [] if not (isinstance(r, dict) and (r.get("id") == novo["id"] or norm(r.get("nome")) == norm(novo["nome"])))]
@@ -629,6 +637,8 @@ def aplicar_diario(cfg, d):
         item["listas"].append(d["lista"])
     if d["tipo"] == "compra" and d.get("data") and d["data"] not in item.setdefault("compras", []):
         item["compras"].append(d["data"])
+    if d["tipo"] == "campos":  # 1.51.0: a quantidade e o setor mudados pela CorrerIA
+        _aplicar_campos(item, d["campos"])
 
 
 def vai_pro_historico(cfg, item, hoje):
@@ -8034,6 +8044,21 @@ FERRAMENTAS_CORRERIA = [
                   "dizendo os que já estão na lista. Não põe nada na lista: depois, use economia_por_na_lista com os que a pessoa "
                   "quiser. Só serve logo depois de a pessoa mandar a foto.",
      "entrada": _obj({"dica": {"type": "string", "description": "O que a pessoa disse sobre a foto, se disse (ajuda a IA a ler)."}})},
+    # 1.51.0 (o dono, à lista do que a IA não fazia: "todas")
+    {"nome": "mudar_item", "titulo": "Mudar item da lista", "grava": True, "apaga": False,
+     "descricao": "Muda a quantidade de um item da lista (1 a 99) e onde comprar (o setor: mercado, farmácia ou pet shop), como na lista da tela.",
+     "entrada": _obj({"produto": _DO_ITEM, "quantidade": {"type": "integer", "minimum": 1, "maximum": 99},
+                      "setor": {"type": "string", "enum": ["mercado", "farmacia", "petshop"]}}, ["produto"])},
+    {"nome": "nova_lista", "titulo": "Nova lista pronta", "grava": True, "apaga": False,
+     "descricao": "Cria uma lista pronta (como Compra semanal ou Churrasco), com as listas prontas ligadas. Para pôr um item nela, "
+                  "use economia_por_na_lista com lista.",
+     "entrada": _obj({"nome": {"type": "string"}}, ["nome"])},
+    {"nome": "guardar_cupom", "titulo": "Guardar cupom", "grava": True, "apaga": False,
+     "descricao": "Guarda um cupom ou um desconto que a pessoa recebeu (de uma das lojas acompanhadas), com o código e a validade, como o + Cupom da tela.",
+     "entrada": _obj({"loja": {"type": "string", "description": "O nome da loja (uma das acompanhadas)."},
+                      "beneficio": {"type": "string", "description": "O desconto, como 20% em protetor solar."},
+                      "codigo": {"type": "string"}, "condicao": {"type": "string"},
+                      "valido_ate": {"type": "string", "description": "AAAA-MM-DD."}, "produto": {"type": "string"}}, ["loja", "beneficio"])},
 ]
 
 
@@ -8729,9 +8754,85 @@ def _ferr_reposto(a, cfg, of):
     return f'{r["nome"]}: a contagem recomeçou hoje; volta em {br_data(repor_proxima(r))}.', {"tipo": "repor", "produto": r["nome"], "item": dict(r)}
 
 
+SETOR_DE = {"mercado": "mercados", "farmacia": "farmacias", "farmácia": "farmacias", "petshop": "petshops", "pet shop": "petshops"}
+NOME_SETOR = {"mercados": "mercado", "farmacias": "farmácia", "petshops": "pet shop"}
+
+
+def _ferr_mudar(a, cfg, of):
+    i = _indice_na_lista(cfg, _texto_arg(a, "produto"))
+    item = cfg["lista"][i]
+    if not isinstance(item, dict):
+        item = cfg["lista"][i] = {"produto": nome_item(item), "compras": []}
+    campos, mud = {}, []
+    if a.get("quantidade") is not None:
+        q = a["quantidade"]
+        if isinstance(q, bool) or not isinstance(q, int) or not 1 <= q <= 99:
+            raise ErroFerramenta("quantidade: de 1 a 99.")
+        campos["qtd"] = q
+        mud.append(f"{q} {'unidade' if q == 1 else 'unidades'}")
+    if a.get("setor") is not None:
+        s = SETOR_DE.get(norm(a["setor"]))
+        if not s:
+            raise ErroFerramenta("setor: mercado, farmacia ou petshop.")
+        campos["setor"] = s
+        mud.append(f"comprar no {NOME_SETOR[s]}" if s != "farmacias" else "comprar na farmácia")
+    if not campos:
+        raise ErroFerramenta("Diga o que muda: quantidade ou setor.")
+    _aplicar_campos(item, campos)
+    return f'{item["produto"]}: {", ".join(mud)}.', {"tipo": "campos", "produto": item["produto"], "campos": campos}
+
+
+def _aplicar_campos(item, campos):
+    for k, v in campos.items():
+        if k == "qtd" and v <= 1:
+            item.pop("qtd", None)
+        else:
+            item[k] = v
+
+
+def _ferr_nova_lista(a, cfg, of):
+    if (cfg.get("opcoes") or {}).get("listas") is not True:
+        raise ErroFerramenta("As listas prontas estão desligadas no EconomIA (Mais › Configurações › Opções › Listas prontas).")
+    nome = " ".join(str(a.get("nome") or "").split())[:30]
+    if not nome:
+        raise ErroFerramenta("Falta o nome da lista.")
+    listas = cfg.setdefault("listas", [])
+    if any(isinstance(x, dict) and norm(x.get("nome")) == norm(nome) for x in listas):
+        raise ErroFerramenta(f"Já tem uma lista {nome}.")
+    nova = {"id": (re.sub(r"\s+", "-", norm(nome))[:24] or "lista") + "-" + secrets.token_hex(2), "nome": nome}
+    listas.append(nova)
+    return f"Lista pronta criada: {nome}. Para pôr itens nela, economia_por_na_lista com lista.", {"tipo": "nova_lista", "produto": nome, "lista_pronta": nova}
+
+
+def _ferr_guardar_cupom(a, cfg, of):
+    info, acompanha = redes_acompanhadas(cfg, of)
+    loja = norm(a.get("loja") or "")
+    redes = [r for r in info if acompanha(r)] or list(info)
+    rede = next((r for r in redes if norm(info[r]["nome"]) == loja), None) or next((r for r in redes if loja and loja in norm(info[r]["nome"])), None)
+    if not rede:
+        nomes = ", ".join(sorted(info[r]["nome"] for r in redes)[:30]) or "nenhuma"
+        raise ErroFerramenta(f"Loja não encontrada: {a.get('loja')}. As lojas acompanhadas: {nomes}.")
+    ben = " ".join(str(a.get("beneficio") or "").split())[:120]
+    if not ben:
+        raise ErroFerramenta("Falta o beneficio (o desconto).")
+    ate = str(a.get("valido_ate") or "").strip() or None
+    if ate and not data_ok(ate):
+        raise ErroFerramenta("valido_ate: AAAA-MM-DD.")
+    codigo = " ".join(str(a.get("codigo") or "").split())[:40] or None
+    meus = cfg.setdefault("cupons_meus", [])
+    if any(isinstance(k, dict) and k.get("rede") == rede and norm(k.get("beneficio")) == norm(ben) and (k.get("codigo") or None) == codigo for k in meus):
+        raise ErroFerramenta("Esse cupom já está guardado.")
+    k = {"id": "meu-" + secrets.token_hex(4), "rede": rede, "beneficio": ben, "codigo": codigo, "condicao": " ".join(str(a.get("condicao") or "").split())[:160],
+         "valido_ate": ate, "produto": " ".join(str(a.get("produto") or "").split())[:80], "criado": hoje_br()}
+    meus.append(k)
+    return (f"Cupom guardado: {info[rede]['nome']}, {ben}" + (f" (código {codigo})" if codigo else "") + (f", até {br_data(ate)}" if ate else "") + "."), \
+        {"tipo": "cupom", "produto": ben, "cupom": k}
+
+
 FERR_IMPL = {"roteiro": _ferr_roteiro, "lista": _ferr_lista, "preco": _ferr_preco, "ofertas": _ferr_ofertas, "cupons": _ferr_cupons,
              "por_na_lista": _ferr_por, "tirar_da_lista": _ferr_tirar, "comprei": _ferr_comprei,
              "reposicao": _ferr_reposicao, "repor": _ferr_repor, "reposto": _ferr_reposto,
+             "mudar_item": _ferr_mudar, "nova_lista": _ferr_nova_lista, "guardar_cupom": _ferr_guardar_cupom,
              "ler_arquivo": None}  # 1.50.0: recebe o arquivo; roda pelo ler_arquivo_correria
 
 
