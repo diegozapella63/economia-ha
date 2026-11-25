@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.54.2
+
+- Em **Mais › Sobre**, a linha do OdisseIA ficou mais curta.
+
 ## 1.54.1
 
 - Em **Mais › Sobre**, o OdisseIA aparece com os jogos.
