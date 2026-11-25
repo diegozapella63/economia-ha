@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.54.1
+
+- Em **Mais › Sobre**, o OdisseIA aparece com os jogos.
+
 ## 1.54.0
 
 - **Selecionar** na Minha lista, como nos outros apps: toque em **Selecionar** (ou segure o dedo num item), marque vários

@@ -3058,7 +3058,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.54.0';
+  var VERSAO = '1.54.1';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -3083,7 +3083,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     ['InventarIA', 'inventario-ha', 'pacote', 'Inventário da casa: cômodos, itens e valores.'],
     ['EconomIA', 'economia-ha', 'recibo', 'Lista de compras com o melhor preço perto de casa.'],
     ['MemorIA', 'memoria-ha', 'livro', 'Cadernos de anotação que abrem na hora certa.'],
-    ['OdisseIA', 'odisseia', 'filme', 'Os filmes e as séries da casa: o que ver e onde.'],
+    ['OdisseIA', 'odisseia', 'filme', 'Os filmes, as séries e os jogos da casa: o que ver, jogar e onde.'],
     ['CorrerIA', 'correria-ha', 'conversa', 'Pergunte e peça a qualquer app, no chat ou no WhatsApp.']
   ];
   function svgSobre(k, cls){ return '<svg' + (cls ? ' class="' + cls + '"' : '') + ' viewBox="0 0 24 24" aria-hidden="true">' + IC_SOBRE[k] + '</svg>'; }
