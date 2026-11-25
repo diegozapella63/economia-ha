@@ -8046,9 +8046,12 @@ FERRAMENTAS_CORRERIA = [
      "entrada": _obj({"dica": {"type": "string", "description": "O que a pessoa disse sobre a foto, se disse (ajuda a IA a ler)."}})},
     # 1.51.0 (o dono, à lista do que a IA não fazia: "todas")
     {"nome": "mudar_item", "titulo": "Mudar item da lista", "grava": True, "apaga": False,
-     "descricao": "Muda a quantidade de um item da lista (1 a 99) e onde comprar (o setor: mercado, farmácia ou pet shop), como na lista da tela.",
+     "descricao": "Muda a quantidade de um item da lista (1 a 99), onde comprar (o setor: mercado, farmácia ou pet shop; "
+                  "automatico volta ao que o app escolhe) e, com as listas prontas, passa o item para outra lista (sai das outras), "
+                  "como na lista da tela (o Selecionar muda vários: chame uma vez para cada item).",
      "entrada": _obj({"produto": _DO_ITEM, "quantidade": {"type": "integer", "minimum": 1, "maximum": 99},
-                      "setor": {"type": "string", "enum": ["mercado", "farmacia", "petshop"]}}, ["produto"])},
+                      "setor": {"type": "string", "enum": ["mercado", "farmacia", "petshop", "automatico"]},
+                      "lista": {"type": "string", "description": "O nome da lista pronta para onde o item vai (só com as listas ligadas)."}}, ["produto"])},
     {"nome": "nova_lista", "titulo": "Nova lista pronta", "grava": True, "apaga": False,
      "descricao": "Cria uma lista pronta (como Compra semanal ou Churrasco), com as listas prontas ligadas. Para pôr um item nela, "
                   "use economia_por_na_lista com lista.",
@@ -8771,21 +8774,31 @@ def _ferr_mudar(a, cfg, of):
         campos["qtd"] = q
         mud.append(f"{q} {'unidade' if q == 1 else 'unidades'}")
     if a.get("setor") is not None:
-        s = SETOR_DE.get(norm(a["setor"]))
-        if not s:
-            raise ErroFerramenta("setor: mercado, farmacia ou petshop.")
-        campos["setor"] = s
-        mud.append(f"comprar no {NOME_SETOR[s]}" if s != "farmacias" else "comprar na farmácia")
+        if norm(a["setor"]) in ("automatico", "auto"):  # 1.54.0: o Automático da tela
+            campos["setor"] = None
+            mud.append("onde comprar automático")
+        else:
+            s = SETOR_DE.get(norm(a["setor"]))
+            if not s:
+                raise ErroFerramenta("setor: mercado, farmacia, petshop ou automatico.")
+            campos["setor"] = s
+            mud.append(f"comprar no {NOME_SETOR[s]}" if s != "farmacias" else "comprar na farmácia")
+    if a.get("lista"):  # 1.54.0: o Mover para a lista do Selecionar
+        if (cfg.get("opcoes") or {}).get("listas") is not True:
+            raise ErroFerramenta("As listas prontas estão desligadas no EconomIA (Mais › Configurações › Opções › Listas prontas).")
+        alvo = _lista_pronta(a, cfg)
+        campos["listas"] = [alvo["id"]]
+        mud.append(f'na lista {alvo["nome"]}')
     if not campos:
-        raise ErroFerramenta("Diga o que muda: quantidade ou setor.")
+        raise ErroFerramenta("Diga o que muda: quantidade, setor ou lista.")
     _aplicar_campos(item, campos)
     return f'{item["produto"]}: {", ".join(mud)}.', {"tipo": "campos", "produto": item["produto"], "campos": campos}
 
 
 def _aplicar_campos(item, campos):
     for k, v in campos.items():
-        if k == "qtd" and v <= 1:
-            item.pop("qtd", None)
+        if (k == "qtd" and v <= 1) or v is None:  # None: o setor Automático (1.54.0)
+            item.pop(k, None)
         else:
             item[k] = v
 

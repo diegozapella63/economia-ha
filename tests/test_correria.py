@@ -298,8 +298,9 @@ class Ferramentas(Cenario):
         self.assertEqual((it["qtd"], it["setor"]), (3, "farmacias"))
         self.usa("mudar_item", produto="Leite integral", quantidade=1)
         self.assertNotIn("qtd", S.ler_config()["lista"][1], "1 é o padrão: sai")
-        for args, erro in (({"produto": "Leite integral"}, "quantidade ou setor"), ({"produto": "Leite integral", "quantidade": 0}, "de 1 a 99"),
-                           ({"produto": "Leite integral", "setor": "padaria"}, "mercado, farmacia ou petshop"), ({"produto": "Leite"}, "mais de um item")):
+        for args, erro in (({"produto": "Leite integral"}, "quantidade, setor ou lista"), ({"produto": "Leite integral", "quantidade": 0}, "de 1 a 99"),
+                           ({"produto": "Leite integral", "setor": "padaria"}, "mercado, farmacia, petshop ou automatico"),
+                           ({"produto": "Leite integral", "lista": "Semanal"}, "listas prontas estão desligadas"), ({"produto": "Leite"}, "mais de um item")):
             with self.assertRaisesRegex(S.ErroFerramenta, erro):
                 self.usa("mudar_item", **args)
         with self.assertRaisesRegex(S.ErroFerramenta, "listas prontas estão desligadas"):
@@ -321,6 +322,14 @@ class Ferramentas(Cenario):
         with self.assertRaisesRegex(S.ErroFerramenta, "valido_ate"):
             self.usa("guardar_cupom", loja="Giassi", beneficio="y", valido_ate="amanhã")
         self.usa("mudar_item", produto="Café Pilão 500 g", setor="mercado", quantidade=2)
+        # 1.54.0: o Mover para a lista e o Automático do Selecionar
+        self.assertEqual(self.usa("mudar_item", produto="Picanha", lista="Compra semanal"), "Picanha: na lista Compra semanal.")
+        self.assertEqual(next(i for i in S.ler_config()["lista"] if i["produto"] == "Picanha")["listas"], ["sem"], "sai das outras")
+        with self.assertRaisesRegex(S.ErroFerramenta, "lista vale: Compra semanal, Churrasco"):
+            self.usa("mudar_item", produto="Picanha", lista="Feira")
+        self.usa("mudar_item", produto="Leite integral", setor="farmacia")
+        self.assertEqual(self.usa("mudar_item", produto="Leite integral", setor="automatico"), "Leite integral: onde comprar automático.")
+        self.assertNotIn("setor", next(i for i in S.ler_config()["lista"] if i["produto"] == "Leite integral"))
         # a página que estava aberta junta tudo ao gravar
         for d in [x for x in S.DIARIO if x["rev"] > pagina["rev"]]:
             S.aplicar_diario(pagina, d)
@@ -328,6 +337,8 @@ class Ferramentas(Cenario):
         self.assertEqual(pagina["cupons_meus"][-1]["beneficio"], "15% em carnes")
         cafe = next(i for i in pagina["lista"] if i["produto"] == "Café Pilão 500 g")
         self.assertEqual((cafe["qtd"], cafe["setor"]), (2, "mercados"))
+        self.assertEqual(next(i for i in pagina["lista"] if i["produto"] == "Picanha")["listas"], ["sem"])
+        self.assertNotIn("setor", next(i for i in pagina["lista"] if i["produto"] == "Leite integral"))
 
     # ----- 1.46.1: a Reposição (HOJE é 2026-11-02) -----
     REPOR = [{"id": "aaaa1", "nome": "Filtro de água", "cada": 6, "unidade": "mes", "desde": "2026-04-30"},

@@ -130,6 +130,16 @@ Nada se compara entre setores: o álcool de 30 ml da farmácia e o galão de 5 L
 
 As lojas online valem com qualquer setor. O campo aparece quando mais de um setor está ligado em **Mais › Lojas**.
 
+### Selecionar
+
+**Selecionar** (ao lado de Completa e Resumida), ou segurar o dedo num item, deixa marcar vários itens (ou **Todos**) e mudar de uma vez:
+
+- **Comprei hoje**: anota a compra de hoje em todos (numa lista pronta, eles vão para Comprados);
+- **Alterar**: onde comprar (Manter, Automático, Mercado, Farmácia ou Pet shop) e, com as listas prontas, para qual lista mover;
+- **Remover**: os itens saem da lista e ficam no histórico; numa lista pronta, **Tirar desta lista**.
+
+O aviso que aparece depois tem o **Desfazer**. O **X** e o Voltar do celular saem da seleção.
+
 ### Comparar com IA
 
 Com a IA ligada, **Comparar** (ao lado de Completa e Resumida) deixa marcar as opções dos cartões: a melhor compra, as outras lojas, os tamanhos (em Comparar tamanhos) e os similares, de um item ou de vários. Toque em cada uma (de 2 a 6); tocar de novo desmarca. **Comparar** abre a Conversa com as escolhidas, e a IA, com a busca na web, diz:

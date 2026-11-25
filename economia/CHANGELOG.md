@@ -1,5 +1,15 @@
 # Mudanças
 
+## 1.54.0
+
+- **Selecionar** na Minha lista, como nos outros apps: toque em **Selecionar** (ou segure o dedo num item), marque vários
+  (ou **Todos**) e, de uma vez:
+  - **Comprei hoje**;
+  - **Alterar**: onde comprar (Mercado, Farmácia, Pet shop ou Automático) e, com as listas prontas, para qual lista;
+  - **Remover** (os itens ficam no histórico) ou, numa lista pronta, **Tirar desta lista**.
+- Depois, o aviso traz o **Desfazer**. O **X** ou o Voltar do celular saem da seleção.
+- Pela CorrerIA, a IA também passa um item para outra lista pronta e volta o onde comprar para o automático.
+
 ## 1.53.0
 
 - **Pela CorrerIA**, a IA agora também:

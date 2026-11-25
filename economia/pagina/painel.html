@@ -511,6 +511,28 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .cmp-acoes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .cmp-acoes > button{min-height:50px;justify-content:center}
 .comparando #wish{padding-bottom:150px}
+/* 1.54.0: Selecionar, como nos outros apps da família: marcar vários e mudar de uma vez */
+.selecionando #wish{padding-bottom:190px}
+.selecionando #wishComprados,.selecionando #limparConf{display:none}
+.sel-top{display:flex;align-items:center;gap:8px}
+.sel-top .cmp-n{flex:1;min-width:0;margin:0;font-weight:700}
+.sel-x{display:grid;place-items:center;width:40px;height:40px;padding:0;margin-left:-6px;border:0;background:none;color:var(--ink);flex:none}
+.sel-x svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.sel-todos{flex:none}
+.sel-bar button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.sel-bar .cmp-acoes button,.sel-todos{display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.sel-bar .cmp-acoes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sel-bar .cmp-acoes > *{min-width:0}
+.sel-alt{display:grid;gap:10px;max-height:46vh;overflow:auto}
+.sel-alt .lbl{display:block;font-size:13px;color:var(--muted);margin:0 0 6px}
+.sel-alt .chips{display:flex;flex-wrap:wrap;gap:6px}
+.sel-alt .chips button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 12px;font:inherit;font-size:14px;cursor:pointer}
+.sel-alt .chips button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.item.mini.sel .sel-marca{display:grid;place-items:center;width:24px;height:24px;border-radius:7px;border:2px solid var(--line);flex:none;color:transparent}
+.item.mini.sel .sel-marca svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.item.mini.sel.on{outline:2px solid var(--accent);outline-offset:-2px}
+.item.mini.sel.on .sel-marca{background:var(--accent);border-color:var(--accent);color:var(--on-accent,#1a1a1a)}
+@media (min-width:1000px){.sel-bar{flex-direction:column !important;align-items:stretch !important}}
 .comparando #wish [data-cmp]{cursor:pointer;outline:2px dashed color-mix(in srgb,var(--accent) 50%,transparent);outline-offset:2px}
 .comparando #wish [data-cmp][data-cmp-sel]{outline:3px solid var(--accent)}
 .comparando #wish .esc-btn,.comparando #wish .sim-acoes{visibility:hidden}
@@ -785,6 +807,7 @@ textarea.field.grow{field-sizing:content;min-height:var(--altura,50px);max-heigh
 .note{font-size:13px;color:var(--muted)}
 
 footer{font-size:12.5px;color:var(--muted)}
+.toast .toast-a{background:none;border:0;padding:0 0 0 8px;color:inherit;font:inherit;font-weight:800;text-decoration:underline;cursor:pointer;min-height:0}
 .toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 16px;border-radius:999px;font-size:13.5px;font-weight:600;z-index:20;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.18)}
 
 
@@ -1534,7 +1557,7 @@ input.field,select.field{min-height:var(--altura)}
         <div class="row-form"><button type="button" class="btn perigo" id="limparSim">Tirar tudo</button><button type="button" class="ghost big" id="limparNao">Cancelar</button></div>
       </div>
       <p class="sec-meta" id="wishDica">Pode escrever só o produto, como "Lysoform": o app compara os tamanhos pelo preço por quilo ou litro.</p>
-      <div class="lista-barra"><div class="seg vis-lista" id="visLista" role="group" aria-label="Como mostrar a lista" hidden><button type="button" data-vis="completa" aria-pressed="true">Completa</button><button type="button" data-vis="resumida" aria-pressed="false">Resumida</button></div><button type="button" class="ghost big so-ia cmp-btn" id="cmpBtn" aria-pressed="false" aria-label="Comparar com IA" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M7 20h10M5 8h14"/><path d="M5 8l-3 7a3 3 0 0 0 6 0zM19 8l-3 7a3 3 0 0 0 6 0z"/></svg>Comparar</button></div>
+      <div class="lista-barra"><div class="seg vis-lista" id="visLista" role="group" aria-label="Como mostrar a lista" hidden><button type="button" data-vis="completa" aria-pressed="true">Completa</button><button type="button" data-vis="resumida" aria-pressed="false">Resumida</button></div><button type="button" class="ghost big sel-btn" id="selBtn" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 5h8M13 12h8M13 19h8"/><path d="m3 17 2 2 4-4M3 7l2 2 4-4"/></svg>Selecionar</button><button type="button" class="ghost big so-ia cmp-btn" id="cmpBtn" aria-pressed="false" aria-label="Comparar com IA" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M7 20h10M5 8h14"/><path d="M5 8l-3 7a3 3 0 0 0 6 0zM19 8l-3 7a3 3 0 0 0 6 0z"/></svg>Comparar</button></div>
       <ul class="wish-grid" id="wish"></ul>
       <div id="wishComprados"></div>
     </section>
@@ -2001,6 +2024,7 @@ input.field,select.field{min-height:var(--altura)}
   </div>
 </div>
 
+<div class="cmp-bar sel-bar" id="selBar" role="region" aria-label="Selecionar" data-noswipe hidden><div class="sel-top"><button type="button" class="ghost sel-x" id="selFim" aria-label="Cancelar seleção"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button><p class="cmp-n num" id="selN" aria-live="polite"></p><button type="button" class="ghost big sel-todos" id="selTodos"></button></div><div class="sel-alt" id="selAlt" hidden></div><div class="cmp-acoes" id="selAcoes"></div></div>
 <div class="cmp-bar" id="cmpBar" role="region" aria-label="Comparar com IA" data-noswipe hidden><p class="cmp-n num" id="cmpN" aria-live="polite"></p><div class="cmp-acoes"><button type="button" class="ghost big" id="cmpCancel">Cancelar</button><button type="button" class="btn" id="cmpGo" disabled>Comparar</button></div></div>
 <nav class="tabbar" id="views" aria-label="Telas">
   <div class="tabbar-in">
@@ -2388,6 +2412,7 @@ input.field,select.field{min-height:var(--altura)}
   var TELA_DE = null;  // a aba de baixo de onde um atalho abriu a tela (Preencher o perfil, Buscar sem CEP): o Voltar volta para ela
   function irPara(v, tela){
     if (CMP && v !== 'lista'){ CMP = null; pintaCmp(); }  // o Comparar é só da Minha lista
+    if (SELL && v !== 'lista'){ SELL = null; pintaSel(); }  // o Selecionar também (1.54.0)
     var de = ui.view, antes = ui.view === 'mais' ? ui.maisTela : '';
     ui.view = v; ui.maisTela = v === 'mais' && MAIS_IDS.indexOf(tela) >= 0 ? tela : ''; salvarUI();
     var t = ui.maisTela, menu = v === 'mais' && !t, cls = document.documentElement.classList;
@@ -3538,6 +3563,8 @@ input.field,select.field{min-height:var(--altura)}
     CMP_REG = {};
     $('cmpBtn').hidden = !iaOn() || !itens.some(function(x){ return precosDe(x.it.produto).length; });
     if (CMP && $('cmpBtn').hidden) saiComparar();
+    $('selBtn').hidden = !!CMP || !itens.length;  // 1.54.0
+    if (SELL && (!itens.length || SELL.lista !== aberta)) saiSel();  // outra lista aberta: acaba a seleção
     $('limpar').hidden = !itens.length || !!aberta;  // numa lista pronta, nada de limpar: ela é para usar de novo (em Nenhuma, limpa só os dela)
     if (!itens.length) $('limparConf').hidden = true;
     pintaRoteiro();
@@ -3556,6 +3583,14 @@ input.field,select.field{min-height:var(--altura)}
       + ' Aceita mais de um? Escreva "coxinha da asa ou asinha".'
       + (semCompra ? ' Toque em "Comprei hoje" quando comprar.' : '')
       + (naoAchou ? ' Item que a busca não acha: escreva com marca e tamanho, como "Detergente Ypê 500 ml".' : '');
+    if (SELL){
+      var vis = itens.map(function(x){ return norm(x.it.produto); });
+      Object.keys(SELL.sel).forEach(function(k){ if (vis.indexOf(k) < 0) delete SELL.sel[k]; });  // só o que está na lista
+      SELL.vis = vis;
+      $('wish').innerHTML = itens.map(linhaSel).join('');
+      pintaSel();
+      return;
+    }
     $('wish').innerHTML = itens.map(function(x){
       var p = precosDe(x.it.produto), soon = x.r.dias != null && x.r.dias <= 3;
       if (resumida && !RES_ABERTO[norm(x.it.produto)]) return linhaResumida(x, p, soon);
@@ -3568,7 +3603,7 @@ input.field,select.field{min-height:var(--altura)}
       if (!p.length){
         var procurou = arr((D.relatorio || {}).sem_preco).map(norm).indexOf(norm(x.it.produto)) >= 0;
         var buscando = buscaItem === x.it.produto;
-        return '<li class="item wait"><div class="i-head"' + fechaRes(x, resumida) + '>' + iconeItem(x.it.produto) + '<p class="i-prod">' + esc(x.it.produto) + '</p></div>'
+        return '<li class="item wait" data-k="' + esc(norm(x.it.produto)) + '"><div class="i-head"' + fechaRes(x, resumida) + '>' + iconeItem(x.it.produto) + '<p class="i-prod">' + esc(x.it.produto) + '</p></div>'
           + (x.r.txt ? '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>' : '')
           + '<div class="i-best"><span class="lbl">Sem preço ainda</span>'
           + (procurou ? '<span class="i-wait">A última busca não achou.' + (((D.relatorio || {}).sugestoes || {})[x.it.produto] ? ' Quis dizer <button type="button" class="link corr-btn" data-de="' + esc(x.it.produto) + '" data-para="' + esc(D.relatorio.sugestoes[x.it.produto]) + '">' + esc(D.relatorio.sugestoes[x.it.produto]) + '</button>?' : '') + '</span>' : '')
@@ -3584,7 +3619,7 @@ input.field,select.field{min-height:var(--altura)}
       var es = escolhaDe(x.it, p);
       p.forEach(function(y){ conta[G[y.id].cat] = (conta[G[y.id].cat] || 0) + 1; });
       var onde = D.categorias.filter(function(c){ return conta[c.id]; }).map(function(c){ return plural(conta[c.id], c.id); }).join(' e ');
-      return '<li class="item"><div class="i-head"' + fechaRes(x, resumida) + '>' + iconeItem(x.it.produto, G[best.id].cat) + '<p class="i-prod">' + esc(x.it.produto) + '</p>' + (eco > 0.004 ? '<span class="i-save num" title="' + (dc ? 'Comparado ao próximo mais barato por ' + esc(dc.un) : 'Comparado à segunda loja mais barata') + '">economia de ' + ecoTxt + '</span>' : '') + '</div>'
+      return '<li class="item" data-k="' + esc(norm(x.it.produto)) + '"><div class="i-head"' + fechaRes(x, resumida) + '>' + iconeItem(x.it.produto, G[best.id].cat) + '<p class="i-prod">' + esc(x.it.produto) + '</p>' + (eco > 0.004 ? '<span class="i-save num" title="' + (dc ? 'Comparado ao próximo mais barato por ' + esc(dc.un) : 'Comparado à segunda loja mais barata') + '">economia de ' + ecoTxt + '</span>' : '') + '</div>'
         + (x.r.txt ? '<p class="rhythm' + (soon ? ' soon' : '') + '">' + esc(x.r.txt) + '</p>' : '')
         + (x.it.escolha && !es ? '<p class="i-esc-nota">Sua escolha (' + esc(G[x.it.escolha.rede] ? G[x.it.escolha.rede].nome : 'a loja') + ') não veio na última busca. <button type="button" class="link" data-desescolher="' + x.i + '">Desfazer escolha</button></p>' : '')
         + (es ? caixaEscolha(x, es, best, dc) : dc
@@ -3628,11 +3663,152 @@ input.field,select.field{min-height:var(--altura)}
   }
   function linhaResumida(x, p, soon){
     var r = p.length ? precoResumido(x, p) : null, k = norm(x.it.produto);
-    return '<li class="item mini"><button type="button" class="i-mini" data-abrir="' + esc(k) + '" aria-expanded="false">' + iconeItem(x.it.produto, p.length ? G[p[0].id].cat : null)
+    return '<li class="item mini" data-k="' + esc(k) + '"><button type="button" class="i-mini" data-abrir="' + esc(k) + '" aria-expanded="false">' + iconeItem(x.it.produto, p.length ? G[p[0].id].cat : null)
       + '<span class="i-prod">' + esc(x.it.produto) + '</span>' + (soon ? '<span class="soon-dot" title="' + esc(x.r.txt || '') + '"></span>' : '')
       + (r ? '<span class="i-mini-v num"><b>' + brl.format(r.v) + '</b><small>' + esc(r.onde) + '</small></span>'
         : '<span class="i-mini-v sem"><b>' + (buscaItem === x.it.produto ? 'Buscando…' : 'Sem preço ainda') + '</b></span>') + '</button></li>';
   }
+  // ----- 1.54.0 (o dono, sobre o Selecionar do OdisseIA: "veja se os outros apps estão assim"): Selecionar, como no
+  // InventarIA, no ResolvIA e no GerencIA: Selecionar (ou segurar o dedo num item), marcar vários (ou Todos) e, de uma vez,
+  // Comprei hoje ou Alterar (onde comprar e, com as listas prontas, para qual lista), ou Remover; depois, o Desfazer.
+  // A seleção vale só para o que está na lista aberta; o Voltar do celular sai.
+  var SELL = null, SELL_VOLTA = null, SELL_DESFAZ = null;
+  var CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  var IC_SEL = {
+    comprei: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9.3 14.2l2 2 3.6-3.7"/></svg>',
+    alterar: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>',
+    apagar: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
+    salvar: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg>',
+    todos: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 5h8M13 12h8M13 19h8"/><path d="m3 17 2 2 4-4M3 7l2 2 4-4"/></svg>'
+  };
+  function histSel(){ try { return !!(history.state && history.state.sell); } catch(e){ return false; } }
+  function linhaSel(x){
+    var k = norm(x.it.produto), on = !!SELL.sel[k], p = precosDe(x.it.produto), r = p.length ? precoResumido(x, p) : null;
+    return '<li class="item mini sel' + (on ? ' on' : '') + '" data-k="' + esc(k) + '"><button type="button" class="i-mini" data-selit="' + esc(k) + '" aria-pressed="' + on + '">'
+      + '<span class="sel-marca" aria-hidden="true">' + CHECK + '</span>' + iconeItem(x.it.produto, p.length ? G[p[0].id].cat : null)
+      + '<span class="i-prod">' + esc(x.it.produto) + (qtdDe(x.it) > 1 ? ' · ' + qtdDe(x.it) : '') + '</span>'
+      + (r ? '<span class="i-mini-v num"><b>' + brl.format(r.v) + '</b><small>' + esc(r.onde) + '</small></span>' : '') + '</button></li>';
+  }
+  function selMarcados(){ return estado.lista.filter(function(it){ return SELL && SELL.sel[norm(it.produto)]; }); }
+  function pintaSel(){
+    document.documentElement.classList.toggle('selecionando', !!SELL);
+    $('selBar').hidden = !SELL;
+    if (!SELL) return;
+    var n = selMarcados().length, todos = n > 0 && arr(SELL.vis).every(function(k){ return SELL.sel[k]; });
+    $('selN').textContent = n ? (n === 1 ? '1 selecionado' : n + ' selecionados') : 'Toque nos itens';
+    $('selTodos').innerHTML = IC_SEL.todos + (todos ? 'Nenhum' : 'Todos');
+    var alt = SELL.alt, outras = estado.listas.filter(function(l){ return l.id !== listaAtual(); });
+    $('selAlt').hidden = !alt;
+    if (alt){
+      var chip = function(campo, v, rot){ return '<button type="button" data-selcampo="' + campo + '" data-v="' + esc(v) + '" aria-pressed="' + (alt[campo] === v) + '">' + esc(rot) + '</button>'; };
+      $('selAlt').innerHTML = '<div><span class="lbl">Onde comprar</span><div class="chips">' + chip('setor', '', 'Manter') + chip('setor', 'auto', 'Automático')
+          + Object.keys(SETORES).map(function(s){ return chip('setor', s, SETORES[s]); }).join('') + '</div></div>'
+        + (listasOn() && outras.length ? '<div><span class="lbl">' + (listaAtual() ? 'Mover para a lista' : 'Pôr na lista') + '</span><div class="chips">' + chip('lista', '', 'Manter')
+          + outras.map(function(l){ return chip('lista', l.id, l.nome); }).join('') + '</div></div>' : '');
+    }
+    $('selAcoes').innerHTML = alt
+      ? '<button type="button" class="ghost big perigo" id="selRemover"' + (n ? '' : ' disabled') + '>' + IC_SEL.apagar + (listaAtual() ? 'Tirar desta lista' : 'Remover') + '</button><button type="button" class="btn" id="selSalvar"' + (n ? '' : ' disabled') + '>' + IC_SEL.salvar + 'Salvar</button>'
+      : '<button type="button" class="ghost big" id="selComprei"' + (n ? '' : ' disabled') + '>' + IC_SEL.comprei + 'Comprei hoje</button><button type="button" class="btn" id="selAlterar"' + (n ? '' : ' disabled') + '>' + IC_SEL.alterar + (n ? 'Alterar ' + (n === 1 ? '1 item' : n + ' itens') : 'Alterar') + '</button>';
+  }
+  function entraSel(k){
+    if (SELL) return;
+    if (CMP) saiComparar();
+    SELL = {sel:{}, alt:null, lista:listaAtual()};
+    $('toast').hidden = true;
+    if (k) SELL.sel[k] = true;
+    if (!histSel()){ try { history.pushState({tela:histTela() || undefined, sell:true}, ''); } catch(e){ /* sem histórico */ } }
+    pintaLista();
+  }
+  function saiSel(){
+    if (!SELL) return;
+    SELL = null; pintaSel(); pintaLista();
+    if (histSel()){ SELL_VOLTA = true; try { history.back(); } catch(e){ SELL_VOLTA = null; } }
+  }
+  // o que muda vira uma cópia antes (o Desfazer do aviso volta a lista, o histórico e as listas prontas como eram)
+  function selFaz(msg, fazer){
+    var antes = JSON.stringify({lista:estado.lista, historico:estado.historico, listas:estado.listas, reposicao:estado.reposicao});
+    var its = selMarcados();
+    fazer(its);
+    SELL_DESFAZ = antes;
+    saiSel();
+    salvar(false);
+    toastDesfazer(msg);
+    pintaOfertasTela(); pintaHist(); pintaReposicao();
+  }
+  function toastDesfazer(msg){
+    var t = $('toast');
+    t.innerHTML = esc(msg) + ' <button type="button" class="link toast-a" id="selDesfazer">Desfazer</button>';
+    t.hidden = false; t.classList.add('com-acao');
+    clearTimeout(toastT); toastT = setTimeout(function(){ t.hidden = true; t.classList.remove('com-acao'); }, 7000);
+  }
+  $('toast').addEventListener('click', function(e){
+    if (!e.target.closest('#selDesfazer') || !SELL_DESFAZ) return;
+    var v = JSON.parse(SELL_DESFAZ); SELL_DESFAZ = null;
+    estado.lista = v.lista; estado.historico = v.historico; estado.listas = v.listas; estado.reposicao = v.reposicao;
+    this.hidden = true; this.classList.remove('com-acao');
+    salvar('Desfeito'); tudo();
+  });
+  $('selBtn').addEventListener('click', function(){ entraSel(); });
+  $('selFim').addEventListener('click', function(){ saiSel(); });
+  $('selTodos').addEventListener('click', function(){
+    if (!SELL) return;
+    var todos = arr(SELL.vis).every(function(k){ return SELL.sel[k]; });
+    SELL.sel = {}; if (!todos) SELL.vis.forEach(function(k){ SELL.sel[k] = true; });
+    pintaLista();
+  });
+  $('selBar').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b || !SELL) return;
+    if (b.dataset.selcampo){ SELL.alt[b.dataset.selcampo] = b.dataset.v; pintaSel(); return; }
+    if (b.id === 'selAlterar'){ SELL.alt = {setor:'', lista:''}; pintaSel(); return; }
+    if (b.id === 'selComprei'){
+      var hoje = hojeSP(), lo = listaObj(listaAtual()), n = selMarcados().length;
+      selFaz((n === 1 ? '1 item comprado' : n + ' itens comprados') + ' hoje', function(its){
+        its.forEach(function(it){
+          if (arr(it.compras).indexOf(hoje) < 0) it.compras = arr(it.compras).concat([hoje]);
+          if (lo && arr(lo.comprados).indexOf(norm(it.produto)) < 0) lo.comprados = arr(lo.comprados).concat([norm(it.produto)]);
+          repComprou(it.produto);
+        });
+      });
+      return;
+    }
+    if (b.id === 'selRemover'){
+      var a = listaAtual(), nr = selMarcados().length;
+      selFaz((nr === 1 ? '1 item' : nr + ' itens') + (a ? ' saíram de ' + nomeLista(a) : ' saíram da lista e ficaram no histórico'), function(its){
+        its.forEach(function(it){
+          if (a && arr(it.listas).length > 1){ it.listas = arr(it.listas).filter(function(id){ return id !== a; }); return; }
+          var i = estado.lista.indexOf(it); if (i >= 0) vaiProHistorico(estado.lista.splice(i, 1));
+        });
+      });
+      return;
+    }
+    if (b.id === 'selSalvar'){
+      var alt = SELL.alt, ns = selMarcados().length;
+      if (!alt.setor && !alt.lista){ SELL.alt = null; pintaSel(); return; }
+      selFaz((ns === 1 ? '1 item alterado' : ns + ' itens alterados'), function(its){
+        its.forEach(function(it){
+          if (alt.setor === 'auto') delete it.setor; else if (alt.setor) it.setor = alt.setor;
+          if (alt.setor && it.escolha && !noSetor(setorDe(it.produto))(it.escolha.rede)) delete it.escolha;  // a escolha de outro setor sai junto
+          if (alt.lista){
+            var ls = arr(it.listas).filter(function(id){ return id !== listaAtual(); });
+            if (ls.indexOf(alt.lista) < 0) ls.push(alt.lista);
+            it.listas = ls;
+          }
+        });
+      });
+    }
+  });
+  window.addEventListener('popstate', function(){
+    if (SELL_VOLTA){ SELL_VOLTA = null; return; }  // a entrada desfeita ao sair
+    if (SELL && !histSel()){ SELL = null; pintaSel(); pintaLista(); }  // o Voltar do celular
+  });
+  // segurar o dedo num item (no celular, o contextmenu) começa o Selecionar com ele marcado
+  $('wish').addEventListener('contextmenu', function(e){
+    var li = e.target.closest && e.target.closest('#wish > li[data-k]');
+    if (!li || SELL || CMP) return;
+    e.preventDefault();
+    try { if (navigator.vibrate) navigator.vibrate(12); } catch(err){ /* sem vibração */ }
+    entraSel(li.dataset.k);
+  });
   function fechaRes(x, resumida){
     return resumida ? ' data-fechar="' + esc(norm(x.it.produto)) + '" role="button" tabindex="0" aria-expanded="true" title="Resumir"' : '';
   }
@@ -3723,6 +3899,10 @@ input.field,select.field{min-height:var(--altura)}
   });
   $('wish').addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.selit != null && SELL){
+      if (SELL.sel[b.dataset.selit]) delete SELL.sel[b.dataset.selit]; else SELL.sel[b.dataset.selit] = true;
+      pintaLista(); return;
+    }
     if (b.dataset.escI != null){
       var ie = estado.lista[Number(b.dataset.escI)]; if (!ie) return;
       var info = itemDe(ie.produto), q0 = info && info.base ? Number(info.base.quantidade) : null, q = Number(b.dataset.escQ) || null;

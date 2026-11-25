@@ -154,3 +154,5 @@ Pendente de antes: papel toalha com tamanho errado ("Pague Menos R$ 233,99").
 
 
 1.53.0: as ferramentas `mudar_item`, `nova_lista` e `guardar_cupom` (diários `campos`, `nova_lista` e `cupom`).
+
+1.54.0: **Selecionar** na Minha lista (`SELL`, `entraSel`, `saiSel`, `pintaSel`, `selFaz`, `#selBar`; o histórico como o do Comparar) e o `mudar_item` com `lista` e `setor: automatico` (ver `docs/tecnico.md`; teste `ec_selecionar`).
