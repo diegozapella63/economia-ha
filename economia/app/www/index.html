@@ -511,14 +511,16 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .lista-barra{display:flex;gap:8px;margin:0 0 12px;min-width:0}
 /* 1.56.0: Agrupar por, no padrão da família (o dos Consumíveis do InventarIA): o título pequeno que fecha o bloco (fechado, o
    escolhido ao lado), as escolhas numa barra só, do mesmo tamanho; cada grupo com o ícone, o nome e quantos */
-.agrupar{display:grid;gap:8px;margin:0 0 14px}
+/* 1.57.0 (PADROES.md, "O alto das listas"): a linha igual nos apps: 40 px, o ícone de 18 px na cor do app, o nome em 15 px,
+   peso 500, na cor do texto; fechado, o escolhido em cinza; a seta no fim */
+.agrupar{display:grid;gap:4px;margin:0 0 8px}
 .agrupar[hidden]{display:none}
 .agrupar.fechado{gap:0}
-.agrupar-l{display:flex;align-items:center;gap:6px;width:100%;min-height:32px;padding:0 2px;background:none;border:0;color:var(--muted);font:inherit;font-size:14px;font-weight:500;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.agrupar-l svg{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.agrupar-l{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:0 2px;background:none;border:0;color:var(--ink);font:inherit;font-size:15px;font-weight:500;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.agrupar-l svg{width:18px;height:18px;flex:none;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .agrupar-l::after{content:"";flex:none;width:18px;height:18px;margin-left:auto;background:var(--muted);transition:transform .2s;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center/18px no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center/18px no-repeat}
 .agrupar.fechado > .agrupar-l::after{transform:rotate(-90deg)}
-.agrupar-l .agrupar-val{color:var(--ink);font-weight:600}
+.agrupar-l .agrupar-val{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--muted);font-weight:500}
 .seg.agrupar-seg{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));width:100%}
 .seg.agrupar-seg button{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;padding:0 6px}
 .seg.agrupar-seg button span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -3083,7 +3085,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.56.1';
+  var VERSAO = '1.57.0';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -4272,13 +4274,15 @@ dialog.ss-wrap::backdrop{background:transparent}
     clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>'
   };
   function icAg(k){ return '<svg viewBox="0 0 24 24" aria-hidden="true">' + IC_AG[k] + '</svg>'; }
+  // 1.57.0 (PADROES.md): de início, a que mais ajuda (a primeira); o Nenhum por último
   function opcoesAgrupar(){
-    return [['', 'Nenhum', 'list']].concat(setoresLigados().length > 1 ? [['setor', 'Onde comprar', 'tag']] : [], [['loja', 'Loja', 'store']]);
+    return (setoresLigados().length > 1 ? [['setor', 'Onde comprar', 'tag']] : []).concat([['loja', 'Loja', 'store'], ['nenhum', 'Nenhum', 'list']]);
   }
   function agruparLista(itens){
     if (itens.length < 2) return '';
-    var v = ui.agrupar || '';
-    return opcoesAgrupar().some(function(o){ return o[0] === v; }) ? v : '';
+    var v = ui.agrupar || '', ops = opcoesAgrupar();
+    var k = ops.some(function(o){ return o[0] === v; }) ? v : ops[0][0];
+    return k === 'nenhum' ? '' : k;
   }
   function lojaDe(x, p){
     var es = escolhaDe(x.it, p); if (es) return es.y.id;
@@ -4305,7 +4309,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     var el = $('listaAgrupar'), ok = itens.length >= 2 && !SELL;
     el.hidden = !ok;
     if (!ok){ el.innerHTML = ''; return; }
-    var ops = opcoesAgrupar(), cur = agruparLista(itens), shut = !!ui.agruparFechado;
+    var ops = opcoesAgrupar(), cur = agruparLista(itens) || 'nenhum', shut = !!ui.agruparFechado;
     var nome = (ops.filter(function(o){ return o[0] === cur; })[0] || ops[0])[1];
     el.className = 'agrupar' + (shut ? ' fechado' : '');
     el.innerHTML = '<button type="button" class="agrupar-l" id="listaAgruparL" data-agrupar-dobra aria-expanded="' + !shut + '">' + icAg('layers') + '<span>Agrupar por</span>' + (shut ? '<span class="agrupar-val">· ' + esc(nome) + '</span>' : '') + '</button>'

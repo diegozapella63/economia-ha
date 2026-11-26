@@ -132,7 +132,7 @@ As lojas online valem com qualquer setor. O campo aparece quando mais de um seto
 
 ### Agrupar por
 
-Embaixo de Completa e Resumida: **Nenhum** (a ordem de sempre), **Onde comprar** (Mercado, Farmácia, Pet shop; aparece com mais de um setor ligado) ou **Loja** (a loja do preço escolhido; o que ainda não tem preço fica no fim). Cada grupo mostra quantos itens e fecha num toque no nome; o título **Agrupar por** fecha o bloco e mostra ao lado o escolhido. O aparelho lembra.
+Embaixo de Completa e Resumida: **Onde comprar** (Mercado, Farmácia, Pet shop; aparece com mais de um setor ligado; de início), **Loja** (a loja do preço escolhido; o que ainda não tem preço fica no fim) ou **Nenhum** (a ordem de sempre). Cada grupo mostra quantos itens e fecha num toque no nome; o título **Agrupar por** fecha o bloco e mostra ao lado o escolhido. O aparelho lembra.
 
 ### Selecionar
 

@@ -5,6 +5,7 @@ num processo e o Chromium do Playwright. Cada teste é um script: python3 tests/
 - as capturas vão para $E2E_TMP/shots (sem E2E_TMP, uma pasta temporária)
 - png_codigo() desenha um código de barras EAN-13/EAN-8 num PNG, sem biblioteca de imagem
 """
+import json
 import os
 import random
 import socket
@@ -131,11 +132,15 @@ async def abrir_mais(pg, onde, computador=False):
         await pg.click("#aba-" + onde)
 
 
-async def pagina(p, largura=390, altura=844, escuro=True, args=None, permissoes=None, toque=True):
+async def pagina(p, largura=390, altura=844, escuro=True, args=None, permissoes=None, toque=True, agrupar="nenhum"):
     b = await p.chromium.launch(args=args or [])
     ctx = await b.new_context(viewport={"width": largura, "height": altura}, device_scale_factor=2,
                               color_scheme="dark" if escuro else "light", has_touch=toque, permissions=permissoes or [],
                               accept_downloads=True)
+    # 1.57.0: a Minha lista começa agrupada (Onde comprar ou Loja); os testes de outras partes olham a lista de sempre
+    # (Agrupar por Nenhum), a menos que escolham outra coisa (o ec_agrupar passa agrupar=None)
+    if agrupar is not None:
+        await ctx.add_init_script("try{var k='ofertas-bairro:ui',u=JSON.parse(localStorage.getItem(k))||{};if(!('agrupar' in u)){u.agrupar=%s;localStorage.setItem(k,JSON.stringify(u));}}catch(e){}" % json.dumps(agrupar))
     pg = await ctx.new_page()
     pg.erros = []
     pg.on("pageerror", lambda e: pg.erros.append(str(e)))

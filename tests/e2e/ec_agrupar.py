@@ -26,14 +26,17 @@ async def main():
     with App(cfg, buscar=False, antes=lambda S: S.gravar_json(S.OFERTAS, OFERTAS)) as app:
         async with async_playwright() as p:
             for w, escuro in ((390, True), (320, False)):
-                b, pg = await pagina(p, w, 844, escuro=escuro)
+                b, pg = await pagina(p, w, 844, escuro=escuro, agrupar=None)
                 await pg.goto(app.url)
                 await pg.wait_for_timeout(1200)
                 await pg.click('.tabbar [data-view="lista"]')
                 await pg.wait_for_timeout(300)
                 ops = [t.strip() for t in await pg.locator("#listaAgrupar .agrupar-seg button").all_inner_texts()]
-                check(ops == ["Nenhum", "Onde comprar", "Loja"], f"{w}: Nenhum, Onde comprar e Loja ({ops})")
-                check(await pg.get_attribute('#listaAgrupar [data-agrupar=""]', "aria-pressed") == "true" and await pg.locator("#wish > li.wish-grp").count() == 0, f"{w}: Nenhum: a lista de sempre")
+                # 1.57.0 (PADROES.md): de início, a que mais ajuda (Onde comprar); o Nenhum por último
+                check(ops == ["Onde comprar", "Loja", "Nenhum"], f"{w}: Onde comprar, Loja e Nenhum ({ops})")
+                check(await pg.get_attribute('#listaAgrupar [data-agrupar="setor"]', "aria-pressed") == "true" and await pg.locator("#wish > li.wish-grp").count() >= 1, f"{w}: por Onde comprar de início")
+                fs = await pg.evaluate("(() => { const e = document.querySelector('#listaAgrupar .agrupar-l'); const r = e.getBoundingClientRect(); return [getComputedStyle(e).fontSize, Math.round(r.height)]; })()")
+                check(fs == ["15px", 40], f"{w}: a linha do Agrupar por, 15 px e 40 px ({fs})")
                 cx = await pg.evaluate("[...document.querySelectorAll('#listaAgrupar .agrupar-seg button')].map(b => { const r = b.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.top)]; })")
                 check(len({c[0] for c in cx}) == 1 and len({c[1] for c in cx}) == 1, f"{w}: numa linha, do mesmo tamanho ({cx})")
                 # Onde comprar
@@ -72,7 +75,7 @@ async def main():
                 check(await pg.locator("#listaAgrupar").is_hidden() and await pg.locator("#wish > li.wish-grp").count() == 0, f"{w}: selecionando, sem o Agrupar")
                 await pg.go_back()
                 await pg.wait_for_timeout(300)
-                await pg.click('#listaAgrupar [data-agrupar=""]')
+                await pg.click('#listaAgrupar [data-agrupar="nenhum"]')
                 await pg.wait_for_timeout(300)
                 check(await pg.locator("#wish > li.wish-grp").count() == 0 and await pg.locator("#wish > li.item").count() == 5, f"{w}: de volta ao Nenhum")
                 await b.close()

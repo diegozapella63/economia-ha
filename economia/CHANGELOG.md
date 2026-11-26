@@ -1,5 +1,10 @@
 # Mudanças
 
+## 1.57.0
+
+- **O alto das listas igual em todos os apps**: na **Minha lista**, o **Agrupar por** é a linha do mesmo tamanho dos outros apps, com o ícone na cor do app e, fechado, o escolhido em cinza.
+- O **Agrupar por** começa em **Onde comprar** (ou em **Loja**, com um setor só); o **Nenhum** fica por último.
+
 ## 1.56.1
 
 - **Minha lista › Agrupar por**: a barra das escolhas com a altura de todos os botões do app (50 px).
