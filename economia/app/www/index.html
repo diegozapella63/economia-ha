@@ -5052,14 +5052,15 @@ dialog.ss-wrap::backdrop{background:transparent}
     ofertas:['Quais ofertas valem a pena para mim?', 'Tem cupom bom agora?', 'Um jantar com o que está em oferta'],
     mais:['O que está mais barato hoje?', 'Monte uma lista para a semana']
   };
-  var PERG_APP = ['Onde a compra fica mais barata?', 'O que está acabando?', 'Monte uma lista para um churrasco', 'Quanto vai dar a compra da lista?',
+  // 1.54.3 (o dono: "tem algumas muito específicas"): só perguntas que valem em qualquer casa, sem itens nem lojas inventados
+  var PERG_APP = ['Onde a compra fica mais barata?', 'O que está acabando?', 'Monte uma lista para receber visitas', 'Quanto vai dar a compra da lista?',
     'Quais ofertas valem a pena para mim?', 'Tem cupom bom agora?', 'Vale a pena ir em duas lojas?', 'Onde compro tudo de uma vez?',
     'O que está mais barato hoje?', 'Monte uma lista para a semana', 'Um jantar com o que está em oferta', 'O que eu compro toda semana?',
-    'O que falta comprar para o café da manhã?', 'Qual item da lista está mais caro que o normal?', 'Qual mercado tem mais itens da lista?',
+    'O que está na hora de repor?', 'Qual item da lista está mais caro que o normal?', 'Qual mercado tem mais itens da lista?',
     'Tem oferta de algum item da lista?', 'Monte um cardápio barato para a semana', 'Quanto economizo comprando no mais barato?',
     'O que dá para trocar por uma marca mais barata?', 'Quais itens eu comprei este mês?', 'Monte uma lista de limpeza da casa',
-    'Adiciona leite e café na lista', 'Comprei o pão', 'Qual é o melhor tamanho de embalagem para o café?', 'O que está em oferta na farmácia?',
-    'Quanto custa o arroz em cada mercado?', 'Faz uma lista para um almoço de domingo', 'Quais lojas eu acompanho?'];
+    'Qual embalagem compensa mais nos itens da lista?', 'Tem oferta nos itens que eu sempre compro?', 'Quanto custa cada item da lista em cada loja?',
+    'Quanto eu gasto por mês em compras?', 'O que eu esqueço de comprar?', 'Quais lojas eu acompanho?'];
   function modelosPerguntas(){ var at = perguntasPadrao(); return PERG_APP.filter(function(t){ return at.indexOf(t) < 0; }).slice(0, 20); }
   var ACAO_CHAT = {
     por_na_lista:{ic:'<path d="M12 5v14M5 12h14"/>', faz:'Pôr na lista: ', feito:'Na lista: '},

@@ -67,7 +67,7 @@ async def main():
                   f"no celular, sobe de baixo ({caixa})")
             check(await pg.text_content(".chat-vazio") == "Pergunte sobre a lista, as ofertas ou o que quiser. A IA sugere; você confirma.", "o texto da conversa vazia")
             sug = await pg.locator("#chatSug [data-chat-sug]").all_text_contents()
-            check(sug == ["Onde a compra fica mais barata?", "O que está acabando?", "Monte uma lista para um churrasco", "Quanto vai dar a compra da lista?", "Quais ofertas valem a pena para mim?", "Tem cupom bom agora?"], f"1.43.0: as 6 sugestões da Minha lista ({sug})")
+            check(sug == ["Onde a compra fica mais barata?", "O que está acabando?", "Monte uma lista para receber visitas", "Quanto vai dar a compra da lista?", "Quais ofertas valem a pena para mim?", "Tem cupom bom agora?"], f"1.43.0: as 6 sugestões da Minha lista ({sug})")
             # 1.38.1: em linhas, quebrando (nada de rolar de lado), cada uma com o ✨, dentro da largura
             caixas = [await b.bounding_box() for b in await pg.locator("#chatSug [data-chat-sug]").all()]
             check(len({round(c["y"]) for c in caixas}) >= 2 and all(c["x"] >= 0 and c["x"] + c["width"] <= 391 for c in caixas), f"as perguntas em linhas, na largura ({caixas})")
@@ -133,7 +133,7 @@ async def main():
             await pg.locator("#chat").screenshot(path=SHOTS + "/ecchat-perguntas.png")
             await pg.click('#chatSug [data-chat-ed="pronto"]')
             novas = await pg.locator("#chatSug [data-chat-sug]").all_text_contents()
-            check(novas == ["O que está acabando em casa?", "Monte uma lista para um churrasco", "Quanto vai dar a compra da lista?", "Quais ofertas valem a pena para mim?", "Tem cupom bom agora?"] + ["Tem cupom de café?"], f"Pronto: as perguntas novas, a mudada também ({novas})")
+            check(novas == ["O que está acabando em casa?", "Monte uma lista para receber visitas", "Quanto vai dar a compra da lista?", "Quais ofertas valem a pena para mim?", "Tem cupom bom agora?"] + ["Tem cupom de café?"], f"Pronto: as perguntas novas, a mudada também ({novas})")
             check(await pg.evaluate("JSON.parse(localStorage.getItem('ofertas-bairro:perguntas'))") == novas, "guardadas no aparelho")
             await pg.click("#chatQ")
             check(await pg.locator("#chatSug").is_hidden(), "o mesmo botão fecha")

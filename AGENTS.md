@@ -130,6 +130,8 @@ outros apps do grupo e publique todos. Um arquivo que passa a ser igual entra em
 
 Aqui não há aviso no celular ainda (o **Avisar no celular** da rotina fica de fora da tela até existir; quando entrar, é o componente da família: Quem recebe, Testar no meu celular, o horário e o A cada, como no GerencIA). O `config.yaml` não tem `panel_admin`: fica como está, no padrão do Home Assistant (o painel só para administradores), até o dono decidir outra coisa. A ação principal do meio é o **Buscar** (não há outra aba Buscar); Integrações põe as integrações próprias (Shopee, Google, Brave, Mercado Livre, Instagram, Lista do Home Assistant) entre o Uso da IA e os Sensores, e o Falar fica dentro da IA do Home Assistant (**Para falar**); a cor da casa em `config.json` (`cor`, `cor_dia`; `corDaCasa()` na página, com a cópia do aparelho em `ofertas-bairro:ui` só para o script do `<head>`); a paleta em `CORES` (as regras `:root[data-cor]` geradas das 12 cores); a Conversa ocupa uma entrada no histórico no celular (`histChat`, `fechaChat(depois)`).
 
+1.54.3 (o dono: "revisar as 20 perguntas padrões da IA, tem algumas muito específicas"): as **perguntas prontas** da Conversa (as 6 à vista e as 20 do Mais perguntas, `PERG_APP`) são gerais e valem em qualquer casa: nada de itens, valores, lojas ou nomes inventados («Comprei o pão», «Quanto custa o arroz em cada mercado?»); o pedido com o detalhe é o que a pessoa escreve. Vale em todos os apps da família.
+
 ## Ideias combinadas e ainda não feitas
 
 Em ordem sugerida: "Promoção de verdade?" (o de/por contra o histórico de preços, antes da Black Friday);
