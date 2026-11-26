@@ -48,12 +48,14 @@ A busca começa pelo que não gasta IA (os sites das lojas, os folhetos e a Shop
 - **Clubes**: toque em "Sou do clube" na loja e o preço de clube entra nas contas; **Benefícios do clube** pede à IA o que o clube dá, com a fonte. Cupons da carteira do app entram por print.
 - **Leitura por IA**: prints, lista escrita à mão ou mensagem do WhatsApp viram itens da lista.
 - **Falar**: o microfone no alto da tela; o Home Assistant transcreve e a IA separa os itens para você conferir.
-- **Conversa com a IA**: o balão ao lado do microfone. Pergunte sobre a tela aberta ou sobre qualquer assunto; a IA vê a sua lista, os preços e as ofertas e só sugere (pôr na lista, buscar o preço, abrir uma tela), e nada muda sem o seu toque.
+- **Conversa com a IA**: o balão ao lado do microfone. Pergunte sobre a tela aberta ou sobre qualquer assunto; a IA vê a sua lista, os preços e as ofertas e só sugere (pôr na lista, buscar o preço, abrir uma tela), e nada muda sem o seu toque. A **Memória da IA** é uma só, da casa, compartilhada por todos os apps da família.
 - **No celular e no computador**: arraste para o lado para trocar de aba; no computador, barra lateral com as telas e as ofertas por tipo de loja, e as ações no alto à direita.
 - **Lista por voz**: sincroniza com a lista de compras do Home Assistant (Assist, Alexa, Google Tasks).
 - **Integrações opcionais**: Google Places (as lojas pequenas), Brave Search (o site das lojas sem site), Mercado Livre (confere a categoria do produto), Instagram das lojas, Shopee Afiliados e AliExpress Afiliados. As chaves ficam só no Home Assistant.
 - **Uso da IA**: quantas chamadas a busca, a leitura de fotos, o Falar e a Conversa fizeram por dia, erros de cota e tokens estimados, com o sensor `sensor.economia_ia_hoje` para painel e automação, além de `sensor.economia_melhor_loja` (onde a lista sai mais barata) e `binary_sensor.economia_oferta` (um item da lista em oferta).
-- **Reposição**: o que você compra de tempos em tempos (de quanto em quanto tempo cada item volta), com os remédios do CronologIA e os consumíveis do InventarIA para escolher.
+- **Reposição**: o que você compra de tempos em tempos (de quanto em quanto tempo cada item volta), com os remédios do CronologIA e os consumíveis do InventarIA para escolher; o **Comprei hoje** conta de novo a duração do consumível lá no InventarIA.
+- **Selecionar** na Minha lista: marcar vários e dar **Comprei hoje**, **Alterar** ou **Remover** de uma vez, com Desfazer.
+- **CorrerIA**: com o [CorrerIA](https://github.com/diegozapella63/CorrerIA-ha), a lista, os preços, as ofertas e os cupons no WhatsApp, no Claude e no Gemini, e nas **Rondas** de compras, da chegada das compras e da casa.
 - **Perfil da casa**: quem mora, pets, restrições e interesses decidem o que aparece.
 - **Mais, um menu** como nos outros apps: Casa, Lojas, Configurações (Integrações, Dados, Aparência e Opções, com **Usar IA**, sensores opcionais, versões anteriores, exportação para Excel e JSON, tema claro ou escuro, as 12 cores da família e a Cor do dia) e Sobre.
 
