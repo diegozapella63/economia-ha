@@ -130,6 +130,10 @@ Nada se compara entre setores: o álcool de 30 ml da farmácia e o galão de 5 L
 
 As lojas online valem com qualquer setor. O campo aparece quando mais de um setor está ligado em **Mais › Lojas**.
 
+### Agrupar por
+
+Embaixo de Completa e Resumida: **Nenhum** (a ordem de sempre), **Onde comprar** (Mercado, Farmácia, Pet shop; aparece com mais de um setor ligado) ou **Loja** (a loja do preço escolhido; o que ainda não tem preço fica no fim). Cada grupo mostra quantos itens e fecha num toque no nome; o título **Agrupar por** fecha o bloco e mostra ao lado o escolhido. O aparelho lembra.
+
 ### Selecionar
 
 **Selecionar** (ao lado de Completa e Resumida), ou segurar o dedo num item, deixa marcar vários itens (ou **Todos**) e mudar de uma vez:

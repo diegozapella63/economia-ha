@@ -498,6 +498,29 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .seg.vis-lista{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;margin:0 0 12px}
 /* 1.36.0: Comparar com IA: o botão ao lado de Completa/Resumida; marcando as opções, a barra acima da de baixo */
 .lista-barra{display:flex;gap:8px;margin:0 0 12px;min-width:0}
+/* 1.56.0: Agrupar por, no padrão da família (o dos Consumíveis do InventarIA): o título pequeno que fecha o bloco (fechado, o
+   escolhido ao lado), as escolhas numa barra só, do mesmo tamanho; cada grupo com o ícone, o nome e quantos */
+.agrupar{display:grid;gap:8px;margin:0 0 14px}
+.agrupar[hidden]{display:none}
+.agrupar.fechado{gap:0}
+.agrupar-l{display:flex;align-items:center;gap:6px;width:100%;min-height:32px;padding:0 2px;background:none;border:0;color:var(--muted);font:inherit;font-size:14px;font-weight:500;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.agrupar-l svg{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.agrupar-l::after{content:"";flex:none;width:18px;height:18px;margin-left:auto;background:var(--muted);transition:transform .2s;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center/18px no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center/18px no-repeat}
+.agrupar.fechado > .agrupar-l::after{transform:rotate(-90deg)}
+.agrupar-l .agrupar-val{color:var(--ink);font-weight:600}
+.seg.agrupar-seg{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));width:100%}
+.seg.agrupar-seg button{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:42px;padding:8px 6px}
+.seg.agrupar-seg button span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seg.agrupar-seg button svg{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:400px){.seg.agrupar-seg button svg{display:none}}
+.wish-grid > .wish-grp{grid-column:1/-1;list-style:none}
+.wish-grp .grp-h{display:flex;align-items:center;gap:12px;width:100%;margin:4px 0 0;padding:0 2px;background:none;border:0;color:var(--ink);font:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.wish-grp .grp-ic{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:11px;background:var(--accent-soft);color:var(--accent)}
+.wish-grp .grp-ic svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.wish-grp .grp-h b{flex:1;min-width:0;font-family:var(--font-display);font-size:20px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wish-grp .grp-n{flex:none;color:var(--muted);font-size:14px}
+.wish-grp .grp-h::after{content:"";flex:none;width:20px;height:20px;background:var(--muted);transition:transform .2s;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center/20px no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center/20px no-repeat}
+.wish-grp .grp-h[aria-expanded="false"]::after{transform:rotate(-90deg)}
 .lista-barra:not(:has(> :not([hidden]))){display:none}
 .lista-barra .seg.vis-lista{margin:0;flex:1 1 auto;min-width:0;width:auto}
 .cmp-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:1 1 auto;white-space:nowrap}
@@ -1559,6 +1582,7 @@ input.field,select.field{min-height:var(--altura)}
       </div>
       <p class="sec-meta" id="wishDica">Pode escrever só o produto, como "Lysoform": o app compara os tamanhos pelo preço por quilo ou litro.</p>
       <div class="lista-barra"><div class="seg vis-lista" id="visLista" role="group" aria-label="Como mostrar a lista" hidden><button type="button" data-vis="completa" aria-pressed="true">Completa</button><button type="button" data-vis="resumida" aria-pressed="false">Resumida</button></div><button type="button" class="ghost big sel-btn" id="selBtn" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 5h8M13 12h8M13 19h8"/><path d="m3 17 2 2 4-4M3 7l2 2 4-4"/></svg>Selecionar</button><button type="button" class="ghost big so-ia cmp-btn" id="cmpBtn" aria-pressed="false" aria-label="Comparar com IA" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M7 20h10M5 8h14"/><path d="M5 8l-3 7a3 3 0 0 0 6 0zM19 8l-3 7a3 3 0 0 0 6 0z"/></svg>Comparar</button></div>
+      <div class="agrupar" id="listaAgrupar" hidden></div>
       <ul class="wish-grid" id="wish"></ul>
       <div id="wishComprados"></div>
     </section>
@@ -3590,9 +3614,11 @@ input.field,select.field{min-height:var(--altura)}
       SELL.vis = vis;
       $('wish').innerHTML = itens.map(linhaSel).join('');
       pintaSel();
+      pintaAgrupar(itens);
       return;
     }
-    $('wish').innerHTML = itens.map(function(x){
+    pintaAgrupar(itens);
+    var cartao = function(x){
       var p = precosDe(x.it.produto), soon = x.r.dias != null && x.r.dias <= 3;
       if (resumida && !RES_ABERTO[norm(x.it.produto)]) return linhaResumida(x, p, soon);
       var N = qtdDe(x.it);
@@ -3643,8 +3669,66 @@ input.field,select.field{min-height:var(--altura)}
           + (estado.opcoes.lojas_diretas || x.it.similares ? '<button type="button" class="ghost big ic-btn i-sim" data-sim="' + x.i + '" aria-pressed="' + !!x.it.similares + '" aria-label="' + (x.it.similares ? 'Esconder os similares' : 'Buscar similares') + '"' + (buscaItem === x.it.produto ? ' disabled' : '') + '>' + (x.it.similares ? '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8 12.5l3 3 5.5-6"/></svg>' : '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/></svg>') + 'Similares</button>' : ''))
         + '<p class="i-foot">Em ' + onde + quandoPrecos(p) + '</p>'  // 1.36.7: no fim, embaixo dos botões
         + '</li>';
+    };
+    var como = agruparLista(itens), fech = ui.gruposLista || {};
+    $('wish').innerHTML = !como ? itens.map(cartao).join('') : gruposLista(itens, como).map(function(g){
+      var id = como + ':' + g.k, off = !!fech[id];
+      return '<li class="wish-grp"><button type="button" class="grp-h" data-grupo="' + esc(id) + '" aria-expanded="' + !off + '"><span class="grp-ic">' + icAg(g.ic) + '</span><b>' + esc(g.nome) + '</b><span class="grp-n">' + (g.itens.length === 1 ? '1 item' : g.itens.length + ' itens') + '</span></button></li>'
+        + (off ? '' : g.itens.map(cartao).join(''));
     }).join('');
     pintaCmp();
+  }
+  // ----- 1.56.0 (o dono: "do mesmo jeito que criamos esse agrupar por… a gente precisa adicionar ele em outros locais"; o
+  // modelo é o dos Consumíveis do InventarIA): Minha lista › Agrupar por Nenhum (a ordem de sempre), Onde comprar (o setor de
+  // cada item, com mais de um setor ligado) e Loja (onde está o preço escolhido: a sua escolha, a melhor compra ou o mais
+  // barato; sem preço no fim). O título fecha o bloco (fechado, o escolhido ao lado); cada grupo fecha pelo nome; o aparelho
+  // lembra (ui.agrupar, ui.agruparFechado, ui.gruposLista).
+  var IC_AG = {
+    layers: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>', list: '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>',
+    tag: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="7.5" r="1.5"/>', store: '<path d="M3 9l1.5-5h15L21 9M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0zM5 13v7h14v-7"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>'
+  };
+  function icAg(k){ return '<svg viewBox="0 0 24 24" aria-hidden="true">' + IC_AG[k] + '</svg>'; }
+  function opcoesAgrupar(){
+    return [['', 'Nenhum', 'list']].concat(setoresLigados().length > 1 ? [['setor', 'Onde comprar', 'tag']] : [], [['loja', 'Loja', 'store']]);
+  }
+  function agruparLista(itens){
+    if (itens.length < 2) return '';
+    var v = ui.agrupar || '';
+    return opcoesAgrupar().some(function(o){ return o[0] === v; }) ? v : '';
+  }
+  function lojaDe(x, p){
+    var es = escolhaDe(x.it, p); if (es) return es.y.id;
+    var mt = melhorTamanho(x.it, x.r, p), dc = mt && mt.principal ? mt.dica : null;
+    return dc ? dc.id : p[0].id;
+  }
+  function gruposLista(itens, como){
+    var by = {}, ordem = [];
+    var put = function(k, nome, ic, x){ if (!by[k]){ by[k] = {k:k, nome:nome, ic:ic, itens:[]}; ordem.push(k); } by[k].itens.push(x); };
+    itens.forEach(function(x){
+      if (como === 'setor'){ var s = setorDe(x.it.produto); put(s || '_', s ? SETORES[s] : 'Qualquer lugar', s ? 'store' : 'globe', x); return; }
+      var p = precosDe(x.it.produto);
+      if (!p.length){ put('_', 'Sem preço ainda', 'clock', x); return; }
+      var id = lojaDe(x, p); put(id, (G[id] || {}).nome || id, 'store', x);
+    });
+    var setores = Object.keys(SETORES);
+    return ordem.map(function(k){ return by[k]; }).sort(function(a, b){
+      if ((a.k === '_') !== (b.k === '_')) return a.k === '_' ? 1 : -1;
+      if (como === 'setor') return setores.indexOf(a.k) - setores.indexOf(b.k);
+      return (b.itens.length - a.itens.length) || a.nome.localeCompare(b.nome, 'pt-BR');
+    });
+  }
+  function pintaAgrupar(itens){
+    var el = $('listaAgrupar'), ok = itens.length >= 2 && !SELL;
+    el.hidden = !ok;
+    if (!ok){ el.innerHTML = ''; return; }
+    var ops = opcoesAgrupar(), cur = agruparLista(itens), shut = !!ui.agruparFechado;
+    var nome = (ops.filter(function(o){ return o[0] === cur; })[0] || ops[0])[1];
+    el.className = 'agrupar' + (shut ? ' fechado' : '');
+    el.innerHTML = '<button type="button" class="agrupar-l" id="listaAgruparL" data-agrupar-dobra aria-expanded="' + !shut + '">' + icAg('layers') + '<span>Agrupar por</span>' + (shut ? '<span class="agrupar-val">· ' + esc(nome) + '</span>' : '') + '</button>'
+      + (shut ? '' : '<div class="seg agrupar-seg" role="group" aria-labelledby="listaAgruparL" style="--n:' + ops.length + '">' + ops.map(function(o){
+        return '<button type="button" data-agrupar="' + o[0] + '" aria-pressed="' + (o[0] === cur) + '">' + icAg(o[2]) + '<span>' + esc(o[1]) + '</span></button>';
+      }).join('') + '</div>');
   }
   // ----- a lista resumida: o item, o preço escolhido (a sua escolha, a melhor compra ou o mais barato) e onde comprar -----
   var RES_ABERTO = {};
@@ -3824,7 +3908,15 @@ input.field,select.field{min-height:var(--altura)}
     salvar('Desmarcado: ' + it.produto); tudo();
   });
   $('wishComprados').addEventListener('toggle', function(e){ if (e.target.dataset && e.target.dataset.inat === 'comprados') COMPRADOS_ABERTO = e.target.open; }, true);
+  $('listaAgrupar').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.hasAttribute('data-agrupar-dobra')) ui.agruparFechado = !ui.agruparFechado;
+    else ui.agrupar = b.dataset.agrupar || '';
+    salvarUI(); pintaLista();
+  });
   $('wish').addEventListener('click', function(e){
+    var gh = e.target.closest('[data-grupo]');
+    if (gh){ var f = ui.gruposLista || {}; if (f[gh.dataset.grupo]) delete f[gh.dataset.grupo]; else f[gh.dataset.grupo] = true; ui.gruposLista = f; salvarUI(); pintaLista(); return; }
     var a = e.target.closest('[data-abrir]');
     if (a){ RES_ABERTO[a.dataset.abrir] = true; pintaLista(); return; }
     // o nome do cartão aberto (na resumida) fecha; os botões e os links dele, não

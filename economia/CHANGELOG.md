@@ -1,5 +1,13 @@
 # Mudanças
 
+## 1.56.0
+
+- **Minha lista › Agrupar por**, no mesmo jeito dos outros apps da família.
+  - **Nenhum** (a ordem de sempre), **Onde comprar** (Mercado, Farmácia, Pet shop e, sem setor, Qualquer lugar; com mais de um setor ligado) ou **Loja** (a loja do preço escolhido: a sua escolha, a melhor compra ou o mais barato; a loja com mais itens primeiro e, no fim, Sem preço ainda), numa barra só, do mesmo tamanho.
+  - Cada grupo mostra o ícone, o nome e quantos itens, e fecha num toque no nome.
+  - O título **Agrupar por** fecha e abre o bloco; fechado, mostra ao lado o que está escolhido. O aparelho lembra.
+  - Selecionando, a lista volta a ser uma só.
+
 ## 1.55.0
 
 - Na **Conversa**, o **Tirar foto** do clipe abre a câmera do próprio app, como no Código de barras: no app do Home Assistant no Android, o de antes abria a galeria. A foto vai para a conversa.
