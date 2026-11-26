@@ -142,6 +142,18 @@ async def main():
             ops = [t.strip() for t in await pg.locator("#chatMenu .chat-op").all_text_contents()]
             check(ops == ["Tirar foto", "Escolher fotos", "Escolher arquivo"], f"o menu do clipe ({ops})")
             await pg.locator("#chat").screenshot(path=SHOTS + "/ecchat-clipe.png")
+            # 1.55.0: Tirar foto é a câmera do app (o app do Home Assistant no Android ignora o capture e abria a galeria)
+            await pg.evaluate("""() => { const c = document.createElement('canvas'); c.width = 320; c.height = 240; const g = c.getContext('2d');
+                setInterval(() => { g.fillStyle = '#c33'; g.fillRect(0, 0, 320, 240); }, 50); navigator.mediaDevices.getUserMedia = async () => c.captureStream(10); }""")
+            await pg.click('#chatMenu [data-chat-op="camera"]')
+            await espera(pg, "() => !document.querySelector('#codCamUI').hidden")
+            check(await pg.get_attribute("#codCamUI", "aria-label") == "Tirar foto" and await pg.locator("#codCamGal").is_hidden() and await pg.locator(".cam-guia").is_hidden(),
+                  "Tirar foto: a câmera do app, sem a guia nem o Escolher foto do código de barras")
+            await espera(pg, "() => document.querySelector('#codVideo').videoWidth > 0")
+            await pg.click("#codCamFoto")
+            await espera(pg, "() => document.querySelectorAll('#chatArqs .chat-arq').length === 1")
+            check(await pg.locator("#codCamUI").is_hidden(), "a foto vai para a conversa e a câmera fecha")
+            await pg.click("#chatClip")
             async with pg.expect_file_chooser() as fc:
                 await pg.click('#chatMenu [data-chat-op="arquivo"]')
             await (await fc.value).set_files(files=[{"name": "encarte.pdf", "mimeType": "application/pdf", "buffer": b"%PDF-1.4 encarte"}])

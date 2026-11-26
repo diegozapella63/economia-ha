@@ -1,5 +1,10 @@
 # Mudanças
 
+## 1.55.0
+
+- Na **Conversa**, o **Tirar foto** do clipe abre a câmera do próprio app, como no Código de barras: no app do Home Assistant no Android, o de antes abria a galeria. A foto vai para a conversa.
+- No app do Home Assistant no Android, **Escolher fotos** (na Conversa, na lista, nos encartes e nos cupons) pega uma foto de cada vez: escolhendo várias, o app do Android não entregava nenhuma.
+
 ## 1.54.4
 
 - Em **Ofertas**, os botões **Mandar encarte** e **Adicionar site** do «Sem preços de» ganharam o ícone, como todos os botões do app.

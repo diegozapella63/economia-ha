@@ -1169,6 +1169,7 @@ html:not(.sem-ia) .so-semia{display:none!important}
 .cam[hidden]{display:none}
 .cam video{flex:1;min-height:0;width:100%;object-fit:cover;background:#000}
 .cam-guia{position:absolute;left:10%;right:10%;top:36%;height:20%;border:3px solid rgba(255,255,255,.92);border-radius:16px;box-shadow:0 0 0 100vmax rgba(0,0,0,.35);pointer-events:none}
+.cam.livre .cam-guia{display:none}
 .cam-dica{position:absolute;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 24px);margin:0;text-align:center;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,.7)}
 .cam-barra{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding:16px 20px calc(16px + env(safe-area-inset-bottom,0px));background:#000}
 .cam-x{justify-self:start;width:50px;height:50px;border-radius:50%;border:0;background:rgba(255,255,255,.16);color:#fff;display:grid;place-items:center;cursor:pointer}
@@ -2026,7 +2027,7 @@ input.field,select.field{min-height:var(--altura)}
   <div class="cam" id="codCamUI" role="dialog" aria-modal="true" aria-label="Foto do código de barras" hidden>
     <video id="codVideo" playsinline muted autoplay></video>
     <div class="cam-guia" aria-hidden="true"></div>
-    <p class="cam-dica">Aponte para o código de barras, de perto e reto.</p>
+    <p class="cam-dica" id="codCamDica">Aponte para o código de barras, de perto e reto.</p>
     <div class="cam-barra">
       <button type="button" class="cam-x" id="codCamX" aria-label="Fechar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       <button type="button" class="cam-disparo" id="codCamFoto" aria-label="Tirar a foto"></button>
@@ -3058,7 +3059,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.54.4';
+  var VERSAO = '1.55.0';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -5258,14 +5259,20 @@ dialog.ss-wrap::backdrop{background:transparent}
   $('chatClip').addEventListener('click', function(){ CHAT.menu = !CHAT.menu; if (CHAT.menu){ CHAT.rapidas = false; CHAT.ed = null; } pintaSug(); pintaArqs(); });
   $('chatMenu').addEventListener('click', function(e){
     var b = e.target.closest('[data-chat-op]'); if (!b) return;
-    var op = b.dataset.chatOp, inp = document.createElement('input');
+    var op = b.dataset.chatOp;
     CHAT.menu = false; pintaArqs();
+    // 1.55.0: Tirar foto é a câmera do app (o app do Home Assistant no Android ignora o capture e abria a galeria)
+    if (op === 'camera' && camPode()) return abreCam('chat');
+    escolheArqChat(op);
+  });
+  function escolheArqChat(op){
+    var inp = document.createElement('input');
     inp.type = 'file'; inp.accept = op === 'arquivo' ? 'image/*,application/pdf' : 'image/*'; inp.style.display = 'none';
     if (op === 'camera') inp.setAttribute('capture', 'environment');
-    if (op === 'fotos') inp.multiple = true;
+    if (op === 'fotos') inp.multiple = !haAndroid();  // o app do Android perde as escolhidas com multiple: uma de cada vez lá
     inp.addEventListener('change', function(){ var l = [].slice.call(inp.files || []); inp.remove(); if (l.length) poeArqs(l); });
     document.body.appendChild(inp); inp.click();
-  });
+  }
   function poeArqs(l){
     var f = l.shift(); if (!f){ pintaArqs(); pintaEnvio(); return; }
     var pdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name || '');
@@ -5487,6 +5494,8 @@ dialog.ss-wrap::backdrop{background:transparent}
   // leitor do navegador, quando existe) ou na foto do botão. Sem https (ou sem câmera), explica e oferece escolher a foto.
   var CAM = null;  // {stream, timer, ocupado}
   function camPode(){ return !!(window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia); }
+  // o app do Home Assistant no Android: perde as fotos escolhidas com multiple e ignora o capture
+  function haAndroid(){ return /Home Assistant\//.test(navigator.userAgent) && /Android/.test(navigator.userAgent); }
   function eanDe(rs){ return (rs || []).map(function(x){ var c = String(x.rawValue || ''); return c.length === 12 ? '0' + c : c; }).filter(eanValido)[0] || null; }
   $('codFoto').addEventListener('click', function(){
     if (!camPode()){
@@ -5494,14 +5503,25 @@ dialog.ss-wrap::backdrop{background:transparent}
       $('codGal').hidden = false; $('codArq').click(); return;
     }
     $('codGal').hidden = true; codMsg('');
+    abreCam('codigo');
+  });
+  /* 1.55.0 (o dono, no ResolvIA: "Tirar foto não funciona, abre a galeria"; "veja se esse bug tem em outros apps"): o app do
+     Home Assistant no Android ignora o capture e abre a galeria. O Tirar foto da Conversa usa esta mesma câmera do app
+     (modo chat: sem ler o código; a foto do botão vai para a conversa). */
+  function abreCam(modo){
+    var chat = modo === 'chat';
     navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}, width:{ideal:1920}, height:{ideal:1080}}, audio:false}).then(function(st){
-      CAM = {stream:st, timer:null, ocupado:false};
+      CAM = {stream:st, timer:null, ocupado:false, modo:modo};
       var v = $('codVideo'); v.srcObject = st;
       try { var pr = v.play(); if (pr && pr.catch) pr.catch(function(){}); } catch(e){ /* toca sozinho */ }
+      $('codCamUI').setAttribute('aria-label', chat ? 'Tirar foto' : 'Foto do código de barras');
+      $('codCamUI').classList.toggle('livre', chat);
+      $('codCamDica').textContent = chat ? 'Enquadre e toque no botão.' : 'Aponte para o código de barras, de perto e reto.';
+      $('codCamGal').hidden = chat;
       $('codCamUI').hidden = false; document.body.classList.add('com-cam');
-      try { history.pushState({cam:true}, ''); } catch(e){ /* ok */ }
+      try { history.pushState(Object.assign({}, history.state || {}, {cam:true}), ''); } catch(e){ /* ok */ }
       var det = null;
-      if ('BarcodeDetector' in window){ try { det = new window.BarcodeDetector({formats:['ean_13', 'ean_8', 'upc_a']}); } catch(e){ det = null; } }
+      if (!chat && 'BarcodeDetector' in window){ try { det = new window.BarcodeDetector({formats:['ean_13', 'ean_8', 'upc_a']}); } catch(e){ det = null; } }
       if (det) CAM.timer = setInterval(function(){
         if (!CAM || CAM.ocupado || v.readyState < 2) return;
         CAM.ocupado = true;
@@ -5509,10 +5529,12 @@ dialog.ss-wrap::backdrop{background:transparent}
           .catch(function(){ if (CAM) CAM.ocupado = false; });
       }, 300);
     }).catch(function(err){
-      codMsg(err && err.name === 'NotAllowedError' ? 'A câmera não foi liberada para o app. Libere nas permissões do app do Home Assistant, ou escolha a foto.' : 'Não deu para abrir a câmera. Escolha a foto.', 'err');
+      var negou = err && err.name === 'NotAllowedError';
+      if (chat){ toast(negou ? 'A câmera não foi liberada para o app. Escolha a foto.' : 'Não deu para abrir a câmera. Escolha a foto.'); return escolheArqChat('fotos'); }
+      codMsg(negou ? 'A câmera não foi liberada para o app. Libere nas permissões do app do Home Assistant, ou escolha a foto.' : 'Não deu para abrir a câmera. Escolha a foto.', 'err');
       $('codGal').hidden = false;
     });
-  });
+  }
   // fecha a câmera; pelo Voltar do celular a entrada no histórico já saiu, pelo X sai aqui
   function fechaCam(peloVoltar){
     var c = CAM; if (!c) return;
@@ -5526,9 +5548,14 @@ dialog.ss-wrap::backdrop{background:transparent}
   $('codCamFoto').addEventListener('click', function(){
     var v = $('codVideo'), W = v.videoWidth, H = v.videoHeight;
     if (!W || !H) return;
+    var chat = CAM && CAM.modo === 'chat';
     var cv = document.createElement('canvas'); cv.width = W; cv.height = H; cv.getContext('2d').drawImage(v, 0, 0, W, H);
     fechaCam();
-    cv.toBlob(function(bl){ if (bl) leFotoCodigo(bl); }, 'image/jpeg', 0.92);
+    cv.toBlob(function(bl){
+      if (!bl) return;
+      if (chat){ var f; try { f = new File([bl], 'Foto.jpg', {type:'image/jpeg'}); } catch(e){ f = bl; } poeArqs([f]); return; }
+      leFotoCodigo(bl);
+    }, 'image/jpeg', 0.92);
   });
   window.addEventListener('popstate', function(){ if (CAM && !(history.state && history.state.cam)) fechaCam(true); });
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && CAM) fechaCam(); });
@@ -7808,6 +7835,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     w.classList.toggle('tem-dir', t.scrollLeft + t.clientWidth < t.scrollWidth - 2);
   }
   function iniciar(){
+    if (haAndroid()) ['encArq', 'fotoArq', 'cupArq'].forEach(function(id){ var x = $(id); if (x) x.multiple = false; });  // 1.55.0: uma foto de cada vez lá
     iconesTitulos(); iconesBotoes(); aplicaDobras(); marcaAbas();
     $('hello').innerHTML = '<span class="brand">' + ICONE_APP + 'Econom<span>IA</span></span>' + (usuario ? '<span class="eb-sep"> · </span>Olá, ' + esc(usuario) : '');
     pintaSync(); tudo(); irPara(ui.view, ui.maisTela);
