@@ -520,7 +520,7 @@ a.i-txtlink{color:var(--accent);font-weight:600;text-decoration:none}
 .agrupar.fechado > .agrupar-l::after{transform:rotate(-90deg)}
 .agrupar-l .agrupar-val{color:var(--ink);font-weight:600}
 .seg.agrupar-seg{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));width:100%}
-.seg.agrupar-seg button{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:42px;padding:8px 6px}
+.seg.agrupar-seg button{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;padding:0 6px}
 .seg.agrupar-seg button span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .seg.agrupar-seg button svg{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 @media (max-width:400px){.seg.agrupar-seg button svg{display:none}}
@@ -3083,7 +3083,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.56.0';
+  var VERSAO = '1.56.1';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {

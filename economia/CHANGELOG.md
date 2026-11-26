@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.56.1
+
+- **Minha lista › Agrupar por**: a barra das escolhas com a altura de todos os botões do app (50 px).
+
 ## 1.56.0
 
 - **Minha lista › Agrupar por**, no mesmo jeito dos outros apps da família.
