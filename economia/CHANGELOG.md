@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.54.4
+
+- Em **Ofertas**, os botões **Mandar encarte** e **Adicionar site** do «Sem preços de» ganharam o ícone, como todos os botões do app.
+
 ## 1.54.3
 
 - As **perguntas prontas** da Conversa (e as **Mais perguntas** do **Editar perguntas**) ficaram gerais, para valer em qualquer casa: saíram as que citavam itens, valores, compromissos ou cômodos inventados, como «Comprei o pão» e «Quanto custa o arroz em cada mercado?». As perguntas que você já editou continuam como estão.

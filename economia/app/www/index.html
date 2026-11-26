@@ -3058,7 +3058,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   // linha e o link para o GitHub, e Meu GitHub. A mesma página dos outros apps (o about.js do CronologIA): só muda "Este app".
   var GITHUB = 'https://github.com/diegozapella63';
   // a versão fica só no config.yaml: o tools/montar_pagina.py põe aqui, na página do add-on (na fonte, fica o marcador)
-  var VERSAO = '1.54.3';
+  var VERSAO = '1.54.4';
   if (!/^\d/.test(VERSAO)) VERSAO = '';
   $('versaoTxt').textContent = VERSAO ? 'v' + VERSAO : 'exemplo';
   var IC_SOBRE = {
@@ -3186,7 +3186,7 @@ dialog.ss-wrap::backdrop{background:transparent}
     $('cats').innerHTML = ativas.map(function(c){ return '<button type="button" data-cat="' + c.id + '" aria-pressed="' + (c.id === CAT.id) + '">' + esc(c.nome) + '</button>'; }).join('');
     var sp = semPrecos(CAT);
     $('semPrecos').hidden = !sp.length;
-    $('semPrecos').innerHTML = sp.length ? '<span><b>Sem preços de:</b> ' + esc(sp.map(function(l){ return G[l.rede].nome; }).join(', ')) + '' + '.' + '</span><button type="button" class="linkbtn so-ia" data-enc="' + esc(sp.length === 1 ? G[sp[0].rede].nome : '') + '">Mandar encarte</button><button type="button" class="linkbtn" data-ir="lojasSec">Adicionar site</button>' : '';
+    $('semPrecos').innerHTML = sp.length ? '<span><b>Sem preços de:</b> ' + esc(sp.map(function(l){ return G[l.rede].nome; }).join(', ')) + '' + '.' + '</span><button type="button" class="linkbtn so-ia" data-enc="' + esc(sp.length === 1 ? G[sp[0].rede].nome : '') + '">' + bIc('image') + 'Mandar encarte</button><button type="button" class="linkbtn" data-ir="lojasSec">' + bIc('plus') + 'Adicionar site</button>' : '';
     $('catNote').textContent = CAT.id === 'petshops' && !petsTotal() ? 'Sem pets no seu perfil, as ofertas daqui ficam escondidas. Ajuste em Mais › Casa.' : (exemplo && CAT.aviso ? CAT.aviso : '');
     $('ofertasMeta').textContent = CAT.id === 'farmacias'
       ? ''
@@ -7760,6 +7760,7 @@ dialog.ss-wrap::backdrop{background:transparent}
   var B_PAL = [[/^Salvar|^Guardar/, 'check'], [/^Testar/, 'refresh'], [/^Apagar|^Limpar|^Tirar/, 'trash'], [/^Conectar/, 'link'], [/^Cancelar|^Fechar/, 'x'],
     [/^Adicionar|^Pôr|^Nova/, 'plus'], [/IA$|^Ler/, 'spark'], [/^Buscar|^Procurar/, 'search'], [/^Importar/, 'upload'], [/^Comparar/, 'columns'],
     [/^Preencher/, 'edit'], [/^Completa|^Resumida/, 'list'], [/^Já /, 'check']];
+  function bIc(k){ return '<svg class="b-ic" viewBox="0 0 24 24" aria-hidden="true">' + T_IC[k] + '</svg>'; }
   function iconesBotoes(raiz){
     Array.prototype.forEach.call((raiz || document).querySelectorAll('button'), function(b){
       if (b.querySelector('svg') || b.closest('.tabbar, .cmp-dia, .uso-chart')) return;

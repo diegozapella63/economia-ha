@@ -104,6 +104,8 @@ async def main():
             # sem preços: a loja do raio sem nada
             sp = await pg.text_content("#semPrecos")
             check("Sem preços de: Farmácia Vida." in sp and "Mandar encarte" in sp and "Adicionar site" in sp, f"loja sem preços ({sp})")
+            # 1.54.4 (o padrão da família: todo botão com texto tem ícone)
+            check(await pg.locator("#semPrecos button:not(:has(svg))").count() == 0, "os botões do Sem preços de com o ícone")
             # filtro por loja
             # 1.36.0: a loja numa caixa de seleção, ao lado da busca nas ofertas
             filtros = [t.strip() for t in await pg.locator("#filters option").all_inner_texts()]
