@@ -83,13 +83,13 @@ class Ferramentas(Cenario):
         S = self.S
         nomes = [f["nome"] for f in S.FERRAMENTAS_CORRERIA]
         self.assertEqual(nomes, ["lista", "preco", "historico_precos", "ofertas", "roteiro", "cupons", "por_na_lista", "tirar_da_lista", "comprei", "reposicao", "repor", "reposto", "ler_arquivo",
-                                 "mudar_item", "nova_lista", "guardar_cupom"])
+                                 "mudar_item", "nova_lista", "guardar_cupom", "lojas", "mudar_loja", "buscar_agora"])
         self.assertEqual(set(nomes), set(S.FERR_IMPL))
         for f in S.FERRAMENTAS_CORRERIA:
             self.assertRegex(f["nome"], r"^[a-z0-9_]{1,40}$")
             self.assertEqual(f["entrada"]["type"], "object")
             self.assertEqual(set(f) - {"anexo"}, {"nome", "titulo", "descricao", "entrada", "grava", "apaga"})  # 1.50.0: a que recebe a foto leva `anexo`
-        self.assertEqual([f["nome"] for f in S.FERRAMENTAS_CORRERIA if f["grava"]], ["por_na_lista", "tirar_da_lista", "comprei", "repor", "reposto", "mudar_item", "nova_lista", "guardar_cupom"])
+        self.assertEqual([f["nome"] for f in S.FERRAMENTAS_CORRERIA if f["grava"]], ["por_na_lista", "tirar_da_lista", "comprei", "repor", "reposto", "mudar_item", "nova_lista", "guardar_cupom", "mudar_loja", "buscar_agora"])
         self.assertIn("economia_lista", S.CORRERIA_INSTRUCOES)
         self.assertIn("economia_reposicao", S.CORRERIA_INSTRUCOES)
 
@@ -140,6 +140,55 @@ class Ferramentas(Cenario):
         self.assertIn("precos_dia.json", S.ARQ_BACKUP)
         S.gravar_json(S.PRECOS_DIA, [])
         self.assertTrue(S.anotar_precos(), "um arquivo estragado recomeça")
+
+    def test_lojas_e_mudar_loja(self):
+        """1.59.0: Mais › Lojas pelo CorrerIA: ver, deixar de acompanhar e acompanhar de novo."""
+        S = self.S
+        t = self.usa("lojas")
+        self.assertEqual(t.splitlines()[:4], ["Acompanhadas (3):", "- Giassi (Mercado, 1,0 km)", "- Angeloni (Mercado, 1,5 km)", "- Mercado Livre (Online)"])
+        self.assertIn("Inativas (2):\n- Amazon (Online)", t)
+        self.assertEqual(self.usa("mudar_loja", loja="angeloni", acompanhar=False), "Angeloni: inativa; as ofertas e os preços dela saem.")
+        self.assertEqual(S.ler_config()["lojas"], {"ignorar": ["angeloni"], "manter": []})
+        self.assertEqual(self.usa("lojas", categoria="mercados").splitlines(), ["Acompanhadas (1):", "- Giassi (Mercado, 1,0 km)", "Inativas (1):", "- Angeloni (Mercado, 1,5 km)"])
+        self.assertEqual(S.DIARIO[-1]["tipo"], "loja")
+        velho = {"lojas": {"ignorar": [], "manter": []}}
+        S.aplicar_diario(velho, S.DIARIO[-1])
+        self.assertEqual(velho["lojas"]["ignorar"], ["angeloni"], "a página aberta com a revisão velha junta a mudança")
+        self.assertEqual(self.usa("mudar_loja", loja="Angeloni", acompanhar=True), "Angeloni: acompanhada de novo; as ofertas e os preços dela voltam.")
+        self.assertEqual(S.ler_config()["lojas"], {"ignorar": [], "manter": ["angeloni"]})
+        self.assertEqual(self.usa("mudar_loja", loja="giassi", acompanhar=True), "Giassi já é acompanhada.")
+        self.assertEqual(self.usa("lojas", categoria="farmacias"), "Nenhuma loja desse tipo na última busca.")
+        for args, erro in ((dict(loja="nada", acompanhar=True), "Não achei a loja"), (dict(loja="giassi"), 'Falta "acompanhar"'), (dict(loja=" ", acompanhar=True), 'Falta "loja"'), (dict(loja="a", acompanhar=False), "Mais de uma loja"),
+                           (dict(loja="amazon", acompanhar=True), "não volta por aqui")):
+            with self.assertRaisesRegex(S.ErroFerramenta, erro):
+                self.usa("mudar_loja", **args)
+        self.ofertas({"categorias": []})
+        self.assertIn("Ainda não há lojas", self.usa("lojas"))
+
+    def test_buscar_agora(self):
+        """1.59.0: o Buscar da tela pelo CorrerIA: começa em segundo plano; uma busca rodando não começa outra."""
+        import threading
+        S = self.S
+        feitas, pronto = [], threading.Event()
+        S.buscar = lambda: (feitas.append("tudo"), pronto.set())
+        S.buscar_itens = lambda itens: (feitas.append(itens), pronto.set())
+        self.addCleanup(lambda: S.BUSCA.update(rodando=False, etapa=None))
+        self.assertTrue(next(f for f in S.FERRAMENTAS_CORRERIA if f["nome"] == "buscar_agora")["grava"])
+        with self.assertRaisesRegex(S.ErroFerramenta, "Nenhum desses itens"):
+            self.usa("buscar_agora", itens=["abacaxi"])
+        self.assertTrue(self.usa("buscar_agora").startswith("Comecei a busca de ofertas e de preços."))
+        self.assertTrue(pronto.wait(5) and S.BUSCA["rodando"])
+        S.BUSCA["etapa"] = "mercados"
+        self.assertEqual(self.usa("buscar_agora"), "Uma busca já está rodando (mercados). O resultado vem em economia_lista quando terminar.")
+        S.BUSCA.update(rodando=False, etapa=None)
+        pronto.clear()
+        self.assertEqual(self.usa("buscar_agora", itens=["café pilão 500 g", "nada"]).split(".")[0], "Comecei a busca de Café Pilão 500 g")
+        self.assertTrue(pronto.wait(5))
+        self.assertEqual(feitas, ["tudo", ["Café Pilão 500 g"]])
+        S.BUSCA["rodando"] = False
+        self.config(lista=lista_cfg(), correria=True, cep="")
+        with self.assertRaisesRegex(S.ErroFerramenta, "Falta o CEP"):
+            self.usa("buscar_agora")
 
     def test_preco(self):
         t = self.usa("preco", produto="café pilão")
@@ -503,7 +552,7 @@ class FerramentasPelaAPI(Servidor):
         self.assertEqual(self.pede("GET", "/api/integracao/ferramentas", cab={"Authorization": "Basic x"})[0], 401)
         st, d = self.ferr()
         self.assertEqual(st, 200)
-        self.assertEqual(len(d["ferramentas"]), 16)
+        self.assertEqual(len(d["ferramentas"]), 19)
         self.assertIn("economia_lista", d["instrucoes"])
         st, d = self.ferr("POST", {"nome": "por_na_lista", "argumentos": {"produto": "Pão de forma"}, "pessoa": {"id": "p1", "nome": "Ana"}, "cliente": "Claude"})
         self.assertEqual((st, d), (200, {"texto": "Pus Pão de forma na lista. O preço vem na próxima busca do app."}))

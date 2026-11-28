@@ -609,6 +609,9 @@ def ler_planilha(dado):
 def aplicar_diario(cfg, d):
     if d.get("repor"):  # 1.49.0: a compra anotada pela CorrerIA que também recomeçou a Reposição do item
         aplicar_diario(cfg, {"tipo": "repor", "item": d["repor"]})
+    if d["tipo"] == "loja":  # 1.59.0: uma loja deixada ou acompanhada de novo pela CorrerIA
+        _aplicar_loja(cfg, d["rede"], d["ativa"], d.get("manter"))
+        return
     if d["tipo"] == "nova_lista":  # 1.51.0: uma lista pronta criada pela CorrerIA
         if not any(isinstance(x, dict) and (x.get("id") == d["lista_pronta"]["id"] or norm(x.get("nome")) == norm(d["lista_pronta"]["nome"])) for x in cfg.get("listas") or []):
             cfg.setdefault("listas", []).append(dict(d["lista_pronta"]))
@@ -8072,6 +8075,18 @@ FERRAMENTAS_CORRERIA = [
                       "beneficio": {"type": "string", "description": "O desconto, como 20% em protetor solar."},
                       "codigo": {"type": "string"}, "condicao": {"type": "string"},
                       "valido_ate": {"type": "string", "description": "AAAA-MM-DD."}, "produto": {"type": "string"}}, ["loja", "beneficio"])},
+    # 1.59.0 (o dono: "pode adicionar esses também"): as lojas de Mais › Lojas e o Buscar da tela
+    {"nome": "lojas", "titulo": "Lojas", "grava": False, "apaga": False,
+     "descricao": "As lojas da última busca, por tipo: as que a casa acompanha (com a distância) e as inativas.",
+     "entrada": _obj({"categoria": {"type": "string", "enum": list(CATS_CORRERIA), "description": "O tipo de loja."}})},
+    {"nome": "mudar_loja", "titulo": "Acompanhar ou deixar uma loja", "grava": True, "apaga": False,
+     "descricao": "Deixa de acompanhar uma loja (as ofertas e os preços dela saem) ou volta a acompanhar uma inativa, como em "
+                  "Mais › Lojas. O nome é o de economia_lojas.",
+     "entrada": _obj({"loja": {"type": "string", "description": "O nome da loja ou parte dele."}, "acompanhar": {"type": "boolean"}}, ["loja", "acompanhar"])},
+    {"nome": "buscar_agora", "titulo": "Buscar preços agora", "grava": True, "apaga": False,
+     "descricao": "Começa a busca de ofertas e de preços da lista, como o Buscar da tela; leva alguns minutos e roda sozinha. Com "
+                  "itens (até 8, da lista), busca só esses. O resultado vem depois em economia_lista e economia_preco.",
+     "entrada": _obj({"itens": {"type": "array", "items": {"type": "string"}, "maxItems": 8, "description": "Só estes itens da lista (opcional)."}})},
 ]
 
 
@@ -8636,6 +8651,77 @@ def _ferr_historico_precos(a, cfg, of):
     return "\n".join(linhas)
 
 
+def _aplicar_loja(cfg, rede, ativa, manter=False):
+    """Mais › Lojas: inativa, a rede vai para lojas.ignorar; ativa, sai de lá (e, a de fora do raio, fica em lojas.manter)."""
+    lj = cfg.setdefault("lojas", {})
+    ign = [r for r in lj.get("ignorar") or [] if r != rede]
+    man = [r for r in lj.get("manter") or [] if r != rede]
+    if not ativa:
+        ign.append(rede)
+    elif manter:
+        man.append(rede)
+    lj["ignorar"], lj["manter"] = ign, man
+
+
+def _ferr_lojas(a, cfg, of):
+    info, acompanha = redes_acompanhadas(cfg, of)
+    cat = a.get("categoria") if a.get("categoria") in CATS_CORRERIA else None
+    if not info:
+        return "Ainda não há lojas: a primeira busca do app é que acha as lojas perto do CEP."
+    ativas, inativas = [], []
+    for rid, i in sorted(info.items(), key=lambda x: (str(x[1]["tipo"]), x[1]["dist"] is None, x[1]["dist"] or 0, norm(x[1]["nome"]))):
+        if cat and i["cat"] != cat:
+            continue
+        linha = f'- {i["nome"]} ({i["tipo"]}' + (f', {str(round(i["dist"], 1)).replace(".", ",")} km' if numero(i["dist"]) else "") + ")"
+        (ativas if acompanha(rid) else inativas).append(linha)
+    if not ativas and not inativas:
+        return "Nenhuma loja desse tipo na última busca."
+    return "\n".join([f"Acompanhadas ({len(ativas)}):"] + (ativas or ["- nenhuma"]) + ([f"Inativas ({len(inativas)}):"] + inativas if inativas else []))
+
+
+def _ferr_mudar_loja(a, cfg, of):
+    nome = " ".join(str(a.get("loja") or "").split())[:80]
+    if not nome:
+        raise ErroFerramenta('Falta "loja": o nome da loja, como em economia_lojas.')
+    if not isinstance(a.get("acompanhar"), bool):
+        raise ErroFerramenta('Falta "acompanhar": true (volta a acompanhar) ou false (deixa de acompanhar).')
+    info, acompanha = redes_acompanhadas(cfg, of)
+    n = norm(nome)
+    achadas = [r for r, i in info.items() if norm(i["nome"]) == n] or [r for r, i in info.items() if n in norm(i["nome"])]
+    if not achadas:
+        raise ErroFerramenta(f'Não achei a loja "{nome}". Veja os nomes em economia_lojas.')
+    if len(achadas) > 1:
+        raise ErroFerramenta("Mais de uma loja com esse nome: " + ", ".join(sorted(info[r]["nome"] for r in achadas)[:8]) + ".")
+    rede, quer = achadas[0], a["acompanhar"]
+    if acompanha(rede) == quer:
+        return f'{info[rede]["nome"]} já {"é acompanhada" if quer else "está inativa"}.', None
+    _aplicar_loja(cfg, rede, quer, manter=True)
+    if quer and not redes_acompanhadas(cfg, of)[1](rede):
+        raise ErroFerramenta(f'{info[rede]["nome"]} não volta por aqui: o tipo de loja dela está desligado (Mais › Casa) ou a opção dela em Mais › Lojas › Online.')
+    return (f'{info[rede]["nome"]}: ' + ("acompanhada de novo; as ofertas e os preços dela voltam." if quer else "inativa; as ofertas e os preços dela saem.")), \
+        {"tipo": "loja", "produto": info[rede]["nome"], "rede": rede, "ativa": quer, "manter": True}
+
+
+def buscar_agora_correria(a):
+    """1.59.0: economia_buscar_agora: o Buscar da tela (ou só de alguns itens da lista), em segundo plano."""
+    alvo, args, o_que = buscar, (), "a busca de ofertas e de preços"
+    pedidos = a.get("itens")
+    if pedidos is not None:
+        nomes = {norm(n): n for n in nomes_da_lista(ler_json(CONFIG, {}) or {})}
+        itens = list(dict.fromkeys(nomes[norm(i)] for i in (pedidos if isinstance(pedidos, list) else []) if isinstance(i, str) and norm(i) in nomes))
+        if not itens:
+            raise ErroFerramenta("Nenhum desses itens está na lista. Veja os nomes em economia_lista.")
+        alvo, args, o_que = buscar_itens, (itens[:MAX_FOCADA],), "a busca de " + ", ".join(itens[:MAX_FOCADA])
+    with _trava:
+        if BUSCA["rodando"]:
+            return "Uma busca já está rodando" + (f' ({BUSCA["etapa"]})' if BUSCA.get("etapa") else "") + ". O resultado vem em economia_lista quando terminar."
+        if not (ler_json(CONFIG, {}) or {}).get("cep"):
+            raise ErroFerramenta("Falta o CEP da casa: salve em Mais › Casa, no app, antes de buscar.")
+        BUSCA["rodando"] = True
+    threading.Thread(target=alvo, args=args, daemon=True).start()
+    return f"Comecei {o_que}. Leva alguns minutos; o resultado vem em economia_lista e economia_preco."
+
+
 def _ferr_cupons(a, cfg, of):
     _, cupons = _ofertas_vivas(cfg, of)
     if not cupons:
@@ -8947,6 +9033,7 @@ FERR_IMPL = {"roteiro": _ferr_roteiro, "lista": _ferr_lista, "preco": _ferr_prec
              "por_na_lista": _ferr_por, "tirar_da_lista": _ferr_tirar, "comprei": _ferr_comprei,
              "reposicao": _ferr_reposicao, "repor": _ferr_repor, "reposto": _ferr_reposto,
              "mudar_item": _ferr_mudar, "nova_lista": _ferr_nova_lista, "guardar_cupom": _ferr_guardar_cupom,
+             "lojas": _ferr_lojas, "mudar_loja": _ferr_mudar_loja, "buscar_agora": None,  # 1.59.0: a busca roda pelo buscar_agora_correria
              "ler_arquivo": None}  # 1.50.0: recebe o arquivo; roda pelo ler_arquivo_correria
 
 
@@ -8992,6 +9079,10 @@ def usar_ferramenta(nome, argumentos, cliente="CorrerIA", anexo=None):
     a = argumentos if isinstance(argumentos, dict) else {}
     if nome == "ler_arquivo":
         return ler_arquivo_correria(a, anexo)
+    if nome == "buscar_agora":
+        texto = buscar_agora_correria(a)
+        log(f"CorrerIA ({cliente}): buscar_agora")
+        return texto
     gravar = next(f["grava"] for f in FERRAMENTAS_CORRERIA if f["nome"] == nome)
     of = ler_json(OFERTAS, {}) or {}
     if not gravar:

@@ -193,6 +193,8 @@ No outro sentido, usa `todo.add_item` para itens novos do painel e para os que d
 O servidor só aceita conexões do ingress (`172.30.32.2`). Para testar fora do HA:
 `OFERTAS_ALLOW_ALL=1 OFERTAS_DATA=/tmp/ofertas python3 economia/app/server.py`
 
+- 1.58.0 e 1.59.0: `historico_precos` (o `precos_dia.json`), `lojas`, `mudar_loja` (o diário `loja`: `{rede, ativa, manter}`) e `buscar_agora` (o `buscar` ou o `buscar_itens` numa thread, com a mesma trava do `POST /api/buscar`).
+
 ## config.json
 
 ```json

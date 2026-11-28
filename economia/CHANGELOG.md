@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.59.0
+
+- **Pelo CorrerIA**: dá para ver as lojas acompanhadas e as inativas, **deixar de acompanhar** uma loja (ou voltar a acompanhar) e **buscar os preços agora** sem abrir o app ("busca os preços antes de eu sair"). As mudanças e a busca só depois do Sim.
+
 ## 1.58.0
 
 - **Histórico de preços**: a cada busca, o app guarda o menor preço de cada item da lista, um por dia. Pelo CorrerIA dá para perguntar "o café está barato mesmo?": a resposta traz o preço de hoje contra a média, o menor e o maior já vistos. O histórico começa a contar desta versão e entra no Exportar e no Backup.
