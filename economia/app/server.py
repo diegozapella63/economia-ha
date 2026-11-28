@@ -610,6 +610,12 @@ def ler_planilha(dado):
 def aplicar_diario(cfg, d):
     if d.get("repor"):  # 1.49.0: a compra anotada pela CorrerIA que também recomeçou a Reposição do item
         aplicar_diario(cfg, {"tipo": "repor", "item": d["repor"]})
+    if d["tipo"] == "refaz":  # 1.64.0: a mesma ferramenta de novo, na configuração da página que gravou com a revisão velha
+        try:
+            FERR_IMPL[d["nome"]](dict(d["args"]), cfg, {})
+        except ErroFerramenta:
+            pass
+        return
     if d["tipo"] == "loja":  # 1.59.0: uma loja deixada ou acompanhada de novo pela CorrerIA
         _aplicar_loja(cfg, d["rede"], d["ativa"], d.get("manter"))
         return
@@ -8097,6 +8103,50 @@ FERRAMENTAS_CORRERIA = [
      "descricao": "Começa a busca de ofertas e de preços da lista, como o Buscar da tela; leva alguns minutos e roda sozinha. Com "
                   "itens (até 8, da lista), busca só esses. O resultado vem depois em economia_lista e economia_preco.",
      "entrada": _obj({"itens": {"type": "array", "items": {"type": "string"}, "maxItems": 8, "description": "Só estes itens da lista (opcional)."}})},
+    # 1.64.0 (a auditoria da tela contra as ferramentas; o dono: "Segue"): o que só a tela fazia
+    {"nome": "opcoes", "titulo": "Opções do app", "grava": False, "apaga": False,
+     "descricao": "As opções de agora do EconomIA: o CEP, o raio, os tipos de loja (mercados, farmácias, pet shops, online), a casa "
+                  "(adultos, crianças, bebês, pets), as palavras que nunca aparecem, os clubes, as listas prontas, a Reposição pelos "
+                  "outros apps e os sensores. Mude com economia_mudar_opcoes.",
+     "entrada": _obj({})},
+    {"nome": "mudar_opcoes", "titulo": "Mudar opções", "grava": True, "apaga": False,
+     "descricao": "Muda opções (só o que for mandado): cep, raio_km (1 a 30), tipos (as categorias de loja), a casa (adultos, criancas, "
+                  "bebes, cachorros, gatos), listas_prontas, itens_sem_preco, encartes, lojas_diretas, remedios_do_cronologia e "
+                  "consumiveis_do_inventario (a Reposição) e sensores. Mudar o CEP ou os tipos pede uma busca nova (economia_buscar_agora).",
+     "entrada": _obj({"cep": {"type": "string"}, "raio_km": {"type": "number", "minimum": 1, "maximum": 30},
+                      "tipos": {"type": "array", "items": {"type": "string", "enum": ["mercados", "farmacias", "petshops", "online"]}},
+                      **{k: {"type": "integer", "minimum": 0, "maximum": 20} for k in ("adultos", "criancas", "bebes", "cachorros", "gatos")},
+                      **{k: {"type": "boolean"} for k in ("listas_prontas", "itens_sem_preco", "encartes", "lojas_diretas", "remedios_do_cronologia",
+                                                          "consumiveis_do_inventario", "sensores")}})},
+    {"nome": "esconder_oferta", "titulo": "Esconder uma oferta", "grava": True, "apaga": False,
+     "descricao": "Esconde uma oferta (o Esconder da tela: vai para Escondidas) pelo produto e, se houver mais de uma, a loja; com "
+                  "mostrar true, ela volta.",
+     "entrada": _obj({"produto": {"type": "string"}, "loja": {"type": "string"}, "mostrar": {"type": "boolean"}}, ["produto"])},
+    {"nome": "nunca_mostrar", "titulo": "Nunca mostrar uma palavra", "grava": True, "apaga": False,
+     "descricao": "Nenhuma oferta com esta palavra aparece mais (o Nunca mostrar da tela, como «cerveja» ou «ração de gato»); com "
+                  "tirar true, volta a aparecer. Sem palavra, lista as de agora.",
+     "entrada": _obj({"palavra": {"type": "string"}, "tirar": {"type": "boolean"}})},
+    {"nome": "clube", "titulo": "Preço de clube", "grava": True, "apaga": False,
+     "descricao": "Diz se a casa é do clube de uma loja (o preço de clube conta no mais barato): ligado true ou false.",
+     "entrada": _obj({"loja": {"type": "string"}, "ligado": {"type": "boolean"}}, ["loja", "ligado"])},
+    {"nome": "escolher_loja", "titulo": "Escolher a loja de um item", "grava": True, "apaga": False,
+     "descricao": "Fixa a loja onde comprar um item da lista (o Escolher da tela: vale essa loja, e não o mais barato); com "
+                  "automatico true, volta ao mais barato.",
+     "entrada": _obj({"produto": _PRODUTO, "loja": {"type": "string"}, "automatico": {"type": "boolean"}}, ["produto"])},
+    {"nome": "apagar_cupom", "titulo": "Apagar um cupom guardado", "grava": True, "apaga": True,
+     "descricao": "Apaga um cupom que a casa guardou (pelo benefício ou pelo código e, se houver mais de um, a loja).",
+     "entrada": _obj({"cupom": {"type": "string", "description": "O benefício ou o código."}, "loja": {"type": "string"}}, ["cupom"])},
+    {"nome": "tirar_da_reposicao", "titulo": "Tirar da Reposição", "grava": True, "apaga": True,
+     "descricao": "Tira um item da Reposição (Mais › Reposição): não volta mais para a lista sozinho.",
+     "entrada": _obj({"item": {"type": "string"}}, ["item"])},
+    {"nome": "editar_lista", "titulo": "Mudar ou apagar uma lista pronta", "grava": True, "apaga": True,
+     "descricao": "Numa lista pronta: muda o nome (novo_nome), recomeça (recomecar true: tudo desmarcado para a próxima compra) ou "
+                  "apaga (apagar true: os itens ficam, só saem dela).",
+     "entrada": _obj({"lista": {"type": "string"}, "novo_nome": {"type": "string"}, "recomecar": {"type": "boolean"}, "apagar": {"type": "boolean"}}, ["lista"])},
+    {"nome": "fazer_backup", "titulo": "Fazer backup", "grava": True, "apaga": False,
+     "descricao": "Salva um backup do EconomIA (a configuração e o resultado da busca) na pasta share do Home Assistant (o Backup de "
+                  "Mais › Configurações › Dados). Restaurar, importar e começar do zero, só pela tela.",
+     "entrada": _obj({})},
 ]
 
 
@@ -9190,7 +9240,245 @@ FERR_IMPL = {"roteiro": _ferr_roteiro, "lista": _ferr_lista, "preco": _ferr_prec
              "reposicao": _ferr_reposicao, "repor": _ferr_repor, "reposto": _ferr_reposto,
              "mudar_item": _ferr_mudar, "nova_lista": _ferr_nova_lista, "guardar_cupom": _ferr_guardar_cupom,
              "lojas": _ferr_lojas, "mudar_loja": _ferr_mudar_loja, "buscar_agora": None,  # 1.59.0: a busca roda pelo buscar_agora_correria
-             "ler_arquivo": None}  # 1.50.0: recebe o arquivo; roda pelo ler_arquivo_correria
+             "ler_arquivo": None,  # 1.50.0: recebe o arquivo; roda pelo ler_arquivo_correria
+             "opcoes": lambda a, cfg, of: _ferr_opcoes(a, cfg, of), "mudar_opcoes": lambda a, cfg, of: _ferr_mudar_opcoes(a, cfg, of),
+             "esconder_oferta": lambda a, cfg, of: _ferr_esconder(a, cfg, of), "nunca_mostrar": lambda a, cfg, of: _ferr_nunca(a, cfg, of),
+             "clube": lambda a, cfg, of: _ferr_clube(a, cfg, of), "escolher_loja": lambda a, cfg, of: _ferr_escolher(a, cfg, of),
+             "apagar_cupom": lambda a, cfg, of: _ferr_apagar_cupom(a, cfg, of), "tirar_da_reposicao": lambda a, cfg, of: _ferr_tirar_rep(a, cfg, of),
+             "editar_lista": lambda a, cfg, of: _ferr_editar_lista(a, cfg, of), "fazer_backup": None}
+
+
+# ---------- 1.64.0: o que só a tela fazia (a auditoria da tela contra as ferramentas) ----------
+# Cada uma devolve (texto, mudança); a mudança é {"tipo": "refaz", nome, args}: a página que gravar com a revisão velha roda a
+# mesma ferramenta de novo, com os argumentos já resolvidos (os ids), no aplicar_diario.
+
+def _refaz(nome, a, produto):
+    return {"tipo": "refaz", "nome": nome, "args": a, "produto": produto}
+
+
+def _rede_por_nome(cfg, of, loja, so_acompanhadas=True):
+    info, acompanha = redes_acompanhadas(cfg, of)
+    redes = [r for r in info if acompanha(r)] if so_acompanhadas else list(info)
+    k = norm(loja or "")
+    if k in info:
+        return k, info[k]["nome"]
+    r = next((r for r in redes if norm(info[r]["nome"]) == k), None) or next((r for r in redes if k and k in norm(info[r]["nome"])), None)
+    if not r:
+        raise ErroFerramenta(f"Loja não encontrada: {loja}. As lojas: " + (", ".join(sorted(info[x]["nome"] for x in redes)[:30]) or "nenhuma") + ".")
+    return r, info[r]["nome"]
+
+
+def _ferr_opcoes(a, cfg, of):
+    p = cfg.get("perfil") if isinstance(cfg.get("perfil"), dict) else {}
+    pets = p.get("pets") if isinstance(p.get("pets"), dict) else {}
+    op = cfg.get("opcoes") if isinstance(cfg.get("opcoes"), dict) else {}
+    info, _ = redes_acompanhadas(cfg, of)
+    return json.dumps({
+        "cep": cfg.get("cep") or "", "raio_km": cfg.get("raio_km") or 2, "tipos": cfg.get("categorias") or [],
+        "casa": {"adultos": p.get("adultos", 0), "criancas": p.get("criancas", 0), "bebes": p.get("bebes", 0), "cachorros": pets.get("cachorro", 0), "gatos": pets.get("gato", 0)},
+        "nunca_mostrar": p.get("nunca_produtos") or [], "clubes": [(info.get(c) or {}).get("nome") or c for c in cfg.get("clubes") or []],
+        "listas_prontas": op.get("listas") is True, "itens_sem_preco": op.get("itens_sem_preco") is not False, "encartes": op.get("encartes_auto") is not False,
+        "lojas_diretas": op.get("lojas_diretas") is not False, "remedios_do_cronologia": (cfg.get("repor") or {}).get("cronologia") is True,
+        "consumiveis_do_inventario": (cfg.get("repor") or {}).get("inventario") is True, "sensores": cfg.get("sensores") is True,
+        "usar_ia": cfg.get("usar_ia") is not False}, ensure_ascii=False)
+
+
+def _ferr_mudar_opcoes(a, cfg, of):
+    mud = []
+    if a.get("cep") is not None:
+        d = re.sub(r"\D", "", str(a["cep"]))
+        if len(d) != 8:
+            raise ErroFerramenta("cep: os 8 números, como 89200-000.")
+        cfg["cep"] = f"{d[:5]}-{d[5:]}"
+        mud.append(f"CEP {cfg['cep']}")
+    if a.get("raio_km") is not None:
+        r = a["raio_km"]
+        if isinstance(r, bool) or not isinstance(r, (int, float)) or not 1 <= r <= 30:
+            raise ErroFerramenta("raio_km: de 1 a 30.")
+        cfg["raio_km"] = r
+        mud.append(f"raio de {str(r).replace('.', ',')} km")
+    if a.get("tipos") is not None:
+        t = [x for x in dict.fromkeys(a["tipos"] if isinstance(a["tipos"], list) else []) if x in ("mercados", "farmacias", "petshops", "online")]
+        if not t:
+            raise ErroFerramenta("tipos: pelo menos um de mercados, farmacias, petshops e online.")
+        cfg["categorias"] = t
+        mud.append("lojas: " + ", ".join(t))
+    p = cfg.setdefault("perfil", {}) if isinstance(cfg.get("perfil"), dict) else cfg.setdefault("perfil", {})
+    for k, onde, sub in (("adultos", "adultos", None), ("criancas", "criancas", None), ("bebes", "bebes", None), ("cachorros", "cachorro", "pets"), ("gatos", "gato", "pets")):
+        if a.get(k) is None:
+            continue
+        v = a[k]
+        if isinstance(v, bool) or not isinstance(v, int) or not 0 <= v <= 20:
+            raise ErroFerramenta(f"{k}: de 0 a 20.")
+        (p.setdefault("pets", {}) if sub else p)[onde] = v
+        mud.append(f"{k} {v}")
+    op = cfg.setdefault("opcoes", {})
+    for k, chave in (("listas_prontas", "listas"), ("itens_sem_preco", "itens_sem_preco"), ("encartes", "encartes_auto"), ("lojas_diretas", "lojas_diretas")):
+        if a.get(k) is not None:
+            if not isinstance(a[k], bool):
+                raise ErroFerramenta(f"{k}: true ou false.")
+            op[chave] = a[k]
+            mud.append(f"{k.replace('_', ' ')} {'ligado' if a[k] else 'desligado'}")
+    for k, chave in (("remedios_do_cronologia", "cronologia"), ("consumiveis_do_inventario", "inventario")):
+        if a.get(k) is not None:
+            if not isinstance(a[k], bool):
+                raise ErroFerramenta(f"{k}: true ou false.")
+            cfg.setdefault("repor", {})[chave] = a[k]
+            mud.append(f"{k.replace('_', ' ')} {'ligado' if a[k] else 'desligado'}")
+    if a.get("sensores") is not None:
+        if not isinstance(a["sensores"], bool):
+            raise ErroFerramenta("sensores: true ou false.")
+        cfg["sensores"] = a["sensores"]
+        mud.append(f"sensores {'ligados' if a['sensores'] else 'desligados'}")
+    if not mud:
+        raise ErroFerramenta("Nada a mudar: mande ao menos uma opção. As de agora estão em economia_opcoes.")
+    busca = " Para os preços da região nova, economia_buscar_agora." if a.get("cep") is not None or a.get("tipos") is not None or a.get("raio_km") is not None else ""
+    return "Opções mudadas: " + "; ".join(mud) + "." + busca, _refaz("mudar_opcoes", dict(a), "opções")
+
+
+def _ferr_esconder(a, cfg, of):
+    if a.get("_id"):  # refeito pelo aplicar_diario: o id já achado
+        if a["_id"] not in cfg.setdefault("ocultas", []):
+            cfg["ocultas"].append(a["_id"])
+        return "", None
+    prod = _texto_arg(a, "produto")
+    mostrar = a.get("mostrar") is True
+    ocultas = cfg.setdefault("ocultas", [])
+    if mostrar:
+        k = norm(prod)
+        achadas = [x for x in ocultas if k in norm(str(x).split("|", 1)[-1]) or x == prod]
+        if a.get("loja"):
+            achadas = [x for x in achadas if norm(a["loja"]) in norm(str(x).split("|", 1)[0])] or achadas
+        if not achadas:
+            raise ErroFerramenta(f"Nenhuma oferta escondida com {prod}.")
+        for x in achadas:
+            ocultas.remove(x)
+        return f"{'Volta a aparecer' if len(achadas) == 1 else f'Voltam a aparecer {len(achadas)} ofertas'}: {prod}.", _refaz("esconder_oferta", {"produto": achadas[0], "mostrar": True}, prod)
+    todas, _ = _ofertas_vivas(cfg, of)
+    k = norm(prod)
+    achadas = [o for o in todas if norm(o["produto"]) == k] or [o for o in todas if k in norm(o["produto"])]
+    if a.get("loja"):
+        achadas = [o for o in achadas if norm(a["loja"]) in norm(o["_loja"])]
+    if not achadas:
+        raise ErroFerramenta(f"Nenhuma oferta à vista com {prod}. Veja as de agora em economia_ofertas.")
+    if len(achadas) > 1 and len({(o["produto"], o["rede"]) for o in achadas}) > 1:
+        raise ErroFerramenta("Mais de uma oferta: " + "; ".join(f'{o["produto"]} ({o["_loja"]})' for o in achadas[:8]) + ". Diga o produto inteiro e a loja.")
+    o = achadas[0]
+    oid = o.get("id") or f'{o.get("rede")}|{o.get("produto")}'
+    if oid not in ocultas:
+        ocultas.append(oid)
+    return f'Oferta escondida: {o["produto"]}, no {o["_loja"]} (fica em Escondidas).', _refaz("esconder_oferta", {"_id": oid}, o["produto"])
+
+
+def _ferr_nunca(a, cfg, of):
+    p = cfg.setdefault("perfil", {})
+    lista = p.setdefault("nunca_produtos", [])
+    palavra = " ".join(str(a.get("palavra") or "").split())[:60]
+    if not palavra:
+        return ("Nunca mostrar: " + ", ".join(lista) + ".") if lista else "Nenhuma palavra em Nunca mostrar.", None
+    if a.get("tirar") is True:
+        antes = len(lista)
+        p["nunca_produtos"] = [x for x in lista if norm(x) != norm(palavra)]
+        if len(p["nunca_produtos"]) == antes:
+            raise ErroFerramenta(f"{palavra} não está em Nunca mostrar." + (f" Estão: {', '.join(lista)}." if lista else ""))
+        return f"Volta a aparecer: {palavra}.", _refaz("nunca_mostrar", {"palavra": palavra, "tirar": True}, palavra)
+    if any(norm(x) == norm(palavra) for x in lista):
+        return f"{palavra} já está em Nunca mostrar.", None
+    if len(lista) >= 100:
+        raise ErroFerramenta("Já são 100 palavras em Nunca mostrar.")
+    lista.append(palavra)
+    return f"Nenhuma oferta com «{palavra}» aparece mais.", _refaz("nunca_mostrar", {"palavra": palavra}, palavra)
+
+
+def _ferr_clube(a, cfg, of):
+    if not isinstance(a.get("ligado"), bool):
+        raise ErroFerramenta("ligado: true (a casa é do clube) ou false.")
+    rede, nome = (a["_rede"], a["_rede"]) if a.get("_rede") else _rede_por_nome(cfg, of, a.get("loja"), so_acompanhadas=False)
+    clubes = cfg.setdefault("clubes", [])
+    if a["ligado"] == (rede in clubes):
+        return f"{nome}: o preço de clube já estava {'ligado' if a['ligado'] else 'desligado'}.", None
+    if a["ligado"]:
+        clubes.append(rede)
+    else:
+        clubes.remove(rede)
+    return f"Preço de clube {'ligado' if a['ligado'] else 'desligado'}: {nome}.", _refaz("clube", {"_rede": rede, "ligado": a["ligado"]}, nome)
+
+
+def _ferr_escolher(a, cfg, of):
+    i = _indice_na_lista(cfg, _texto_arg(a, "produto"))
+    item = cfg["lista"][i]
+    if not isinstance(item, dict):
+        item = cfg["lista"][i] = {"produto": nome_item(item), "compras": []}
+    if a.get("automatico") is True:
+        if not item.get("escolha"):
+            return f"{nome_item(item)} já estava no mais barato.", None
+        item.pop("escolha", None)
+        return f"{nome_item(item)}: volta ao mais barato.", _refaz("escolher_loja", {"produto": nome_item(item), "automatico": True}, nome_item(item))
+    if not a.get("loja") and not a.get("_rede"):
+        raise ErroFerramenta("Diga a loja, ou automatico true.")
+    rede, nome = (a["_rede"], a["_rede"]) if a.get("_rede") else _rede_por_nome(cfg, of, a.get("loja"))
+    item["escolha"] = {"rede": rede, "q": None, "obs": ""}
+    return f"Escolhido: {nome} para {nome_item(item)}.", _refaz("escolher_loja", {"produto": nome_item(item), "_rede": rede}, nome_item(item))
+
+
+def _ferr_apagar_cupom(a, cfg, of):
+    k = norm(a.get("cupom") or "")
+    meus = [c for c in cfg.get("cupons_meus") or [] if isinstance(c, dict)]
+    achados = [c for c in meus if c.get("id") == a.get("cupom") or (k and (k in norm(c.get("beneficio")) or k == norm(c.get("codigo"))))]
+    if a.get("loja"):
+        info, _ = redes_acompanhadas(cfg, of)
+        achados = [c for c in achados if norm(a["loja"]) in norm((info.get(c.get("rede")) or {}).get("nome") or c.get("rede") or "")]
+    if not achados:
+        raise ErroFerramenta("Cupom não encontrado." + (" Os guardados: " + "; ".join(c.get("beneficio") or "" for c in meus[:15]) + "." if meus else " Nenhum cupom guardado."))
+    if len(achados) > 1:
+        raise ErroFerramenta("Mais de um cupom: " + "; ".join(c.get("beneficio") or "" for c in achados[:8]) + ". Diga a loja ou o benefício inteiro.")
+    c = achados[0]
+    cfg["cupons_meus"] = [x for x in cfg.get("cupons_meus") or [] if not (isinstance(x, dict) and x.get("id") == c["id"])]
+    return f"Cupom apagado: {c.get('beneficio')}.", _refaz("apagar_cupom", {"cupom": c["id"]}, c.get("beneficio") or "cupom")
+
+
+def _ferr_tirar_rep(a, cfg, of):
+    r = _repor_item(cfg, _texto_arg(a, "item"))
+    cfg["reposicao"] = [x for x in cfg.get("reposicao") or [] if not (isinstance(x, dict) and (x.get("id") == r.get("id") or norm(x.get("nome")) == norm(r["nome"])))]
+    return f"Tirado da Reposição: {r['nome']}.", _refaz("tirar_da_reposicao", {"item": r["nome"]}, r["nome"])
+
+
+def _ferr_editar_lista(a, cfg, of):
+    listas = [x for x in cfg.get("listas") or [] if isinstance(x, dict) and x.get("id")]
+    k = norm(a.get("lista") or "")
+    alvo = next((x for x in listas if x["id"] == a.get("lista") or norm(x.get("nome")) == k), None) or next((x for x in listas if k and k in norm(x.get("nome"))), None)
+    if not alvo:
+        raise ErroFerramenta("Lista não encontrada. As listas prontas: " + (", ".join(x.get("nome") or "" for x in listas) or "nenhuma") + ".")
+    args = {"lista": alvo["id"]}
+    if a.get("apagar") is True:
+        cfg["listas"] = [x for x in cfg.get("listas") or [] if not (isinstance(x, dict) and x.get("id") == alvo["id"])]
+        for it in cfg.get("lista") or []:
+            if isinstance(it, dict) and alvo["id"] in (it.get("listas") or []):
+                it["listas"] = [x for x in it["listas"] if x != alvo["id"]]
+                if not it["listas"]:
+                    it.pop("listas")
+        rot = cfg.get("roteiro") if isinstance(cfg.get("roteiro"), dict) else {}
+        if isinstance(rot.get("listas"), list):
+            rot["listas"] = [x for x in rot["listas"] if x != alvo["id"]]
+        return f"Lista {alvo.get('nome')} apagada (os itens continuam na lista de compras).", _refaz("editar_lista", dict(args, apagar=True), alvo.get("nome") or "lista")
+    mud = []
+    if a.get("novo_nome") is not None:
+        nome = " ".join(str(a["novo_nome"]).split())[:30]
+        if not nome:
+            raise ErroFerramenta("O nome novo ficou vazio.")
+        if any(x is not alvo and norm(x.get("nome")) == norm(nome) for x in listas):
+            raise ErroFerramenta(f"Já tem uma lista {nome}.")
+        alvo["nome"] = nome
+        args["novo_nome"] = nome
+        mud.append(f"agora se chama {nome}")
+    if a.get("recomecar") is True:
+        alvo["comprados"] = []
+        args["recomecar"] = True
+        mud.append("pronta para a próxima compra")
+    if not mud:
+        raise ErroFerramenta("Diga o que muda: novo_nome, recomecar ou apagar.")
+    return f"Lista {alvo.get('nome')}: " + ", ".join(mud) + ".", _refaz("editar_lista", args, alvo.get("nome") or "lista")
+
 
 
 # 1.62.0 (o dono, à nota de compra numa foto só: "faz primeiro o lote 1"): a foto de uma nota ou cupom de compra, lida pela IA
@@ -9293,6 +9581,14 @@ def usar_ferramenta(nome, argumentos, cliente="CorrerIA", anexo=None):
     a = argumentos if isinstance(argumentos, dict) else {}
     if nome == "ler_arquivo":
         return ler_arquivo_correria(a, anexo)
+    if nome == "fazer_backup":  # 1.64.0: o Backup de Mais › Configurações › Dados
+        try:
+            criar_backup()
+        except (ErroBusca, OSError) as e:
+            raise ErroFerramenta(str(e)) from None
+        b = (listar_backups() or [{}])[0]
+        log(f"CorrerIA ({cliente}): fazer_backup")
+        return f"Backup salvo em share/economia/{b.get('nome') or b.get('arquivo') or ''}.".replace("/.", ".")
     if nome == "buscar_agora":
         texto = buscar_agora_correria(a)
         log(f"CorrerIA ({cliente}): buscar_agora")
@@ -9313,6 +9609,11 @@ def usar_ferramenta(nome, argumentos, cliente="CorrerIA", anexo=None):
             DIARIO.append(dict(mudanca, rev=rev))
             del DIARIO[:-300]
             log(f"CorrerIA ({cliente}): {nome} {mudanca['produto']}")
+    if gravar and mudanca and nome == "mudar_opcoes":  # 1.64.0: o que o PUT /api/config põe para andar
+        if "consumiveis_do_inventario" in a:
+            publicar_integracao(cfg)
+        if "sensores" in a:
+            threading.Thread(target=publica_sensor_uso, daemon=True).start()
     if gravar and mudanca and mudanca["tipo"] != "repor" and sync_ligado(cfg):
         # 1.43.0: com a Lista do Home Assistant ligada, vai para lá na hora (sem esperar a volta de cada minuto)
         _sincronizar_logo()

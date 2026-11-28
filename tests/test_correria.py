@@ -113,13 +113,17 @@ class Ferramentas(Cenario):
         S = self.S
         nomes = [f["nome"] for f in S.FERRAMENTAS_CORRERIA]
         self.assertEqual(nomes, ["lista", "preco", "historico_precos", "combustivel", "ofertas", "roteiro", "cupons", "por_na_lista", "tirar_da_lista", "comprei", "reposicao", "repor", "reposto", "ler_arquivo",
-                                 "mudar_item", "nova_lista", "guardar_cupom", "lojas", "mudar_loja", "buscar_agora"])
+                                 "mudar_item", "nova_lista", "guardar_cupom", "lojas", "mudar_loja", "buscar_agora",
+                                 "opcoes", "mudar_opcoes", "esconder_oferta", "nunca_mostrar", "clube", "escolher_loja", "apagar_cupom",
+                                 "tirar_da_reposicao", "editar_lista", "fazer_backup"])
         self.assertEqual(set(nomes), set(S.FERR_IMPL))
         for f in S.FERRAMENTAS_CORRERIA:
             self.assertRegex(f["nome"], r"^[a-z0-9_]{1,40}$")
             self.assertEqual(f["entrada"]["type"], "object")
             self.assertEqual(set(f) - {"anexo"}, {"nome", "titulo", "descricao", "entrada", "grava", "apaga"})  # 1.50.0: a que recebe a foto leva `anexo`
-        self.assertEqual([f["nome"] for f in S.FERRAMENTAS_CORRERIA if f["grava"]], ["por_na_lista", "tirar_da_lista", "comprei", "repor", "reposto", "mudar_item", "nova_lista", "guardar_cupom", "mudar_loja", "buscar_agora"])
+        self.assertEqual([f["nome"] for f in S.FERRAMENTAS_CORRERIA if f["grava"]], ["por_na_lista", "tirar_da_lista", "comprei", "repor", "reposto", "mudar_item", "nova_lista", "guardar_cupom", "mudar_loja", "buscar_agora",
+                                                                                 "mudar_opcoes", "esconder_oferta", "nunca_mostrar", "clube", "escolher_loja", "apagar_cupom",
+                                                                                 "tirar_da_reposicao", "editar_lista", "fazer_backup"])
         self.assertIn("economia_lista", S.CORRERIA_INSTRUCOES)
         self.assertIn("economia_reposicao", S.CORRERIA_INSTRUCOES)
 
@@ -238,6 +242,95 @@ class Ferramentas(Cenario):
                 self.usa("mudar_loja", **args)
         self.ofertas({"categorias": []})
         self.assertIn("Ainda não há lojas", self.usa("lojas"))
+
+    def test_1_64_o_que_so_a_tela_fazia(self):
+        """1.64.0: a auditoria da tela contra as ferramentas: opções, esconder, nunca mostrar, clube, escolher a loja,
+        apagar cupom, tirar da Reposição, as listas prontas e o backup; cada uma entra no diário e a página com a revisão velha refaz."""
+        S = self.S
+        o = json.loads(self.usa("opcoes"))
+        self.assertEqual((o["raio_km"], o["tipos"], o["listas_prontas"], o["nunca_mostrar"]), (2, ["mercados", "online"], False, []))
+        t = self.usa("mudar_opcoes", cep="89200000", raio_km=5, adultos=2, gatos=1, listas_prontas=True, sensores=True)
+        self.assertEqual(t, "Opções mudadas: CEP 89200-000; raio de 5 km; adultos 2; gatos 1; listas prontas ligado; sensores ligados. Para os preços da região nova, economia_buscar_agora.")
+        c = S.ler_config()
+        self.assertEqual((c["cep"], c["raio_km"], c["perfil"]["adultos"], c["perfil"]["pets"]["gato"], c["opcoes"]["listas"], c["sensores"]), ("89200-000", 5, 2, 1, True, True))
+        velho = {"perfil": {}}
+        S.aplicar_diario(velho, S.DIARIO[-1])
+        self.assertEqual((velho["cep"], velho["perfil"]["adultos"]), ("89200-000", 2), "a página com a revisão velha refaz")
+        for args, erro in ((dict(cep="123"), "8 números"), (dict(raio_km=50), "de 1 a 30"), (dict(tipos=["bares"]), "pelo menos um"), (dict(bebes=-1), "de 0 a 20"),
+                           (dict(encartes="sim"), "true ou false"), (dict(remedios_do_cronologia=1), "true ou false"), (dict(sensores="x"), "true ou false"), ({}, "Nada a mudar")):
+            with self.assertRaisesRegex(S.ErroFerramenta, erro):
+                self.usa("mudar_opcoes", **args)
+        with unittest.mock.patch.object(S, "publicar_integracao") as pub:
+            self.usa("mudar_opcoes", consumiveis_do_inventario=False, tipos=["mercados"], itens_sem_preco=False, lojas_diretas=True)
+            pub.assert_called_once()
+        self.usa("mudar_opcoes", tipos=["mercados", "online"])
+        # esconder e mostrar uma oferta
+        self.assertEqual(self.usa("esconder_oferta", produto="picanha"), "Oferta escondida: Picanha kg, no Giassi (fica em Escondidas).")
+        self.assertIn("g1", S.ler_config()["ocultas"])
+        self.assertNotIn("Picanha", self.usa("ofertas"))
+        velho = {"ocultas": []}
+        S.aplicar_diario(velho, S.DIARIO[-1])
+        self.assertEqual(velho["ocultas"], ["g1"])
+        self.assertEqual(self.usa("esconder_oferta", produto="g1", mostrar=True), "Volta a aparecer: g1.")
+        self.assertIn("Picanha", self.usa("ofertas"))
+        with self.assertRaisesRegex(S.ErroFerramenta, "Nenhuma oferta à vista"):
+            self.usa("esconder_oferta", produto="café", loja="angeloni")
+        with self.assertRaisesRegex(S.ErroFerramenta, "Nenhuma oferta à vista"):
+            self.usa("esconder_oferta", produto="abacaxi")
+        with self.assertRaisesRegex(S.ErroFerramenta, "Nenhuma oferta escondida"):
+            self.usa("esconder_oferta", produto="abacaxi", mostrar=True)
+        # nunca mostrar
+        self.assertEqual(self.usa("nunca_mostrar", palavra="cerveja"), "Nenhuma oferta com «cerveja» aparece mais.")
+        self.assertEqual(self.usa("nunca_mostrar", palavra="Cerveja"), "Cerveja já está em Nunca mostrar.")
+        self.assertEqual(self.usa("nunca_mostrar"), "Nunca mostrar: cerveja.")
+        self.assertEqual(self.usa("nunca_mostrar", palavra="cerveja", tirar=True), "Volta a aparecer: cerveja.")
+        with self.assertRaisesRegex(S.ErroFerramenta, "não está em Nunca mostrar"):
+            self.usa("nunca_mostrar", palavra="vinho", tirar=True)
+        self.assertEqual(self.usa("nunca_mostrar"), "Nenhuma palavra em Nunca mostrar.")
+        # clube e a loja escolhida
+        self.assertEqual(self.usa("clube", loja="angeloni", ligado=True), "Preço de clube ligado: Angeloni.")
+        self.assertEqual(S.ler_config()["clubes"], ["angeloni"])
+        self.assertIn("já estava ligado", self.usa("clube", loja="Angeloni", ligado=True))
+        velho = {}
+        S.aplicar_diario(velho, {"tipo": "refaz", "nome": "clube", "args": {"_rede": "angeloni", "ligado": True}})
+        self.assertEqual(velho["clubes"], ["angeloni"])
+        self.assertEqual(self.usa("clube", loja="angeloni", ligado=False), "Preço de clube desligado: Angeloni.")
+        with self.assertRaisesRegex(S.ErroFerramenta, "ligado: true"):
+            self.usa("clube", loja="angeloni")
+        with self.assertRaisesRegex(S.ErroFerramenta, "Loja não encontrada: nada"):
+            self.usa("clube", loja="nada", ligado=True)
+        self.assertEqual(self.usa("escolher_loja", produto="café pilão 500 g", loja="angeloni"), "Escolhido: Angeloni para Café Pilão 500 g.")
+        self.assertEqual(S.ler_config()["lista"][0]["escolha"], {"rede": "angeloni", "q": None, "obs": ""})
+        self.assertEqual(self.usa("escolher_loja", produto="café pilão", automatico=True), "Café Pilão 500 g: volta ao mais barato.")
+        self.assertIn("já estava no mais barato", self.usa("escolher_loja", produto="café pilão", automatico=True))
+        with self.assertRaisesRegex(S.ErroFerramenta, "Diga a loja"):
+            self.usa("escolher_loja", produto="café pilão")
+        # cupom, Reposição e listas prontas
+        with self.assertRaisesRegex(S.ErroFerramenta, "Cupom não encontrado. Os guardados: 20% em Colgate"):
+            self.usa("apagar_cupom", cupom="nada")
+        self.assertEqual(self.usa("apagar_cupom", cupom="colgate", loja="giassi"), "Cupom apagado: 20% em Colgate.")
+        self.assertEqual(S.ler_config()["cupons_meus"], [])
+        self.usa("repor", item="Filtro de água", a_cada=6, unidade="mes")
+        self.assertEqual(self.usa("tirar_da_reposicao", item="filtro"), "Tirado da Reposição: Filtro de água.")
+        self.assertEqual(S.ler_config().get("reposicao"), [])
+        self.usa("nova_lista", nome="Churrasco")
+        self.usa("por_na_lista", produto="Carvão", lista="Churrasco")
+        self.assertEqual(self.usa("editar_lista", lista="churras", novo_nome="Festa", recomecar=True), "Lista Festa: agora se chama Festa, pronta para a próxima compra.")
+        with self.assertRaisesRegex(S.ErroFerramenta, "Diga o que muda"):
+            self.usa("editar_lista", lista="Festa")
+        with self.assertRaisesRegex(S.ErroFerramenta, "Lista não encontrada. As listas prontas: Festa"):
+            self.usa("editar_lista", lista="Feira", apagar=True)
+        self.assertEqual(self.usa("editar_lista", lista="festa", apagar=True), "Lista Festa apagada (os itens continuam na lista de compras).")
+        c = S.ler_config()
+        self.assertEqual((c["listas"], [i for i in c["lista"] if i.get("produto") == "Carvão"][0].get("listas")), ([], None))
+        # backup
+        with unittest.mock.patch.object(S, "criar_backup"), unittest.mock.patch.object(S, "listar_backups", return_value=[{"nome": "economia-20261102-090000.zip"}]):
+            self.assertEqual(self.usa("fazer_backup"), "Backup salvo em share/economia/economia-20261102-090000.zip.")
+        with unittest.mock.patch.object(S, "criar_backup", side_effect=S.ErroBusca("A pasta share não está disponível para o app.")):
+            with self.assertRaisesRegex(S.ErroFerramenta, "pasta share"):
+                self.usa("fazer_backup")
+        # um diário de ferramenta que não vale mais na página (o item saiu) não atrapalha
+        S.aplicar_diario({"lista": []}, {"tipo": "refaz", "nome": "escolher_loja", "args": {"produto": "Nada", "_rede": "giassi"}})
 
     def test_buscar_agora(self):
         """1.59.0: o Buscar da tela pelo CorrerIA: começa em segundo plano; uma busca rodando não começa outra."""
@@ -630,7 +723,7 @@ class FerramentasPelaAPI(Servidor):
         self.S.combustivel_cidade = lambda cfg=None: ("Joinville", "SC")
         st, c = self.pede("GET", "/api/combustivel")
         self.assertEqual((st, c["cidade"], c["produtos"], c["buscando"]), (200, "Joinville", [], False))
-        self.assertEqual(len(d["ferramentas"]), 20)
+        self.assertEqual(len(d["ferramentas"]), 30)
         self.assertIn("economia_lista", d["instrucoes"])
         st, d = self.ferr("POST", {"nome": "por_na_lista", "argumentos": {"produto": "Pão de forma"}, "pessoa": {"id": "p1", "nome": "Ana"}, "cliente": "Claude"})
         self.assertEqual((st, d), (200, {"texto": "Pus Pão de forma na lista. O preço vem na próxima busca do app."}))

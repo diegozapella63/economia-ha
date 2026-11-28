@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.64.0
+
+- **Mais coisas da tela pela IA do CorrerIA** (no WhatsApp, no Claude, no Gemini e na Conversa de lá): ver e mudar as **opções** (o CEP, o raio, os tipos de loja, a casa, as listas prontas, os encartes, a Reposição pelos outros apps e os sensores), **esconder uma oferta**, o **Nunca mostrar**, o **preço de clube** de uma loja, **escolher a loja** de um item, apagar um **cupom** guardado, tirar da **Reposição**, mudar ou apagar uma **lista pronta** e **fazer um backup**. Ex.: "nunca mais me mostra cerveja", "o café eu compro sempre no Giassi", "sou do clube do Angeloni".
+
 ## 1.63.0
 
 - **Combustível**: em **Mais › Casa**, o cartão novo mostra o preço da gasolina, do etanol e do diesel nos postos da sua cidade: a média e o posto mais barato de cada um. Os preços são da pesquisa semanal da ANP (nem todo posto entra toda semana); toque em **Ver preços dos postos** para buscar.
