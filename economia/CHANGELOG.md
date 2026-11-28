@@ -1,5 +1,10 @@
 # Mudanças
 
+## 1.63.0
+
+- **Combustível**: em **Mais › Casa**, o cartão novo mostra o preço da gasolina, do etanol e do diesel nos postos da sua cidade: a média e o posto mais barato de cada um. Os preços são da pesquisa semanal da ANP (nem todo posto entra toda semana); toque em **Ver preços dos postos** para buscar.
+- Pelo CorrerIA: "onde a gasolina está mais barata?" e "quanto está o etanol?".
+
 ## 1.62.0
 
 - **Nota de compra pela foto**: mande a foto da nota ou do cupom na conversa do CorrerIA ("essa é a nota do mercado"). A IA lê a loja, o dia, o total e o preço de cada item, e o CorrerIA propõe anotar a compra dos itens que estão na sua lista, com o preço pago (e lançar o gasto no GerencIA, se você usa). Nada é anotado antes do seu Sim. O CPF e o nome da nota não são lidos.

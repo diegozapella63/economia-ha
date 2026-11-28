@@ -112,7 +112,7 @@ class Ferramentas(Cenario):
     def test_o_catalogo(self):
         S = self.S
         nomes = [f["nome"] for f in S.FERRAMENTAS_CORRERIA]
-        self.assertEqual(nomes, ["lista", "preco", "historico_precos", "ofertas", "roteiro", "cupons", "por_na_lista", "tirar_da_lista", "comprei", "reposicao", "repor", "reposto", "ler_arquivo",
+        self.assertEqual(nomes, ["lista", "preco", "historico_precos", "combustivel", "ofertas", "roteiro", "cupons", "por_na_lista", "tirar_da_lista", "comprei", "reposicao", "repor", "reposto", "ler_arquivo",
                                  "mudar_item", "nova_lista", "guardar_cupom", "lojas", "mudar_loja", "buscar_agora"])
         self.assertEqual(set(nomes), set(S.FERR_IMPL))
         for f in S.FERRAMENTAS_CORRERIA:
@@ -626,7 +626,11 @@ class FerramentasPelaAPI(Servidor):
         self.assertEqual(self.pede("GET", "/api/integracao/ferramentas", cab={"Authorization": "Basic x"})[0], 401)
         st, d = self.ferr()
         self.assertEqual(st, 200)
-        self.assertEqual(len(d["ferramentas"]), 19)
+        # 1.63.0: a rota do cartão Combustível (sem CEP na cidade guardada, só diz o que falta ou o que há)
+        self.S.combustivel_cidade = lambda cfg=None: ("Joinville", "SC")
+        st, c = self.pede("GET", "/api/combustivel")
+        self.assertEqual((st, c["cidade"], c["produtos"], c["buscando"]), (200, "Joinville", [], False))
+        self.assertEqual(len(d["ferramentas"]), 20)
         self.assertIn("economia_lista", d["instrucoes"])
         st, d = self.ferr("POST", {"nome": "por_na_lista", "argumentos": {"produto": "Pão de forma"}, "pessoa": {"id": "p1", "nome": "Ana"}, "cliente": "Claude"})
         self.assertEqual((st, d), (200, {"texto": "Pus Pão de forma na lista. O preço vem na próxima busca do app."}))

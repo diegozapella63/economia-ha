@@ -275,13 +275,14 @@ def servidor(env=None):
     os.environ.update(SEM_INTERNET)
     for k in ("OFERTAS_VTEX_TESTE", "OFERTAS_ML_API", "OFERTAS_ML_AUTH", "OFERTAS_OFF", "OFERTAS_SHOPEE_API", "OFERTAS_OVERPASS",
               "OFERTAS_GOOGLE_PLACES", "OFERTAS_GOOGLE_TEXTO", "OFERTAS_BRAVE", "OFERTAS_GRAPH", "OFERTAS_FOLHETOS_TESTE",
-              "OFERTAS_CASA", "OFERTAS_ITENS", "OFERTAS_VOZ_SIMULADA", "OFERTAS_ESPERA_COTA", "OFERTAS_SYNC_SEG", "OFERTAS_AUTO_ENCARTES",
+              "OFERTAS_CASA", "OFERTAS_ANP", "OFERTAS_ITENS", "OFERTAS_VOZ_SIMULADA", "OFERTAS_ESPERA_COTA", "OFERTAS_SYNC_SEG", "OFERTAS_AUTO_ENCARTES",
               "SUPERVISOR_TOKEN", "HASSIO_TOKEN"):
         os.environ.pop(k, None)
     os.environ.update(env or {})
     if APP not in sys.path:
         sys.path.insert(0, APP)
     sys.modules.pop("server", None)
+    sys.modules.pop("anp", None)
     sys.modules.pop("memoria_ia", None)  # de novo a cada servidor: sem a lista guardada de outro teste (e a cobertura vê o módulo inteiro)
     S = importlib.import_module("server")
     msgs = []

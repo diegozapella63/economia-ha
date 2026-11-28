@@ -769,6 +769,13 @@ li.escolhida{border-color:var(--accent) !important}
 .rep-cada > input.field{flex:0 0 4.6em;width:4.6em;text-align:center}
 .rep-cada > select.field{flex:1 1 auto;min-width:0}
 .rep-lista{list-style:none;margin:0;padding:0}
+.comb-lista{list-style:none;margin:0 0 10px;padding:0}
+.comb-item{padding:10px 0;border-top:1px solid var(--line)}
+.comb-item:first-child{border-top:0;padding-top:0}
+.comb-l1{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.comb-l1 span{color:var(--muted);font-size:14px;white-space:nowrap}
+.comb-l2{font-size:14px;color:var(--muted);overflow-wrap:anywhere}
+#combustivel .row-form > .ghost.big{flex:1 1 100%;width:100%;min-height:50px;justify-content:center}
 .rep-lista .hist-add small b{font-weight:600;color:var(--warn)}
 .rep-de{display:inline-block;margin-left:6px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 .rep-vez{padding:12px 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
@@ -1662,6 +1669,10 @@ input.field,select.field{min-height:var(--altura)}
           </div>
           <p class="hint" id="casaHint"></p>
         </section>
+        <section class="panel" aria-labelledby="h-comb" id="combustivel">
+          <div class="sec-head"><h2 id="h-comb"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M3 21h12M6 8h6"/><path d="M14 11h2a2 2 0 0 1 2 2v3a1.5 1.5 0 0 0 3 0V8l-3-3"/></svg></span>Combustível</h2></div>
+          <div id="combCorpo"></div>
+        </section>
         <section class="panel" aria-labelledby="h-rotina">
           <div class="sec-head"><h2 id="h-rotina"><span class="h-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></span>Rotina de compras</h2></div>
           <div class="group"><h3>Dias de mercado</h3><div class="picks dias" id="dMercado"></div></div>
@@ -2462,6 +2473,7 @@ input.field,select.field{min-height:var(--altura)}
     if ($('maisAbas').parentElement.classList.contains('abas-wrap')){ $('maisAbas').parentElement.hidden = t !== 'config'; if (t === 'config') setTimeout(marcaAbas, 0); }
     ['casa', 'lojas', 'reposicao', 'sobre'].forEach(function(x){ $('mp-' + x).hidden = t !== x; });
     if (t === 'reposicao' && typeof carregaRepFontes === 'function'){ repEditar(null); carregaRepFontes(); }
+    if (t === 'casa' && typeof carregaComb === 'function') carregaComb(false);
     if (t === 'config') abaConfig(ui.maisAba); else CONFIG_ABAS.forEach(function(x){ $('mp-' + x).hidden = true; });
     $('maisPe').hidden = t === 'sobre';  // em Sobre, a versão está em Este app
     marcarTela();
@@ -4477,6 +4489,38 @@ input.field,select.field{min-height:var(--altura)}
       return '<li><span><b>' + esc(x.texto) + '</b><small>' + esc(de) + '</small></span>'
         + '<button type="button" class="ghost mem-del" data-mem="' + esc(x.id) + '" aria-label="Apagar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button></li>';
     }).join('');
+  }
+  // 1.63.0: Mais › Casa › Combustível: os preços dos postos da cidade pela pesquisa semanal da ANP. O servidor só baixa o
+  // arquivo quando alguém pede (o botão) e guarda só a cidade; buscando, a tela pergunta de novo a cada 3 s.
+  var COMB = null, COMB_T = null;
+  var COMB_EX = {cidade:'Joinville', uf:'SC', buscado_em:'2026-11-24T09:00:00+00:00', buscando:false, erro:'', produtos:[
+    {produto:'gasolina', nome:'Gasolina', data:'2026-11-23', media:6.09, n:2, postos:[{posto:'Posto Da Ana', bairro:'Centro', rua:'Rua Das Flores 10', preco:5.99, data:'2026-11-23'}, {posto:'Posto Do Beto', bairro:'Glória', rua:'Rua Do Sol 20', preco:6.19, data:'2026-11-23'}]},
+    {produto:'etanol', nome:'Etanol', data:'2026-11-23', media:4.19, n:1, postos:[{posto:'Posto Da Ana', bairro:'Centro', rua:'Rua Das Flores 10', preco:4.19, data:'2026-11-23'}]}]};
+  function carregaComb(buscar){
+    if (MODO !== 'addon'){ COMB = buscar ? COMB_EX : (COMB || {cidade:'Joinville', produtos:[], buscando:false, erro:''}); pintaComb(); return; }
+    clearTimeout(COMB_T);
+    fetch('api/combustivel' + (buscar ? '?buscar=1' : ''), {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
+      COMB = j; pintaComb();
+      if (j.buscando && ui.view === 'mais' && ui.maisTela === 'casa') COMB_T = setTimeout(function(){ carregaComb(false); }, 3000);
+    }).catch(function(){});
+  }
+  function pintaComb(){
+    var el = $('combCorpo'); if (!el) return;
+    var c = COMB || {produtos:[]}, dm = function(iso){ return iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) : ''; }, h = '';
+    var anpLink = '<a class="site" href="https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/serie-historica-de-precos-de-combustiveis" target="_blank" rel="noopener noreferrer">ANP</a>';
+    if (c.produtos && c.produtos.length){
+      h += '<ul class="comb-lista">' + c.produtos.map(function(p){
+        var m = p.postos[0];
+        return '<li class="comb-item" data-produto="' + esc(p.produto) + '"><div class="comb-l1"><b>' + esc(p.nome) + '</b><span>média ' + brl.format(p.media) + '</span></div>'
+          + '<div class="comb-l2">' + brl.format(m.preco) + ' · ' + esc(m.posto) + (m.bairro ? ' (' + esc(m.bairro) + ')' : '') + '</div></li>';
+      }).join('') + '</ul>';
+      h += '<p class="hint" id="combHint">Postos de ' + esc(c.cidade) + ' na pesquisa semanal da ' + anpLink + ', coleta de ' + dm(c.produtos[0].data) + '.</p>';
+    } else {
+      h += '<p class="hint" id="combHint">' + (c.buscando ? 'Buscando os preços…' : esc(c.erro || '') || 'Os preços dos postos da cidade, pela pesquisa semanal da ' + anpLink + '.') + '</p>';
+    }
+    h += '<div class="row-form"><button type="button" class="ghost big" id="combBuscar"' + (c.buscando ? ' disabled' : '') + '>' + bIc('refresh') + (c.buscando ? 'Buscando…' : c.produtos && c.produtos.length ? 'Atualizar' : 'Ver preços dos postos') + '</button></div>';
+    el.innerHTML = h;
+    $('combBuscar').addEventListener('click', function(){ if (COMB) COMB.buscando = MODO === 'addon'; pintaComb(); carregaComb(true); });
   }
   function carregaMemoria(){
     if (!iaOn()){ return; }

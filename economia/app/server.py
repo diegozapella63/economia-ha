@@ -73,6 +73,7 @@ from xml.sax.saxutils import escape as xml_esc
 import shutil
 import zipfile
 
+import anp
 import memoria_ia
 import voz
 
@@ -8003,6 +8004,10 @@ FERRAMENTAS_CORRERIA = [
                   "média, o menor e o maior, para saber se a promoção é de verdade. Sem produto, os itens da lista com o preço de "
                   "hoje contra a média deles, o que mais caiu primeiro.",
      "entrada": _obj({"produto": {"type": "string", "description": "O item da lista (o nome ou parte dele). Vazio: todos os da lista."}})},
+    {"nome": "combustivel", "titulo": "Preço dos combustíveis", "grava": False, "apaga": False,
+     "descricao": "O preço da gasolina, do etanol, do diesel e do GNV nos postos da cidade da casa, pela pesquisa semanal da ANP: "
+                  "a média e os postos mais baratos. Com produto, só ele (com mais postos).",
+     "entrada": _obj({"produto": {"type": "string", "description": "gasolina, gasolina aditivada, etanol, diesel, diesel s10 ou gnv. Vazio: todos."}})},
     {"nome": "ofertas", "titulo": "Ofertas", "grava": False, "apaga": False,
      "descricao": "As ofertas das lojas acompanhadas, as de maior desconto primeiro. Dá para filtrar pelo tipo de loja, pela "
                   "loja e por palavras do produto.",
@@ -9081,7 +9086,106 @@ def _ferr_guardar_cupom(a, cfg, of):
         {"tipo": "cupom", "produto": ben, "cupom": k}
 
 
-FERR_IMPL = {"roteiro": _ferr_roteiro, "lista": _ferr_lista, "preco": _ferr_preco, "historico_precos": _ferr_historico_precos, "ofertas": _ferr_ofertas, "cupons": _ferr_cupons,
+# 1.63.0 (o dono: "Preço do combustível (ANP) no EconomIA. Pode seguir também"): o levantamento semanal de preços dos postos, dos
+# dados abertos da ANP. Só as linhas da cidade do CEP ficam guardadas (/data/combustivel.json). O arquivo é do país todo
+# (uns 4 MB), então a busca roda em segundo plano, só quando alguém pede e o guardado tem mais de COMB_DIAS dias.
+COMBUSTIVEL = os.path.join(DATA, "combustivel.json")
+ANP_BASE = os.environ.get("OFERTAS_ANP") or anp.BASE  # OFERTAS_ANP: só para testes
+COMB_DIAS = 3
+COMB = {"rodando": False, "erro": ""}
+_comb_trava = threading.Lock()
+
+
+def _reais3(v):
+    return "R$ " + f"{v:.2f}".replace(".", ",")
+
+
+def combustivel_cidade(cfg=None):
+    cfg = cfg if cfg is not None else (ler_json(CONFIG, {}) or {})
+    cache = ler_json(FOLHETOS, {}) or {}
+    c = cache.get("_cep") or {}
+    if c.get("cidade") and c.get("uf"):
+        return c["cidade"], c["uf"]
+    return cidade_do_cep(cfg.get("cep"), {}) if cfg.get("cep") else (None, None)
+
+
+def combustivel_buscar(cidade, uf):
+    """Baixa os arquivos da ANP e guarda as linhas da cidade. O erro fica em COMB["erro"]."""
+    try:
+        linhas = []
+        for arq in anp.ARQUIVOS:
+            url = ANP_BASE.rstrip("/") + "/" + arq
+            if not agreg_permite(url):
+                raise ErroBusca("O site da ANP não deixa programas abrirem esse arquivo agora.")
+            linhas += anp.baixar(url, cidade, uf)
+        gravar_json(COMBUSTIVEL, {"cidade": cidade, "uf": uf, "buscado_em": agora(), "linhas": linhas})
+        COMB["erro"] = "" if linhas else f"A ANP não tem postos pesquisados em {cidade} nas últimas semanas."
+    except ErroBusca as e:
+        COMB["erro"] = str(e)
+    except Exception as e:  # noqa: BLE001
+        log(f"ANP: {e}")
+        COMB["erro"] = "Não consegui abrir os preços da ANP agora."
+    finally:
+        COMB["rodando"] = False
+
+
+def combustivel_estado(buscar=False, esperar=False):
+    """O que há guardado da cidade da casa: {cidade, uf, buscado_em, buscando, erro, produtos: [{produto, nome, data, media, n,
+    postos}]}. buscar: se o guardado está velho (ou é de outra cidade), começa a busca em segundo plano."""
+    cidade, uf = combustivel_cidade()
+    if not cidade:
+        return {"cidade": "", "produtos": [], "buscando": False, "erro": "Falta o CEP da casa, em Mais › Casa."}
+    c = ler_json(COMBUSTIVEL, {}) or {}
+    c = c if isinstance(c, dict) and c.get("cidade") == cidade and c.get("uf") == uf else {}
+    velho = True
+    try:
+        velho = datetime.now(timezone.utc) - datetime.fromisoformat(c.get("buscado_em") or "") > timedelta(days=COMB_DIAS)
+    except (ValueError, TypeError):
+        pass
+    if buscar and velho:
+        with _comb_trava:
+            comeca = not COMB["rodando"]
+            if comeca:
+                COMB.update(rodando=True, erro="")
+        if comeca:
+            t = threading.Thread(target=combustivel_buscar, args=(cidade, uf), daemon=True)
+            t.start()
+            if esperar:
+                t.join()
+                return combustivel_estado()
+    r = anp.resumo(c.get("linhas") or [])
+    ordem = [k for k, _ in anp.PRODUTOS]
+    produtos = [{"produto": p, "nome": anp.nome_produto(p), "data": x["data"], "media": x["media"], "n": x["n"], "postos": x["postos"][:5]}
+                for p, x in sorted(r.items(), key=lambda kv: ordem.index(kv[0]) if kv[0] in ordem else 99)]
+    return {"cidade": cidade, "uf": uf, "buscado_em": c.get("buscado_em") or "", "buscando": COMB["rodando"], "erro": COMB["erro"], "produtos": produtos}
+
+
+def _ferr_combustivel(a, cfg, of):
+    prod = anp.produto(a.get("produto")) if a.get("produto") not in (None, "") else ""
+    if a.get("produto") not in (None, "") and not prod:
+        raise ErroFerramenta("produto: gasolina, gasolina aditivada, etanol, diesel, diesel s10 ou gnv.")
+    e = combustivel_estado(buscar=True)
+    if not e["cidade"]:
+        raise ErroFerramenta(e["erro"])
+    ps = [p for p in e["produtos"] if not prod or p["produto"] == prod]
+    if not ps:
+        if e["buscando"]:
+            return "Estou buscando os preços dos postos na ANP (o arquivo é grande): pergunte de novo daqui a um minuto."
+        return e["erro"] or (f"A ANP não tem {anp.nome_produto(prod).lower()} pesquisado em {e['cidade']} nas últimas semanas." if prod
+                             else f"A ANP não tem postos pesquisados em {e['cidade']} nas últimas semanas.")
+    dm = lambda iso: f"{iso[8:10]}/{iso[5:7]}"  # noqa: E731
+    out = [f"Preços dos postos em {e['cidade']} pela pesquisa semanal da ANP (nem todo posto entra toda semana):"]
+    for p in ps:
+        out.append(f"{p['nome']}: média {_reais3(p['media'])} em {p['n']} posto{'s' if p['n'] != 1 else ''} (coleta de {dm(p['data'])}). Os mais baratos:")
+        for x in p["postos"][:5 if prod else 3]:
+            onde = ", ".join(v for v in (x["rua"], x["bairro"]) if v)
+            out.append(f"- {_reais3(x['preco'])}: {x['posto']}" + (f" ({onde})" if onde else "") + (f", {dm(x['data'])}" if x["data"] != p["data"] else ""))
+    if e["buscando"]:
+        out.append("Estou atualizando com o arquivo desta semana: daqui a um minuto pode ter mudado.")
+    return "\n".join(out)
+
+
+FERR_IMPL = {"roteiro": _ferr_roteiro, "lista": _ferr_lista, "preco": _ferr_preco, "historico_precos": _ferr_historico_precos, "combustivel": _ferr_combustivel, "ofertas": _ferr_ofertas, "cupons": _ferr_cupons,
              "por_na_lista": _ferr_por, "tirar_da_lista": _ferr_tirar, "comprei": _ferr_comprei,
              "reposicao": _ferr_reposicao, "repor": _ferr_repor, "reposto": _ferr_reposto,
              "mudar_item": _ferr_mudar, "nova_lista": _ferr_nova_lista, "guardar_cupom": _ferr_guardar_cupom,
@@ -9367,6 +9471,8 @@ class Painel(BaseHTTPRequestHandler):
             self._json(200, reposicao_fontes())
         elif rota == "/api/uso-ia":
             self._json(200, uso_resumo())
+        elif rota == "/api/combustivel":  # 1.63.0: os preços dos postos da cidade (ANP); ?buscar=1 atualiza se está velho
+            self._json(200, combustivel_estado(buscar="buscar=1" in urllib.parse.urlsplit(self.path).query))
         elif rota == "/api/memoria-ia":  # 1.52.0: a Memória da IA, de todos os apps
             self._json(200, memoria_estado())
         elif rota == "/api/voz/status":

@@ -369,3 +369,7 @@ Em **Mais › Configurações › Dados**, na ordem dos outros apps:
 Em **Mais › Configurações › Aparência**: o **tema** (Sistema, Claro ou Escuro) vale só para o aparelho e começa em **Sistema**, que segue o do Home Assistant; o fundo e os cartões são os do tema do Home Assistant, os mesmos dos outros apps. A **cor do app** vale para a casa toda, em todos os aparelhos: são as 12 cores da família (Vermelho, Coral, Laranja, Ouro, Verde, Menta, Turquesa, Azul, Índigo, Lilás, Rosa e Grafite). Com a **Cor do dia** ligada (vem assim), a cor muda sozinha todo dia, a mesma em todos os apps da família; escolher uma cor desliga. Quem tinha uma cor escolhida só no aparelho passa a ter essa cor na casa toda (Amarelo agora é Ouro, Roxo é Lilás, Magenta é Rosa e Cinza é Grafite).
 
 Tudo o que você preenche fica guardado só no Home Assistant e entra nos backups dele.
+
+## Combustível
+
+Em **Mais › Casa**, o cartão **Combustível** mostra, para a cidade do CEP da casa, a média e o posto mais barato da gasolina, do etanol, do diesel e do GNV. Os preços vêm da pesquisa semanal de preços da ANP (dados abertos do governo): os fiscais visitam uma amostra de postos por semana, então nem todo posto aparece e o preço pode ter mudado desde a coleta, que o cartão diz de quando é. O app só busca quando você toca em **Ver preços dos postos** (ou **Atualizar**) ou pergunta pelo CorrerIA, e guarda só os postos da sua cidade.
