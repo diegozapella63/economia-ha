@@ -138,6 +138,9 @@ class Ferramentas(Cenario):
         self.assertEqual(S._contra_media(10, 10), "na média")
         self.assertEqual(S._contra_media(11, 10), "10% acima da média")
         self.assertIn("precos_dia.json", S.ARQ_BACKUP)
+        # 1.60.0: para o gráfico da tela, os itens da lista com dois dias ou mais
+        self.assertEqual(S.precos_da_tela(), {k: [["2026-10-10", 25.9, "Angeloni"], ["2026-10-20", 23.9, "Giassi"], ["2026-11-02", 19.9, "Giassi"]]})
+        self.assertEqual(S.precos_da_tela(dias=1)[k], [["2026-11-02", 19.9, "Giassi"]])
         S.gravar_json(S.PRECOS_DIA, [])
         self.assertTrue(S.anotar_precos(), "um arquivo estragado recomeça")
 

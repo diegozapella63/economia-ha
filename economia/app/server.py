@@ -8598,6 +8598,20 @@ def anotar_precos(cfg=None, of=None, hoje=None):
     return mudou
 
 
+def precos_da_tela(cfg=None, dias=120):
+    """1.60.0: o histórico de preços dos itens da lista, para o gráfico de cada item: {produto sem acento: [[AAAA-MM-DD, preço,
+    loja], ...]}, os últimos dias, só de quem tem dois ou mais."""
+    cfg = (ler_json(CONFIG, {}) or {}) if cfg is None else cfg
+    hist = ler_json(PRECOS_DIA, {}) or {}
+    out = {}
+    for i in (cfg.get("lista") or []) if isinstance(hist, dict) else []:
+        k = norm(nome_item(i)) if nome_item(i) else ""
+        r = _resumo_precos(hist[k]) if k and isinstance(hist.get(k), dict) else None
+        if r and len(r[0]) >= 2:
+            out[k] = [list(x) for x in r[0][-dias:]]
+    return out
+
+
 def _resumo_precos(h):
     """(dias em ordem [(data, preço, loja)], menor, maior, média) de um item do histórico; None sem preço nenhum."""
     dias = sorted((d, v[0], v[1] if len(v) > 1 else "") for d, v in (h.get("dias") or {}).items()
@@ -9242,6 +9256,7 @@ class Painel(BaseHTTPRequestHandler):
                 "clubes": ler_json(CLUBES_FILE, {}) or {},
                 "buscas": buscas_dos_sites(),
                 "similares": similares_salvos(ler_json(CONFIG, {}) or {}),
+                "precos_dia": precos_da_tela(),
                 "correria": {"ligada": correria_ligada(), "ultimo": CORRERIA_USO["ultimo"]},
                 "atalho": atalho(),
             })

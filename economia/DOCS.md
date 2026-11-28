@@ -343,6 +343,10 @@ Em **Mais › Configurações › Integrações › Memória da IA** (com o Usar
 
 A memória fica na pasta share do Home Assistant (`share/familia/memoria_ia.json`), fora dos apps: funciona com um app só instalado, e não precisa do CorrerIA. Ela não entra no Exportar nem no Começar do zero de um app (é de todos); apague as frases pelo cartão.
 
+## Histórico de preços
+
+A cada busca, o app guarda o menor preço de cada item da lista, um por dia (desde a versão 1.58.0). Na **Minha lista**, o item com dois dias ou mais ganha o bloco **Histórico de preços**: fechado, diz o preço de hoje contra a média; aberto, mostra o gráfico, o menor, o maior e a média. Com menos de uma semana de preços, o app avisa que ainda é cedo para dizer se é promoção de verdade. O histórico entra no Exportar e no Backup.
+
 ## CorrerIA (opcional)
 
 A **CorrerIA** é o app da família que põe os apps da casa no WhatsApp, no Claude e no Gemini. Em **Mais › Configurações › Integrações › CorrerIA**, ligue **Ligar a CorrerIA**: o EconomIA aparece sozinho na CorrerIA (o app CorrerIA precisa estar instalado no Home Assistant). Vem desligado e não depende da IA daqui.

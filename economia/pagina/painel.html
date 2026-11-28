@@ -679,6 +679,11 @@ li.escolhida{border-color:var(--accent) !important}
 .copiar .field{width:100%;font-size:14px;letter-spacing:0}
 .i-det > div + div{margin-top:10px}
 .i-sub{font-size:13px;color:var(--muted)}
+.hist-graf{display:block;width:100%;height:72px;margin-top:4px}
+.hist-linha{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.hist-media{stroke:var(--muted);stroke-width:1;stroke-dasharray:4 4;vector-effect:non-scaling-stroke;opacity:.7}
+.hist-ponto{fill:var(--accent)}
+.i-hist .i-tam p.hist-datas{display:flex;justify-content:space-between;width:100%;font-size:12px;color:var(--muted);margin:2px 0 4px}
 .ghost.ic-btn{display:inline-flex;align-items:center;gap:7px}
 .ic-btn svg{width:17px;height:17px;flex:none;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .ic-btn:disabled svg{stroke:var(--muted)}
@@ -3664,6 +3669,7 @@ input.field,select.field{min-height:var(--altura)}
         + (p.length > 1 && !(dc && dc.comum && !es) ? '<ul class="i-others num">' + p.slice(1).map(function(y){ return '<li' + (ehEscolha(x.it, y.id, null, y.obs) ? ' class="escolhida"' : '') + cmpAttr(x.it.produto, y.obs || x.it.produto, G[y.id].nome, y.v, q0De(x.it.produto), baseDe(x.it.produto)) + '>' + abreLink(linkCompra(y.id, y.obs || x.it.produto, y.link), 'i-chip', '<span class="ic-n">' + esc(G[y.id].curto) + '</span><b>' + brl.format(y.v) + '</b>' + (y.online && y.carrinho ? '<small>+ frete</small>' : y.online && y.frete ? '<small>c/ frete</small>' : '') + (y.clube ? '<small>clube</small>' : '')) + '' + botaoEscolher(x.it, y.id, null, y.obs, G[y.id].nome + ' por ' + brl.format(y.v)) + '</li>'; }).join('') + '</ul>' : '')
         + dicaClube(p, best)
         + detalhesCompra(x, p, dc, mt)
+        + blocoHistorico(x)
         + blocoSimilares(x, p)
         + acoes
         + botoes('<button type="button" class="ghost big ic-btn i-rebusca" data-buscaitem="' + x.i + '"' + (buscaItem === x.it.produto ? ' disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>Buscando…' : '><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>Buscar de novo') + '</button>'
@@ -3948,6 +3954,39 @@ input.field,select.field{min-height:var(--altura)}
   }
   // online ou na loja e os tamanhos: recolhidos, como o Comparar tamanhos; o dia a dia é a Melhor compra, acima
   var DET_ABERTO = {};
+  // 1.60.0 (o dono: "Histórico de preços na tela do EconomIA: hoje só a IA vê; um gráfico no item da lista. Pode seguir"):
+  // o menor preço de cada dia (o servidor guarda a cada busca, desde a 1.58.0), num gráfico pequeno dentro do item, que
+  // fecha e abre como os outros blocos dele; fechado, o título diz o de hoje contra a média.
+  var PRECOS_DIA = {};
+  function contraMedia(v, media){
+    var pct = media ? Math.round((v - media) / media * 100) : 0;
+    return pct === 0 ? 'na média' : Math.abs(pct) + '% ' + (pct < 0 ? 'abaixo' : 'acima') + ' da média';
+  }
+  function blocoHistorico(x){
+    var k = norm(x.it.produto), d = arr(PRECOS_DIA[k]).filter(function(y){ return y && /^\d{4}-\d{2}-\d{2}$/.test(y[0]) && y[1] > 0; });
+    if (d.length < 2) return '';
+    var vs = d.map(function(y){ return y[1]; }), min = Math.min.apply(null, vs), max = Math.max.apply(null, vs);
+    var media = Math.round(vs.reduce(function(a, b){ return a + b; }, 0) / vs.length * 100) / 100, ult = d[d.length - 1];
+    var iMin = vs.indexOf(min), iMax = vs.indexOf(max);
+    // o tempo no eixo de baixo (os dias sem busca ficam no lugar deles), o preço no de lado, com folga em cima e embaixo
+    var t0 = Date.parse(d[0][0]), t1 = Date.parse(ult[0]), W = 300, H = 72, P = 6;
+    var X = function(y){ return t1 > t0 ? P + (Date.parse(y[0]) - t0) / (t1 - t0) * (W - 2 * P) : W / 2; };
+    var Y = function(v){ return max > min ? H - P - (v - min) / (max - min) * (H - 2 * P) : H / 2; };
+    var pts = d.map(function(y){ return X(y).toFixed(1) + ',' + Y(y[1]).toFixed(1); }).join(' ');
+    var dm = function(iso){ return iso.slice(8, 10) + '/' + iso.slice(5, 7); };
+    var graf = '<svg class="hist-graf" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="O menor preço de cada dia, de ' + dm(d[0][0]) + ' a ' + dm(ult[0]) + '">'
+      + '<line class="hist-media" x1="' + P + '" x2="' + (W - P) + '" y1="' + Y(media).toFixed(1) + '" y2="' + Y(media).toFixed(1) + '"/>'
+      + '<polyline class="hist-linha" points="' + pts + '"/>'
+      + '<circle class="hist-ponto" cx="' + X(ult).toFixed(1) + '" cy="' + Y(ult[1]).toFixed(1) + '" r="3.5"/></svg>';
+    return '<details class="i-det i-hist" data-det="' + esc(k + '|hist') + '"' + (DET_ABERTO[k + '|hist'] ? ' open' : '') + '><summary>'
+      + '<svg class="det-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Histórico de preços · ' + esc(contraMedia(ult[1], media)) + '</summary>'
+      + '<div class="i-tam">' + graf
+      + '<p class="hist-datas num"><span>' + dm(d[0][0]) + '</span><span>' + dm(ult[0]) + '</span></p>'
+      + '<p class="i-sub num">Hoje <b>' + brl.format(ult[1]) + '</b>' + (ult[2] ? ' (' + esc(ult[2]) + ')' : '') + ' · média <b>' + brl.format(media) + '</b> em ' + d.length + ' dias</p>'
+      + '<p class="i-sub num">Menor <b>' + brl.format(min) + '</b> em ' + dm(d[iMin][0]) + (d[iMin][2] ? ' (' + esc(d[iMin][2]) + ')' : '') + ' · maior <b>' + brl.format(max) + '</b> em ' + dm(d[iMax][0]) + '</p>'
+      + (d.length < 7 ? '<p class="i-sub">Ainda são poucos dias para dizer se é promoção de verdade.</p>' : '')
+      + '</div></details>';
+  }
   function detalhesCompra(x, p, dc, mt){
     var on = decisaoOnline(x.r, p, dc);
     if (!on && !mt) return '';
@@ -7241,7 +7280,7 @@ input.field,select.field{min-height:var(--altura)}
   function recarrega(comp){
     fetch('api/estado', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(api){
       if (api.uso_ia){ USO = api.uso_ia; pintaUso(); }
-      COMP = api.comparacoes || {}; CLUBES_BEN = api.clubes || {}; BUSCAS_SITE = api.buscas || {}; SIM_SALVOS = api.similares || {};
+      COMP = api.comparacoes || {}; CLUBES_BEN = api.clubes || {}; BUSCAS_SITE = api.buscas || {}; SIM_SALVOS = api.similares || {}; PRECOS_DIA = api.precos_dia || {};
       if (api.ofertas && api.ofertas.categorias){ D = api.ofertas; exemplo = false; indexa(); pintaSync(); tudo(); if (!comp) toast('Ofertas atualizadas'); }
       else if (comp) pintaDeals();
       if (comp && ui.view === 'ofertas' && api.busca && arr(api.busca.avisos).length) toast(api.busca.avisos[0]);
@@ -7374,7 +7413,7 @@ input.field,select.field{min-height:var(--altura)}
     .then(function(r){ var ct = r.headers.get('content-type') || ''; if (!r.ok || ct.indexOf('json') < 0) throw new Error('sem add-on'); return r.json(); })
     .then(function(api){
       clearTimeout(limite);
-      MODO = 'addon'; usuario = api.usuario || null; COMP = api.comparacoes || {}; CLUBES_BEN = api.clubes || {}; BUSCAS_SITE = api.buscas || {}; SIM_SALVOS = api.similares || {}; CORRERIA_ST = api.correria || null;
+      MODO = 'addon'; usuario = api.usuario || null; COMP = api.comparacoes || {}; CLUBES_BEN = api.clubes || {}; BUSCAS_SITE = api.buscas || {}; SIM_SALVOS = api.similares || {}; PRECOS_DIA = api.precos_dia || {}; CORRERIA_ST = api.correria || null;
       pintaAtalho(api.atalho);
       D = api.ofertas && api.ofertas.categorias ? api.ofertas : EX; exemplo = D === EX; indexa();
       estado = normaliza(api.config || (exemplo ? EX.config_exemplo : null)); iniciar();

@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.60.0
+
+- **Histórico de preços na tela**: na Minha lista, o item com dois dias ou mais de preço guardado ganha o bloco **Histórico de preços**. Fechado, diz o preço de hoje contra a média ("13% abaixo da média"); aberto, mostra o gráfico do menor preço de cada dia, com o menor, o maior e a média. O histórico começou a ser guardado na versão 1.58.0.
+
 ## 1.59.0
 
 - **Pelo CorrerIA**: dá para ver as lojas acompanhadas e as inativas, **deixar de acompanhar** uma loja (ou voltar a acompanhar) e **buscar os preços agora** sem abrir o app ("busca os preços antes de eu sair"). As mudanças e a busca só depois do Sim.
