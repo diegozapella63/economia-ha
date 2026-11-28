@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.62.0
+
+- **Nota de compra pela foto**: mande a foto da nota ou do cupom na conversa do CorrerIA ("essa é a nota do mercado"). A IA lê a loja, o dia, o total e o preço de cada item, e o CorrerIA propõe anotar a compra dos itens que estão na sua lista, com o preço pago (e lançar o gasto no GerencIA, se você usa). Nada é anotado antes do seu Sim. O CPF e o nome da nota não são lidos.
+
 ## 1.61.0
 
 - **Preço pago**: pelo CorrerIA, ao anotar uma compra dá para dizer quanto custou e onde ("comprei o café por 21,50 no Giassi"), ou mandar a foto da nota. O app guarda o que você pagou, e o histórico de preços passa a dizer «Você pagou: …». Entra no Exportar e no Backup.

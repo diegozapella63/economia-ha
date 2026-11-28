@@ -345,7 +345,7 @@ A memória fica na pasta share do Home Assistant (`share/familia/memoria_ia.json
 
 ## Histórico de preços
 
-A cada busca, o app guarda o menor preço de cada item da lista, um por dia (desde a versão 1.58.0). Na **Minha lista**, o item com dois dias ou mais ganha o bloco **Histórico de preços**: fechado, diz o preço de hoje contra a média; aberto, mostra o gráfico, o menor, o maior e a média. Com menos de uma semana de preços, o app avisa que ainda é cedo para dizer se é promoção de verdade. O histórico entra no Exportar e no Backup. Pelo CorrerIA, ao anotar uma compra você pode dizer quanto pagou e onde (ou mandar a foto da nota): o app guarda e o histórico passa a dizer o que você pagou.
+A cada busca, o app guarda o menor preço de cada item da lista, um por dia (desde a versão 1.58.0). Na **Minha lista**, o item com dois dias ou mais ganha o bloco **Histórico de preços**: fechado, diz o preço de hoje contra a média; aberto, mostra o gráfico, o menor, o maior e a média. Com menos de uma semana de preços, o app avisa que ainda é cedo para dizer se é promoção de verdade. O histórico entra no Exportar e no Backup. Pelo CorrerIA, ao anotar uma compra você pode dizer quanto pagou e onde (ou mandar a foto da nota): o app guarda e o histórico passa a dizer o que você pagou. A foto da nota ou do cupom de compra, mandada na conversa do CorrerIA, é lida pela IA (a loja, o dia, o total e o preço de cada item; o CPF e o nome ficam de fora) e nada é anotado antes do seu Sim.
 
 ## CorrerIA (opcional)
 

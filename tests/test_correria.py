@@ -79,6 +79,36 @@ class Ferramentas(Cenario):
                 S.usar_ferramenta("ler_arquivo", {}, "CorrerIA", anexo=anexo)
             self.assertIn(parte, str(cm.exception))
 
+    def test_ler_arquivo_a_nota_de_compra(self):
+        """1.62.0: a foto de uma nota de compra: a loja, o dia, o total e o preço de cada item, com os que estão na lista."""
+        import base64
+        S = self.S
+        foto = {"tipo": "image/png", "nome": "nota.png", "b64": base64.b64encode(b"\x89PNG" + b"x" * 50).decode()}
+        self.ha.responde_ia("ler nota", {"loja": "Mercado Bom", "data": HOJE, "total": 61.4, "cpf": "000", "itens": [
+            {"produto": "Café Pilão 500 g", "quantidade": 2, "preco": 43}, {"produto": "Biscoito", "quantidade": 1, "preco": 18.4},
+            {"produto": "", "preco": 3}, {"produto": "Sacola", "preco": 0}, "lixo"]})
+        txt = S.usar_ferramenta("ler_arquivo", {"nota": True, "dica": "a nota do mercado"}, "CorrerIA", anexo=foto)
+        linhas = txt.split("\n")
+        self.assertEqual(linhas[:3], [f"Nota de compra (lida pela IA do EconomIA; loja: Mercado Bom; data: {HOJE}; total: R$ 61,40), 2 itens:",
+                                      "- Café Pilão 500 g (2): R$ 43,00 [na lista: «Café Pilão 500 g»]", "- Biscoito: R$ 18,40"])
+        self.assertIn("economia_comprei", linhas[3])
+        self.assertNotIn("000", txt)
+        pedido = self.ha.tudo_que_chegou()
+        self.assertIn("A pessoa disse: a nota do mercado", pedido)
+        self.assertFalse([f for f in os.listdir(os.path.join(S.MEDIA, "economia")) if f.startswith("nota-")], "a foto sai da pasta de mídia")
+        with unittest.mock.patch.object(S, "chamar_ai_task", return_value={"data": "2999-01-01", "itens": [{"produto": "Arroz", "preco": 10}, {"produto": "Feijão", "preco": 5}]}):
+            self.assertIn("(lida pela IA do EconomIA; total: R$ 15,00), 2 itens", S.usar_ferramenta("ler_arquivo", {"nota": True}, "CorrerIA", anexo=foto))
+        with unittest.mock.patch.object(S, "chamar_ai_task", return_value={"itens": [{"produto": "Arroz", "preco": 10}]}):
+            self.assertIn("1 item:", S.usar_ferramenta("ler_arquivo", {"nota": True}, "CorrerIA", anexo=foto))
+        with unittest.mock.patch.object(S, "chamar_ai_task", return_value=None):
+            self.assertIn("não achou uma nota de compra", S.usar_ferramenta("ler_arquivo", {"nota": True}, "CorrerIA", anexo=foto))
+        with unittest.mock.patch.object(S, "chamar_ai_task", side_effect=S.ErroBusca("A IA está desligada.")):
+            with self.assertRaisesRegex(S.ErroFerramenta, "não conseguiu ler a foto: A IA está desligada"):
+                S.usar_ferramenta("ler_arquivo", {"nota": True}, "CorrerIA", anexo=foto)
+        with unittest.mock.patch.object(S.os, "makedirs", side_effect=OSError("cheio")):
+            with self.assertRaisesRegex(S.ErroFerramenta, "pasta de mídia"):
+                S.usar_ferramenta("ler_arquivo", {"nota": True}, "CorrerIA", anexo=foto)
+
     def test_o_catalogo(self):
         S = self.S
         nomes = [f["nome"] for f in S.FERRAMENTAS_CORRERIA]

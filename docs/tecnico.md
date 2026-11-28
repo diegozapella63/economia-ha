@@ -160,6 +160,8 @@ que gravar com a revisão velha junta pelo `aplicar_diario`. O último uso fica 
 
 **1.51.0, Memória da IA**: o CorrerIA 1.28.0 grava em `share/correria/lembrancas.json` as frases que a casa pediu para a IA lembrar (`{lembrancas: [frases]}`); com a opção CorrerIA ligada aqui, `lembrancas_da_casa()` as põe logo depois da guarda `IA_SO_MATERIAL` em toda chamada do `chamar_ai_task` (relido uma vez por minuto; `ECONOMIA_LEMBRANCAS` troca o arquivo nos testes). Só leitura; nada sai do Home Assistant.
 
+**1.62.0, `ler_arquivo` com `nota: true`**: a foto de uma nota ou cupom de compra (`ler_nota_correria`, `instrucoes_nota`, a chamada «EconomIA: ler nota»): a loja, a data, o total e o preço de cada item, com os que estão na lista (`nome_parecido`); nada fica guardado e a foto sai da pasta de mídia; sem CPF, nome, endereço ou cartão.
+
 **1.50.0, `ler_arquivo`**: ferramenta de leitura com `anexo: [image/jpeg, image/png, image/webp]` (o CorrerIA 1.24.0 manda a foto da conversa em `anexo`, fora dos argumentos; `usar_ferramenta(..., anexo=)`, `ler_arquivo_correria`): roda o `ler_lista` da página numa leitura só dela (`LEITURAS["correria-…"]`, apagada no fim), com os mesmos limites (até 6 MB), e devolve os itens em texto, marcando os que já estão na lista; nada é gravado. O pedido da rota aceita 12 MB.
 
 ### Conversa com a IA

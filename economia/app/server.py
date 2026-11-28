@@ -8057,8 +8057,11 @@ FERRAMENTAS_CORRERIA = [
      "descricao": "Lê com a IA do EconomIA a foto ou a imagem que a pessoa acabou de mandar na conversa (uma lista de compras "
                   "escrita à mão, um bilhete, um print de mensagem, a prateleira ou a despensa) e devolve os itens de compra que há nela, "
                   "dizendo os que já estão na lista. Não põe nada na lista: depois, use economia_por_na_lista com os que a pessoa "
-                  "quiser. Só serve logo depois de a pessoa mandar a foto.",
-     "entrada": _obj({"dica": {"type": "string", "description": "O que a pessoa disse sobre a foto, se disse (ajuda a IA a ler)."}})},
+                  "quiser. Com nota true, lê uma nota ou cupom de compra (a loja, o dia, o total e o preço de cada item). Só serve logo "
+                  "depois de a pessoa mandar a foto.",
+     "entrada": _obj({"dica": {"type": "string", "description": "O que a pessoa disse sobre a foto, se disse (ajuda a IA a ler)."},
+                      "nota": {"type": "boolean", "description": "true quando a foto é uma nota ou cupom de compra: devolve a loja, o dia, o total "
+                                                                 "e o preço de cada item, dizendo os que estão na lista."}})},
     # 1.51.0 (o dono, à lista do que a IA não fazia: "todas")
     {"nome": "mudar_item", "titulo": "Mudar item da lista", "grava": True, "apaga": False,
      "descricao": "Muda a quantidade de um item da lista (1 a 99), onde comprar (o setor: mercado, farmácia ou pet shop; "
@@ -9086,6 +9089,62 @@ FERR_IMPL = {"roteiro": _ferr_roteiro, "lista": _ferr_lista, "preco": _ferr_prec
              "ler_arquivo": None}  # 1.50.0: recebe o arquivo; roda pelo ler_arquivo_correria
 
 
+# 1.62.0 (o dono, à nota de compra numa foto só: "faz primeiro o lote 1"): a foto de uma nota ou cupom de compra, lida pela IA
+# daqui: a loja, o dia, o total e o preço de cada item. Nada fica guardado: a CorrerIA lança o gasto no GerencIA e anota os
+# itens da lista com o comprei (preco_pago). Sem CPF, nome ou endereço: o pedido manda deixar de fora e a saída não tem campo.
+def instrucoes_nota(dica=""):
+    return ("A imagem em anexo é uma nota ou cupom de compra (NFC-e, cupom fiscal ou recibo de loja). Leia só o que está escrito nela, "
+            "sem inventar. Devolva JSON: {\"loja\": o nome da loja, \"data\": \"AAAA-MM-DD\" ou \"\", \"total\": o total pago (número), "
+            "\"itens\": [{\"produto\": o nome do produto por extenso quando der para entender a abreviação, \"quantidade\": número, "
+            "\"preco\": o total daquele item (número)}]}. Não devolva CPF, nome de pessoa, endereço nem número de cartão. "
+            "Se a imagem não é uma nota de compra, devolva {\"itens\": []}."
+            + (f" A pessoa disse: {dica}" if dica else ""))
+
+
+def ler_nota_correria(bruto, mime, dica=""):
+    pasta = os.path.join(MEDIA, "economia")
+    ext = "png" if mime == "image/png" else "webp" if mime == "image/webp" else "jpg"
+    nome = f"nota-{os.urandom(4).hex()}.{ext}"
+    arq = os.path.join(pasta, nome)
+    try:
+        try:
+            os.makedirs(pasta, exist_ok=True)
+            with open(arq, "wb") as f:
+                f.write(bruto)
+        except OSError as e:
+            raise ErroFerramenta("O EconomIA não consegue usar a pasta de mídia do Home Assistant. Diga isso à pessoa.") from e
+        try:
+            r = chamar_ai_task("EconomIA: ler nota", instrucoes_nota(dica), [{"media_content_id": f"{MEDIA_URI}/economia/{nome}", "media_content_type": mime}], uso="fotos")
+        except ErroBusca as e:
+            raise ErroFerramenta(f"O EconomIA não conseguiu ler a foto: {e} Diga isso à pessoa, sem inventar o que há nela.") from None
+    finally:
+        try:
+            os.remove(arq)
+        except OSError:
+            pass
+    r = r if isinstance(r, dict) else {}
+    itens = []
+    for it in r.get("itens") if isinstance(r.get("itens"), list) else []:
+        prod = texto(it.get("produto"), 80) if isinstance(it, dict) else ""
+        if prod and numero(it.get("preco")) and 0 < it["preco"] < 1000000:
+            itens.append((prod, round(float(it["preco"]), 2), it.get("quantidade") if numero(it.get("quantidade")) and it.get("quantidade") > 0 else None))
+    if not itens:
+        return "A IA do EconomIA leu a foto e não achou uma nota de compra com itens e preços. Diga isso à pessoa e pergunte o que ela quer fazer."
+    itens = itens[:60]
+    loja, data = texto(r.get("loja"), 60), str(r.get("data") or "")
+    data = data if data_ok(data) and data <= hoje_br() else ""
+    total = round(float(r["total"]), 2) if numero(r.get("total")) and 0 < r["total"] < 10000000 else round(sum(p for _, p, _ in itens), 2)
+    nomes = [nome_item(i) for i in (ler_config().get("lista") or []) if nome_item(i)]
+    linhas = []
+    for prod, preco, qtd in itens:
+        na = nome_parecido(prod, nomes)
+        linhas.append(f"- {prod}" + (f" ({qtd:g})" if qtd and qtd != 1 else "") + f": {br_preco(preco)}" + (f" [na lista: «{na}»]" if na else ""))
+    cab = "; ".join(x for x in (f"loja: {loja}" if loja else "", f"data: {data}" if data else "", f"total: {br_preco(total)}") if x)
+    return (f"Nota de compra (lida pela IA do EconomIA; {cab}), {'1 item' if len(itens) == 1 else f'{len(itens)} itens'}:\n" + "\n".join(linhas)
+            + "\nNada foi anotado. Mostre o total à pessoa. Para anotar a compra dos itens marcados «na lista», use economia_comprei de cada um, "
+              "com o nome da lista, preco_pago, loja e a data da nota; os outros não entram. O gasto (o total) vai para o app de finanças, se houver.")
+
+
 def ler_arquivo_correria(a, anexo):
     """1.50.0: economia_ler_arquivo: a foto da conversa do CorrerIA lida como uma lista de compras, pelo mesmo ler_lista do
     Ler com IA da página (os mesmos limites: JPG, PNG ou WebP, até 6 MB). Devolve o texto; nada entra na lista."""
@@ -9102,6 +9161,8 @@ def ler_arquivo_correria(a, anexo):
         bruto = b""
     if not 0 < len(bruto) <= 6 * 1024 * 1024:
         raise ErroFerramenta("A foto não abriu ou é grande demais (até 6 MB). Peça uma foto menor.")
+    if a.get("nota") is True:
+        return ler_nota_correria(bruto, mime, str(a.get("dica") or "").strip()[:500])
     job = "correria-" + os.urandom(4).hex()
     LEITURAS[job] = {"status": "lendo", "itens": [], "erro": None}
     try:
