@@ -453,7 +453,7 @@ def restaurar_versao(nome):
 MAX_BACKUPS = 10
 # o que vai no backup: a configuração (lista, perfil, lojas, ajustes) e o resultado da busca; as chaves das integrações
 # (segredos.json) e a do CorrerIA ficam de fora, como nas versões
-ARQ_BACKUP = ("config.json", "ofertas.json", "comparacoes.json", "precos_dia.json")
+ARQ_BACKUP = ("config.json", "ofertas.json", "comparacoes.json", "precos_dia.json", "pagos.json")
 BACKUP_RE = re.compile(r"^economia-(\d{8})-(\d{6})\.zip$")
 # no Começar do zero ficam só os ajustes (IA, integrações, opções, sensores, a cor); a lista, o perfil, as lojas e o resto saem
 FICA_NO_ZERO = ("usar_ia", "ia", "sensores", "correria", "opcoes", "repor", "sync", "cor", "cor_dia")  # repor: as chaves de Opções › Reposição
@@ -518,7 +518,7 @@ def restaurar_backup(nome):
         guardar_versao("restaurar", forcar=True)
         cfg["rev"] = int(ler_config().get("rev") or 0)
         novo = gravar_config(cfg)
-        for arq in ("ofertas.json", "comparacoes.json", "precos_dia.json"):
+        for arq in ("ofertas.json", "comparacoes.json", "precos_dia.json", "pagos.json"):
             if arq in dados:
                 with open(os.path.join(DATA, arq), "wb") as f:
                     f.write(dados[arq])
@@ -552,7 +552,7 @@ def zerar():
         novo = {k: atual[k] for k in FICA_NO_ZERO if k in atual}
         novo["rev"] = int(atual.get("rev") or 0)
         novo = gravar_config(novo)
-        for arq in ("ofertas.json", "comparacoes.json", "precos_dia.json"):
+        for arq in ("ofertas.json", "comparacoes.json", "precos_dia.json", "pagos.json"):
             try:
                 os.remove(os.path.join(DATA, arq))
             except OSError:
@@ -8031,7 +8031,9 @@ FERRAMENTAS_CORRERIA = [
                   "tempo o item acaba.",
      "entrada": _obj({"produto": _DO_ITEM, "data": {"type": "string", "description": "AAAA-MM-DD; sem data, hoje."},
                       "dura_dias": {"type": "integer", "description": "Por quantos dias a pessoa vai ter o item antes de repor (1 a 3650), se ela disse: "
-                                                                      "vira o A cada da Reposição e a duração do consumível no InventarIA."}}, ["produto"])},
+                                                                      "vira o A cada da Reposição e a duração do consumível no InventarIA."},
+                      "preco_pago": {"type": "number", "exclusiveMinimum": 0, "description": "Quanto custou (o total do item), se a pessoa disse ou está na nota."},
+                      "loja": {"type": "string", "description": "Onde foi comprado, se a pessoa disse ou está na nota."}}, ["produto"])},
     # 1.46.1: a Reposição (Mais › Reposição)
     {"nome": "reposicao", "titulo": "Reposição", "grava": False, "apaga": False,
      "descricao": "O que a casa compra de tempos em tempos: cada item com o seu intervalo (a cada N dias, semanas ou meses) e "
@@ -8646,6 +8648,9 @@ def _ferr_historico_precos(a, cfg, of):
         if len(dias) < 7:
             linhas.append("Ainda são poucos dias para dizer se é promoção de verdade.")
         linhas.append("Os últimos: " + "; ".join(f"{br_data(d)[:5]} {br_preco(p)}" for d, p, _ in dias[-8:]) + ".")
+        pg = pagos_de(h["nome"])
+        if pg:
+            linhas.append("Você pagou: " + "; ".join(f"{br_preco(x[1])} em {br_data(x[0])}" + (f" ({x[2]})" if len(x) > 2 and x[2] else "") for x in pg[-4:]) + ".")
         return "\n".join(linhas)
     na_lista = [norm(nome_item(i)) for i in cfg.get("lista") or [] if nome_item(i)]
     achados = []
@@ -8802,19 +8807,49 @@ def _ferr_tirar(a, cfg, of):
     return f'Tirei {item["produto"]} da lista. Ficou no histórico, com as compras.', {"tipo": "saiu", "produto": item["produto"], "data": hoje}
 
 
+# 1.61.0 (o dono, à nota de compra numa foto só: "pode fazer todos"): o preço pago de cada compra, quando a pessoa diz ou a
+# nota traz (/data/pagos.json: {produto sem acento: [[AAAA-MM-DD, preço, loja], ...]}, as últimas 40 de cada, até 600 itens;
+# fica no servidor, fora do config.json que a página regrava; vai no backup). O histórico de preços diz o que foi pago.
+PAGOS = os.path.join(DATA, "pagos.json")
+
+
+def anotar_pago(produto, data, preco, loja=""):
+    h = ler_json(PAGOS, {}) or {}
+    h = h if isinstance(h, dict) else {}
+    k = norm(produto)
+    ls = [x for x in (h.get(k) if isinstance(h.get(k), list) else []) if isinstance(x, list) and len(x) >= 2 and x[0] != data]
+    h[k] = sorted(ls + [[data, round(float(preco), 2), str(loja or "")[:60]]])[-40:]
+    if len(h) > PRECOS_ITENS_MAX:
+        for kk in sorted(h, key=lambda x: h[x][-1][0] if h[x] else "")[:len(h) - PRECOS_ITENS_MAX]:
+            del h[kk]
+    gravar_json(PAGOS, h)
+
+
+def pagos_de(produto):
+    h = ler_json(PAGOS, {}) or {}
+    ls = h.get(norm(produto)) if isinstance(h, dict) else None
+    return [x for x in ls if isinstance(x, list) and len(x) >= 2 and data_ok(x[0]) and numero(x[1])] if isinstance(ls, list) else []
+
+
 def _ferr_comprei(a, cfg, of):
     i = _indice_na_lista(cfg, _texto_arg(a, "produto"))
     hoje = hoje_br()
     data = str(a.get("data") or hoje)
     if not data_ok(data) or data > hoje:
         raise ErroFerramenta("data vale AAAA-MM-DD, até hoje.")
+    pago = a.get("preco_pago")
+    if pago is not None and (not numero(pago) or not 0 < pago < 1000000):
+        raise ErroFerramenta("preco_pago: quanto custou, um número maior que zero.")
+    if pago is not None:  # o preço vale também para uma compra já anotada (a nota chegou depois)
+        anotar_pago(nome_item(cfg["lista"][i]), data, pago, " ".join(str(a.get("loja") or "").split()))
     lista = cfg["lista"]
     if not isinstance(lista[i], dict):
         lista[i] = {"produto": nome_item(lista[i]), "compras": []}
     item = lista[i]
     compras = item.setdefault("compras", [])
+    pagou = f" Pago: {br_preco(pago)}" + (f' ({" ".join(str(a.get("loja")).split())[:60]})' if a.get("loja") else "") + "." if pago is not None else ""
     if data in compras:
-        return f'A compra de {item["produto"]} em {br_data(data)} já estava anotada.', None
+        return f'A compra de {item["produto"]} em {br_data(data)} já estava anotada.' + pagou, None
     compras.append(data)
     compras.sort()
     # 1.49.0: como o Comprei hoje da tela: a Reposição do item (o igual ou o parecido) recomeça da compra, com a duração dita
@@ -8847,7 +8882,7 @@ def _ferr_comprei(a, cfg, of):
     mud = {"tipo": "compra", "produto": item["produto"], "data": data}
     if r:
         mud["repor"] = dict(r)
-    return (f'Anotei a compra de {item["produto"]} em {br_data(data)}' + _prazo(item) + "." + extra), mud
+    return (f'Anotei a compra de {item["produto"]} em {br_data(data)}' + _prazo(item) + "." + pagou + extra), mud
 
 
 def _ferr_roteiro(a, cfg, of):

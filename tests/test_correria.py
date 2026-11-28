@@ -160,6 +160,31 @@ class Ferramentas(Cenario):
         with mock.patch.object(S, "anotar_precos", side_effect=RuntimeError("quebrou")):
             S.gravar_json(S.OFERTAS, S.ler_json(S.OFERTAS, {}))
 
+    def test_comprei_com_o_preco_pago(self):
+        """1.61.0: o preço pago e a loja de uma compra (da nota), guardados à parte e ditos no histórico de preços."""
+        S = self.S
+        t = self.usa("comprei", produto="café pilão", preco_pago=21.5, loja=" Giassi  Centro ")
+        self.assertIn(" Pago: R$ 21,50 (Giassi Centro).", t)
+        k = S.norm("Café Pilão 500 g")
+        self.assertEqual(S.ler_json(S.PAGOS, {})[k], [[HOJE, 21.5, "Giassi Centro"]])
+        self.assertEqual(self.usa("comprei", produto="café pilão", preco_pago=20), f"A compra de Café Pilão 500 g em {S.br_data(HOJE)} já estava anotada. Pago: R$ 20,00.")
+        self.assertEqual(S.pagos_de("Café Pilão 500 g"), [[HOJE, 20.0, ""]], "o preço do mesmo dia troca o de antes")
+        self.usa("comprei", produto="café pilão", data="2026-10-20", preco_pago=23.9, loja="Angeloni")
+        h = S.ler_json(S.PRECOS_DIA, {})
+        h[k]["dias"]["2026-10-10"] = [25.9, "Angeloni"]
+        S.gravar_json(S.PRECOS_DIA, h)
+        self.assertIn("Você pagou: R$ 23,90 em 20/10/2026 (Angeloni); R$ 20,00 em 02/11/2026.", self.usa("historico_precos", produto="café pilão"))
+        for v in (0, -1, "caro"):
+            with self.assertRaisesRegex(S.ErroFerramenta, "preco_pago"):
+                self.usa("comprei", produto="café pilão", preco_pago=v)
+        self.assertIn("pagos.json", S.ARQ_BACKUP)
+        self.assertEqual(S.pagos_de("nada"), [])
+        velho, S.PRECOS_ITENS_MAX = S.PRECOS_ITENS_MAX, 1
+        self.addCleanup(setattr, S, "PRECOS_ITENS_MAX", velho)
+        S.anotar_pago("Outro item", "2026-01-01", 5)
+        S.anotar_pago("Café Pilão 500 g", HOJE, 19)
+        self.assertEqual(list(S.ler_json(S.PAGOS, {})), [k], "passou do limite: sai o de compra mais antiga")
+
     def test_lojas_e_mudar_loja(self):
         """1.59.0: Mais › Lojas pelo CorrerIA: ver, deixar de acompanhar e acompanhar de novo."""
         S = self.S

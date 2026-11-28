@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.61.0
+
+- **Preço pago**: pelo CorrerIA, ao anotar uma compra dá para dizer quanto custou e onde ("comprei o café por 21,50 no Giassi"), ou mandar a foto da nota. O app guarda o que você pagou, e o histórico de preços passa a dizer «Você pagou: …». Entra no Exportar e no Backup.
+
 ## 1.60.0
 
 - **Histórico de preços na tela**: na Minha lista, o item com dois dias ou mais de preço guardado ganha o bloco **Histórico de preços**. Fechado, diz o preço de hoje contra a média ("13% abaixo da média"); aberto, mostra o gráfico do menor preço de cada dia, com o menor, o maior e a média. O histórico começou a ser guardado na versão 1.58.0.

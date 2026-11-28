@@ -8,6 +8,7 @@ Todos os dados ficam no Home Assistant, na pasta `/data` do add-on:
 | --- | --- | --- |
 | `config.json` | o painel | CEP, distância, categorias, lojas, lista, perfil, rotina, ofertas escondidas |
 | `ofertas.json` | a busca de ofertas | lojas, cupons, ofertas e preços da lista |
+| `pagos.json` | a ferramenta `comprei` do CorrerIA (1.61.0) | o preço pago de cada compra: `{produto: [[AAAA-MM-DD, preço, loja]]}`, as últimas 40 de cada (`anotar_pago`, `pagos_de`); fora do `config.json`, que a página regrava; vai no backup; o `historico_precos` diz «Você pagou» |
 | `precos_dia.json` | a busca de ofertas (1.58.0) | o menor preço de cada item da lista em cada dia: `{produto: {nome, dias: {AAAA-MM-DD: [preço, loja]}}}`, até 400 dias e 600 itens (`anotar_precos`, chamado pelo `gravar_json` do `ofertas.json`); vai no backup; a ferramenta `historico_precos` do CorrerIA lê; 1.60.0: vai para a página no `precos_dia` do `api/estado` (`precos_da_tela`: só os itens da lista com dois dias ou mais, os últimos 120), que desenha o `blocoHistorico` no cartão do item |
 
 Sem `ofertas.json`, o painel mostra um exemplo embutido.
