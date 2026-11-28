@@ -82,7 +82,7 @@ class Ferramentas(Cenario):
     def test_o_catalogo(self):
         S = self.S
         nomes = [f["nome"] for f in S.FERRAMENTAS_CORRERIA]
-        self.assertEqual(nomes, ["lista", "preco", "ofertas", "roteiro", "cupons", "por_na_lista", "tirar_da_lista", "comprei", "reposicao", "repor", "reposto", "ler_arquivo",
+        self.assertEqual(nomes, ["lista", "preco", "historico_precos", "ofertas", "roteiro", "cupons", "por_na_lista", "tirar_da_lista", "comprei", "reposicao", "repor", "reposto", "ler_arquivo",
                                  "mudar_item", "nova_lista", "guardar_cupom"])
         self.assertEqual(set(nomes), set(S.FERR_IMPL))
         for f in S.FERRAMENTAS_CORRERIA:
@@ -114,6 +114,32 @@ class Ferramentas(Cenario):
         self.assertNotIn("Mercado Livre:", t, "só as lojas físicas no total")
         self.config(lista=[], categorias=["mercados"], correria=True)
         self.assertIn("Nenhum item da lista tem preço nas lojas físicas ainda.", self.usa("roteiro"))
+
+    def test_historico_precos(self):
+        """1.58.0: o menor preço de cada item da lista, um por dia (gravado junto com as ofertas), e o de hoje contra a média."""
+        S = self.S
+        k = S.norm("Café Pilão 500 g")
+        self.assertEqual(S.ler_json(S.PRECOS_DIA, {})[k]["dias"], {HOJE: [19.9, "Giassi"]}, "gravar as ofertas anota o preço do dia")
+        self.assertIn("Ainda não há dias bastantes", self.usa("historico_precos"))
+        self.assertIn('Ainda não há preço guardado de "abacaxi"', self.usa("historico_precos", produto="abacaxi"))
+        self.assertFalse(S.anotar_precos(), "o mesmo preço no mesmo dia não regrava")
+        self.assertTrue(S.anotar_precos(hoje="2026-10-20"))
+        h = S.ler_json(S.PRECOS_DIA, {})
+        h[k]["dias"].update({"2026-10-10": [25.9, "Angeloni"], "2026-10-20": [23.9, "Giassi"], "ruim": [1], "2026-10-16": "x"})
+        S.gravar_json(S.PRECOS_DIA, h)
+        t = self.usa("historico_precos", produto="café pilão")
+        self.assertEqual(t.splitlines()[0], "Café Pilão 500 g: R$ 19,90 (Giassi) em 02/11/2026, 14% abaixo da média.")
+        self.assertIn("3 dias com preço guardado, desde 10/10/2026: o menor foi R$ 19,90 em 02/11/2026 (Giassi), o maior R$ 25,90 em 10/10/2026 (Angeloni), a média R$ 23,23.".replace(" (Angeloni), a", ", a"), t)
+        self.assertIn("Ainda são poucos dias", t)
+        self.assertIn("Os últimos: 10/10 R$ 25,90; 20/10 R$ 23,90; 02/11 R$ 19,90.", t)
+        t = self.usa("historico_precos")
+        self.assertEqual(t.splitlines()[0], "1 item da lista com histórico de preços; 1 abaixo da média hoje:")
+        self.assertIn("- Café Pilão 500 g: R$ 19,90 (Giassi), 14% abaixo da média de 3 dias (R$ 23,23); o menor foi R$ 19,90.", t)
+        self.assertEqual(S._contra_media(10, 10), "na média")
+        self.assertEqual(S._contra_media(11, 10), "10% acima da média")
+        self.assertIn("precos_dia.json", S.ARQ_BACKUP)
+        S.gravar_json(S.PRECOS_DIA, [])
+        self.assertTrue(S.anotar_precos(), "um arquivo estragado recomeça")
 
     def test_preco(self):
         t = self.usa("preco", produto="café pilão")
@@ -477,7 +503,7 @@ class FerramentasPelaAPI(Servidor):
         self.assertEqual(self.pede("GET", "/api/integracao/ferramentas", cab={"Authorization": "Basic x"})[0], 401)
         st, d = self.ferr()
         self.assertEqual(st, 200)
-        self.assertEqual(len(d["ferramentas"]), 15)
+        self.assertEqual(len(d["ferramentas"]), 16)
         self.assertIn("economia_lista", d["instrucoes"])
         st, d = self.ferr("POST", {"nome": "por_na_lista", "argumentos": {"produto": "Pão de forma"}, "pessoa": {"id": "p1", "nome": "Ana"}, "cliente": "Claude"})
         self.assertEqual((st, d), (200, {"texto": "Pus Pão de forma na lista. O preço vem na próxima busca do app."}))

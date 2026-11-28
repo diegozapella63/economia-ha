@@ -8,6 +8,7 @@ Todos os dados ficam no Home Assistant, na pasta `/data` do add-on:
 | --- | --- | --- |
 | `config.json` | o painel | CEP, distância, categorias, lojas, lista, perfil, rotina, ofertas escondidas |
 | `ofertas.json` | a busca de ofertas | lojas, cupons, ofertas e preços da lista |
+| `precos_dia.json` | a busca de ofertas (1.58.0) | o menor preço de cada item da lista em cada dia: `{produto: {nome, dias: {AAAA-MM-DD: [preço, loja]}}}`, até 400 dias e 600 itens (`anotar_precos`, chamado pelo `gravar_json` do `ofertas.json`); vai no backup; a ferramenta `historico_precos` do CorrerIA lê |
 
 Sem `ofertas.json`, o painel mostra um exemplo embutido.
 

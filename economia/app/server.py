@@ -205,6 +205,11 @@ def gravar_json(path, dado):
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(dado, f, ensure_ascii=False, indent=2)
     os.replace(tmp, path)
+    if path == OFERTAS:  # 1.58.0: o preço de hoje de cada item da lista entra no histórico de preços
+        try:
+            anotar_precos(of=dado)
+        except Exception as e:  # o histórico nunca atrapalha a busca
+            log(f"histórico de preços: {e}")
 
 
 def agora():
@@ -448,7 +453,7 @@ def restaurar_versao(nome):
 MAX_BACKUPS = 10
 # o que vai no backup: a configuração (lista, perfil, lojas, ajustes) e o resultado da busca; as chaves das integrações
 # (segredos.json) e a do CorrerIA ficam de fora, como nas versões
-ARQ_BACKUP = ("config.json", "ofertas.json", "comparacoes.json")
+ARQ_BACKUP = ("config.json", "ofertas.json", "comparacoes.json", "precos_dia.json")
 BACKUP_RE = re.compile(r"^economia-(\d{8})-(\d{6})\.zip$")
 # no Começar do zero ficam só os ajustes (IA, integrações, opções, sensores, a cor); a lista, o perfil, as lojas e o resto saem
 FICA_NO_ZERO = ("usar_ia", "ia", "sensores", "correria", "opcoes", "repor", "sync", "cor", "cor_dia")  # repor: as chaves de Opções › Reposição
@@ -513,7 +518,7 @@ def restaurar_backup(nome):
         guardar_versao("restaurar", forcar=True)
         cfg["rev"] = int(ler_config().get("rev") or 0)
         novo = gravar_config(cfg)
-        for arq in ("ofertas.json", "comparacoes.json"):
+        for arq in ("ofertas.json", "comparacoes.json", "precos_dia.json"):
             if arq in dados:
                 with open(os.path.join(DATA, arq), "wb") as f:
                     f.write(dados[arq])
@@ -547,7 +552,7 @@ def zerar():
         novo = {k: atual[k] for k in FICA_NO_ZERO if k in atual}
         novo["rev"] = int(atual.get("rev") or 0)
         novo = gravar_config(novo)
-        for arq in ("ofertas.json", "comparacoes.json"):
+        for arq in ("ofertas.json", "comparacoes.json", "precos_dia.json"):
             try:
                 os.remove(os.path.join(DATA, arq))
             except OSError:
@@ -7990,6 +7995,11 @@ FERRAMENTAS_CORRERIA = [
     {"nome": "preco", "titulo": "Onde está mais barato", "grava": False, "apaga": False,
      "descricao": "O preço de um produto em cada loja (da lista, pela última busca) e as ofertas que batem com ele.",
      "entrada": _obj({"produto": _PRODUTO}, ["produto"])},
+    {"nome": "historico_precos", "titulo": "Histórico de preços", "grava": False, "apaga": False,
+     "descricao": "O preço de um item da lista ao longo dos dias (o menor de cada dia, guardado a cada busca): o de agora contra a "
+                  "média, o menor e o maior, para saber se a promoção é de verdade. Sem produto, os itens da lista com o preço de "
+                  "hoje contra a média deles, o que mais caiu primeiro.",
+     "entrada": _obj({"produto": {"type": "string", "description": "O item da lista (o nome ou parte dele). Vazio: todos os da lista."}})},
     {"nome": "ofertas", "titulo": "Ofertas", "grava": False, "apaga": False,
      "descricao": "As ofertas das lojas acompanhadas, as de maior desconto primeiro. Dá para filtrar pelo tipo de loja, pela "
                   "loja e por palavras do produto.",
@@ -8535,6 +8545,97 @@ def _ferr_preco(a, cfg, of):
     return "\n".join(linhas)
 
 
+# ---------- histórico de preços (1.58.0) ----------
+# o dono, às ferramentas que faltavam para o CorrerIA: "pode seguir em todas". A cada busca gravada, o menor preço de cada
+# item da lista fica guardado, um por dia (/data/precos_dia.json: {produto sem acento: {nome, dias: {AAAA-MM-DD: [preço,
+# loja]}}}), para saber se o preço de hoje é bom de verdade. Começa a contar da 1.58.0: antes não havia preço guardado.
+PRECOS_DIA = os.path.join(DATA, "precos_dia.json")
+PRECOS_DIAS_MAX = 400
+PRECOS_ITENS_MAX = 600
+
+
+def anotar_precos(cfg=None, of=None, hoje=None):
+    """O menor preço de hoje de cada item da lista entra no histórico (o do dia fica com o menor visto no dia)."""
+    hoje = hoje or hoje_br()
+    itens, _ = dados_lista(cfg, of)
+    hist = ler_json(PRECOS_DIA, {}) or {}
+    if not isinstance(hist, dict):
+        hist = {}
+    mudou = False
+    for i in itens:
+        mb = i.get("mais_barato")
+        if not mb or not numero(mb.get("preco")):
+            continue
+        k = norm(i["produto"])
+        h = hist.get(k) if isinstance(hist.get(k), dict) else {}
+        dias = h.get("dias") if isinstance(h.get("dias"), dict) else {}
+        ja = dias.get(hoje)
+        if isinstance(ja, list) and ja and numero(ja[0]) and ja[0] <= mb["preco"]:
+            continue
+        dias[hoje] = [round(float(mb["preco"]), 2), str(mb.get("loja") or "")[:60]]
+        hist[k] = {"nome": str(i["produto"])[:120], "dias": {d: dias[d] for d in sorted(dias)[-PRECOS_DIAS_MAX:]}}
+        mudou = True
+    if mudou:
+        if len(hist) > PRECOS_ITENS_MAX:  # saem os que não têm preço há mais tempo
+            for k in sorted(hist, key=lambda x: max(hist[x]["dias"]))[:len(hist) - PRECOS_ITENS_MAX]:
+                del hist[k]
+        gravar_json(PRECOS_DIA, hist)
+    return mudou
+
+
+def _resumo_precos(h):
+    """(dias em ordem [(data, preço, loja)], menor, maior, média) de um item do histórico; None sem preço nenhum."""
+    dias = sorted((d, v[0], v[1] if len(v) > 1 else "") for d, v in (h.get("dias") or {}).items()
+                  if data_ok(d) and isinstance(v, list) and v and numero(v[0]))
+    if not dias:
+        return None
+    ps = [p for _, p, _ in dias]
+    return dias, min(dias, key=lambda x: x[1]), max(dias, key=lambda x: x[1]), round(sum(ps) / len(ps), 2)
+
+
+def _contra_media(preco, media):
+    pct = round((preco - media) / media * 100) if media else 0
+    return "na média" if pct == 0 else f"{abs(pct)}% {'abaixo' if pct < 0 else 'acima'} da média"
+
+
+def _ferr_historico_precos(a, cfg, of):
+    hist = ler_json(PRECOS_DIA, {}) or {}
+    hist = hist if isinstance(hist, dict) else {}
+    prod = " ".join(str(a.get("produto") or "").split())
+    if prod:
+        k = norm(prod)
+        palavras = [w for w in k.split() if len(w) > 2 and not w.isdigit()] or k.split()
+        h = hist.get(k) or next((v for kk, v in sorted(hist.items()) if all(w in kk for w in palavras)), None)
+        r = _resumo_precos(h) if isinstance(h, dict) else None
+        if not r:
+            return f'Ainda não há preço guardado de "{prod}". O app guarda o menor preço de cada item da lista a cada busca, desde a versão 1.58.0.'
+        dias, menor, maior, media = r
+        ult = dias[-1]
+        linhas = [f'{h["nome"]}: {br_preco(ult[1])}' + (f" ({ult[2]})" if ult[2] else "") + f" em {br_data(ult[0])}, {_contra_media(ult[1], media)}.",
+                  f'{len(dias)} {"dia" if len(dias) == 1 else "dias"} com preço guardado, desde {br_data(dias[0][0])}: o menor foi {br_preco(menor[1])} em {br_data(menor[0])}'
+                  + (f" ({menor[2]})" if menor[2] else "") + f", o maior {br_preco(maior[1])} em {br_data(maior[0])}, a média {br_preco(media)}."]
+        if len(dias) < 7:
+            linhas.append("Ainda são poucos dias para dizer se é promoção de verdade.")
+        linhas.append("Os últimos: " + "; ".join(f"{br_data(d)[:5]} {br_preco(p)}" for d, p, _ in dias[-8:]) + ".")
+        return "\n".join(linhas)
+    na_lista = [norm(nome_item(i)) for i in cfg.get("lista") or [] if nome_item(i)]
+    achados = []
+    for k in na_lista:
+        r = _resumo_precos(hist[k]) if isinstance(hist.get(k), dict) else None
+        if r and len(r[0]) >= 2:
+            dias, menor, _, media = r
+            achados.append(((dias[-1][1] - media) / media if media else 0, hist[k]["nome"], dias, menor, media))
+    if not achados:
+        return "Ainda não há dias bastantes de preço guardado dos itens da lista. O app guarda o menor preço de cada item a cada busca, desde a versão 1.58.0."
+    achados.sort(key=lambda x: (x[0], x[1]))
+    abaixo = sum(1 for x in achados if round(x[0] * 100) < 0)
+    linhas = [f"{len(achados)} {'item' if len(achados) == 1 else 'itens'} da lista com histórico de preços; {abaixo} abaixo da média hoje:"]
+    for _, nome, dias, menor, media in achados[:20]:
+        ult = dias[-1]
+        linhas.append(f"- {nome}: {br_preco(ult[1])}" + (f" ({ult[2]})" if ult[2] else "") + f", {_contra_media(ult[1], media)} de {len(dias)} dias ({br_preco(media)}); o menor foi {br_preco(menor[1])}.")
+    return "\n".join(linhas)
+
+
 def _ferr_cupons(a, cfg, of):
     _, cupons = _ofertas_vivas(cfg, of)
     if not cupons:
@@ -8842,7 +8943,7 @@ def _ferr_guardar_cupom(a, cfg, of):
         {"tipo": "cupom", "produto": ben, "cupom": k}
 
 
-FERR_IMPL = {"roteiro": _ferr_roteiro, "lista": _ferr_lista, "preco": _ferr_preco, "ofertas": _ferr_ofertas, "cupons": _ferr_cupons,
+FERR_IMPL = {"roteiro": _ferr_roteiro, "lista": _ferr_lista, "preco": _ferr_preco, "historico_precos": _ferr_historico_precos, "ofertas": _ferr_ofertas, "cupons": _ferr_cupons,
              "por_na_lista": _ferr_por, "tirar_da_lista": _ferr_tirar, "comprei": _ferr_comprei,
              "reposicao": _ferr_reposicao, "repor": _ferr_repor, "reposto": _ferr_reposto,
              "mudar_item": _ferr_mudar, "nova_lista": _ferr_nova_lista, "guardar_cupom": _ferr_guardar_cupom,

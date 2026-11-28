@@ -1,5 +1,9 @@
 # Mudanças
 
+## 1.58.0
+
+- **Histórico de preços**: a cada busca, o app guarda o menor preço de cada item da lista, um por dia. Pelo CorrerIA dá para perguntar "o café está barato mesmo?": a resposta traz o preço de hoje contra a média, o menor e o maior já vistos. O histórico começa a contar desta versão e entra no Exportar e no Backup.
+
 ## 1.57.0
 
 - **O alto das listas igual em todos os apps**: na **Minha lista**, o **Agrupar por** é a linha do mesmo tamanho dos outros apps, com o ícone na cor do app e, fechado, o escolhido em cinza.
