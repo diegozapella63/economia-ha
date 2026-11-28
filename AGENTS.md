@@ -78,7 +78,7 @@ A lista fica em `tools/iguais.py` e as regras, em **Arquivos iguais** e **Os app
   nada de fingir ser o usuário, nada de usar login ou chave que a loja não abriu para nós. Respeitar o `robots.txt`
   (`robots_permite`) e o `Content-Signal: ai-input=no`. Site bloqueado fica de fora e o app diz por quê.
   Já decidido assim: Catálogos Ofertas (verificação de robô), Raia (403), Tiendeo (sem downloads), VipCommerce (busca só
-  com chave da plataforma), SiteMercado (token de sessão), Instabuy (bloqueia o IP por horas). O plano grátis do Brave
+  com chave da plataforma), SiteMercado (token de sessão), Instabuy (bloqueia o IP por horas). A consulta da NFC-e da SEF/SC (`sat.sef.sc.gov.br`, a página do QR code da nota; conferido em 28/11/2026): o `robots.txt` do site não deixa robôs entrarem, então a nota é lida pela foto (`ler_arquivo` com `nota`). O plano grátis do Brave
   não serve para guardar preços.
 - **Primeiro o que não gasta IA** (busca direta VTEX, busca do site, páginas de produto, catálogos, Shopee, AliExpress, folhetos);
   a IA do Home Assistant (`ai_task.generate_data`) entra por último, só para o que faltou, e pode ser desligada.
@@ -118,7 +118,6 @@ Aqui não há aviso no celular ainda (o **Avisar no celular** da rotina fica de 
 ## Ideias combinadas e ainda não feitas
 
 Em ordem sugerida: "Promoção de verdade?" (o de/por contra o histórico de preços, antes da Black Friday);
-ler a nota fiscal pelo QR code (preço pago, loja e data; conferir se a consulta da SEF/SC abre sem verificação de robô);
 "Hora de estocar"; dia da semana de cada loja; descontos fixos por loja (cartão, cashback); custo do deslocamento
 no roteiro (preço da ANP × km); reduflação; resumo semanal no celular; orçamento do mês; alerta de preço-alvo.
 Pendente de antes: papel toalha com tamanho errado ("Pague Menos R$ 233,99").
