@@ -141,8 +141,24 @@ class Ferramentas(Cenario):
         # 1.60.0: para o gráfico da tela, os itens da lista com dois dias ou mais
         self.assertEqual(S.precos_da_tela(), {k: [["2026-10-10", 25.9, "Angeloni"], ["2026-10-20", 23.9, "Giassi"], ["2026-11-02", 19.9, "Giassi"]]})
         self.assertEqual(S.precos_da_tela(dias=1)[k], [["2026-11-02", 19.9, "Giassi"]])
-        S.gravar_json(S.PRECOS_DIA, [])
+        S.gravar_json(S.PRECOS_DIA, [1])
         self.assertTrue(S.anotar_precos(), "um arquivo estragado recomeça")
+        # um item só com dias estragados não tem histórico; o que passa do limite sai (o de preço mais antigo primeiro)
+        h = S.ler_json(S.PRECOS_DIA, {})
+        h["velho"] = {"nome": "Velho", "dias": {"2020-01-01": [1.0, "Loja"]}}
+        h["ruim"] = {"nome": "Ruim", "dias": {"x": [1]}}
+        S.gravar_json(S.PRECOS_DIA, h)
+        self.assertIsNone(S._resumo_precos(h["ruim"]))
+        velho_max, S.PRECOS_ITENS_MAX = S.PRECOS_ITENS_MAX, 2
+        self.addCleanup(setattr, S, "PRECOS_ITENS_MAX", velho_max)
+        h[k]["dias"].pop(HOJE, None)
+        S.gravar_json(S.PRECOS_DIA, {kk: v for kk, v in h.items() if kk != "ruim"} | {"outro": {"nome": "Outro", "dias": {"2026-01-01": [2.0, ""]}}})
+        self.assertTrue(S.anotar_precos())
+        self.assertNotIn("velho", S.ler_json(S.PRECOS_DIA, {}))
+        # o histórico nunca atrapalha a gravação das ofertas
+        from unittest import mock
+        with mock.patch.object(S, "anotar_precos", side_effect=RuntimeError("quebrou")):
+            S.gravar_json(S.OFERTAS, S.ler_json(S.OFERTAS, {}))
 
     def test_lojas_e_mudar_loja(self):
         """1.59.0: Mais › Lojas pelo CorrerIA: ver, deixar de acompanhar e acompanhar de novo."""
